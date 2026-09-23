@@ -306,34 +306,42 @@ def fetch_factories() -> dict[str, list[dict]]:
             resource_url = urllib.parse.urljoin(FACTORY_CSV_URL, norm(candidates[0].get("下載連結")))
             log(f"Factory registry index resolved latest resource: {resource_url}")
             raw = request_bytes(resource_url, timeout=120, retries=2)
+            if raw[:4] == b"PK\\x03\\x04":
+                with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+                    csv_names = [n for n in zf.namelist() if n.lower().endswith(".csv")]
+                    if not csv_names:
+                        raise RuntimeError("factory ZIP contained no CSV")
+                    # Prefer the largest CSV if the archive has more than one.
+                    csv_name = max(csv_names, key=lambda n: zf.getinfo(n).file_size)
+                    log(f"Factory registry ZIP resolved CSV: {csv_name}")
+                    raw = zf.read(csv_name)
             decoded = decode_factory_csv(raw)
-            reader = csv.DictReader(io.StringIO(decoded))
+            reader = csv.DictReader(io.StringIO(decoded, newline=""))
             headers = reader.fieldnames or []
 
         log(f"Factory registry data headers={headers[:12]}")
+        by_tax: dict[str, list[dict]] = {}
+        for row in reader:
+            tax_id = row_value(row, "統一編號", "公司（營利事業）統一編號", "公司(營利事業)統一編號", "公司統一編號")
+            tax_id = re.sub(r"\D", "", tax_id)
+            if len(tax_id) != 8:
+                continue
+            item = {
+                "factoryName": row_value(row, "工廠名稱", "工廠名稱/姓名"),
+                "factoryId": row_value(row, "工廠登記編號", "登記編號"),
+                "address": row_value(row, "工廠地址", "地址"),
+                "setupApprovalDate": row_value(row, "工廠設立核准日期", "設立核准日期"),
+                "registrationDate": row_value(row, "工廠登記核准日期", "登記核准日期"),
+                "industries": row_value(row, "產業類別", "產業類別(新版)"),
+                "products": row_value(row, "主要產品", "主要產品1", "產品"),
+                "status": row_value(row, "工廠登記狀態", "登記狀態"),
+            }
+            by_tax.setdefault(tax_id, []).append(item)
+        log(f"Factory registry companies={len(by_tax)}")
+        return by_tax
     except Exception as exc:
         log(f"WARNING: factory registry unavailable: {exc}")
         return {}
-
-    by_tax: dict[str, list[dict]] = {}
-    for row in reader:
-        tax_id = row_value(row, "統一編號", "公司（營利事業）統一編號", "公司(營利事業)統一編號")
-        tax_id = re.sub(r"\D", "", tax_id)
-        if len(tax_id) != 8:
-            continue
-        item = {
-            "factoryName": row_value(row, "工廠名稱"),
-            "factoryId": row_value(row, "工廠登記編號"),
-            "address": row_value(row, "工廠地址"),
-            "setupApprovalDate": row_value(row, "工廠設立核准日期"),
-            "registrationDate": row_value(row, "工廠登記核准日期"),
-            "industries": row_value(row, "產業類別"),
-            "products": row_value(row, "主要產品"),
-            "status": row_value(row, "工廠登記狀態"),
-        }
-        by_tax.setdefault(tax_id, []).append(item)
-    log(f"Factory registry companies={len(by_tax)}")
-    return by_tax
 
 
 def clean_int(value) -> int:
