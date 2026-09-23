@@ -1,10 +1,14 @@
-name: Publish Company Radar branch
+name: Publish OpenData web suite
 
 on:
   push:
     branches: ["main"]
     paths:
       - "company-radar-web/**"
+      - "site-selection-web/**"
+      - "construction-radar-web/**"
+      - "tender-intelligence-web/**"
+      - "disaster-risk-web/**"
       - ".github/workflows/company-radar-pages.yml"
   workflow_dispatch:
 
@@ -12,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: "company-radar-publish"
+  group: "opendata-pages-publish"
   cancel-in-progress: true
 
 jobs:
@@ -22,11 +26,20 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v4
 
-      - name: Prepare static site
+      - name: Prepare static sites
         run: |
-          mkdir -p /tmp/company-radar-site
-          cp -R company-radar-web/. /tmp/company-radar-site/
-          touch /tmp/company-radar-site/.nojekyll
+          rm -rf /tmp/opendata-site
+          mkdir -p /tmp/opendata-site
+          cp -R company-radar-web/. /tmp/opendata-site/
+          mkdir -p /tmp/opendata-site/site-selection-web
+          mkdir -p /tmp/opendata-site/construction-radar-web
+          mkdir -p /tmp/opendata-site/tender-intelligence-web
+          mkdir -p /tmp/opendata-site/disaster-risk-web
+          cp -R site-selection-web/. /tmp/opendata-site/site-selection-web/
+          cp -R construction-radar-web/. /tmp/opendata-site/construction-radar-web/
+          cp -R tender-intelligence-web/. /tmp/opendata-site/tender-intelligence-web/
+          cp -R disaster-risk-web/. /tmp/opendata-site/disaster-risk-web/
+          touch /tmp/opendata-site/.nojekyll
 
       - name: Publish gh-pages branch
         run: |
@@ -34,7 +47,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan gh-pages
           git rm -rf .
-          cp -R /tmp/company-radar-site/. .
+          cp -R /tmp/opendata-site/. .
           git add .
-          git commit -m "Publish Company Radar web"
+          git commit -m "Publish OpenData web suite"
           git push --force origin gh-pages
