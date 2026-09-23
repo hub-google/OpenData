@@ -16,10 +16,9 @@ let companies = [];
 let filtered = [];
 
 function signalClassName(c) {
-  if (c.signalClass === "資金到位") return "capital";
-  if (c.signalClass === "落後佐證") return "move";
-  if (c.signalClass === "風險訊號") return "move";
-  if (c.signalClass === "新業務訊號") return "director";
+  if (["資金到位","大型專案啟動"].includes(c.signalClass)) return "capital";
+  if (["落後佐證","風險訊號"].includes(c.signalClass)) return "move";
+  if (["新業務訊號","新事業啟動","據點擴張"].includes(c.signalClass)) return "director";
   return "";
 }
 
@@ -106,8 +105,11 @@ function renderStats() {
   $("#statNew").textContent = Number(s.newCompanies ?? companies.filter(c => (c.eventTypes||[]).includes("新設立")).length).toLocaleString();
   $("#statCapital").textContent = Number(s.capitalIncrease ?? companies.filter(c => (c.eventTypes||[]).includes("增資")).length).toLocaleString();
   const industry = Number(s.industryChange || 0);
+  const businessAdd = Number(s.businessItemAdded || 0);
+  const branches = Number(s.newBranches || 0);
+  const awards = Number(s.giantProcurement || 0);
   const lagging = Number(s.laggingOnly || 0);
-  $("#statsNote").textContent = `另有 ${industry.toLocaleString()} 家產業方向變化；${lagging.toLocaleString()} 家僅屬落後／不明訊號，預設不列入商機名單。`;
+  $("#statsNote").textContent = `新事業項目 ${businessAdd.toLocaleString()} 家・新設分公司 ${branches.toLocaleString()} 家・巨額標案 ${awards.toLocaleString()} 家・產業變化 ${industry.toLocaleString()} 家；另有 ${lagging.toLocaleString()} 家僅屬落後／不明訊號。`;
 }
 
 function bindRows() {
@@ -173,6 +175,14 @@ function openDrawer(id) {
       <h3>後續可能支出方向</h3>
       <p>${esc(needs.join("、") || "需先確認異動內容")}</p>
     </div>
+    ${Array.isArray(c.changes?.businessItemsAdded) && c.changes.businessItemsAdded.length ? `
+      <div class="action-box"><h3>新增營業項目</h3><p>${c.changes.businessItemsAdded.map(x=>esc(x.desc||x.code)).join("、")}</p></div>` : ""}
+    ${Array.isArray(c.changes?.newBranches) && c.changes.newBranches.length ? `
+      <div class="action-box"><h3>新設分公司</h3><p>${c.changes.newBranches.map(x=>`${esc(x.name||x.taxId)}｜${esc(x.location||"")}`).join("<br>")}</p></div>` : ""}
+    ${Array.isArray(c.changes?.giantProcurements) && c.changes.giantProcurements.length ? `
+      <div class="action-box"><h3>政府巨額採購</h3><p>${c.changes.giantProcurements.map(x=>`${esc(x.caseName||"政府標案")}${x.awardAmount ? "｜"+fmtMoney(x.awardAmount) : ""}`).join("<br>")}</p></div>` : ""}
+    ${c.hiringSignal?.postings ? `
+      <div class="action-box"><h3>徵才佐證</h3><p>台灣就業通命中 ${esc(c.hiringSignal.postings)} 筆${c.hiringSignal.people ? "，預計招募 "+esc(c.hiringSignal.people)+" 人" : ""}${c.hiringSignal.roles?.length ? "｜"+c.hiringSignal.roles.map(esc).join("、") : ""}<br><small>官方介面單次最多 1000 筆，僅作佐證。</small></p></div>` : ""}
     <div class="action-box">
       <h3>怎麼切入比較合理</h3>
       <p>${esc(c.action||"先確認本次異動原因，再決定是否接觸。")}</p>
