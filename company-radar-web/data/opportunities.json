@@ -1,0 +1,20 @@
+{
+  "generatedAt": null,
+  "date": null,
+  "baselineReady": false,
+  "rowCount": 0,
+  "stats": {
+    "detected": 0,
+    "highPriority": 0,
+    "newCompanies": 0,
+    "capitalIncrease": 0,
+    "addressChange": 0,
+    "industryChange": 0
+  },
+  "eventCounts": {},
+  "sources": [],
+  "notes": [
+    "等待 GitHub Actions 完成第一次真實資料同步。"
+  ],
+  "companies": []
+}
