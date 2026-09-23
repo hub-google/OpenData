@@ -1,6 +1,9 @@
-name: Publish OpenData web suite
+name: Update and publish OpenData web suite
 
 on:
+  schedule:
+    # 08:20 Asia/Taipei every day
+    - cron: "20 0 * * *"
   push:
     branches: ["main"]
     paths:
@@ -20,17 +23,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  publish:
+  update-and-publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Restore company baseline
+        id: restore-company-state
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/company-radar
+          key: company-radar-state-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            company-radar-state-${{ runner.os }}-
+
+      - name: Build real company opportunity feed
+        run: python3 company-radar-web/scripts/update_company_radar.py
+
+      - name: Save company baseline
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/company-radar
+          key: company-radar-state-${{ runner.os }}-${{ github.run_id }}
+
+      - name: Commit generated daily data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A company-radar-web/data
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh company radar $(date -u +%F) [skip ci]"
+            git push origin HEAD:main
+          fi
 
       - name: Prepare static sites
         run: |
           rm -rf /tmp/opendata-site
           mkdir -p /tmp/opendata-site
           cp -R company-radar-web/. /tmp/opendata-site/
+          rm -rf /tmp/opendata-site/scripts
           mkdir -p /tmp/opendata-site/site-selection-web
           mkdir -p /tmp/opendata-site/construction-radar-web
           mkdir -p /tmp/opendata-site/tender-intelligence-web
