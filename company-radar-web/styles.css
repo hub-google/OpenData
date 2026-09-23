@@ -84,7 +84,7 @@ h1 { font-size: clamp(28px, 3vw, 42px); margin: 0; letter-spacing: -.04em; line-
 
 .filters-card {
   display: grid;
-  grid-template-columns: minmax(220px, 1.6fr) repeat(4, minmax(130px, .8fr));
+  grid-template-columns: minmax(220px, 1.5fr) repeat(5, minmax(120px, .8fr));
   gap: 12px; padding: 16px; margin-bottom: 14px;
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
 }
