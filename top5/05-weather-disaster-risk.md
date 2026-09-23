@@ -1,48 +1,50 @@
-# 05｜Weather & Disaster Risk Intelligence
+# 05｜氣象與災害風險情報
 
-## 商業價值
-- 評分：88/100
-- 台灣單一產品 ARR 潛力：NT$2,000萬～1.2億
-- 主要客戶：保險、工程、物流、農業、能源、戶外活動、資產管理。
-- 核心問題：免費天氣資訊很多，但企業願意付費的是「這個地址／資產／工地未來或歷史的風險」。
+## 為什麼值得做
+- 商業價值：88/100
+- 估計台灣單一產品年營收：2,000萬～1.2億元
+- 可能客戶：保險、工程、物流、農業、能源、戶外活動、資產管理。
+- 解決問題：大家都能免費看天氣，但企業願意付費的是「這個地址、工地、農場或資產到底有多危險」。
 
-## 核心資料來源
+## 需要的資料
 
-### A. 全測站逐時氣象資料
+### 1. 全測站逐時氣象資料
 - 官方頁：https://data.gov.tw/dataset/9176
-- 氣象署 Open Data：https://opendata.cwa.gov.tw/
-- 關鍵欄位：StationName、StationId、DateTime、CoordinateName、CoordinateFormat、StationLatitude、StationLongitude、StationAltitude、CountyName、TownName、CountyCode、TownCode，以及天氣、降水、風速/風向、氣溫、相對溼度、氣壓、極值等觀測欄位。
-- 更新：逐時。
+- 中央氣象署：https://opendata.cwa.gov.tw/
+- 需要欄位：測站名稱、測站代碼、時間、經緯度、海拔、縣市、鄉鎮、雨量、風速、風向、氣溫、濕度、氣壓、極值。
 
-### B. 空氣品質指標 AQI
+### 2. 空氣品質
 - 官方頁：https://data.gov.tw/dataset/40448
 - 空氣品質監測網：https://airtw.moenv.gov.tw/
-- 關鍵欄位：sitename、county、aqi、pollutant、status、so2、co、o3、o3_8hr、pm10、pm2.5、no2、nox、no、wind_speed、wind_direc。
-- 更新：每小時。
+- 需要欄位：測站、縣市、空氣品質指標、主要污染物、狀態、二氧化硫、一氧化碳、臭氧、PM10、PM2.5、二氧化氮、風速、風向。
 
-### C. 土石流潛勢溪流
-- 官方頁：https://data.gov.tw/dataset/7279
-- 115 年影響範圍：https://data.gov.tw/dataset/176526
-- 115 年大規模崩塌潛勢區：https://data.gov.tw/dataset/176527
-- 115 年大規模崩塌影響範圍：https://data.gov.tw/dataset/176528
+### 3. 土石流與崩塌風險
+- 土石流潛勢溪流：https://data.gov.tw/dataset/7279
+- 115年土石流影響範圍：https://data.gov.tw/dataset/176526
+- 115年大規模崩塌潛勢區：https://data.gov.tw/dataset/176527
+- 115年大規模崩塌影響範圍：https://data.gov.tw/dataset/176528
 - 災害潛勢地圖：https://dmap.ncdr.nat.gov.tw/
-- 關鍵欄位：Debrisno、County、Town、Vill、Address、Overflow_X、Overflow_Y、Total_Res、Res_Class、Risk。
+- 需要欄位：縣市、鄉鎮、村里、地址、座標、保全住戶、風險等級。
 
-## 建議產品化
-- Address Risk Score。
-- 工地 24/48/72 小時施工風險。
-- 太陽能／風電發電量 weather feature。
-- 物流 route weather risk。
-- 農作物極端天氣 alert。
-- 保險 portfolio geospatial accumulation risk。
-- 歷史「某地址遇到極端降雨的頻率」。
+## 可以做成什麼
+- 單一地址風險分數。
+- 工地未來 24／48／72 小時施工風險。
+- 物流路線天候風險。
+- 農作物極端天氣通知。
+- 太陽能與風電發電量預估。
+- 保險公司大量保單地址的累積災害風險。
+- 某地址過去十年遇到豪雨、強風、高溫的次數。
 
 ## 商業模式
-- API：每地址／每千次查詢。
-- Portfolio Batch：按資產筆數收費。
-- Enterprise Dashboard：NT$30萬～300萬/年。
-- Alert：依工地／農場／資產數量訂閱。
-- Insurance/Bank Data Feed：客製授權。
+- 地址查詢 API。
+- 一次上傳大量地址批次評分。
+- 企業風險儀表板：每年 30萬～300萬元。
+- 按工地、農場、資產數量訂閱預警。
+- 銀行／保險專用資料服務。
 
-## MVP
-挑一個高付費場景，例如「營造工地降雨風險」或「保險地址風險」，不要做泛用天氣 App。
+## 最推薦的第一版
+先挑一個願意付錢的場景，例如：
+- 工地豪雨施工風險。
+- 保險地址天然災害風險。
+
+不要先做一般消費者天氣 App。
