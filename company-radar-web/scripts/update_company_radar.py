@@ -27,6 +27,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -739,19 +740,38 @@ def main() -> int:
         candidate_ids = list(events.keys())
         log(f"Enriching {len(candidate_ids)} changed/new companies with GCIS business items and branches")
 
+        def fetch_company_secondary(tax_id: str) -> tuple[str, list[dict], list[dict], str]:
+            try:
+                items = gcis_company_rows(GCIS_BUSINESS, tax_id)
+                branches = gcis_company_rows(GCIS_BRANCH, tax_id)
+                return tax_id, items, branches, ""
+            except Exception as exc:
+                return tax_id, [], [], str(exc)
+
+        fetched_secondary: dict[str, tuple[list[dict], list[dict], str]] = {}
+        workers = min(8, max(1, len(candidate_ids)))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(fetch_company_secondary, tax_id) for tax_id in candidate_ids]
+            for done_idx, future in enumerate(as_completed(futures), start=1):
+                tax_id, item_rows, branch_rows, err = future.result()
+                fetched_secondary[tax_id] = (item_rows, branch_rows, err)
+                if done_idx % 100 == 0:
+                    log(f"GCIS secondary fetched {done_idx}/{len(candidate_ids)}")
+
         for idx, tax_id in enumerate(candidate_ids, start=1):
             item = events[tax_id]
+            item_rows, branch_rows, fetch_err = fetched_secondary.get(tax_id, ([], [], "missing"))
+            if fetch_err:
+                log(f"WARNING: secondary GCIS enrichment failed for {tax_id}: {fetch_err}")
 
-            # Company registered business items: detect additions only when a prior snapshot exists.
-            try:
-                rows = gcis_company_rows(GCIS_BUSINESS, tax_id)
-                current_items = []
-                for row in rows:
-                    code = norm(row.get("Business_Item"))
-                    desc = norm(row.get("Business_Item_Desc"))
-                    if code:
-                        current_items.append({"code": code, "desc": desc})
-                business_items_by_tax[tax_id] = current_items
+            current_items = []
+            for row in item_rows:
+                code = norm(row.get("Business_Item"))
+                desc = norm(row.get("Business_Item_Desc"))
+                if code:
+                    current_items.append({"code": code, "desc": desc})
+            business_items_by_tax[tax_id] = current_items
+            if not fetch_err:
                 prev_codes = {
                     r[0]: r[1]
                     for r in conn.execute(
@@ -759,7 +779,6 @@ def main() -> int:
                     ).fetchall()
                 }
                 new_codes = [x for x in current_items if x["code"] not in prev_codes]
-                # Existing companies only: on first observation we establish a baseline, not claim everything was newly added.
                 if prev_codes and new_codes and tax_id not in setup_map:
                     item["types"].append("營業項目新增")
                     item["changes"]["businessItemsAdded"] = new_codes
@@ -770,25 +789,21 @@ def main() -> int:
                     "INSERT OR REPLACE INTO business_items(tax_id,item_code,item_desc,observed_at) VALUES(?,?,?,?)",
                     [(tax_id, x["code"], x["desc"], today.isoformat()) for x in current_items],
                 )
-            except Exception as exc:
-                log(f"WARNING: business-item enrichment failed for {tax_id}: {exc}")
 
-            # Branches: establishment date lets us detect today's new branch even without prior snapshot.
-            try:
-                rows = gcis_company_rows(GCIS_BRANCH, tax_id)
-                current_branches = []
-                for row in rows:
-                    branch_id = norm(row.get("Branch_Office_Business_Accounting_NO"))
-                    if not branch_id:
-                        continue
-                    current_branches.append({
-                        "taxId": branch_id,
-                        "name": norm(row.get("Branch_Office_Name")),
-                        "location": norm(row.get("Branch_Office_Location")),
-                        "setupDate": norm(row.get("BR_ESTAB_DATE")),
-                        "status": norm(row.get("Branch_Office_Status_Desc")),
-                    })
-                branches_by_tax[tax_id] = current_branches
+            current_branches = []
+            for row in branch_rows:
+                branch_id = norm(row.get("Branch_Office_Business_Accounting_NO"))
+                if not branch_id:
+                    continue
+                current_branches.append({
+                    "taxId": branch_id,
+                    "name": norm(row.get("Branch_Office_Name")),
+                    "location": norm(row.get("Branch_Office_Location")),
+                    "setupDate": norm(row.get("BR_ESTAB_DATE")),
+                    "status": norm(row.get("Branch_Office_Status_Desc")),
+                })
+            branches_by_tax[tax_id] = current_branches
+            if not fetch_err:
                 prev_branch_ids = {
                     r[0] for r in conn.execute(
                         "SELECT branch_tax_id FROM branches WHERE tax_id=?", (tax_id,)
@@ -808,11 +823,7 @@ def main() -> int:
                     "INSERT OR REPLACE INTO branches(tax_id,branch_tax_id,branch_name,location,setup_date,status,observed_at) VALUES(?,?,?,?,?,?,?)",
                     [(tax_id, x["taxId"], x["name"], x["location"], x["setupDate"], x["status"], today.isoformat()) for x in current_branches],
                 )
-            except Exception as exc:
-                log(f"WARNING: branch enrichment failed for {tax_id}: {exc}")
 
-            # Large government project signal: official recent giant procurement / in-performance list.
-            # Factory expansion: source updates less frequently, so use registration date when possible.
             factories = factories_by_tax.get(tax_id) or []
             today_factories = [x for x in factories if x.get("registrationDate") == roc]
             if today_factories:
@@ -835,8 +846,7 @@ def main() -> int:
 
             if idx % 100 == 0:
                 conn.commit()
-                log(f"GCIS secondary enrichment {idx}/{len(candidate_ids)}")
-            time.sleep(0.015)
+                log(f"GCIS secondary applied {idx}/{len(candidate_ids)}")
 
         conn.commit()
 
