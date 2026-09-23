@@ -1,34 +1,41 @@
-# 06｜Corporate Compliance / ESG Risk
+# 06｜企業法遵、裁罰與永續風險
 
 ## 商業價值
 - 評分：86/100
-- ARR 潛力：NT$1,500萬～8,000萬
-- 客戶：銀行、保險、採購、供應鏈、ESG 顧問、企業法遵。
+- 估計台灣單一產品年營收：1,500萬～8,000萬元
+- 客戶：銀行、保險、大企業採購、供應鏈管理、永續顧問、法遵部門。
 
-## 資料來源
+## 需要的資料
 
-### 違反勞動法令事業單位－勞動基準法
-- https://data.gov.tw/dataset/109896
-- 關鍵欄位：主管機關、公告日期、處分日期、處分字號、事業單位名稱或負責人、違法法規法條、違反法規內容、罰鍰金額、備註說明。
+### 違反勞動法令事業單位
+- 官方頁：https://data.gov.tw/dataset/109896
+- 需要欄位：主管機關、公告日期、處分日期、處分字號、事業單位名稱或負責人、違法法條、違法內容、罰鍰金額。
 
-### 環境部裁罰處分
-- https://data.gov.tw/dataset/10165
-- JSON API：https://data.moenv.gov.tw/api/v2/doc_p_17?api_key=b7df779e-71a6-4148-8379-5afbd441d803&format=JSON&limit=1000&sort=ImportDate+desc
-- 關鍵欄位：no、name、date、case、fact、low、fine、appeal、result、restricted_date、improve。
+### 環境裁罰
+- 官方頁：https://data.gov.tw/dataset/10165
+- API：https://data.moenv.gov.tw/api/v2/doc_p_17?api_key=b7df779e-71a6-4148-8379-5afbd441d803&format=JSON&limit=1000&sort=ImportDate+desc
+- 需要欄位：公司或行為人、日期、違反事實、法令、罰鍰、改善狀況、申訴結果。
 
 ### 公司基本資料
 - https://data.gov.tw/dataset/22197
 - https://data.gov.tw/dataset/9400
 
-## 關鍵技術
-裁罰資料常只有公司名稱，不一定有統編；核心護城河是 company entity resolution：名稱正規化、舊名、地址、公司狀態與人工覆核。
+## 最大技術難點
+很多裁罰資料只有公司名稱，不一定直接提供統編。
 
-## 產品
-- Supplier Risk Score。
-- ESG Due Diligence。
-- 每日新裁罰 Alert。
-- 客戶／供應商 Batch Screening。
+所以真正有價值的技術是：
+- 公司名稱標準化。
+- 舊公司名稱對應。
+- 地址比對。
+- 同名公司排除。
+- 人工覆核機制。
+
+## 可以做成什麼
+- 供應商風險分數。
+- 客戶／供應商批次查核。
+- 每日新裁罰通知。
 - 公司風險 API。
+- 永續與法遵盡職調查報告。
 
 ## 商業模式
-每家公司／每批名單／每年 Enterprise License 收費。高價值客戶在採購、授信與大型供應鏈。
+依公司數量、查詢量或企業年度授權收費。最有價值的場景是大型企業採購、供應商管理與金融授信。
