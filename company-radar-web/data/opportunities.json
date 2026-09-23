@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-09-23T18:28:48+08:00",
+  "generatedAt": "2026-09-23T18:38:26+08:00",
   "date": "2026-09-23",
   "baselineReady": true,
   "rowCount": 1713508,
   "stats": {
-    "detected": 498,
+    "detected": 503,
     "actionable": 83,
     "highPriority": 1,
     "newCompanies": 83,
@@ -15,10 +15,10 @@
     "newBranches": 1,
     "giantProcurement": 0,
     "newFactory": 0,
-    "laggingOnly": 415
+    "laggingOnly": 420
   },
   "eventCounts": {
-    "其他公司登記異動": 415,
+    "其他公司登記異動": 420,
     "新設立": 83,
     "新設分公司": 1
   },
@@ -17350,6 +17350,58 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "69441143",
+      "name": "金優列印科技股份有限公司",
+      "taxId": "69441143",
+      "city": "新北市",
+      "district": "蘆洲區",
+      "industry": "印刷",
+      "industries": [
+        "印刷"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 3000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1070423",
+      "owner": "",
+      "address": "新北市蘆洲區溪墘里信義路１１３巷１弄５號（１樓）",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 300 萬",
+        "主要稅籍行業：印刷"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "82911293",
       "name": "撼星數位行銷股份有限公司",
       "taxId": "82911293",
@@ -19216,6 +19268,58 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "94076426",
+      "name": "永檷有限公司",
+      "taxId": "94076426",
+      "city": "苗栗縣",
+      "district": "苗栗市",
+      "industry": "未分類其他食品、飲料及菸草製品零售",
+      "industries": [
+        "未分類其他食品、飲料及菸草製品零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 2000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "展店/通路",
+        "POS與支付",
+        "物流/倉儲",
+        "行銷",
+        "招募與員工保障"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1120606",
+      "owner": "",
+      "address": "苗栗縣苗栗市北苗里國華路４５０巷５６號１樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 200 萬",
+        "主要稅籍行業：未分類其他食品、飲料及菸草製品零售"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "94142328",
       "name": "鑫凱祥實業股份有限公司",
       "taxId": "94142328",
@@ -19635,6 +19739,59 @@
         "經濟部公司資料異動 API 顯示今日有核准變更",
         "目前公開資本額 150 萬",
         "主要稅籍行業：金屬加工用機械批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "50846545",
+      "name": "萬齊進出口貿易股份有限公司",
+      "taxId": "50846545",
+      "city": "新北市",
+      "district": "板橋區",
+      "industry": "未分類其他機械器具批發",
+      "industries": [
+        "未分類其他機械器具批發",
+        "電腦及電腦週邊設備批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1500000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1070823",
+      "owner": "",
+      "address": "新北市板橋區華江里民生路二段２３４巷１０號２樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 150 萬",
+        "主要稅籍行業：未分類其他機械器具批發"
       ],
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
@@ -23468,6 +23625,59 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "62100855",
+      "name": "固芯有限公司",
+      "taxId": "62100855",
+      "city": "新北市",
+      "district": "中和區",
+      "industry": "其他電子、通訊設備及其零組件批發",
+      "industries": [
+        "其他電子、通訊設備及其零組件批發",
+        "產業用光學儀器批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 500000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1150703",
+      "owner": "",
+      "address": "新北市中和區福真里中山路２段２９６號１１樓之４",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 50 萬",
+        "主要稅籍行業：其他電子、通訊設備及其零組件批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "62108316",
       "name": "碩美泰股份有限公司",
       "taxId": "62108316",
@@ -25964,6 +26174,54 @@
       "id": "62087311",
       "name": "豐山食品股份有限公司",
       "taxId": "62087311",
+      "city": "未分類",
+      "district": "",
+      "industry": "未分類",
+      "industries": [],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 0,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "",
+      "owner": "",
+      "address": "",
+      "orgType": "",
+      "invoice": "",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "62101524",
+      "name": "青萍資本股份有限公司",
+      "taxId": "62101524",
       "city": "未分類",
       "district": "",
       "industry": "未分類",
