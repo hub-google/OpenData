@@ -1,68 +1,84 @@
-# 01｜Taiwan Company Intelligence
+# 01｜台灣企業情報資料庫
 
-## 商業價值
-- 評分：95/100
-- 台灣單一產品 ARR 潛力：NT$5,000萬～2.5億+
-- 主要客戶：銀行、保險、租賃、B2B SaaS、供應鏈管理、會計師、徵信、業務團隊。
-- 核心問題：台灣企業資料分散在不同政府系統，企業要做 KYB、找客戶、判斷公司異動或 enrich CRM 時，要重複查多個來源。
+## 為什麼值得做
+- 商業價值：95/100
+- 估計台灣單一產品年營收：5,000萬～2.5億元以上
+- 可能客戶：銀行、保險、租賃、企業業務團隊、會計師、供應鏈管理、企業徵信。
+- 解決問題：企業資料散落在不同政府系統，找客戶、查公司、做企業風險審查時，要重複查很多地方。
 
-## 核心資料來源
+## 需要的資料
 
-### A. 全國營業（稅籍）登記資料集
+### 1. 全國營業（稅籍）登記資料
 - 官方頁：https://data.gov.tw/dataset/9400
 - CSV：https://eip.fia.gov.tw/data/BGMOPEN1.csv
 - ZIP：https://eip.fia.gov.tw/data/BGMOPEN1.zip
-- 更新：每日
-- 關鍵欄位：統一編號、總機構統一編號、營業人名稱、營業地址、資本額、設立日期、組織別名稱、使用統一發票、行業代號、名稱、行業代號1～3、名稱1～3。
-- Primary Key：統一編號
+- 更新頻率：每日
+- 最重要欄位：統一編號、總機構統一編號、營業人名稱、營業地址、資本額、設立日期、組織別、是否使用統一發票、行業代號、行業名稱。
+- 最重要串接欄位：統一編號。
 
-### B. 公司登記基本資料－應用一
+### 2. 公司登記基本資料
 - 官方頁：https://data.gov.tw/dataset/22197
-- 商工 API Swagger：https://data.gcis.nat.gov.tw/resources/swagger/index.html
-- Swagger JSON：http://data.gcis.nat.gov.tw/resources/swagger/swagger.json
-- 關鍵欄位：Business_Accounting_NO、Company_Status_Desc、Company_Name、Capital_Stock_Amount、Paid_In_Capital_Amount、Share_Val、Equity_Amt、Responsible_Name、Company_Location、Register_Organization_Desc、Company_Setup_Date、Change_Of_Approval_Data、Revoke_App_Date、Case_Status、Case_Status_Desc、Sus_App_Date、Sus_Beg_Date、Sus_End_Date。
+- 商工 API 文件：https://data.gcis.nat.gov.tw/resources/swagger/index.html
+- 原始技術欄位：Business_Accounting_NO、Company_Status_Desc、Company_Name、Capital_Stock_Amount、Paid_In_Capital_Amount、Responsible_Name、Company_Location、Company_Setup_Date、Change_Of_Approval_Data 等。
+- 中文意義：統編、公司狀態、公司名稱、資本額、實收資本額、負責人、地址、設立日期、最後核准變更日期。
 
-### C. 公司登記董監事資料
+### 3. 公司董監事資料
 - 官方頁：https://data.gov.tw/dataset/13863
 - API 文件：https://data.gcis.nat.gov.tw/resources/swagger/index.html
-- 關鍵欄位：Person_Position_Name、Person_Name、Juristic_Person_Name、Person_Shareholding。
-- JOIN：公司統編。
+- 需要欄位：職稱、姓名、法人名稱、持股數。
+- 用途：建立董事、法人與公司的關係。
 
-### D. 公司資料異動查詢
+### 4. 公司異動資料
 - 官方頁：https://data.gov.tw/dataset/84880
-- 關鍵欄位：Business_Accounting_NO、Company_Name；以最後核准變更日期查詢。
-- 用途：Daily Change Feed。
+- 需要欄位：統一編號、公司名稱、最後核准變更日期。
+- 用途：抓增資、搬遷、名稱變更等事件。
 
-### E. 公司資料設立查詢
+### 5. 公司新設資料
 - 官方頁：https://data.gov.tw/dataset/152280
-- 關鍵欄位：Business_Accounting_NO、Company_Name。
-- 用途：新設公司名單／Sales Trigger。
+- 需要欄位：統一編號、公司名稱、設立日期。
+- 用途：每天找新成立企業。
 
-### F. 商業登記基本資料
+### 6. 商業登記基本資料
 - 官方頁：https://data.gov.tw/dataset/108339
-- 關鍵欄位：President_No、Business_Name、Business_Current_Status、Business_Current_Status_Desc、Business_Setup_Approve_Date、Business_Organization_Type_Desc、Agency、Agency_Desc、Business_Address、Business_Item、Business_Item_Desc。
+- 需要欄位：統一編號、商業名稱、營業狀態、設立日期、組織型態、地址、營業項目。
 
-## 建議資料模型
-company_master：統編、名稱、狀態、地址、資本額、設立日、負責人、產業。  
-company_director：統編、姓名、職稱、法人、持股。  
-company_tax_profile：統編、稅籍地址、發票、行業代碼。  
-company_event：統編、event_type、event_date、before、after。  
-company_relation：source_company、target_entity、relation_type。
+## 建議整理成哪些表
+- 公司主檔：統編、名稱、狀態、地址、資本額、成立日、負責人、產業。
+- 董監事表：統編、姓名、職稱、法人、持股。
+- 稅籍表：統編、稅籍地址、產業分類、是否使用統一發票。
+- 公司事件表：統編、事件類型、事件日期、變更前、變更後。
+- 關係表：公司與董事、法人、關係企業的連結。
 
-## 可以賣什麼
-1. Company Search：單家公司完整 Profile。
-2. KYB API：輸入統編回傳公司狀態、登記、稅籍、董監、風險。
-3. CRM Enrichment：客戶公司自動補齊產業、規模、地址、成立日。
-4. Sales Trigger：每天通知「新設立、增資、搬遷、董監異動」企業。
-5. Company Graph：關係人／法人董事／地址／關係企業網路。
-6. Company Change History：政府來源只給當下資料時，自行保存每日 snapshot 形成歷史。
+## 可以做成什麼產品
+
+### 公司完整查詢
+輸入統編或公司名稱，直接看到公司、稅籍、董事、歷史異動與風險。
+
+### 企業查核 API
+讓銀行、保險、租賃公司直接串進自己的系統。
+
+### 業務名單補強
+客戶只丟一批公司名稱，系統自動補上統編、產業、地址、資本額、成立年限。
+
+### 每日商機通知
+例如：
+- 今天新成立的餐飲公司。
+- 最近增資超過 5,000 萬的企業。
+- 最近搬到新辦公室的公司。
+- 某產業最近大量成立的新公司。
 
 ## 商業模式
-- SaaS：NT$1,500～15,000/月/席。
-- API：按每千次 request 計價。
-- Enterprise Data Feed：NT$30萬～300萬/年。
-- CRM Plugin：依公司名單數或席次計價。
-- Premium Trigger Pack：新公司、增資、搬遷、特定產業事件訂閱。
+- 一般使用者：每月 1,500～15,000 元。
+- 企業資料 API：依查詢量收費。
+- 大型企業年度資料授權：每年 30萬～300萬元。
+- 客戶名單補強：按筆數計價。
+- 商機通知進階版：依產業、地區、事件數收費。
 
-## MVP
-先做「每天新增／異動企業雷達」：使用者選產業、縣市、資本額門檻，每天收到最值得聯絡的 20 家公司。這比單純公司查詢更容易直接量化 ROI。
+## 最推薦的第一版
+先不要做「查公司網站」。
+
+直接做：
+
+> 每天告訴業務：今天有哪些公司最值得聯絡？
+
+讓客戶設定產業、縣市、資本額、成立日期等條件，每天收到 20～100 家新商機。
