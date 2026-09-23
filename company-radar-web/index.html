@@ -82,9 +82,12 @@
             <label for="signalFilter">商機價值</label>
             <select id="signalFilter">
               <option value="actionable" selected>只看可行動商機</option>
+              <option value="大型專案啟動">大型專案啟動</option>
+              <option value="據點擴張">新設分公司／據點擴張</option>
               <option value="資金到位">資金到位</option>
+              <option value="新事業啟動">營業項目新增</option>
               <option value="開辦期">新設開辦</option>
-              <option value="新業務訊號">新業務訊號</option>
+              <option value="新業務訊號">產業方向變化</option>
               <option value="watch">只看觀察／落後訊號</option>
               <option value="all">全部訊號</option>
             </select>
@@ -93,6 +96,9 @@
             <label for="eventFilter">原始事件</label>
             <select id="eventFilter">
               <option value="all">全部</option>
+              <option value="巨額標案履約中">巨額標案履約中</option>
+              <option value="新設分公司">新設分公司</option>
+              <option value="營業項目新增">營業項目新增</option>
               <option value="新設立">新設立</option>
               <option value="增資">增資</option>
               <option value="產業異動">產業異動</option>
@@ -167,6 +173,9 @@
           <article class="about-card">
             <h3>目前高價值訊號</h3>
             <ul>
+              <li><strong>巨額標案履約：</strong>大型專案已進入執行期，常伴隨設備、人力、分包、保險與週轉需求。</li>
+              <li><strong>新設分公司：</strong>新據點正式落地，比公司搬家更接近展店／擴點需求。</li>
+              <li><strong>營業項目新增：</strong>可能是新事業準備啟動，屬於真正偏前段的訊號。</li>
               <li><strong>新設立：</strong>法人剛成立，供應商與營運配置可能尚未固定。</li>
               <li><strong>增資：</strong>不是缺錢，而是資金已到位；後續擴產、擴編與採購值得追。</li>
               <li><strong>產業異動：</strong>稅籍行業方向變化，可能代表新業務或收入結構改變，需再驗證。</li>
@@ -184,11 +193,10 @@
           <article class="about-card">
             <h3>下一層要補的領先訊號</h3>
             <ul>
-              <li>公司營業項目新增／新事業登記</li>
-              <li>政府標案得標與大型專案啟動</li>
-              <li>徵才突然增加</li>
-              <li>工廠、建照、許可與新據點相關資料</li>
-              <li>動產擔保／融資等資金與設備訊號</li>
+              <li><strong>已接：</strong>營業項目新增、新設分公司、巨額政府採購履約、台灣就業通徵才佐證。</li>
+              <li><strong>下一階段：</strong>工廠登記／新廠、建照與使用執照、特許業許可。</li>
+              <li><strong>待專門介接：</strong>動產擔保目前是公開查詢網站而非穩定批次 API，需另外做查詢器與節流機制。</li>
+              <li><strong>不會亂接：</strong>一般搬遷、改名、不明變更維持低權重。</li>
             </ul>
           </article>
         </div>
