@@ -1,33 +1,33 @@
-# 13｜Labor / Job Market Intelligence
+# 13｜勞動與職缺市場情報
 
 ## 商業價值
 - 評分：63/100
-- ARR 潛力：NT$500萬～3,000萬
-- 客戶：HR SaaS、獵才、人力顧問、選址顧問、企業策略部門。
+- 估計台灣單一產品年營收：500萬～3,000萬元
+- 客戶：人資系統、人力顧問、獵才公司、選址顧問、企業策略部門。
 
-## 資料來源
+## 需要的資料
 
-### 台灣就業通網站職缺清單
-- https://data.gov.tw/dataset/44062
+### 台灣就業通職缺
+- 官方頁：https://data.gov.tw/dataset/44062
 - API 範例：https://free.taiwanjobs.gov.tw/webservice_taipei/Webservice.ashx?jobno=050313&zipno=104&count=10
 - API 說明：https://free.taiwanjobs.gov.tw/webservice_taipei/A17000000J-030144-Taiwanjobs-OpenData.pdf
-- 勞動部 OAS：https://apiservice.mol.gov.tw/OdService/openapi/OAS.html
-- 限制：官方備註每次查詢最多 1000 筆。
+- 勞動部 API 文件：https://apiservice.mol.gov.tw/OdService/openapi/OAS.html
+- 注意：官方說明單次查詢最多 1,000 筆。
 
 ### 勞動違規
-- https://data.gov.tw/dataset/109896
-- 用途：雇主風險訊號。
+- 官方頁：https://data.gov.tw/dataset/109896
+- 用途：加入雇主風險。
 
 ### 公司登記
-- https://data.gov.tw/dataset/22197
-- 用途：把職缺公司 enrich 成產業、資本額、地址、公司年齡。
+- 官方頁：https://data.gov.tw/dataset/22197
+- 用途：補充徵才公司的產業、資本額、地址、成立年限。
 
-## 產品
-- Job Demand Index。
-- 地區／職類人才缺口。
-- 公司 Hiring Signal。
-- 薪資與職缺趨勢（若資料欄位可用）。
+## 可以做成什麼
+- 各產業職缺需求指數。
+- 各地區人才缺口。
+- 公司大量徵才訊號。
+- 職類與薪資趨勢。
 - 招募競爭熱度。
 
 ## 商業模式
-HR market intelligence SaaS、報告、API、企業年度訂閱。
+人力市場情報訂閱、企業報告、API、年度企業版。
