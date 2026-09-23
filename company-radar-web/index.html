@@ -20,22 +20,16 @@
       </div>
 
       <nav class="nav">
-        <button class="nav-item active" data-view="opportunities">
-          <span>◎</span> 今日商機
-        </button>
-        <button class="nav-item" data-view="saved">
-          <span>☆</span> 追蹤清單
-        </button>
-        <button class="nav-item" data-view="about">
-          <span>i</span> 資料說明
-        </button>
+        <button class="nav-item active" data-view="opportunities"><span>◎</span> 今日商機</button>
+        <button class="nav-item" data-view="saved"><span>☆</span> 追蹤清單</button>
+        <button class="nav-item" data-view="about"><span>i</span> 資料說明</button>
       </nav>
 
       <div class="sidebar-note">
         <span class="demo-dot"></span>
         <div>
-          <strong>Prototype</strong>
-          <p>目前為可操作 Demo，資料為示範資料；下一階段可接政府每日 Open Data。</p>
+          <strong id="sourceMode">讀取資料中</strong>
+          <p id="sourceStatus">正在載入政府 Open Data 產生的商機資料。</p>
         </div>
       </div>
     </aside>
@@ -45,11 +39,12 @@
         <div>
           <p class="eyebrow">TAIWAN COMPANY INTELLIGENCE</p>
           <h1>今天，哪些公司最值得你聯絡？</h1>
-          <p class="subtitle">把「新設立、增資、搬遷、董監異動」轉成業務可以直接行動的名單。</p>
+          <p class="subtitle">把公司新設、資本額、地址與產業異動，轉成業務可以直接行動的名單。</p>
+          <p class="subtitle" id="lastUpdated">資料更新：讀取中</p>
         </div>
         <div class="top-actions">
           <button id="exportBtn" class="btn btn-secondary">匯出目前名單</button>
-          <button class="btn btn-primary" id="refreshBtn">重新整理商機</button>
+          <button class="btn btn-primary" id="refreshBtn">讀取最新資料</button>
         </div>
       </header>
 
@@ -73,14 +68,14 @@
           <article class="stat-card">
             <span>增資事件</span>
             <strong id="statCapital">0</strong>
-            <small>今日事件</small>
+            <small>快照差分</small>
           </article>
         </div>
 
         <section class="filters-card">
           <div class="filter-search">
             <label for="searchInput">搜尋</label>
-            <input id="searchInput" type="search" placeholder="公司名稱、統編、產業…" />
+            <input id="searchInput" type="search" placeholder="公司名稱、統編、產業、地址…" />
           </div>
           <div>
             <label for="eventFilter">異動類型</label>
@@ -89,21 +84,19 @@
               <option value="新設立">新設立</option>
               <option value="增資">增資</option>
               <option value="搬遷">搬遷</option>
-              <option value="董監異動">董監異動</option>
-              <option value="營業項目新增">營業項目新增</option>
+              <option value="產業異動">產業異動</option>
+              <option value="名稱變更">名稱變更</option>
+              <option value="減資">減資</option>
+              <option value="其他公司登記異動">其他公司登記異動</option>
             </select>
           </div>
           <div>
             <label for="cityFilter">地區</label>
-            <select id="cityFilter">
-              <option value="all">全部地區</option>
-            </select>
+            <select id="cityFilter"><option value="all">全部地區</option></select>
           </div>
           <div>
             <label for="industryFilter">產業</label>
-            <select id="industryFilter">
-              <option value="all">全部產業</option>
-            </select>
+            <select id="industryFilter"><option value="all">全部產業</option></select>
           </div>
           <div>
             <label for="capitalFilter">最低資本額</label>
@@ -121,7 +114,7 @@
           <div class="list-head">
             <div>
               <h2>今日推薦名單</h2>
-              <p><span id="resultCount">0</span> 家符合條件，依商機分數排序</p>
+              <p><span id="resultCount">0</span> 家目前符合篩選條件，依商機分數排序</p>
             </div>
             <select id="sortSelect" aria-label="排序">
               <option value="score">商機分數最高</option>
@@ -131,8 +124,8 @@
           </div>
           <div id="companyList" class="company-list"></div>
           <div id="emptyState" class="empty hidden">
-            <strong>沒有符合條件的公司</strong>
-            <span>調整篩選條件再看看。</span>
+            <strong>目前沒有符合條件的公司</strong>
+            <span>可能尚未完成首次同步，或可調整篩選條件。</span>
           </div>
         </section>
       </section>
@@ -142,7 +135,7 @@
           <div>
             <p class="eyebrow">WATCHLIST</p>
             <h2>追蹤清單</h2>
-            <p>把值得後續聯絡的公司先存起來。</p>
+            <p>把值得後續聯絡的公司先存起來；追蹤狀態保存在這台瀏覽器。</p>
           </div>
         </div>
         <div id="savedList" class="company-list standalone"></div>
@@ -155,28 +148,35 @@
       <section id="aboutView" class="view">
         <div class="about-grid">
           <article class="about-card">
-            <p class="eyebrow">PRODUCT IDEA</p>
-            <h2>這不是公司查詢站</h2>
-            <p>產品目標是把政府每天更新的企業資料，轉成「現在值得聯絡誰」的業務觸發訊號，而不是只讓使用者查統編。</p>
+            <p class="eyebrow">LIVE DATA PIPELINE</p>
+            <h2>現在不是假資料 Demo</h2>
+            <p>網站讀取 GitHub Actions 每日產生的 JSON。資料管線會下載全國營業中稅籍資料，並查詢經濟部當日公司設立與公司異動 API。</p>
           </article>
           <article class="about-card">
-            <h3>預計接入資料</h3>
+            <h3>已接入資料</h3>
             <ul>
-              <li>全國營業（稅籍）登記資料</li>
-              <li>公司登記基本資料</li>
-              <li>公司董監事資料</li>
-              <li>公司資料設立查詢</li>
-              <li>公司資料異動查詢</li>
+              <li>財政部：全國營業（稅籍）登記資料集</li>
+              <li>經濟部：公司資料設立查詢 API</li>
+              <li>經濟部：公司資料異動查詢 API</li>
+              <li>每日 SQLite baseline 與前後快照差分</li>
             </ul>
           </article>
           <article class="about-card">
-            <h3>正式版會多什麼？</h3>
+            <h3>事件怎麼判定？</h3>
             <ul>
-              <li>每日自動同步與歷史 Snapshot</li>
-              <li>依使用者產業自訂 Lead Score</li>
-              <li>Email / LINE 商機通知</li>
-              <li>CRM 匯出與 API</li>
-              <li>公司關係圖與異動歷史</li>
+              <li>新設立：以經濟部當日設立 API 為準</li>
+              <li>增資／減資：今日與前次快照公開資本額不同</li>
+              <li>搬遷：公開營業地址與前次快照不同</li>
+              <li>產業異動：稅籍行業代號／名稱與前次快照不同</li>
+              <li>其他公司登記異動：官方確認有異動，但目前差分欄位不足以細分</li>
+            </ul>
+          </article>
+          <article class="about-card">
+            <h3>重要限制</h3>
+            <ul>
+              <li>第一次執行只建立 baseline；真正的前後差分從下一次成功同步開始。</li>
+              <li>商機分數是透明規則式分數，不代表成交機率。</li>
+              <li>資料來自政府公開資料，仍應在正式商務接觸前再次查核。</li>
             </ul>
           </article>
         </div>
