@@ -1,30 +1,30 @@
-# 10｜Energy / EV Intelligence
+# 10｜能源與電動車市場情報
 
 ## 商業價值
 - 評分：76/100
-- ARR 潛力：NT$1,000萬～6,000萬
-- 客戶：能源公司、儲能、售電、ESG、EV 充電營運商、企業用電管理。
+- 估計台灣單一產品年營收：1,000萬～6,000萬元
+- 客戶：能源公司、儲能、售電、永續部門、電動車充電營運商、企業用電管理。
 
-## 資料來源
+## 需要的資料
 
-### 台電各機組發電量即時資訊（含外購電力）
-- https://data.gov.tw/dataset/8931
-- 欄位：機組類型、機組名稱、裝置容量(MW)、淨發電量(MW)、淨發電量/裝置容量比(%)、備註。
-- 更新：每 10 分鐘。
+### 台電各機組即時發電量
+- 官方頁：https://data.gov.tw/dataset/8931
+- 需要欄位：機組類型、機組名稱、裝置容量、即時發電量、發電量占裝置容量比例、備註。
+- 更新頻率：約每 10 分鐘。
 
 ### 充電站基本資料
-- https://data.gov.tw/dataset/170220
-- TDX：https://tdx.transportdata.tw/
-- API 說明：https://tdx.transportdata.tw/api-service/swagger/basic/b378d320-04a9-4fba-80b8-0df1b96dd5e8#/CityEVCharging/ParkingEV_API_Station
-- 主要資訊：充電站代碼、名稱、地址、經緯度、充電樁數量、費率說明。
-- 更新：每 4 小時。
+- 官方頁：https://data.gov.tw/dataset/170220
+- 交通資料服務：https://tdx.transportdata.tw/
+- API 文件：https://tdx.transportdata.tw/api-service/swagger/basic/b378d320-04a9-4fba-80b8-0df1b96dd5e8#/CityEVCharging/ParkingEV_API_Station
+- 需要資料：充電站代碼、名稱、地址、經緯度、充電樁數量、費率。
+- 更新頻率：約每 4 小時。
 
-## 產品
-- 台灣電力 mix 即時與歷史 API。
-- 再生能源發電 anomaly。
-- EV 充電站 coverage / white-space map。
-- 充電站選址分數：人口×停車×道路×競品×所得。
-- 企業能源／ESG Dashboard。
+## 可以做成什麼
+- 台灣各能源發電結構歷史資料。
+- 再生能源發電異常通知。
+- 電動車充電站缺口地圖。
+- 充電站選址評分。
+- 企業能源與永續儀表板。
 
 ## 商業模式
-API、企業儀表板、選址報告、資料 feed。
+企業 API、資料儀表板、充電站選址報告、定期資料服務。
