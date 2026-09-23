@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-09-23T18:14:00+08:00",
+  "generatedAt": "2026-09-23T18:28:48+08:00",
   "date": "2026-09-23",
   "baselineReady": true,
   "rowCount": 1713508,
   "stats": {
-    "detected": 484,
-    "actionable": 81,
+    "detected": 498,
+    "actionable": 83,
     "highPriority": 1,
-    "newCompanies": 81,
+    "newCompanies": 83,
     "capitalIncrease": 0,
     "addressChange": 0,
     "industryChange": 0,
@@ -15,11 +15,11 @@
     "newBranches": 1,
     "giantProcurement": 0,
     "newFactory": 0,
-    "laggingOnly": 403
+    "laggingOnly": 415
   },
   "eventCounts": {
-    "其他公司登記異動": 403,
-    "新設立": 81,
+    "其他公司登記異動": 415,
+    "新設立": 83,
     "新設分公司": 1
   },
   "sources": [
@@ -388,6 +388,55 @@
       "reasons": [
         "經濟部公司資料設立 API 顯示今日核准設立",
         "目前公開資本額 900 萬"
+      ],
+      "action": "優先找高資本額且產業需求明確的新公司，從開辦必需品與第一批供應商關係切入。"
+    },
+    {
+      "id": "61983767",
+      "name": "玉存有限公司",
+      "taxId": "61983767",
+      "city": "新北市",
+      "district": "三重區",
+      "industry": "未分類",
+      "industries": [],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 8100000,
+      "event": "新設立",
+      "eventTypes": [
+        "新設立"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 72,
+      "tier": "B",
+      "signalClass": "開辦期",
+      "signalStage": "前段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 0–6 個月值得追蹤",
+      "commercialMeaning": "法人剛成立，供應商與營運配置通常尚未完全固定；開辦、招募、系統、保險與採購仍有切入空間。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {},
+      "setup": "1150923",
+      "owner": "黃玉娟",
+      "address": "新北市三重區光復路1段82之5號6樓",
+      "orgType": "",
+      "invoice": "",
+      "reasons": [
+        "經濟部公司資料設立 API 顯示今日核准設立",
+        "目前公開資本額 810 萬"
       ],
       "action": "優先找高資本額且產業需求明確的新公司，從開辦必需品與第一批供應商關係切入。"
     },
@@ -976,6 +1025,55 @@
       "reasons": [
         "經濟部公司資料設立 API 顯示今日核准設立",
         "目前公開資本額 200 萬"
+      ],
+      "action": "優先找高資本額且產業需求明確的新公司，從開辦必需品與第一批供應商關係切入。"
+    },
+    {
+      "id": "61928771",
+      "name": "媚力蔻有限公司",
+      "taxId": "61928771",
+      "city": "臺北市",
+      "district": "大安區",
+      "industry": "未分類",
+      "industries": [],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1700000,
+      "event": "新設立",
+      "eventTypes": [
+        "新設立"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 69,
+      "tier": "B",
+      "signalClass": "開辦期",
+      "signalStage": "前段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 0–6 個月值得追蹤",
+      "commercialMeaning": "法人剛成立，供應商與營運配置通常尚未完全固定；開辦、招募、系統、保險與採購仍有切入空間。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {},
+      "setup": "1150923",
+      "owner": "程舒唯",
+      "address": "臺北市大安區忠孝東路4段169號12樓之4",
+      "orgType": "",
+      "invoice": "",
+      "reasons": [
+        "經濟部公司資料設立 API 顯示今日核准設立",
+        "目前公開資本額 170 萬"
       ],
       "action": "優先找高資本額且產業需求明確的新公司，從開辦必需品與第一批供應商關係切入。"
     },
@@ -5894,7 +5992,15 @@
         "基本金屬批發"
       ],
       "registeredBusinessItems": [],
-      "branches": [],
+      "branches": [
+        {
+          "taxId": "50926271",
+          "name": "大發分公司",
+          "location": "高雄市大寮區興業路29號",
+          "setupDate": "1070803",
+          "status": "核准設立"
+        }
+      ],
       "hiringSignal": {
         "postings": 0,
         "people": 0,
@@ -6568,6 +6674,66 @@
         "經濟部公司資料異動 API 顯示今日有核准變更",
         "目前公開資本額 7,353 萬",
         "主要稅籍行業：電子器材、電子設備批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "84291468",
+      "name": "宏遠證券投資顧問股份有限公司",
+      "taxId": "84291468",
+      "city": "臺北市",
+      "district": "大安區",
+      "industry": "證券投資顧問",
+      "industries": [
+        "證券投資顧問"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [
+        {
+          "taxId": "60341941",
+          "name": "高雄分公司",
+          "location": "高雄市苓雅區四維四路7號3樓",
+          "setupDate": "1150225",
+          "status": "核准設立"
+        }
+      ],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 70000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "0820820",
+      "owner": "",
+      "address": "臺北市大安區通安里信義路４段２３６號４樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 7,000 萬",
+        "主要稅籍行業：證券投資顧問"
       ],
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
@@ -7660,6 +7826,58 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "00066596",
+      "name": "翊安投資股份有限公司",
+      "taxId": "00066596",
+      "city": "臺北市",
+      "district": "中山區",
+      "industry": "投資有價證券",
+      "industries": [
+        "投資有價證券"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 45000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1131121",
+      "owner": "",
+      "address": "臺北市中山區民安里中山北路２段２號１樓",
+      "orgType": "股份有限公司",
+      "invoice": "N",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 4,500 萬",
+        "主要稅籍行業：投資有價證券"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "82802653",
       "name": "台灣邁那比股份有限公司",
       "taxId": "82802653",
@@ -8608,6 +8826,58 @@
         "經濟部公司資料異動 API 顯示今日有核准變更",
         "目前公開資本額 2,900 萬",
         "主要稅籍行業：原動機批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "52567646",
+      "name": "至秦投資有限公司",
+      "taxId": "52567646",
+      "city": "臺北市",
+      "district": "信義區",
+      "industry": "投資有價證券",
+      "industries": [
+        "投資有價證券"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 29000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1060216",
+      "owner": "",
+      "address": "臺北市信義區六藝里永吉路１６８號８樓",
+      "orgType": "有限公司",
+      "invoice": "N",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 2,900 萬",
+        "主要稅籍行業：投資有價證券"
       ],
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
@@ -10760,7 +11030,43 @@
         "推拿按摩服務"
       ],
       "registeredBusinessItems": [],
-      "branches": [],
+      "branches": [
+        {
+          "taxId": "63686818",
+          "name": "彰化中正分公司",
+          "location": "彰化縣彰化市中正路二段216號1樓",
+          "setupDate": "1070102",
+          "status": "核准設立"
+        },
+        {
+          "taxId": "63690405",
+          "name": "台中忠明分公司",
+          "location": "臺中市西區忠明南路181之1號1樓",
+          "setupDate": "1070102",
+          "status": "核准設立"
+        },
+        {
+          "taxId": "63704702",
+          "name": "彰化員林分公司",
+          "location": "彰化縣員林市林森路409號1樓",
+          "setupDate": "1070102",
+          "status": "核准設立"
+        },
+        {
+          "taxId": "63759121",
+          "name": "台中中科分公司",
+          "location": "臺中市西屯區福科路362巷26號1樓",
+          "setupDate": "1070104",
+          "status": "廢止"
+        },
+        {
+          "taxId": "63827752",
+          "name": "新竹巨城分公司",
+          "location": "新竹市民權路60號1樓",
+          "setupDate": "1070111",
+          "status": "核准設立"
+        }
+      ],
       "hiringSignal": {
         "postings": 0,
         "people": 0,
@@ -12350,6 +12656,60 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "22190905",
+      "name": "漢崧實業有限公司",
+      "taxId": "22190905",
+      "city": "臺北市",
+      "district": "中山區",
+      "industry": "通用電池批發",
+      "industries": [
+        "通用電池批發",
+        "食用油脂批發",
+        "進口菸酒批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 9000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "0750911",
+      "owner": "",
+      "address": "臺北市中山區江山里民生東路３段７３巷８號１樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 900 萬",
+        "主要稅籍行業：通用電池批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "28882291",
       "name": "山大王開發股份有限公司",
       "taxId": "28882291",
@@ -13636,6 +13996,61 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "12858008",
+      "name": "概亞形象整合有限公司",
+      "taxId": "12858008",
+      "city": "臺北市",
+      "district": "大安區",
+      "industry": "其他化粧品批發",
+      "industries": [
+        "其他化粧品批發",
+        "行銷管理顧問",
+        "農、林、漁、礦、食品、紡織等技術指導",
+        "樂器批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 5000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "0900501",
+      "owner": "",
+      "address": "臺北市大安區建倫里忠孝東路４段２１６巷３６－１號２樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 500 萬",
+        "主要稅籍行業：其他化粧品批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "12902882",
       "name": "日蝕科技股份有限公司",
       "taxId": "12902882",
@@ -14868,6 +15283,58 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "53548605",
+      "name": "瓏山林興業股份有限公司",
+      "taxId": "53548605",
+      "city": "臺北市",
+      "district": "松山區",
+      "industry": "不動產投資開發",
+      "industries": [
+        "不動產投資開發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 5000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "工程設備",
+        "車輛/機具",
+        "融資與保險",
+        "工安",
+        "供應商與人力"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1001026",
+      "owner": "",
+      "address": "臺北市松山區民有里民生東路３段１０９丶１０９之１號１８樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 500 萬",
+        "主要稅籍行業：不動產投資開發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "59158168",
       "name": "長誼金屬有限公司",
       "taxId": "59158168",
@@ -15398,6 +15865,59 @@
         "經濟部公司資料異動 API 顯示今日有核准變更",
         "目前公開資本額 500 萬",
         "主要稅籍行業：其他投資顧問"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "89518324",
+      "name": "光齊企業股份有限公司",
+      "taxId": "89518324",
+      "city": "新北市",
+      "district": "樹林區",
+      "industry": "其他未分類電子零組件製造",
+      "industries": [
+        "其他未分類電子零組件製造",
+        "家電材料批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 5000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "0840526",
+      "owner": "",
+      "address": "新北市樹林區千歲街９２巷７弄４號１樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 500 萬",
+        "主要稅籍行業：其他未分類電子零組件製造"
       ],
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
@@ -16986,6 +17506,58 @@
         "經濟部公司資料異動 API 顯示今日有核准變更",
         "目前公開資本額 300 萬",
         "主要稅籍行業：其他水產品批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "93955281",
+      "name": "煥鑫國際汽車有限公司",
+      "taxId": "93955281",
+      "city": "新北市",
+      "district": "土城區",
+      "industry": "中古汽車零售",
+      "industries": [
+        "中古汽車零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 3000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "展店/通路",
+        "POS與支付",
+        "物流/倉儲",
+        "行銷",
+        "招募與員工保障"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1120712",
+      "owner": "",
+      "address": "新北市土城區長風里中華路２段８９巷２弄６號１６樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 300 萬",
+        "主要稅籍行業：中古汽車零售"
       ],
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
@@ -18589,6 +19161,61 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "93575711",
+      "name": "民恩健康儀器有限公司",
+      "taxId": "93575711",
+      "city": "臺北市",
+      "district": "大同區",
+      "industry": "產業用光學儀器批發",
+      "industries": [
+        "產業用光學儀器批發",
+        "其他家用電器批發",
+        "其他商品批發經紀",
+        "醫療耗材零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 2000000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1130329",
+      "owner": "",
+      "address": "臺北市大同區國順里迪化街２段１７２巷１６號１樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 200 萬",
+        "主要稅籍行業：產業用光學儀器批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "94142328",
       "name": "鑫凱祥實業股份有限公司",
       "taxId": "94142328",
@@ -19220,6 +19847,58 @@
         "經濟部公司資料異動 API 顯示今日有核准變更",
         "目前公開資本額 120 萬",
         "主要稅籍行業：室內裝修工程"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "91077750",
+      "name": "火山鯨遊戲有限公司",
+      "taxId": "91077750",
+      "city": "臺北市",
+      "district": "大安區",
+      "industry": "電子遊樂器、電子遊樂器套裝軟體零售",
+      "industries": [
+        "電子遊樂器、電子遊樂器套裝軟體零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1200000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1100811",
+      "owner": "",
+      "address": "臺北市大安區全安里和平東路３段８７號６樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 120 萬",
+        "主要稅籍行業：電子遊樂器、電子遊樂器套裝軟體零售"
       ],
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
@@ -22420,6 +23099,59 @@
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
     {
+      "id": "60354620",
+      "name": "一陽健康科技管理顧問有限公司",
+      "taxId": "60354620",
+      "city": "新北市",
+      "district": "汐止區",
+      "industry": "綜合商品批發",
+      "industries": [
+        "綜合商品批發",
+        "其他投資顧問"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 500000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1150107",
+      "owner": "",
+      "address": "新北市汐止區北山里康寧街８３巷４８號十二樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 50 萬",
+        "主要稅籍行業：綜合商品批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
       "id": "60450807",
       "name": "曜光工程有限公司",
       "taxId": "60450807",
@@ -22626,6 +23358,58 @@
         "經濟部公司資料異動 API 顯示今日有核准變更",
         "目前公開資本額 50 萬",
         "主要稅籍行業：印刷電路板製造"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "60617807",
+      "name": "朵夢實業有限公司",
+      "taxId": "60617807",
+      "city": "臺北市",
+      "district": "信義區",
+      "industry": "真皮皮包、手提包零售",
+      "industries": [
+        "真皮皮包、手提包零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 500000,
+      "event": "其他公司登記異動",
+      "eventTypes": [
+        "其他公司登記異動"
+      ],
+      "eventDate": "2026-09-23",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "展店/通路",
+        "POS與支付",
+        "物流/倉儲",
+        "行銷",
+        "招募與員工保障"
+      ],
+      "actionable": false,
+      "changes": {},
+      "setup": "1140724",
+      "owner": "",
+      "address": "臺北市信義區忠孝東路４段５６３號１１樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "經濟部公司資料異動 API 顯示今日有核准變更",
+        "目前公開資本額 50 萬",
+        "主要稅籍行業：真皮皮包、手提包零售"
       ],
       "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
     },
