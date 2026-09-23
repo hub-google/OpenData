@@ -9,16 +9,17 @@ const esc = (v) => String(v ?? "")
   .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
   .replaceAll('"',"&quot;").replaceAll("'","&#039;");
 
-const savedKey = "company-radar-saved-v2";
+const savedKey = "company-radar-saved-v3";
 let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || "[]").map(String));
 let payload = {companies:[],stats:{}};
 let companies = [];
 let filtered = [];
 
-function eventClass(event) {
-  if (event === "增資") return "capital";
-  if (event === "搬遷") return "move";
-  if (event === "名稱變更") return "director";
+function signalClassName(c) {
+  if (c.signalClass === "資金到位") return "capital";
+  if (c.signalClass === "落後佐證") return "move";
+  if (c.signalClass === "風險訊號") return "move";
+  if (c.signalClass === "新業務訊號") return "director";
   return "";
 }
 
@@ -26,22 +27,22 @@ function rowTemplate(c) {
   const types = Array.isArray(c.eventTypes) && c.eventTypes.length ? c.eventTypes : [c.event || "資料異動"];
   return `
   <article class="company-row">
-    <div class="score ${c.score >= 85 ? "hot" : ""}">${esc(c.score)}</div>
+    <div class="score ${c.score >= 80 && c.actionable ? "hot" : ""}">${esc(c.score)}</div>
     <div class="company-main">
       <button class="company-name" data-open="${esc(c.taxId)}">${esc(c.name)}</button>
       <div class="company-meta">${esc(c.taxId)} ・ ${esc((c.city||"")+(c.district||""))} ・ ${esc(c.industry||"未分類")}</div>
     </div>
     <div class="event-cell">
-      <span>最新事件</span>
-      <span class="event-badge ${eventClass(types[0])}">${esc(types.join("＋"))}</span>
+      <span>商機訊號</span>
+      <span class="event-badge ${signalClassName(c)}">${esc(c.signalClass || "待確認")}・${esc(c.tier || "觀察")}</span>
+    </div>
+    <div class="metric">
+      <span>主要事件</span>
+      <strong>${esc(types.join("＋"))}</strong>
     </div>
     <div class="metric">
       <span>資本額</span>
       <strong>${fmtMoney(c.capital)}</strong>
-    </div>
-    <div class="metric">
-      <span>異動日期</span>
-      <strong>${esc(c.eventDate||"—")}</strong>
     </div>
     <button class="star-btn ${saved.has(String(c.taxId)) ? "saved" : ""}" data-save="${esc(c.taxId)}" aria-label="加入追蹤">${saved.has(String(c.taxId)) ? "★" : "☆"}</button>
   </article>`;
@@ -60,6 +61,7 @@ function populateOptions() {
 
 function applyFilters() {
   const q = $("#searchInput").value.trim().toLowerCase();
+  const signal = $("#signalFilter").value;
   const event = $("#eventFilter").value;
   const city = $("#cityFilter").value;
   const industry = $("#industryFilter").value;
@@ -67,9 +69,15 @@ function applyFilters() {
   const sort = $("#sortSelect").value;
 
   filtered = companies.filter(c => {
-    const hay = [c.name,c.taxId,c.industry,c.city,c.district,c.address,(c.eventTypes||[]).join(" ")].join(" ").toLowerCase();
+    const hay = [c.name,c.taxId,c.industry,c.city,c.district,c.address,c.signalClass,c.commercialMeaning,(c.eventTypes||[]).join(" ")].join(" ").toLowerCase();
     const types = Array.isArray(c.eventTypes) ? c.eventTypes : [c.event];
+    const signalOk =
+      signal === "all" ||
+      (signal === "actionable" && c.actionable) ||
+      (signal === "watch" && !c.actionable) ||
+      c.signalClass === signal;
     return (!q || hay.includes(q))
+      && signalOk
       && (event === "all" || types.includes(event))
       && (city === "all" || c.city === city)
       && (industry === "all" || c.industry === industry)
@@ -79,7 +87,7 @@ function applyFilters() {
   filtered.sort((a,b) => {
     if (sort === "capital") return Number(b.capital||0) - Number(a.capital||0);
     if (sort === "date") return String(b.eventDate||"").localeCompare(String(a.eventDate||""));
-    return Number(b.score||0) - Number(a.score||0);
+    return Number(b.score||0) - Number(a.score||0) || Number(b.capital||0)-Number(a.capital||0);
   });
   renderList();
 }
@@ -93,10 +101,13 @@ function renderList() {
 
 function renderStats() {
   const s = payload.stats || {};
-  $("#statTotal").textContent = Number(s.detected ?? companies.length).toLocaleString();
-  $("#statHot").textContent = Number(s.highPriority ?? companies.filter(c => c.score >= 80).length).toLocaleString();
+  $("#statTotal").textContent = Number(s.actionable ?? companies.filter(c=>c.actionable).length).toLocaleString();
+  $("#statHot").textContent = Number(s.highPriority ?? companies.filter(c => c.actionable && c.score >= 80).length).toLocaleString();
   $("#statNew").textContent = Number(s.newCompanies ?? companies.filter(c => (c.eventTypes||[]).includes("新設立")).length).toLocaleString();
   $("#statCapital").textContent = Number(s.capitalIncrease ?? companies.filter(c => (c.eventTypes||[]).includes("增資")).length).toLocaleString();
+  const industry = Number(s.industryChange || 0);
+  const lagging = Number(s.laggingOnly || 0);
+  $("#statsNote").textContent = `另有 ${industry.toLocaleString()} 家產業方向變化；${lagging.toLocaleString()} 家僅屬落後／不明訊號，預設不列入商機名單。`;
 }
 
 function bindRows() {
@@ -125,30 +136,46 @@ function openDrawer(id) {
   if (!c) return;
   const types = Array.isArray(c.eventTypes) && c.eventTypes.length ? c.eventTypes : [c.event || "資料異動"];
   const reasons = Array.isArray(c.reasons) ? c.reasons : [];
+  const needs = Array.isArray(c.likelyNeeds) ? c.likelyNeeds : [];
   $("#drawerContent").innerHTML = `
     <div class="drawer-head">
-      <p class="eyebrow">真實 Open Data 商機情報</p>
+      <p class="eyebrow">企業成長／擴張訊號</p>
       <h2>${esc(c.name)}</h2>
       <div class="drawer-sub">統編 ${esc(c.taxId)} ・ ${esc((c.city||"")+(c.district||""))}</div>
     </div>
     <div class="drawer-score">
-      <div><span style="display:block;color:#667085;font-size:11px">商機分數</span><small style="color:#667085">規則式：事件強度＋公開資本額</small></div>
+      <div>
+        <span style="display:block;color:#667085;font-size:11px">商機分數・${esc(c.tier||"觀察")}</span>
+        <small style="color:#667085">${esc(c.signalClass||"待確認")}｜${esc(c.signalStage||"未知")}</small>
+      </div>
       <strong>${esc(c.score)}</strong>
     </div>
-    <h3 style="font-size:14px;margin:0">為什麼現在值得看？</h3>
+
+    <h3 style="font-size:14px;margin:0">這個訊號真正代表什麼？</h3>
+    <div class="action-box" style="margin-top:10px">
+      <p>${esc(c.commercialMeaning || "目前只能確認有官方異動，尚不足以判定商機。")}</p>
+    </div>
+
+    <h3 style="font-size:14px;margin:22px 0 0">為什麼被抓到？</h3>
     <div class="reason-list">${reasons.map(x=>`<div class="reason">✓ ${esc(x)}</div>`).join("") || '<div class="reason">官方資料顯示今日有異動。</div>'}</div>
+
     <div class="detail-grid">
       <div class="detail-item"><span>事件</span><strong>${esc(types.join("＋"))}</strong></div>
-      <div class="detail-item"><span>異動日期</span><strong>${esc(c.eventDate||"—")}</strong></div>
+      <div class="detail-item"><span>建議追蹤時窗</span><strong>${esc(c.leadWindow||"—")}</strong></div>
       <div class="detail-item"><span>資本額</span><strong>${fmtMoney(c.capital)}</strong></div>
       <div class="detail-item"><span>設立日期</span><strong>${esc(c.setup||"—")}</strong></div>
       <div class="detail-item"><span>主要產業</span><strong>${esc(c.industry||"未分類")}</strong></div>
-      <div class="detail-item"><span>組織別</span><strong>${esc(c.orgType||"—")}</strong></div>
+      <div class="detail-item"><span>商機價值</span><strong>${esc(c.commercialValue||"觀察")}</strong></div>
       <div class="detail-item" style="grid-column:1/-1"><span>公開營業地址</span><strong>${esc(c.address||"—")}</strong></div>
     </div>
+
     <div class="action-box">
-      <h3>建議業務切入</h3>
-      <p>${esc(c.action||"先確認本次異動原因，再決定接觸方式。")}</p>
+      <h3>後續可能支出方向</h3>
+      <p>${esc(needs.join("、") || "需先確認異動內容")}</p>
+    </div>
+    <div class="action-box">
+      <h3>怎麼切入比較合理</h3>
+      <p>${esc(c.action||"先確認本次異動原因，再決定是否接觸。")}</p>
     </div>
   `;
   $("#drawerBackdrop").classList.remove("hidden");
@@ -171,14 +198,14 @@ function switchView(view) {
 }
 
 function exportCsv() {
-  const headers = ["公司名稱","統編","縣市","行政區","產業","資本額","事件","異動日期","商機分數","地址"];
-  const rows = filtered.map(c => [c.name,c.taxId,c.city,c.district,c.industry,c.capital,(c.eventTypes||[c.event]).join("+"),c.eventDate,c.score,c.address]);
+  const headers = ["公司名稱","統編","縣市","行政區","產業","資本額","商機訊號","事件","商機等級","商機分數","建議追蹤時窗","可能支出方向","地址"];
+  const rows = filtered.map(c => [c.name,c.taxId,c.city,c.district,c.industry,c.capital,c.signalClass,(c.eventTypes||[c.event]).join("+"),c.tier,c.score,c.leadWindow,(c.likelyNeeds||[]).join(" / "),c.address]);
   const csvEsc = v => `"${String(v??"").replaceAll('"','""')}"`;
   const csv = "\ufeff" + [headers, ...rows].map(r => r.map(csvEsc).join(",")).join("\n");
   const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = `企業商機雷達_${payload.date||"latest"}.csv`; a.click();
+  a.href = url; a.download = `企業擴張雷達_${payload.date||"latest"}.csv`; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -190,18 +217,16 @@ function toast(msg) {
 }
 
 function renderDataStatus() {
-  const generated = payload.generatedAt ? new Date(payload.generatedAt).toLocaleString("zh-TW") : "尚未完成第一次同步";
+  const generated = payload.generatedAt ? new Date(payload.generatedAt).toLocaleString("zh-TW") : "尚未完成同步";
   $("#lastUpdated").textContent = `資料更新：${generated}`;
   const mode = $("#sourceMode");
   const status = $("#sourceStatus");
   if (payload.generatedAt) {
-    mode.textContent = payload.baselineReady ? "Live Open Data" : "Baseline 建立完成";
-    status.textContent = payload.baselineReady
-      ? `已比對全國 ${Number(payload.rowCount||0).toLocaleString()} 筆營業中稅籍；事件來自每日快照差分與經濟部 API。`
-      : `已載入全國 ${Number(payload.rowCount||0).toLocaleString()} 筆營業中稅籍；下一次同步起開始產生前後差分事件。`;
+    mode.textContent = "Live Expansion Signals";
+    status.textContent = `每日比對全國 ${Number(payload.rowCount||0).toLocaleString()} 筆營業中稅籍；只有仍可能帶來後續支出的訊號才列為商機。`;
   } else {
-    mode.textContent = "等待首次同步";
-    status.textContent = "GitHub Actions 尚未完成第一輪政府 Open Data 同步。";
+    mode.textContent = "等待同步";
+    status.textContent = "GitHub Actions 尚未完成政府 Open Data 同步。";
   }
 }
 
@@ -229,7 +254,7 @@ async function loadData(showToast=false) {
   }
 }
 
-["searchInput","eventFilter","cityFilter","industryFilter","capitalFilter","sortSelect"].forEach(id => {
+["searchInput","signalFilter","eventFilter","cityFilter","industryFilter","capitalFilter","sortSelect"].forEach(id => {
   $("#"+id).addEventListener(id === "searchInput" ? "input" : "change", applyFilters);
 });
 document.querySelectorAll(".nav-item").forEach(btn => btn.addEventListener("click",()=>switchView(btn.dataset.view)));
