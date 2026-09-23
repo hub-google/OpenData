@@ -45,6 +45,7 @@ GCIS_CHANGE = "4347A009-6489-4F19-AC79-78F366BE7976"
 GCIS_BASIC = "5F64D864-61CB-4D0D-8AD9-492047CC1EA6"
 GCIS_BUSINESS = "236EE382-4942-41A9-BD03-CA0709025E7C"
 GCIS_BRANCH = "FDB8D2C8-573D-4276-BFA4-8D3925ABE1CB"
+TAIWANJOBS_JSON_URL = "https://apiservice.mol.gov.tw/OdService/download/A17000000J-030144-nkP"
 TAIWANJOBS_URL = "https://free.taiwanjobs.gov.tw/webservice_taipei/Webservice.ashx?count=1000"
 PCC_GIANT_URL = "https://web.pcc.gov.tw/peems/lapeem/lapeemGeneralPolit/downLoadOpenData"
 FACTORY_CSV_URL = "https://www.ida.gov.tw/opendata/02/SDD6569.csv"
@@ -134,10 +135,24 @@ def gcis_company_rows(endpoint: str, tax_id: str) -> list[dict]:
         "$top": "1000",
     })
     url = f"{GCIS_BASE}/{endpoint}?{query}"
-    payload = json.loads(request_bytes(url, timeout=15, retries=1).decode("utf-8-sig"))
-    if isinstance(payload, dict):
-        payload = payload.get("value") or payload.get("data") or []
-    return payload if isinstance(payload, list) else []
+    last = None
+    for attempt in range(3):
+        try:
+            raw = request_bytes(url, timeout=20, retries=1)
+            text = raw.decode("utf-8-sig", errors="replace").strip()
+            if not text or text[0] not in "[{":
+                raise ValueError(f"non-JSON response ({len(text)} chars)")
+            payload = json.loads(text)
+            if isinstance(payload, dict):
+                payload = payload.get("value") or payload.get("data") or []
+            if not isinstance(payload, list):
+                raise ValueError(f"unexpected payload {type(payload).__name__}")
+            return payload
+        except Exception as exc:
+            last = exc
+            if attempt < 2:
+                time.sleep(0.8 * (attempt + 1))
+    raise RuntimeError(f"GCIS {endpoint} failed for {tax_id}: {last}")
 
 
 def table_exists(conn: sqlite3.Connection, table: str) -> bool:
@@ -192,13 +207,23 @@ def first_key(row: dict, keys: list[str]) -> str:
 
 
 def fetch_taiwanjobs() -> dict[str, dict]:
-    """Official TaiwanJobs is capped at 1000 rows; use only as corroborating evidence."""
+    """Official TaiwanJobs feed; still evidence-only because coverage/query limits may vary."""
+    rows = []
     try:
-        raw = request_bytes(TAIWANJOBS_URL, timeout=60, retries=2)
-        rows = xml_records(raw)
-    except Exception as exc:
-        log(f"WARNING: TaiwanJobs unavailable: {exc}")
-        return {}
+        raw = request_bytes(TAIWANJOBS_JSON_URL, timeout=90, retries=2)
+        payload = json.loads(raw.decode("utf-8-sig", errors="replace"))
+        if isinstance(payload, dict):
+            payload = payload.get("data") or payload.get("value") or payload.get("records") or []
+        if isinstance(payload, list):
+            rows = payload
+    except Exception as primary_exc:
+        log(f"WARNING: MOL JSON jobs endpoint unavailable, trying legacy WebService: {primary_exc}")
+        try:
+            raw = request_bytes(TAIWANJOBS_URL, timeout=60, retries=2)
+            rows = xml_records(raw)
+        except Exception as fallback_exc:
+            log(f"WARNING: TaiwanJobs unavailable: {fallback_exc}")
+            return {}
 
     by_name: dict[str, dict] = {}
     for row in rows:
@@ -249,8 +274,20 @@ def fetch_factories() -> dict[str, list[dict]]:
     """Registered operating factories, keyed by company/business tax ID."""
     try:
         raw = request_bytes(FACTORY_CSV_URL, timeout=120, retries=2)
-        text = raw.decode("utf-8-sig", errors="replace")
-        reader = csv.DictReader(io.StringIO(text))
+        decoded = None
+        for enc in ("utf-8-sig", "cp950", "big5", "utf-8"):
+            try:
+                candidate = raw.decode(enc)
+            except UnicodeDecodeError:
+                continue
+            if "統一編號" in candidate or "工廠" in candidate[:1000]:
+                decoded = candidate
+                break
+        if decoded is None:
+            decoded = raw.decode("utf-8-sig", errors="replace")
+        reader = csv.DictReader(io.StringIO(decoded))
+        headers = reader.fieldnames or []
+        log(f"Factory registry headers={headers[:12]}")
     except Exception as exc:
         log(f"WARNING: factory registry unavailable: {exc}")
         return {}
@@ -740,38 +777,43 @@ def main() -> int:
         candidate_ids = list(events.keys())
         log(f"Enriching {len(candidate_ids)} changed/new companies with GCIS business items and branches")
 
-        def fetch_company_secondary(tax_id: str) -> tuple[str, list[dict], list[dict], str]:
+        def fetch_company_secondary(tax_id: str) -> tuple[str, list[dict] | None, list[dict] | None, str, str]:
+            items = None
+            branches = None
+            item_err = ""
+            branch_err = ""
             try:
                 items = gcis_company_rows(GCIS_BUSINESS, tax_id)
-                branches = gcis_company_rows(GCIS_BRANCH, tax_id)
-                return tax_id, items, branches, ""
             except Exception as exc:
-                return tax_id, [], [], str(exc)
+                item_err = str(exc)
+            try:
+                branches = gcis_company_rows(GCIS_BRANCH, tax_id)
+            except Exception as exc:
+                branch_err = str(exc)
+            return tax_id, items, branches, item_err, branch_err
 
-        fetched_secondary: dict[str, tuple[list[dict], list[dict], str]] = {}
-        workers = min(16, max(1, len(candidate_ids)))
+        fetched_secondary: dict[str, tuple[list[dict] | None, list[dict] | None, str, str]] = {}
+        workers = min(4, max(1, len(candidate_ids)))
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futures = [pool.submit(fetch_company_secondary, tax_id) for tax_id in candidate_ids]
             for done_idx, future in enumerate(as_completed(futures), start=1):
-                tax_id, item_rows, branch_rows, err = future.result()
-                fetched_secondary[tax_id] = (item_rows, branch_rows, err)
+                tax_id, item_rows, branch_rows, item_err, branch_err = future.result()
+                fetched_secondary[tax_id] = (item_rows, branch_rows, item_err, branch_err)
                 if done_idx % 100 == 0:
                     log(f"GCIS secondary fetched {done_idx}/{len(candidate_ids)}")
 
         for idx, tax_id in enumerate(candidate_ids, start=1):
             item = events[tax_id]
-            item_rows, branch_rows, fetch_err = fetched_secondary.get(tax_id, ([], [], "missing"))
-            if fetch_err:
-                log(f"WARNING: secondary GCIS enrichment failed for {tax_id}: {fetch_err}")
+            item_rows, branch_rows, item_err, branch_err = fetched_secondary.get(tax_id, (None, None, "missing", "missing"))
 
             current_items = []
-            for row in item_rows:
+            for row in (item_rows or []):
                 code = norm(row.get("Business_Item"))
                 desc = norm(row.get("Business_Item_Desc"))
                 if code:
                     current_items.append({"code": code, "desc": desc})
             business_items_by_tax[tax_id] = current_items
-            if not fetch_err:
+            if item_rows is not None:
                 prev_codes = {
                     r[0]: r[1]
                     for r in conn.execute(
@@ -791,7 +833,7 @@ def main() -> int:
                 )
 
             current_branches = []
-            for row in branch_rows:
+            for row in (branch_rows or []):
                 branch_id = norm(row.get("Branch_Office_Business_Accounting_NO"))
                 if not branch_id:
                     continue
@@ -803,7 +845,7 @@ def main() -> int:
                     "status": norm(row.get("Branch_Office_Status_Desc")),
                 })
             branches_by_tax[tax_id] = current_branches
-            if not fetch_err:
+            if branch_rows is not None:
                 prev_branch_ids = {
                     r[0] for r in conn.execute(
                         "SELECT branch_tax_id FROM branches WHERE tax_id=?", (tax_id,)
@@ -849,6 +891,9 @@ def main() -> int:
                 log(f"GCIS secondary applied {idx}/{len(candidate_ids)}")
 
         conn.commit()
+        item_failures = sum(1 for _, _, item_err, _ in fetched_secondary.values() if item_err)
+        branch_failures = sum(1 for _, _, _, branch_err in fetched_secondary.values() if branch_err)
+        log(f"GCIS secondary result: item_failures={item_failures}/{len(candidate_ids)}, branch_failures={branch_failures}/{len(candidate_ids)}")
 
         companies = []
         counts: dict[str, int] = {}
