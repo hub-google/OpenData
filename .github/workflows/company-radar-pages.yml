@@ -82,6 +82,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan gh-pages
           git rm -rf .
+          rm -rf .cache
           cp -R /tmp/opendata-site/. .
           git add .
           git commit -m "Publish OpenData web suite"
