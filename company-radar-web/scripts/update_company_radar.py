@@ -219,27 +219,62 @@ def load_company(conn: sqlite3.Connection, tax_id: str) -> dict | None:
     return dict(zip(keys, row))
 
 
-def score_company(event_types: list[str], capital: int) -> int:
-    weights = {
-        "新設立": 23,
-        "增資": 28,
-        "搬遷": 18,
-        "產業異動": 15,
-        "名稱變更": 5,
-        "減資": 4,
-        "其他公司登記異動": 8,
-    }
-    score = 36 + sum(weights.get(x, 4) for x in event_types)
-    if capital >= 100_000_000:
-        score += 18
-    elif capital >= 50_000_000:
-        score += 15
-    elif capital >= 10_000_000:
-        score += 11
-    elif capital >= 5_000_000:
+def score_company(event_types: list[str], capital: int, changes: dict | None = None) -> int:
+    """商機分數不是異動熱度；只獎勵仍可能帶來後續支出的訊號。"""
+    changes = changes or {}
+    types = set(event_types)
+
+    # 主訊號：後面仍有採購、擴編、營運建置機會
+    if "增資" in types:
+        score = 72
+    elif "新設立" in types:
+        score = 66
+    elif "產業異動" in types:
+        score = 58
+    else:
+        # 搬遷/改名/一般登記異動大多是落後或不明訊號，不可因公司很大就變高分
+        score = 18
+
+    if "新設立" in types and "產業異動" in types:
         score += 8
-    elif capital >= 1_000_000:
-        score += 4
+    if "增資" in types and "產業異動" in types:
+        score += 12
+    if "增資" in types and "搬遷" in types:
+        score += 5  # 搬遷只當擴張佐證，不是主商機
+    if "新設立" in types and "搬遷" in types:
+        score += 2
+
+    if {"增資", "新設立", "產業異動"} & types:
+        if capital >= 100_000_000:
+            score += 14
+        elif capital >= 50_000_000:
+            score += 11
+        elif capital >= 10_000_000:
+            score += 8
+        elif capital >= 5_000_000:
+            score += 6
+        elif capital >= 1_000_000:
+            score += 3
+
+    cap = changes.get("capital") or {}
+    delta = clean_int(cap.get("delta"))
+    before = clean_int(cap.get("before"))
+    if "增資" in types and delta:
+        if delta >= 100_000_000:
+            score += 10
+        elif delta >= 50_000_000:
+            score += 8
+        elif delta >= 10_000_000:
+            score += 5
+        if before and delta >= before:
+            score += 4
+
+    # 只有落後/弱訊號永遠不列成高價值商機
+    if not ({"增資", "新設立", "產業異動"} & types):
+        score = min(score, 35)
+    if "減資" in types and not ({"增資", "新設立", "產業異動"} & types):
+        score = min(score, 20)
+
     return max(1, min(99, score))
 
 
@@ -251,16 +286,85 @@ def money_zh(n: int) -> str:
     return f"{n:,}"
 
 
-def build_action(event_types: list[str], industry: str) -> str:
-    if "新設立" in event_types:
-        return "新公司剛成立，可優先切入開辦期需求：企業金融、保險、支付、電信、雲端、招募與辦公採購。"
-    if "增資" in event_types:
-        return "近期有增資訊號，可優先確認擴產、擴編、設備採購、融資、保險與新專案需求。"
-    if "搬遷" in event_types:
-        return "近期有地址異動，可優先確認搬遷、展店或擴編需求，例如網路、辦公設備、裝修、保險與人力。"
-    if "產業異動" in event_types:
-        return "產業欄位出現變化，可能代表新增營運方向；適合從新產品線、供應鏈與合作服務切入。"
-    return f"近期有官方公司登記異動，可先確認異動原因，再依「{industry or '主要產業'}」準備對應商務提案。"
+def industry_spend_themes(industry: str) -> list[str]:
+    text = industry or ""
+    if any(k in text for k in ["製造", "電子", "機械", "金屬", "半導體"]):
+        return ["設備/自動化", "原料與供應鏈", "廠務/能源", "物流", "產險與員工保障"]
+    if any(k in text for k in ["餐飲", "食品", "零售", "咖啡", "超商"]):
+        return ["展店/通路", "POS與支付", "物流/倉儲", "行銷", "招募與員工保障"]
+    if any(k in text for k in ["軟體", "資訊", "電腦", "資料處理", "雲端"]):
+        return ["雲端/資安", "企業軟體", "招募", "行銷", "辦公與員工保障"]
+    if any(k in text for k in ["營造", "工程", "建築", "不動產"]):
+        return ["工程設備", "車輛/機具", "融資與保險", "工安", "供應商與人力"]
+    if any(k in text for k in ["醫療", "藥", "生醫", "健康"]):
+        return ["設備/醫材", "法遵", "資訊系統", "專業人才", "責任險與員工保障"]
+    return ["企業軟體/電信", "招募", "金融與保險", "行銷", "設備與營運採購"]
+
+
+def opportunity_profile(event_types: list[str], capital: int, changes: dict, industry: str) -> dict:
+    types = set(event_types)
+    themes = industry_spend_themes(industry)
+
+    if "增資" in types:
+        signal_class = "資金到位"
+        stage = "前中段訊號"
+        value = "高"
+        lead_window = "未來 1–6 個月值得追蹤"
+        meaning = "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。"
+        action = "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    elif "新設立" in types:
+        signal_class = "開辦期"
+        stage = "前段訊號"
+        value = "高"
+        lead_window = "未來 0–6 個月值得追蹤"
+        meaning = "法人剛成立，供應商與營運配置通常尚未完全固定；開辦、招募、系統、保險與採購仍有切入空間。"
+        action = "優先找高資本額且產業需求明確的新公司，從開辦必需品與第一批供應商關係切入。"
+    elif "產業異動" in types:
+        signal_class = "新業務訊號"
+        stage = "前中段訊號"
+        value = "中高"
+        lead_window = "未來 1–12 個月值得追蹤"
+        meaning = "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。"
+        action = "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    elif "搬遷" in types:
+        signal_class = "落後佐證"
+        stage = "後段訊號"
+        value = "低"
+        lead_window = "事件多半已發生；只適合做擴張佐證"
+        meaning = "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。"
+        action = "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    elif "減資" in types:
+        signal_class = "風險訊號"
+        stage = "後段/風險"
+        value = "低"
+        lead_window = "不作一般銷售主名單"
+        meaning = "減資更適合風險、授信與供應鏈監控，不代表公司正準備增加支出。"
+        action = "從一般銷售名單降權；若產品是徵信、授信、法遵或供應鏈風險服務才提高關注。"
+    else:
+        signal_class = "待確認"
+        stage = "未知"
+        value = "觀察"
+        lead_window = "先查明異動內容"
+        meaning = "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。"
+        action = "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+
+    if "搬遷" in types and ({"增資", "新設立", "產業異動"} & types):
+        meaning += " 同時出現地址變更，可作為組織/據點調整的佐證，但不單獨視為需求。"
+
+    score = score_company(event_types, capital, changes)
+    tier = "A" if score >= 80 else "B" if score >= 65 else "C" if score >= 50 else "觀察"
+    return {
+        "score": score,
+        "tier": tier,
+        "signalClass": signal_class,
+        "signalStage": stage,
+        "commercialValue": value,
+        "leadWindow": lead_window,
+        "commercialMeaning": meaning,
+        "likelyNeeds": themes,
+        "action": action,
+        "actionable": score >= 50 and bool({"增資", "新設立", "產業異動"} & types),
+    }
 
 
 def main() -> int:
@@ -310,23 +414,30 @@ def main() -> int:
                 tax_id = r["tax_id"]
                 types = []
                 reasons = []
+                changes = {}
                 if r["capital"] > r["p_capital"]:
                     types.append("增資")
-                    reasons.append(f"資本額由 {money_zh(r['p_capital'])} 增加至 {money_zh(r['capital'])}")
+                    delta = r["capital"] - r["p_capital"]
+                    changes["capital"] = {"before": r["p_capital"], "after": r["capital"], "delta": delta}
+                    reasons.append(f"資本額由 {money_zh(r['p_capital'])} 增加至 {money_zh(r['capital'])}（+{money_zh(delta)}）")
                 elif r["capital"] < r["p_capital"]:
                     types.append("減資")
+                    changes["capital"] = {"before": r["p_capital"], "after": r["capital"], "delta": r["capital"] - r["p_capital"]}
                     reasons.append(f"資本額由 {money_zh(r['p_capital'])} 變更為 {money_zh(r['capital'])}")
                 if r["address"] != r["p_address"]:
                     types.append("搬遷")
+                    changes["address"] = {"before": r["p_address"], "after": r["address"]}
                     reasons.append(f"營業地址由「{r['p_address'] or '未提供'}」變更為「{r['address'] or '未提供'}」")
                 if r["industry_codes"] != r["p_industry_codes"] or r["industry_names"] != r["p_industry_names"]:
                     types.append("產業異動")
+                    changes["industry"] = {"before": r["p_industry_names"], "after": r["industry_names"]}
                     reasons.append("稅籍行業分類與前一日快照不同")
                 if r["name"] != r["p_name"]:
                     types.append("名稱變更")
+                    changes["name"] = {"before": r["p_name"], "after": r["name"]}
                     reasons.append(f"名稱由「{r['p_name']}」變更為「{r['name']}」")
                 if types:
-                    events[tax_id] = {"types": types, "reasons": reasons}
+                    events[tax_id] = {"types": types, "reasons": reasons, "changes": changes}
 
             conn.execute("DETACH DATABASE prev")
             log(f"Snapshot diff events={len(events)}")
@@ -335,7 +446,7 @@ def main() -> int:
 
         # GCIS is authoritative for today's approval/setup date. Merge those signals.
         for tax_id in change_map:
-            item = events.setdefault(tax_id, {"types": [], "reasons": []})
+            item = events.setdefault(tax_id, {"types": [], "reasons": [], "changes": {}})
             if not item["types"]:
                 item["types"].append("其他公司登記異動")
                 item["reasons"].append("經濟部公司資料異動 API 顯示今日有核准變更")
@@ -343,7 +454,7 @@ def main() -> int:
                 item["reasons"].append("經濟部公司資料異動 API 同步顯示今日有核准變更")
 
         for tax_id in setup_map:
-            item = events.setdefault(tax_id, {"types": [], "reasons": []})
+            item = events.setdefault(tax_id, {"types": [], "reasons": [], "changes": {}})
             if "新設立" not in item["types"]:
                 item["types"].insert(0, "新設立")
                 item["reasons"].insert(0, "經濟部公司資料設立 API 顯示今日核准設立")
@@ -373,6 +484,7 @@ def main() -> int:
             industries = [x for x in c["industryNames"].split("|") if x]
             industry = industries[0] if industries else "未分類"
             reasons = list(dict.fromkeys(event["reasons"]))
+            profile = opportunity_profile(types, c["capital"], event.get("changes", {}), industry)
             if c["capital"]:
                 reasons.append(f"目前公開資本額 {money_zh(c['capital'])}")
             if industry != "未分類":
@@ -390,14 +502,23 @@ def main() -> int:
                 "event": types[0] if types else "資料異動",
                 "eventTypes": types,
                 "eventDate": today.isoformat(),
-                "score": score_company(types, c["capital"]),
+                "score": profile["score"],
+                "tier": profile["tier"],
+                "signalClass": profile["signalClass"],
+                "signalStage": profile["signalStage"],
+                "commercialValue": profile["commercialValue"],
+                "leadWindow": profile["leadWindow"],
+                "commercialMeaning": profile["commercialMeaning"],
+                "likelyNeeds": profile["likelyNeeds"],
+                "actionable": profile["actionable"],
+                "changes": event.get("changes", {}),
                 "setup": c["setup"],
                 "owner": "",
                 "address": c["address"],
                 "orgType": c["orgType"],
                 "invoice": c["invoice"],
                 "reasons": reasons[:6],
-                "action": build_action(types, industry),
+                "action": profile["action"],
             })
 
         conn.close()
@@ -414,11 +535,13 @@ def main() -> int:
             "rowCount": row_count,
             "stats": {
                 "detected": total_detected,
-                "highPriority": sum(1 for x in companies if x["score"] >= 80),
+                "actionable": sum(1 for x in companies if x.get("actionable")),
+                "highPriority": sum(1 for x in companies if x["score"] >= 80 and x.get("actionable")),
                 "newCompanies": counts.get("新設立", 0),
                 "capitalIncrease": counts.get("增資", 0),
                 "addressChange": counts.get("搬遷", 0),
                 "industryChange": counts.get("產業異動", 0),
+                "laggingOnly": sum(1 for x in companies if not x.get("actionable")),
             },
             "eventCounts": counts,
             "sources": [
@@ -440,6 +563,8 @@ def main() -> int:
             ],
             "notes": [
                 "第一次成功執行會建立全台營業中稅籍 baseline；從下一次執行開始才可依前後快照辨識資本額、地址與產業欄位的實際變化。",
+                "商機分數改以『未來支出可能性』為核心：新設、增資、產業變化為主訊號；搬遷、改名與不明異動只作佐證或觀察。",
+                "地址變更通常屬落後訊號；系統不再把搬遷本身解讀成搬家、裝潢或網路佈建商機。",
                 "「其他公司登記異動」代表經濟部 API 確認今日有核准變更，但目前公開欄位差分不足以判定是哪一種異動。",
                 f"前端最多載入分數最高的 {MAX_FRONTEND_ROWS:,} 筆；統計數字以全部偵測事件計算。",
             ],
