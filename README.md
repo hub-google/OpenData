@@ -1,131 +1,115 @@
-# Taiwan Open Data 商業價值研究
+# 台灣政府開放資料商業機會研究
 
 > 更新日期：2026-09-23  
-> 目的：從台灣政府 Open Data 出發，找出「有真實需求、可交叉關聯、可產品化、有人願意付費」的資料機會。
+> 目標：從台灣政府公開資料中，找出真正有需求、可以產品化、有人願意付費的商業機會。
 
-## 評估方法
+## 我怎麼判斷資料有沒有商業價值
 
-本研究不以「政府認定高價值」作為唯一依據，而是交叉評估：
+不是看政府說它「重要」就算有價值，而是看：
 
-1. **需求量**：政府資料平臺瀏覽／下載量、更新頻率、民間活化案例。
-2. **付費痛點**：是否能直接幫企業增加營收、降低成本、降低風險、加快決策。
-3. **資料摩擦**：原始資料是否分散、難清洗、難 JOIN、需要持續更新。
-4. **可形成訊號**：能否從「資料」升級成「名單、預警、評分、預測、API」。
-5. **可防禦性**：雖然原始資料人人可拿，但歷史化、實體對應、地址標準化、去重、事件偵測、模型與工作流程可以形成護城河。
-6. **市場付費能力**：企業客戶單價與潛在客群數量。
+1. **有沒有很多人真的在用**：下載量、瀏覽量、更新頻率、民間應用。
+2. **能不能直接幫企業賺錢或省錢**：找客戶、找商機、降低風險、加快決策。
+3. **資料是不是很難自己整理**：來源分散、格式不同、名稱對不起來、地址需要清理。
+4. **能不能從資料變成可直接使用的結果**：例如商機名單、風險分數、預警、預測、推薦。
+5. **企業願不願意持續付費**：最好不是一次性報告，而是每天、每週都需要更新。
 
-### 估值口徑
+## 前五名商業機會
 
-以下「年商業價值／ARR 潛力」不是政府 CSV 本身的售價，而是：
-**若把該資料群組產品化為 SaaS / API / Data-as-a-Service，在台灣單一垂直市場可能支撐的年營收區間。**
-
----
-
-## 前五名
-
-| 排名 | 題目 | 商業價值分數 | 台灣單一產品 ARR 潛力 | 核心付費問題 |
+| 排名 | 題目 | 商業價值 | 我估計可支撐的台灣年營收 | 解決的問題 |
 |---|---|---:|---:|---|
-| 1 | [Taiwan Company Intelligence](top5/01-company-intelligence.md) | 95/100 | NT$5,000萬～2.5億+ | 找客戶、KYB、企業徵信、CRM enrichment、異動訊號 |
-| 2 | [Taiwan Location Intelligence](top5/02-location-intelligence.md) | 94/100 | NT$5,000萬～3億+ | 展店、商圈、房產估值、授信、區域需求 |
-| 3 | [Construction Leads](top5/03-construction-leads.md) | 91/100 | NT$3,000萬～1.5億 | 找「正在發生」的工程採購商機 |
-| 4 | [Government Procurement Intelligence](top5/04-government-procurement.md) | 89/100 | NT$2,000萬～1億 | 標案雷達、競品、機關採購週期、續約機會 |
-| 5 | [Weather & Disaster Risk Intelligence](top5/05-weather-disaster-risk.md) | 88/100 | NT$2,000萬～1.2億 | 保險、物流、工程、農業、能源風險預警 |
+| 1 | [台灣企業情報資料庫](top5/01-company-intelligence.md) | 95/100 | 5,000萬～2.5億元以上 | 找客戶、企業查核、公司異動、業務名單 |
+| 2 | [台灣選址與商圈情報](top5/02-location-intelligence.md) | 94/100 | 5,000萬～3億元以上 | 展店、商圈分析、房產估值、區域需求 |
+| 3 | [建案商機雷達](top5/03-construction-leads.md) | 91/100 | 3,000萬～1.5億元 | 提前找到正在發生的建築採購需求 |
+| 4 | [政府標案情報平台](top5/04-government-procurement.md) | 89/100 | 2,000萬～1億元 | 找標案、看競爭對手、找續約機會 |
+| 5 | [氣象與災害風險情報](top5/05-weather-disaster-risk.md) | 88/100 | 2,000萬～1.2億元 | 保險、物流、工程、農業與能源風險 |
 
----
+## 其他有潛力的方向
 
-## 其他高潛力項目
+| 題目 | 商業價值 | 我估計可支撐的台灣年營收 |
+|---|---:|---:|
+| [企業法遵／裁罰／永續風險](potential/06-compliance-esg-risk.md) | 86/100 | 1,500萬～8,000萬元 |
+| [醫療與藥品市場情報](potential/07-healthcare-pharma.md) | 84/100 | 2,000萬～1億元 |
+| [人口與消費市場情報](potential/08-demographic-intelligence.md) | 83/100 | 2,000萬～1億元 |
+| [交通與道路風險情報](potential/09-traffic-mobility.md) | 78/100 | 1,000萬～6,000萬元 |
+| [能源與電動車情報](potential/10-energy-ev.md) | 76/100 | 1,000萬～6,000萬元 |
+| [食品業者與食安情報](potential/11-food-safety.md) | 72/100 | 800萬～4,000萬元 |
+| [農產品價格情報](potential/12-agriculture-price.md) | 68/100 | 500萬～3,000萬元 |
+| [勞動與職缺市場情報](potential/13-labor-job-market.md) | 63/100 | 500萬～3,000萬元 |
+| [觀光與活動需求情報](potential/14-tourism-event-demand.md) | 50/100 | 200萬～1,500萬元 |
 
-| 題目 | 商業價值分數 | 台灣單一產品 ARR 潛力 | 檔案 |
-|---|---:|---:|---|
-| Corporate Compliance / ESG Risk | 86 | NT$1,500萬～8,000萬 | [MD](potential/06-compliance-esg-risk.md) |
-| Healthcare & Pharma Intelligence | 84 | NT$2,000萬～1億 | [MD](potential/07-healthcare-pharma.md) |
-| Consumer Demographic Intelligence | 83 | NT$2,000萬～1億 | [MD](potential/08-demographic-intelligence.md) |
-| Traffic / Mobility Risk | 78 | NT$1,000萬～6,000萬 | [MD](potential/09-traffic-mobility.md) |
-| Energy / EV Intelligence | 76 | NT$1,000萬～6,000萬 | [MD](potential/10-energy-ev.md) |
-| Food Business / Food Safety Intelligence | 72 | NT$800萬～4,000萬 | [MD](potential/11-food-safety.md) |
-| Agriculture Price Intelligence | 68 | NT$500萬～3,000萬 | [MD](potential/12-agriculture-price.md) |
-| Labor / Job Market Intelligence | 63 | NT$500萬～3,000萬 | [MD](potential/13-labor-job-market.md) |
-| Tourism / Event Demand Intelligence | 50 | NT$200萬～1,500萬 | [MD](potential/14-tourism-event-demand.md) |
+## 最重要的結論
 
----
+真正值錢的通常不是某一個資料集，而是**把不同資料接起來後，產生企業可以直接採取行動的訊號**。
 
-## 最重要的架構洞察
-
-真正有商業價值的不是單一資料集，而是能被 JOIN 的資料圖譜。
-
-### Entity Key 1：統一編號
-可串：
-- 公司／商業登記
+### 第一種核心：用「統一編號」串企業資料
+可以串：
+- 公司登記
 - 稅籍
 - 董監事
 - 公司異動
-- 政府採購得標
+- 政府採購
 - 勞動裁罰
 - 環境裁罰
 - 食品業者
-- 藥品／醫材申請商
+- 藥品與醫材
 
-可以形成 **Taiwan Company Graph**。
+最後可以形成一個「台灣企業資料圖譜」。
 
-### Entity Key 2：地址／經緯度
-可串：
-- 人口年齡
+### 第二種核心：用「地址／經緯度」串地點資料
+可以串：
+- 人口
 - 所得
-- 實價登錄
-- 建照／使照
-- 公司／店家
+- 房價
+- 建築
+- 公司與店家
 - 交通
 - 醫療
 - 氣象
-- 空氣品質
-- 災害／事故
+- 災害
 
-可以形成 **Taiwan Location Graph**。
+最後可以形成一個「台灣地點資料圖譜」。
 
-### Entity Key 3：時間／事件
-最有價值的商業訊號通常不是「現在是什麼」，而是「最近發生了什麼」：
+### 第三種核心：抓「最近發生了什麼事」
+最容易賣錢的往往不是查詢，而是事件通知，例如：
 - 新公司成立
-- 公司變更
-- 公司歇業
+- 公司增資
+- 公司搬家
 - 新建照
 - 新使照
-- 新標案／決標
+- 新標案
+- 新決標
 - 新裁罰
 - 新藥證
 - 價格異常
-- 天氣／災害事件
 
-這類 Event Feed 最容易做成企業訂閱產品。
+這些都可以直接變成「商機通知」或「風險通知」。
 
----
+## 我最推薦先做的產品
 
-## 建議產品策略
+### 商機雷達
 
-不要做「Open Data 查詢網站」；建議把原始資料升級成：
-- 搜尋與篩選
-- 歷史版本
-- Entity Resolution
-- 地址標準化與地理編碼
-- 異動偵測
-- 風險分數
-- 商機分數
-- 預警
-- API
-- CRM / Slack / Email / LINE webhook
-- 企業內部名單 enrichment
+不要先做一個「查資料的平台」，而是每天直接告訴客戶：
 
-## 主要官方入口
+> 今天有哪些公司、建案、標案，最可能需要你的產品？
+
+例如：
+- 新成立、資本額 1,000 萬以上的餐飲公司。
+- 最近取得建照、戶數 100 戶以上的新建案。
+- 即將進入設備採購階段的工程。
+- 過去固定每兩年採購一次某設備的政府機關。
+
+這種產品比單純資料查詢更容易收費，因為客戶可以直接衡量它有沒有帶來業績。
+
+## 主要官方資料入口
 
 - 台灣政府資料開放平臺：https://data.gov.tw/
 - 政府資料開放授權條款：https://data.gov.tw/license
 - 經濟部商工資料 API：https://data.gcis.nat.gov.tw/resources/swagger/index.html
-- 內政部戶政 Open Data API：https://www.ris.gov.tw/rs-opendata/api/Main/docs/v1
-- 交通部 TDX：https://tdx.transportdata.tw/
-- 中央氣象署 Open Data：https://opendata.cwa.gov.tw/
-- 食藥署 Open Data：https://data.fda.gov.tw/
+- 內政部戶政資料 API：https://www.ris.gov.tw/rs-opendata/api/Main/docs/v1
+- 交通部交通資料服務：https://tdx.transportdata.tw/
+- 中央氣象署開放資料：https://opendata.cwa.gov.tw/
+- 食藥署開放資料：https://data.fda.gov.tw/
 
-## 研究限制
+## 估值說明
 
-- 商業價值分數與 ARR 為市場機會估算，不是會計／投資估值。
-- 部分資料頁會替換最新年度的直接下載檔，因此 MD 優先保留「官方資料集固定網址」，另在穩定時提供 API / 下載 endpoint。
-- 真正產品化前，仍需逐一確認授權條款、資料品質、個資／公平交易／金融與醫療等特定產業規範。
+本專案中的「年營收估值」不是政府資料本身值多少錢，而是我估計：如果把這些資料整理成真正能賣的服務，在台灣市場可能支撐的單一產品年營收規模。實際結果仍會受到客戶數、價格、競爭、資料品質與銷售能力影響。
