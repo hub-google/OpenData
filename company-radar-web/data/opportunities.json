@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T16:01:38+08:00",
+  "generatedAt": "2026-09-23T16:03:52+08:00",
   "date": "2026-09-23",
-  "baselineReady": false,
+  "baselineReady": true,
   "rowCount": 1713508,
   "stats": {
     "detected": 284,
