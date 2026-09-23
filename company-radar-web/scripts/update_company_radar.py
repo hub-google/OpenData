@@ -46,6 +46,7 @@ GCIS_BUSINESS = "236EE382-4942-41A9-BD03-CA0709025E7C"
 GCIS_BRANCH = "FDB8D2C8-573D-4276-BFA4-8D3925ABE1CB"
 TAIWANJOBS_URL = "https://free.taiwanjobs.gov.tw/webservice_taipei/Webservice.ashx?count=1000"
 PCC_GIANT_URL = "https://web.pcc.gov.tw/peems/lapeem/lapeemGeneralPolit/downLoadOpenData"
+FACTORY_CSV_URL = "https://www.ida.gov.tw/opendata/02/SDD6569.csv"
 
 MAX_FRONTEND_ROWS = int(os.environ.get("RADAR_MAX_ROWS", "5000"))
 HISTORY_DAYS = int(os.environ.get("RADAR_HISTORY_DAYS", "60"))
@@ -242,6 +243,38 @@ def fetch_giant_procurements() -> dict[str, list[dict]]:
     return by_tax
 
 
+
+def fetch_factories() -> dict[str, list[dict]]:
+    """Registered operating factories, keyed by company/business tax ID."""
+    try:
+        raw = request_bytes(FACTORY_CSV_URL, timeout=120, retries=2)
+        text = raw.decode("utf-8-sig", errors="replace")
+        reader = csv.DictReader(io.StringIO(text))
+    except Exception as exc:
+        log(f"WARNING: factory registry unavailable: {exc}")
+        return {}
+
+    by_tax: dict[str, list[dict]] = {}
+    for row in reader:
+        tax_id = row_value(row, "統一編號", "公司（營利事業）統一編號", "公司(營利事業)統一編號")
+        tax_id = re.sub(r"\D", "", tax_id)
+        if len(tax_id) != 8:
+            continue
+        item = {
+            "factoryName": row_value(row, "工廠名稱"),
+            "factoryId": row_value(row, "工廠登記編號"),
+            "address": row_value(row, "工廠地址"),
+            "setupApprovalDate": row_value(row, "工廠設立核准日期"),
+            "registrationDate": row_value(row, "工廠登記核准日期"),
+            "industries": row_value(row, "產業類別"),
+            "products": row_value(row, "主要產品"),
+            "status": row_value(row, "工廠登記狀態"),
+        }
+        by_tax.setdefault(tax_id, []).append(item)
+    log(f"Factory registry companies={len(by_tax)}")
+    return by_tax
+
+
 def clean_int(value) -> int:
     text = str(value or "").replace(",", "").strip()
     try:
@@ -390,6 +423,8 @@ def score_company(event_types: list[str], capital: int, changes: dict | None = N
     # 主訊號：後面仍有採購、擴編、營運建置機會
     if "巨額標案履約中" in types:
         score = 80
+    elif "新工廠登記" in types:
+        score = 78
     elif "新設分公司" in types:
         score = 76
     elif "增資" in types:
@@ -404,6 +439,10 @@ def score_company(event_types: list[str], capital: int, changes: dict | None = N
         # 搬遷/改名/一般登記異動大多是落後或不明訊號，不可因公司很大就變高分
         score = 18
 
+    if "新工廠登記" in types and "增資" in types:
+        score += 10
+    if "新工廠登記" in types and "營業項目新增" in types:
+        score += 8
     if "巨額標案履約中" in types and "增資" in types:
         score += 10
     if "新設分公司" in types and "增資" in types:
@@ -421,7 +460,7 @@ def score_company(event_types: list[str], capital: int, changes: dict | None = N
     if "新設立" in types and "搬遷" in types:
         score += 2
 
-    if {"巨額標案履約中", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types:
+    if {"巨額標案履約中", "新工廠登記", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types:
         if capital >= 100_000_000:
             score += 14
         elif capital >= 50_000_000:
@@ -447,9 +486,9 @@ def score_company(event_types: list[str], capital: int, changes: dict | None = N
             score += 4
 
     # 只有落後/弱訊號永遠不列成高價值商機
-    if not ({"巨額標案履約中", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types):
+    if not ({"巨額標案履約中", "新工廠登記", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types):
         score = min(score, 35)
-    if "減資" in types and not ({"巨額標案履約中", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types):
+    if "減資" in types and not ({"巨額標案履約中", "新工廠登記", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types):
         score = min(score, 20)
 
     return max(1, min(99, score))
@@ -489,6 +528,13 @@ def opportunity_profile(event_types: list[str], capital: int, changes: dict, ind
         lead_window = "履約期間持續追蹤"
         meaning = "公司近期取得政府巨額採購且仍在履約期，通常代表專案已進入執行與資源投入階段；對分包、設備、人力、保險、融資與供應鏈服務具有直接價值。"
         action = "先看標案內容、履約期間與決標金額，再找執行專案會新增的設備、人力、分包、保險或週轉需求。"
+    elif "新工廠登記" in types:
+        signal_class = "產能落地"
+        stage = "前中段訊號"
+        value = "很高"
+        lead_window = "登記後 0–12 個月持續追蹤"
+        meaning = "公司有新工廠登記或工廠資料新出現，通常代表製造據點與產能正在落地；設備、自動化、能源、物流、工安、保險與人力需求比一般地址異動更直接。"
+        action = "先看主要產品與工廠地址，再鎖定設備、自動化、能源、原料、物流、工安、產險與招募需求。"
     elif "新設分公司" in types:
         signal_class = "據點擴張"
         stage = "前中段訊號"
@@ -561,7 +607,7 @@ def opportunity_profile(event_types: list[str], capital: int, changes: dict, ind
         "commercialMeaning": meaning,
         "likelyNeeds": themes,
         "action": action,
-        "actionable": score >= 50 and bool({"巨額標案履約中", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types),
+        "actionable": score >= 50 and bool({"巨額標案履約中", "新工廠登記", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types),
     }
 
 
@@ -686,6 +732,7 @@ def main() -> int:
         # Secondary official signals.
         jobs_by_name = fetch_taiwanjobs()
         giant_procurements = fetch_giant_procurements()
+        factories_by_tax = fetch_factories()
 
         business_items_by_tax: dict[str, list[dict]] = {}
         branches_by_tax: dict[str, list[dict]] = {}
@@ -765,6 +812,15 @@ def main() -> int:
                 log(f"WARNING: branch enrichment failed for {tax_id}: {exc}")
 
             # Large government project signal: official recent giant procurement / in-performance list.
+            # Factory expansion: source updates less frequently, so use registration date when possible.
+            factories = factories_by_tax.get(tax_id) or []
+            today_factories = [x for x in factories if x.get("registrationDate") == roc]
+            if today_factories:
+                item["types"].append("新工廠登記")
+                item["changes"]["newFactories"] = today_factories[:5]
+                labels = "、".join((x.get("factoryName") or x.get("factoryId") or "新工廠") for x in today_factories[:4])
+                item["reasons"].append(f"經濟部登記工廠名錄顯示新工廠登記：{labels}")
+
             awards = giant_procurements.get(tax_id) or []
             if awards:
                 item["types"].append("巨額標案履約中")
@@ -857,6 +913,7 @@ def main() -> int:
                 "registeredBusinessItems": registered_items[:20],
                 "branches": branches_by_tax.get(tax_id, [])[:20],
                 "hiringSignal": hiring,
+                "factories": factories_by_tax.get(tax_id, [])[:20],
                 "capital": c["capital"],
                 "event": types[0] if types else "資料異動",
                 "eventTypes": types,
@@ -903,6 +960,7 @@ def main() -> int:
                 "businessItemAdded": counts.get("營業項目新增", 0),
                 "newBranches": counts.get("新設分公司", 0),
                 "giantProcurement": counts.get("巨額標案履約中", 0),
+                "newFactory": counts.get("新工廠登記", 0),
                 "laggingOnly": sum(1 for x in companies if not x.get("actionable")),
             },
             "eventCounts": counts,
@@ -942,6 +1000,11 @@ def main() -> int:
                     "url": "https://data.gov.tw/dataset/7264",
                     "refresh": "每上班日",
                 },
+                {
+                    "name": "經濟部產業發展署－登記工廠名錄",
+                    "url": "https://data.gov.tw/dataset/6569",
+                    "refresh": "每季/不定期",
+                },
             ],
             "notes": [
                 "第一次成功執行會建立全台營業中稅籍 baseline；從下一次執行開始才可依前後快照辨識資本額、地址與產業欄位的實際變化。",
@@ -951,6 +1014,7 @@ def main() -> int:
                 "新設分公司可利用官方 BR_ESTAB_DATE 直接抓當日新據點；這類訊號比公司地址變更更接近展店/擴點商機。",
                 "台灣就業通單次最多 1000 筆，因此徵才命中只作加分佐證，不以沒命中推論公司沒有在招人。",
                 "公共工程委員會巨額採購履約資料是強專案訊號；命中時可直接提高商機優先級。",
+                "登記工廠名錄包含統編、工廠核准日期、產業類別與主要產品；因更新頻率較低，只在官方登記日期明確吻合時標成新工廠，避免把資料集延遲誤判成今天新設。",
                 "「其他公司登記異動」代表經濟部 API 確認今日有核准變更，但目前公開欄位差分不足以判定是哪一種異動。",
                 f"前端最多載入分數最高的 {MAX_FRONTEND_ROWS:,} 筆；統計數字以全部偵測事件計算。",
             ],
