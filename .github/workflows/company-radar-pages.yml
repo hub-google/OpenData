@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: "opendata-pages-publish"
+  group: "opendata-pages-publish-v2"
   cancel-in-progress: true
 
 jobs:
