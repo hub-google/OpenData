@@ -16,7 +16,7 @@ let companies = [];
 let filtered = [];
 
 function signalClassName(c) {
-  if (["資金到位","大型專案啟動"].includes(c.signalClass)) return "capital";
+  if (["資金到位","大型專案啟動","產能落地"].includes(c.signalClass)) return "capital";
   if (["落後佐證","風險訊號"].includes(c.signalClass)) return "move";
   if (["新業務訊號","新事業啟動","據點擴張"].includes(c.signalClass)) return "director";
   return "";
@@ -108,8 +108,9 @@ function renderStats() {
   const businessAdd = Number(s.businessItemAdded || 0);
   const branches = Number(s.newBranches || 0);
   const awards = Number(s.giantProcurement || 0);
+  const factories = Number(s.newFactory || 0);
   const lagging = Number(s.laggingOnly || 0);
-  $("#statsNote").textContent = `新事業項目 ${businessAdd.toLocaleString()} 家・新設分公司 ${branches.toLocaleString()} 家・巨額標案 ${awards.toLocaleString()} 家・產業變化 ${industry.toLocaleString()} 家；另有 ${lagging.toLocaleString()} 家僅屬落後／不明訊號。`;
+  $("#statsNote").textContent = `新事業項目 ${businessAdd.toLocaleString()} 家・新設分公司 ${branches.toLocaleString()} 家・新工廠 ${factories.toLocaleString()} 家・巨額標案 ${awards.toLocaleString()} 家・產業變化 ${industry.toLocaleString()} 家；另有 ${lagging.toLocaleString()} 家僅屬落後／不明訊號。`;
 }
 
 function bindRows() {
@@ -179,6 +180,8 @@ function openDrawer(id) {
       <div class="action-box"><h3>新增營業項目</h3><p>${c.changes.businessItemsAdded.map(x=>esc(x.desc||x.code)).join("、")}</p></div>` : ""}
     ${Array.isArray(c.changes?.newBranches) && c.changes.newBranches.length ? `
       <div class="action-box"><h3>新設分公司</h3><p>${c.changes.newBranches.map(x=>`${esc(x.name||x.taxId)}｜${esc(x.location||"")}`).join("<br>")}</p></div>` : ""}
+    ${Array.isArray(c.changes?.newFactories) && c.changes.newFactories.length ? `
+      <div class="action-box"><h3>新工廠登記</h3><p>${c.changes.newFactories.map(x=>`${esc(x.factoryName||x.factoryId||"新工廠")}｜${esc(x.address||"")}${x.products ? "｜"+esc(x.products) : ""}`).join("<br>")}</p></div>` : ""}
     ${Array.isArray(c.changes?.giantProcurements) && c.changes.giantProcurements.length ? `
       <div class="action-box"><h3>政府巨額採購</h3><p>${c.changes.giantProcurements.map(x=>`${esc(x.caseName||"政府標案")}${x.awardAmount ? "｜"+fmtMoney(x.awardAmount) : ""}`).join("<br>")}</p></div>` : ""}
     ${c.hiringSignal?.postings ? `
