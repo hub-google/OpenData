@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>企業商機雷達｜OpenData</title>
+  <meta name="description" content="用台灣政府 Open Data 找出每天最值得聯絡的企業商機。" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div>
+          <strong>企業商機雷達</strong>
+          <span>Company Radar</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="opportunities">
+          <span>◎</span> 今日商機
+        </button>
+        <button class="nav-item" data-view="saved">
+          <span>☆</span> 追蹤清單
+        </button>
+        <button class="nav-item" data-view="about">
+          <span>i</span> 資料說明
+        </button>
+      </nav>
+
+      <div class="sidebar-note">
+        <span class="demo-dot"></span>
+        <div>
+          <strong>Prototype</strong>
+          <p>目前為可操作 Demo，資料為示範資料；下一階段可接政府每日 Open Data。</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">TAIWAN COMPANY INTELLIGENCE</p>
+          <h1>今天，哪些公司最值得你聯絡？</h1>
+          <p class="subtitle">把「新設立、增資、搬遷、董監異動」轉成業務可以直接行動的名單。</p>
+        </div>
+        <div class="top-actions">
+          <button id="exportBtn" class="btn btn-secondary">匯出目前名單</button>
+          <button class="btn btn-primary" id="refreshBtn">重新整理商機</button>
+        </div>
+      </header>
+
+      <section id="opportunitiesView" class="view active">
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>今日偵測異動</span>
+            <strong id="statTotal">0</strong>
+            <small>家公司</small>
+          </article>
+          <article class="stat-card">
+            <span>高優先商機</span>
+            <strong id="statHot">0</strong>
+            <small>分數 ≥ 80</small>
+          </article>
+          <article class="stat-card">
+            <span>新設公司</span>
+            <strong id="statNew">0</strong>
+            <small>今日事件</small>
+          </article>
+          <article class="stat-card">
+            <span>增資事件</span>
+            <strong id="statCapital">0</strong>
+            <small>今日事件</small>
+          </article>
+        </div>
+
+        <section class="filters-card">
+          <div class="filter-search">
+            <label for="searchInput">搜尋</label>
+            <input id="searchInput" type="search" placeholder="公司名稱、統編、產業…" />
+          </div>
+          <div>
+            <label for="eventFilter">異動類型</label>
+            <select id="eventFilter">
+              <option value="all">全部</option>
+              <option value="新設立">新設立</option>
+              <option value="增資">增資</option>
+              <option value="搬遷">搬遷</option>
+              <option value="董監異動">董監異動</option>
+              <option value="營業項目新增">營業項目新增</option>
+            </select>
+          </div>
+          <div>
+            <label for="cityFilter">地區</label>
+            <select id="cityFilter">
+              <option value="all">全部地區</option>
+            </select>
+          </div>
+          <div>
+            <label for="industryFilter">產業</label>
+            <select id="industryFilter">
+              <option value="all">全部產業</option>
+            </select>
+          </div>
+          <div>
+            <label for="capitalFilter">最低資本額</label>
+            <select id="capitalFilter">
+              <option value="0">不限</option>
+              <option value="5000000">500 萬+</option>
+              <option value="10000000">1,000 萬+</option>
+              <option value="50000000">5,000 萬+</option>
+              <option value="100000000">1 億+</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="list-card">
+          <div class="list-head">
+            <div>
+              <h2>今日推薦名單</h2>
+              <p><span id="resultCount">0</span> 家符合條件，依商機分數排序</p>
+            </div>
+            <select id="sortSelect" aria-label="排序">
+              <option value="score">商機分數最高</option>
+              <option value="capital">資本額最高</option>
+              <option value="date">異動最新</option>
+            </select>
+          </div>
+          <div id="companyList" class="company-list"></div>
+          <div id="emptyState" class="empty hidden">
+            <strong>沒有符合條件的公司</strong>
+            <span>調整篩選條件再看看。</span>
+          </div>
+        </section>
+      </section>
+
+      <section id="savedView" class="view">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">WATCHLIST</p>
+            <h2>追蹤清單</h2>
+            <p>把值得後續聯絡的公司先存起來。</p>
+          </div>
+        </div>
+        <div id="savedList" class="company-list standalone"></div>
+        <div id="savedEmpty" class="empty">
+          <strong>目前還沒有追蹤公司</strong>
+          <span>回到今日商機，按星號加入追蹤。</span>
+        </div>
+      </section>
+
+      <section id="aboutView" class="view">
+        <div class="about-grid">
+          <article class="about-card">
+            <p class="eyebrow">PRODUCT IDEA</p>
+            <h2>這不是公司查詢站</h2>
+            <p>產品目標是把政府每天更新的企業資料，轉成「現在值得聯絡誰」的業務觸發訊號，而不是只讓使用者查統編。</p>
+          </article>
+          <article class="about-card">
+            <h3>預計接入資料</h3>
+            <ul>
+              <li>全國營業（稅籍）登記資料</li>
+              <li>公司登記基本資料</li>
+              <li>公司董監事資料</li>
+              <li>公司資料設立查詢</li>
+              <li>公司資料異動查詢</li>
+            </ul>
+          </article>
+          <article class="about-card">
+            <h3>正式版會多什麼？</h3>
+            <ul>
+              <li>每日自動同步與歷史 Snapshot</li>
+              <li>依使用者產業自訂 Lead Score</li>
+              <li>Email / LINE 商機通知</li>
+              <li>CRM 匯出與 API</li>
+              <li>公司關係圖與異動歷史</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+  <aside id="detailDrawer" class="drawer" aria-hidden="true">
+    <button id="drawerClose" class="drawer-close" aria-label="關閉">×</button>
+    <div id="drawerContent"></div>
+  </aside>
+
+  <script src="./app.js"></script>
+</body>
+</html>
