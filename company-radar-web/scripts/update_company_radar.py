@@ -140,7 +140,9 @@ def gcis_company_rows(endpoint: str, tax_id: str) -> list[dict]:
         try:
             raw = request_bytes(url, timeout=20, retries=1)
             text = raw.decode("utf-8-sig", errors="replace").strip()
-            if not text or text[0] not in "[{":
+            if not text:
+                return []
+            if text[0] not in "[{":
                 raise ValueError(f"non-JSON response ({len(text)} chars)")
             payload = json.loads(text)
             if isinstance(payload, dict):
@@ -274,20 +276,41 @@ def fetch_factories() -> dict[str, list[dict]]:
     """Registered operating factories, keyed by company/business tax ID."""
     try:
         raw = request_bytes(FACTORY_CSV_URL, timeout=120, retries=2)
-        decoded = None
-        for enc in ("utf-8-sig", "cp950", "big5", "utf-8"):
-            try:
-                candidate = raw.decode(enc)
-            except UnicodeDecodeError:
-                continue
-            if "統一編號" in candidate or "工廠" in candidate[:1000]:
-                decoded = candidate
-                break
-        if decoded is None:
-            decoded = raw.decode("utf-8-sig", errors="replace")
+
+        def decode_factory_csv(blob: bytes) -> str:
+            for enc in ("utf-8-sig", "cp950", "big5", "utf-8"):
+                try:
+                    candidate = blob.decode(enc)
+                except UnicodeDecodeError:
+                    continue
+                if "統一編號" in candidate or "工廠" in candidate[:1500] or "下載連結" in candidate[:1500]:
+                    return candidate
+            return blob.decode("utf-8-sig", errors="replace")
+
+        decoded = decode_factory_csv(raw)
         reader = csv.DictReader(io.StringIO(decoded))
         headers = reader.fieldnames or []
-        log(f"Factory registry headers={headers[:12]}")
+
+        # IDA endpoint is an index CSV (year/name/format/download URL), not always the actual factory rows.
+        if "下載連結" in headers and "統一編號" not in headers:
+            index_rows = list(reader)
+            candidates = [
+                row for row in index_rows
+                if "csv" in norm(row.get("檔案格式")).lower() and norm(row.get("下載連結"))
+            ]
+            if not candidates:
+                candidates = [row for row in index_rows if norm(row.get("下載連結"))]
+            if not candidates:
+                raise RuntimeError("factory resource index contained no downloadable resource")
+            candidates.sort(key=lambda row: (norm(row.get("年份")), clean_int(row.get("序號"))), reverse=True)
+            resource_url = urllib.parse.urljoin(FACTORY_CSV_URL, norm(candidates[0].get("下載連結")))
+            log(f"Factory registry index resolved latest resource: {resource_url}")
+            raw = request_bytes(resource_url, timeout=120, retries=2)
+            decoded = decode_factory_csv(raw)
+            reader = csv.DictReader(io.StringIO(decoded))
+            headers = reader.fieldnames or []
+
+        log(f"Factory registry data headers={headers[:12]}")
     except Exception as exc:
         log(f"WARNING: factory registry unavailable: {exc}")
         return {}
