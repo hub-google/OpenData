@@ -134,7 +134,7 @@ def gcis_company_rows(endpoint: str, tax_id: str) -> list[dict]:
         "$top": "1000",
     })
     url = f"{GCIS_BASE}/{endpoint}?{query}"
-    payload = json.loads(request_bytes(url, timeout=40, retries=2).decode("utf-8-sig"))
+    payload = json.loads(request_bytes(url, timeout=15, retries=1).decode("utf-8-sig"))
     if isinstance(payload, dict):
         payload = payload.get("value") or payload.get("data") or []
     return payload if isinstance(payload, list) else []
@@ -749,7 +749,7 @@ def main() -> int:
                 return tax_id, [], [], str(exc)
 
         fetched_secondary: dict[str, tuple[list[dict], list[dict], str]] = {}
-        workers = min(8, max(1, len(candidate_ids)))
+        workers = min(16, max(1, len(candidate_ids)))
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futures = [pool.submit(fetch_company_secondary, tax_id) for tax_id in candidate_ids]
             for done_idx, future in enumerate(as_completed(futures), start=1):
