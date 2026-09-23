@@ -26,6 +26,7 @@ import time
 import urllib.parse
 import urllib.request
 import zipfile
+import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -41,6 +42,10 @@ GCIS_BASE = "https://data.gcis.nat.gov.tw/od/data/api"
 GCIS_SETUP = "467E8A3A-72C6-4663-9557-D9D74C597E14"
 GCIS_CHANGE = "4347A009-6489-4F19-AC79-78F366BE7976"
 GCIS_BASIC = "5F64D864-61CB-4D0D-8AD9-492047CC1EA6"
+GCIS_BUSINESS = "236EE382-4942-41A9-BD03-CA0709025E7C"
+GCIS_BRANCH = "FDB8D2C8-573D-4276-BFA4-8D3925ABE1CB"
+TAIWANJOBS_URL = "https://free.taiwanjobs.gov.tw/webservice_taipei/Webservice.ashx?count=1000"
+PCC_GIANT_URL = "https://web.pcc.gov.tw/peems/lapeem/lapeemGeneralPolit/downLoadOpenData"
 
 MAX_FRONTEND_ROWS = int(os.environ.get("RADAR_MAX_ROWS", "5000"))
 HISTORY_DAYS = int(os.environ.get("RADAR_HISTORY_DAYS", "60"))
@@ -118,6 +123,125 @@ def gcis_basic_company(tax_id: str) -> dict | None:
         return payload[0]
     return None
 
+
+def gcis_company_rows(endpoint: str, tax_id: str) -> list[dict]:
+    query = urllib.parse.urlencode({
+        "$format": "json",
+        "$filter": f"Business_Accounting_NO eq {tax_id}",
+        "$skip": "0",
+        "$top": "1000",
+    })
+    url = f"{GCIS_BASE}/{endpoint}?{query}"
+    payload = json.loads(request_bytes(url, timeout=40, retries=2).decode("utf-8-sig"))
+    if isinstance(payload, dict):
+        payload = payload.get("value") or payload.get("data") or []
+    return payload if isinstance(payload, list) else []
+
+
+def table_exists(conn: sqlite3.Connection, table: str) -> bool:
+    row = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone()
+    return bool(row)
+
+
+def copy_tracking_tables(current: sqlite3.Connection, previous_path: Path) -> None:
+    if not previous_path.exists():
+        return
+    current.execute("ATTACH DATABASE ? AS prevtrack", (str(previous_path),))
+    try:
+        for table in ("business_items", "branches"):
+            exists = current.execute(
+                "SELECT 1 FROM prevtrack.sqlite_master WHERE type='table' AND name=?", (table,)
+            ).fetchone()
+            if exists:
+                current.execute(f"INSERT OR REPLACE INTO {table} SELECT * FROM prevtrack.{table}")
+        current.commit()
+    finally:
+        current.execute("DETACH DATABASE prevtrack")
+
+
+def xml_records(raw: bytes) -> list[dict]:
+    """Best-effort XML flattener for official feeds with varying record tag names."""
+    root = ET.fromstring(raw)
+    records = []
+    for elem in root.iter():
+        children = list(elem)
+        if len(children) < 3:
+            continue
+        row = {}
+        useful = 0
+        for child in children:
+            key = child.tag.split("}")[-1].strip()
+            value = norm(child.text)
+            if key and value:
+                row[key] = value
+                useful += 1
+        if useful >= 3:
+            records.append(row)
+    return records
+
+
+def first_key(row: dict, keys: list[str]) -> str:
+    for wanted in keys:
+        for key, value in row.items():
+            if key.lower() == wanted.lower() or wanted in key:
+                if value not in (None, ""):
+                    return norm(value)
+    return ""
+
+
+def fetch_taiwanjobs() -> dict[str, dict]:
+    """Official TaiwanJobs is capped at 1000 rows; use only as corroborating evidence."""
+    try:
+        raw = request_bytes(TAIWANJOBS_URL, timeout=60, retries=2)
+        rows = xml_records(raw)
+    except Exception as exc:
+        log(f"WARNING: TaiwanJobs unavailable: {exc}")
+        return {}
+
+    by_name: dict[str, dict] = {}
+    for row in rows:
+        name = first_key(row, ["COMPNAME", "公司名稱"])
+        if not name:
+            continue
+        people = clean_int(first_key(row, ["JOB_PERSON", "WORKER", "雇用人數"]))
+        occu = first_key(row, ["OCCU_DESC", "職務名稱"])
+        item = by_name.setdefault(name, {"postings": 0, "people": 0, "roles": []})
+        item["postings"] += 1
+        item["people"] += people
+        if occu and occu not in item["roles"] and len(item["roles"]) < 5:
+            item["roles"].append(occu)
+    log(f"TaiwanJobs matched-name universe={len(by_name)} from capped official feed")
+    return by_name
+
+
+def fetch_giant_procurements() -> dict[str, list[dict]]:
+    """Recent giant government procurements in performance period; keyed by vendor tax ID."""
+    try:
+        raw = request_bytes(PCC_GIANT_URL, timeout=90, retries=2)
+        rows = xml_records(raw)
+    except Exception as exc:
+        log(f"WARNING: PCC giant procurement feed unavailable: {exc}")
+        return {}
+
+    by_tax: dict[str, list[dict]] = {}
+    for row in rows:
+        tax_id = first_key(row, ["簽約廠商代碼", "廠商代碼", "Corporation_Number", "vendorId"])
+        digits = re.sub(r"\D", "", tax_id)
+        if len(digits) != 8:
+            continue
+        record = {
+            "caseName": first_key(row, ["標案名稱", "Case_Name", "tenderName"]),
+            "agency": first_key(row, ["機關名稱", "agencyName"]),
+            "awardAmount": clean_int(first_key(row, ["決標金額", "awardAmount"])),
+            "announceDate": first_key(row, ["決標公告日期", "announceDate"]),
+            "startDate": first_key(row, ["履約起日", "決標公告履約起日", "startDate"]),
+            "endDate": first_key(row, ["履約迄日", "決標公告履約迄日", "endDate"]),
+        }
+        by_tax.setdefault(digits, []).append(record)
+    log(f"PCC giant procurement vendors={len(by_tax)}")
+    return by_tax
+
+
 def clean_int(value) -> int:
     text = str(value or "").replace(",", "").strip()
     try:
@@ -164,6 +288,27 @@ def init_db(path: Path) -> sqlite3.Connection:
             invoice TEXT NOT NULL,
             industry_codes TEXT NOT NULL,
             industry_names TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS business_items (
+            tax_id TEXT NOT NULL,
+            item_code TEXT NOT NULL,
+            item_desc TEXT NOT NULL,
+            observed_at TEXT NOT NULL,
+            PRIMARY KEY (tax_id, item_code)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS branches (
+            tax_id TEXT NOT NULL,
+            branch_tax_id TEXT NOT NULL,
+            branch_name TEXT NOT NULL,
+            location TEXT NOT NULL,
+            setup_date TEXT NOT NULL,
+            status TEXT NOT NULL,
+            observed_at TEXT NOT NULL,
+            PRIMARY KEY (tax_id, branch_tax_id)
         )
     """)
     return conn
@@ -243,8 +388,14 @@ def score_company(event_types: list[str], capital: int, changes: dict | None = N
     types = set(event_types)
 
     # 主訊號：後面仍有採購、擴編、營運建置機會
-    if "增資" in types:
+    if "巨額標案履約中" in types:
+        score = 80
+    elif "新設分公司" in types:
+        score = 76
+    elif "增資" in types:
         score = 72
+    elif "營業項目新增" in types:
+        score = 70
     elif "新設立" in types:
         score = 66
     elif "產業異動" in types:
@@ -253,6 +404,14 @@ def score_company(event_types: list[str], capital: int, changes: dict | None = N
         # 搬遷/改名/一般登記異動大多是落後或不明訊號，不可因公司很大就變高分
         score = 18
 
+    if "巨額標案履約中" in types and "增資" in types:
+        score += 10
+    if "新設分公司" in types and "增資" in types:
+        score += 9
+    if "營業項目新增" in types and "增資" in types:
+        score += 10
+    if "營業項目新增" in types and "新設分公司" in types:
+        score += 8
     if "新設立" in types and "產業異動" in types:
         score += 8
     if "增資" in types and "產業異動" in types:
@@ -262,7 +421,7 @@ def score_company(event_types: list[str], capital: int, changes: dict | None = N
     if "新設立" in types and "搬遷" in types:
         score += 2
 
-    if {"增資", "新設立", "產業異動"} & types:
+    if {"巨額標案履約中", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types:
         if capital >= 100_000_000:
             score += 14
         elif capital >= 50_000_000:
@@ -288,9 +447,9 @@ def score_company(event_types: list[str], capital: int, changes: dict | None = N
             score += 4
 
     # 只有落後/弱訊號永遠不列成高價值商機
-    if not ({"增資", "新設立", "產業異動"} & types):
+    if not ({"巨額標案履約中", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types):
         score = min(score, 35)
-    if "減資" in types and not ({"增資", "新設立", "產業異動"} & types):
+    if "減資" in types and not ({"巨額標案履約中", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types):
         score = min(score, 20)
 
     return max(1, min(99, score))
@@ -323,13 +482,34 @@ def opportunity_profile(event_types: list[str], capital: int, changes: dict, ind
     types = set(event_types)
     themes = industry_spend_themes(industry)
 
-    if "增資" in types:
+    if "巨額標案履約中" in types:
+        signal_class = "大型專案啟動"
+        stage = "前中段訊號"
+        value = "很高"
+        lead_window = "履約期間持續追蹤"
+        meaning = "公司近期取得政府巨額採購且仍在履約期，通常代表專案已進入執行與資源投入階段；對分包、設備、人力、保險、融資與供應鏈服務具有直接價值。"
+        action = "先看標案內容、履約期間與決標金額，再找執行專案會新增的設備、人力、分包、保險或週轉需求。"
+    elif "新設分公司" in types:
+        signal_class = "據點擴張"
+        stage = "前中段訊號"
+        value = "高"
+        lead_window = "設立後 0–6 個月值得追蹤"
+        meaning = "公司新增分公司，代表新據點已進入法人/營運落地階段；比單純地址變更更接近真正的展店、擴點與在地營運需求。"
+        action = "從新據點營運需求切入，例如招募、支付/POS、設備、物流、保險、在地行銷與企業服務。"
+    elif "增資" in types:
         signal_class = "資金到位"
         stage = "前中段訊號"
         value = "高"
         lead_window = "未來 1–6 個月值得追蹤"
         meaning = "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。"
         action = "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    elif "營業項目新增" in types:
+        signal_class = "新事業啟動"
+        stage = "前段訊號"
+        value = "高"
+        lead_window = "未來 1–12 個月值得追蹤"
+        meaning = "公司新增登記營業項目，通常比實際營收發生更早，是目前資料裡最接近『準備做新事業』的訊號之一；但仍需確認是否真的投入經營。"
+        action = "直接看新增的營業項目是什麼，再反推該新事業啟動必須採購的系統、人才、設備、通路、法遵或保險。"
     elif "新設立" in types:
         signal_class = "開辦期"
         stage = "前段訊號"
@@ -381,7 +561,7 @@ def opportunity_profile(event_types: list[str], capital: int, changes: dict, ind
         "commercialMeaning": meaning,
         "likelyNeeds": themes,
         "action": action,
-        "actionable": score >= 50 and bool({"增資", "新設立", "產業異動"} & types),
+        "actionable": score >= 50 and bool({"巨額標案履約中", "新設分公司", "增資", "營業項目新增", "新設立", "產業異動"} & types),
     }
 
 
@@ -500,6 +680,110 @@ def main() -> int:
                 item["reasons"].insert(0, "經濟部公司資料設立 API 顯示今日核准設立")
             item["types"] = [x for x in item["types"] if x != "其他公司登記異動"]
 
+        # Carry prior per-company tracking state into today's SQLite baseline.
+        copy_tracking_tables(conn, STATE_DB)
+
+        # Secondary official signals.
+        jobs_by_name = fetch_taiwanjobs()
+        giant_procurements = fetch_giant_procurements()
+
+        business_items_by_tax: dict[str, list[dict]] = {}
+        branches_by_tax: dict[str, list[dict]] = {}
+        candidate_ids = list(events.keys())
+        log(f"Enriching {len(candidate_ids)} changed/new companies with GCIS business items and branches")
+
+        for idx, tax_id in enumerate(candidate_ids, start=1):
+            item = events[tax_id]
+
+            # Company registered business items: detect additions only when a prior snapshot exists.
+            try:
+                rows = gcis_company_rows(GCIS_BUSINESS, tax_id)
+                current_items = []
+                for row in rows:
+                    code = norm(row.get("Business_Item"))
+                    desc = norm(row.get("Business_Item_Desc"))
+                    if code:
+                        current_items.append({"code": code, "desc": desc})
+                business_items_by_tax[tax_id] = current_items
+                prev_codes = {
+                    r[0]: r[1]
+                    for r in conn.execute(
+                        "SELECT item_code,item_desc FROM business_items WHERE tax_id=?", (tax_id,)
+                    ).fetchall()
+                }
+                new_codes = [x for x in current_items if x["code"] not in prev_codes]
+                # Existing companies only: on first observation we establish a baseline, not claim everything was newly added.
+                if prev_codes and new_codes and tax_id not in setup_map:
+                    item["types"].append("營業項目新增")
+                    item["changes"]["businessItemsAdded"] = new_codes
+                    labels = "、".join((x["desc"] or x["code"]) for x in new_codes[:5])
+                    item["reasons"].append(f"公司登記營業項目新增：{labels}")
+                conn.execute("DELETE FROM business_items WHERE tax_id=?", (tax_id,))
+                conn.executemany(
+                    "INSERT OR REPLACE INTO business_items(tax_id,item_code,item_desc,observed_at) VALUES(?,?,?,?)",
+                    [(tax_id, x["code"], x["desc"], today.isoformat()) for x in current_items],
+                )
+            except Exception as exc:
+                log(f"WARNING: business-item enrichment failed for {tax_id}: {exc}")
+
+            # Branches: establishment date lets us detect today's new branch even without prior snapshot.
+            try:
+                rows = gcis_company_rows(GCIS_BRANCH, tax_id)
+                current_branches = []
+                for row in rows:
+                    branch_id = norm(row.get("Branch_Office_Business_Accounting_NO"))
+                    if not branch_id:
+                        continue
+                    current_branches.append({
+                        "taxId": branch_id,
+                        "name": norm(row.get("Branch_Office_Name")),
+                        "location": norm(row.get("Branch_Office_Location")),
+                        "setupDate": norm(row.get("BR_ESTAB_DATE")),
+                        "status": norm(row.get("Branch_Office_Status_Desc")),
+                    })
+                branches_by_tax[tax_id] = current_branches
+                prev_branch_ids = {
+                    r[0] for r in conn.execute(
+                        "SELECT branch_tax_id FROM branches WHERE tax_id=?", (tax_id,)
+                    ).fetchall()
+                }
+                new_branches = [
+                    x for x in current_branches
+                    if x["setupDate"] == roc or (prev_branch_ids and x["taxId"] not in prev_branch_ids)
+                ]
+                if new_branches:
+                    item["types"].append("新設分公司")
+                    item["changes"]["newBranches"] = new_branches
+                    labels = "、".join((x["name"] or x["taxId"]) for x in new_branches[:4])
+                    item["reasons"].append(f"新設分公司/據點：{labels}")
+                conn.execute("DELETE FROM branches WHERE tax_id=?", (tax_id,))
+                conn.executemany(
+                    "INSERT OR REPLACE INTO branches(tax_id,branch_tax_id,branch_name,location,setup_date,status,observed_at) VALUES(?,?,?,?,?,?,?)",
+                    [(tax_id, x["taxId"], x["name"], x["location"], x["setupDate"], x["status"], today.isoformat()) for x in current_branches],
+                )
+            except Exception as exc:
+                log(f"WARNING: branch enrichment failed for {tax_id}: {exc}")
+
+            # Large government project signal: official recent giant procurement / in-performance list.
+            awards = giant_procurements.get(tax_id) or []
+            if awards:
+                item["types"].append("巨額標案履約中")
+                item["changes"]["giantProcurements"] = awards[:5]
+                top_award = max(awards, key=lambda x: x.get("awardAmount", 0))
+                amount = top_award.get("awardAmount", 0)
+                case = top_award.get("caseName") or "政府巨額採購"
+                item["reasons"].append(
+                    f"公共工程委員會資料顯示近期巨額採購履約中：{case}"
+                    + (f"（決標金額 {money_zh(amount)}）" if amount else "")
+                )
+
+            if idx % 100 == 0:
+                conn.commit()
+                log(f"GCIS secondary enrichment {idx}/{len(candidate_ids)}")
+            time.sleep(0.015)
+
+        conn.commit()
+
         companies = []
         counts: dict[str, int] = {}
         for tax_id, event in events.items():
@@ -532,9 +816,31 @@ def main() -> int:
                 counts[t] = counts.get(t, 0) + 1
             city, district = extract_area(c["address"])
             industries = [x for x in c["industryNames"].split("|") if x]
-            industry = industries[0] if industries else "未分類"
+            registered_items = business_items_by_tax.get(tax_id, [])
+            if industries:
+                industry = industries[0]
+            elif registered_items:
+                industry = (registered_items[0].get("desc") or registered_items[0].get("code") or "未分類") + "（登記項目）"
+            else:
+                industry = "未分類"
+
+            # TaiwanJobs is capped at 1000 official rows, so it is evidence only, never a sole high-priority trigger.
+            hiring = jobs_by_name.get(c["name"]) or {"postings": 0, "people": 0, "roles": []}
             reasons = list(dict.fromkeys(event["reasons"]))
+            if hiring.get("postings"):
+                roles = "、".join(hiring.get("roles", [])[:3])
+                reasons.append(
+                    f"台灣就業通目前命中 {hiring['postings']} 筆職缺"
+                    + (f"，預計招募 {hiring['people']} 人" if hiring.get("people") else "")
+                    + (f"（{roles}）" if roles else "")
+                    + "；因官方介面單次最多 1000 筆，此訊號只作佐證"
+                )
             profile = opportunity_profile(types, c["capital"], event.get("changes", {}), industry)
+            if hiring.get("people", 0) >= 20 and profile["actionable"]:
+                profile["score"] = min(99, profile["score"] + 6)
+            elif hiring.get("postings", 0) >= 3 and profile["actionable"]:
+                profile["score"] = min(99, profile["score"] + 3)
+            profile["tier"] = "A" if profile["score"] >= 80 else "B" if profile["score"] >= 65 else "C" if profile["score"] >= 50 else "觀察"
             if c["capital"]:
                 reasons.append(f"目前公開資本額 {money_zh(c['capital'])}")
             if industry != "未分類":
@@ -548,6 +854,9 @@ def main() -> int:
                 "district": district,
                 "industry": industry,
                 "industries": industries,
+                "registeredBusinessItems": registered_items[:20],
+                "branches": branches_by_tax.get(tax_id, [])[:20],
+                "hiringSignal": hiring,
                 "capital": c["capital"],
                 "event": types[0] if types else "資料異動",
                 "eventTypes": types,
@@ -591,6 +900,9 @@ def main() -> int:
                 "capitalIncrease": counts.get("增資", 0),
                 "addressChange": counts.get("搬遷", 0),
                 "industryChange": counts.get("產業異動", 0),
+                "businessItemAdded": counts.get("營業項目新增", 0),
+                "newBranches": counts.get("新設分公司", 0),
+                "giantProcurement": counts.get("巨額標案履約中", 0),
                 "laggingOnly": sum(1 for x in companies if not x.get("actionable")),
             },
             "eventCounts": counts,
@@ -610,11 +922,35 @@ def main() -> int:
                     "url": "https://data.gov.tw/dataset/84880",
                     "refresh": "API",
                 },
+                {
+                    "name": "經濟部商業發展署－公司登記基本資料-應用三（營業項目）",
+                    "url": "https://data.gov.tw/dataset/22198",
+                    "refresh": "API",
+                },
+                {
+                    "name": "經濟部商業發展署－統編查分公司資料",
+                    "url": "https://data.gov.tw/dataset/84877",
+                    "refresh": "API",
+                },
+                {
+                    "name": "勞動部－台灣就業通網站職缺清單",
+                    "url": "https://data.gov.tw/dataset/44062",
+                    "refresh": "官方介面，最多1000筆/次",
+                },
+                {
+                    "name": "公共工程委員會－與政府機關有巨額採購且在履約期間之廠商名單",
+                    "url": "https://data.gov.tw/dataset/7264",
+                    "refresh": "每上班日",
+                },
             ],
             "notes": [
                 "第一次成功執行會建立全台營業中稅籍 baseline；從下一次執行開始才可依前後快照辨識資本額、地址與產業欄位的實際變化。",
                 "商機分數改以『未來支出可能性』為核心：新設、增資、產業變化為主訊號；搬遷、改名與不明異動只作佐證或觀察。",
                 "地址變更通常屬落後訊號；系統不再把搬遷本身解讀成搬家、裝潢或網路佈建商機。",
+                "公司營業項目與分公司資料會對今日異動企業建立獨立快照；營業項目只有在有前次快照可比較時才標示『新增』，不把第一次看到的全部項目誤判成新增。",
+                "新設分公司可利用官方 BR_ESTAB_DATE 直接抓當日新據點；這類訊號比公司地址變更更接近展店/擴點商機。",
+                "台灣就業通單次最多 1000 筆，因此徵才命中只作加分佐證，不以沒命中推論公司沒有在招人。",
+                "公共工程委員會巨額採購履約資料是強專案訊號；命中時可直接提高商機優先級。",
                 "「其他公司登記異動」代表經濟部 API 確認今日有核准變更，但目前公開欄位差分不足以判定是哪一種異動。",
                 f"前端最多載入分數最高的 {MAX_FRONTEND_ROWS:,} 筆；統計數字以全部偵測事件計算。",
             ],
