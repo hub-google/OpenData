@@ -40,6 +40,7 @@ BGM_URL = "https://eip.fia.gov.tw/data/BGMOPEN1.zip"
 GCIS_BASE = "https://data.gcis.nat.gov.tw/od/data/api"
 GCIS_SETUP = "467E8A3A-72C6-4663-9557-D9D74C597E14"
 GCIS_CHANGE = "4347A009-6489-4F19-AC79-78F366BE7976"
+GCIS_BASIC = "5F64D864-61CB-4D0D-8AD9-492047CC1EA6"
 
 MAX_FRONTEND_ROWS = int(os.environ.get("RADAR_MAX_ROWS", "5000"))
 HISTORY_DAYS = int(os.environ.get("RADAR_HISTORY_DAYS", "60"))
@@ -99,6 +100,23 @@ def gcis_by_date(endpoint: str, field: str, value: str) -> list[dict]:
             break
     return rows
 
+
+
+def gcis_basic_company(tax_id: str) -> dict | None:
+    """補齊剛設立、尚未進稅籍檔公司的資本額/地址。失敗時不影響主流程。"""
+    query = urllib.parse.urlencode({
+        "$format": "json",
+        "$filter": f"Business_Accounting_NO eq {tax_id}",
+        "$skip": "0",
+        "$top": "1",
+    })
+    url = f"{GCIS_BASE}/{GCIS_BASIC}?{query}"
+    payload = json.loads(request_bytes(url, timeout=30, retries=2).decode("utf-8-sig"))
+    if isinstance(payload, dict):
+        payload = payload.get("value") or payload.get("data") or []
+    if isinstance(payload, list) and payload:
+        return payload[0]
+    return None
 
 def clean_int(value) -> int:
     text = str(value or "").replace(",", "").strip()
@@ -394,6 +412,28 @@ def main() -> int:
         baseline_ready = STATE_DB.exists() and STATE_DB.stat().st_size > 0
         conn = sqlite3.connect(current_db)
         conn.row_factory = sqlite3.Row
+
+        # 新設公司常比財政部稅籍檔更早出現；僅對尚未有完整稅籍資料者補查公司登記基本資料。
+        basic_info: dict[str, dict] = {}
+        enrichment_available = True
+        enriched = 0
+        for tax_id in setup_map:
+            existing = load_company(conn, tax_id)
+            if existing and existing.get("capital") and existing.get("address"):
+                continue
+            if not enrichment_available:
+                break
+            try:
+                info = gcis_basic_company(tax_id)
+                if info:
+                    basic_info[tax_id] = info
+                    enriched += 1
+                time.sleep(0.03)
+            except Exception as exc:
+                enrichment_available = False
+                log(f"WARNING: GCIS basic-company enrichment unavailable; continuing without it: {exc}")
+        log(f"GCIS new-company enrichment={enriched}")
+
         events: dict[str, dict] = {}
 
         if baseline_ready:
@@ -464,18 +504,28 @@ def main() -> int:
         counts: dict[str, int] = {}
         for tax_id, event in events.items():
             c = load_company(conn, tax_id)
+            basic = basic_info.get(tax_id) or {}
             if c is None:
                 c = {
                     "taxId": tax_id,
-                    "name": setup_map.get(tax_id) or change_map.get(tax_id) or "公司資料同步中",
-                    "address": "",
-                    "capital": 0,
-                    "setup": "",
+                    "name": norm(basic.get("Company_Name")) or setup_map.get(tax_id) or change_map.get(tax_id) or "公司資料同步中",
+                    "address": norm(basic.get("Company_Location")),
+                    "capital": clean_int(basic.get("Paid_In_Capital_Amount")) or clean_int(basic.get("Capital_Stock_Amount")),
+                    "setup": norm(basic.get("Company_Setup_Date")),
                     "orgType": "",
                     "invoice": "",
                     "industryCodes": "",
                     "industryNames": "",
+                    "owner": norm(basic.get("Responsible_Name")),
                 }
+            elif basic:
+                if not c.get("address"):
+                    c["address"] = norm(basic.get("Company_Location"))
+                if not c.get("capital"):
+                    c["capital"] = clean_int(basic.get("Paid_In_Capital_Amount")) or clean_int(basic.get("Capital_Stock_Amount"))
+                if not c.get("setup"):
+                    c["setup"] = norm(basic.get("Company_Setup_Date"))
+                c["owner"] = norm(basic.get("Responsible_Name"))
 
             types = list(dict.fromkeys(event["types"]))
             for t in types:
@@ -513,7 +563,7 @@ def main() -> int:
                 "actionable": profile["actionable"],
                 "changes": event.get("changes", {}),
                 "setup": c["setup"],
-                "owner": "",
+                "owner": c.get("owner", ""),
                 "address": c["address"],
                 "orgType": c["orgType"],
                 "invoice": c["invoice"],
