@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>企業成長／擴張雷達｜OpenData</title>
+  <meta name="description" content="用台灣政府 Open Data 找出仍可能帶來後續支出的企業成長與擴張訊號。" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div>
+          <strong>企業擴張雷達</strong>
+          <span>Expansion Radar</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="opportunities"><span>◎</span> 今日商機</button>
+        <button class="nav-item" data-view="saved"><span>☆</span> 追蹤清單</button>
+        <button class="nav-item" data-view="about"><span>i</span> 判讀邏輯</button>
+      </nav>
+
+      <div class="sidebar-note">
+        <span class="demo-dot"></span>
+        <div>
+          <strong id="sourceMode">讀取資料中</strong>
+          <p id="sourceStatus">正在載入政府 Open Data 產生的成長訊號。</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">TAIWAN BUSINESS EXPANSION SIGNALS</p>
+          <h1>誰正在進入下一波花錢期？</h1>
+          <p class="subtitle">不再把所有公司異動都叫商機。優先找「資金到位、剛成立、新業務啟動」；搬遷與改名只當佐證。</p>
+          <p class="subtitle" id="lastUpdated">資料更新：讀取中</p>
+        </div>
+        <div class="top-actions">
+          <button id="exportBtn" class="btn btn-secondary">匯出目前名單</button>
+          <button class="btn btn-primary" id="refreshBtn">讀取最新資料</button>
+        </div>
+      </header>
+
+      <section id="opportunitiesView" class="view active">
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>可行動商機</span>
+            <strong id="statTotal">0</strong>
+            <small>非單純異動數</small>
+          </article>
+          <article class="stat-card">
+            <span>A級高優先</span>
+            <strong id="statHot">0</strong>
+            <small>分數 ≥ 80</small>
+          </article>
+          <article class="stat-card">
+            <span>新設開辦</span>
+            <strong id="statNew">0</strong>
+            <small>供應商尚未固定</small>
+          </article>
+          <article class="stat-card">
+            <span>資金到位</span>
+            <strong id="statCapital">0</strong>
+            <small>增資訊號</small>
+          </article>
+        </div>
+        <p id="statsNote" class="subtitle" style="margin:0 2px 14px"></p>
+
+        <section class="filters-card">
+          <div class="filter-search">
+            <label for="searchInput">搜尋</label>
+            <input id="searchInput" type="search" placeholder="公司名稱、統編、產業、地址…" />
+          </div>
+          <div>
+            <label for="signalFilter">商機價值</label>
+            <select id="signalFilter">
+              <option value="actionable" selected>只看可行動商機</option>
+              <option value="大型專案啟動">大型專案啟動</option>
+              <option value="產能落地">新工廠／產能落地</option>
+              <option value="據點擴張">新設分公司／據點擴張</option>
+              <option value="資金到位">資金到位</option>
+              <option value="新事業啟動">營業項目新增</option>
+              <option value="開辦期">新設開辦</option>
+              <option value="新業務訊號">產業方向變化</option>
+              <option value="watch">只看觀察／落後訊號</option>
+              <option value="all">全部訊號</option>
+            </select>
+          </div>
+          <div>
+            <label for="eventFilter">原始事件</label>
+            <select id="eventFilter">
+              <option value="all">全部</option>
+              <option value="巨額標案履約中">巨額標案履約中</option>
+              <option value="新工廠登記">新工廠登記</option>
+              <option value="新設分公司">新設分公司</option>
+              <option value="營業項目新增">營業項目新增</option>
+              <option value="新設立">新設立</option>
+              <option value="增資">增資</option>
+              <option value="產業異動">產業異動</option>
+              <option value="搬遷">搬遷</option>
+              <option value="減資">減資</option>
+              <option value="名稱變更">名稱變更</option>
+              <option value="其他公司登記異動">其他公司登記異動</option>
+            </select>
+          </div>
+          <div>
+            <label for="cityFilter">地區</label>
+            <select id="cityFilter"><option value="all">全部地區</option></select>
+          </div>
+          <div>
+            <label for="industryFilter">產業</label>
+            <select id="industryFilter"><option value="all">全部產業</option></select>
+          </div>
+          <div>
+            <label for="capitalFilter">最低資本額</label>
+            <select id="capitalFilter">
+              <option value="0">不限</option>
+              <option value="5000000">500 萬+</option>
+              <option value="10000000">1,000 萬+</option>
+              <option value="50000000">5,000 萬+</option>
+              <option value="100000000">1 億+</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="list-card">
+          <div class="list-head">
+            <div>
+              <h2>今日值得追的企業</h2>
+              <p><span id="resultCount">0</span> 家符合條件；排序依「未來支出可能性」而不是單純異動熱度。</p>
+            </div>
+            <select id="sortSelect" aria-label="排序">
+              <option value="score">商機分數最高</option>
+              <option value="capital">資本額最高</option>
+              <option value="date">異動最新</option>
+            </select>
+          </div>
+          <div id="companyList" class="company-list"></div>
+          <div id="emptyState" class="empty hidden">
+            <strong>目前沒有符合條件的可行動商機</strong>
+            <span>可以切換「全部訊號」查看落後或待確認異動。</span>
+          </div>
+        </section>
+      </section>
+
+      <section id="savedView" class="view">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">WATCHLIST</p>
+            <h2>追蹤清單</h2>
+            <p>把值得後續聯絡的公司先存起來；追蹤狀態保存在這台瀏覽器。</p>
+          </div>
+        </div>
+        <div id="savedList" class="company-list standalone"></div>
+        <div id="savedEmpty" class="empty">
+          <strong>目前還沒有追蹤公司</strong>
+          <span>回到今日商機，按星號加入追蹤。</span>
+        </div>
+      </section>
+
+      <section id="aboutView" class="view">
+        <div class="about-grid">
+          <article class="about-card">
+            <p class="eyebrow">CORE LOGIC</p>
+            <h2>異動不是商機，異動只是 Sensor</h2>
+            <p>真正要找的是「這個訊號出現後，公司未來幾個月還可能花什麼錢」。所以系統把訊號分成前段、前中段、後段／風險，而不是看到異動就加分。</p>
+          </article>
+          <article class="about-card">
+            <h3>目前高價值訊號</h3>
+            <ul>
+              <li><strong>巨額標案履約：</strong>大型專案已進入執行期，常伴隨設備、人力、分包、保險與週轉需求。</li>
+              <li><strong>新工廠登記：</strong>製造據點與產能落地，對設備、自動化、能源、物流、工安與產險很有價值。</li>
+              <li><strong>新設分公司：</strong>新據點正式落地，比公司搬家更接近展店／擴點需求。</li>
+              <li><strong>營業項目新增：</strong>可能是新事業準備啟動，屬於真正偏前段的訊號。</li>
+              <li><strong>新設立：</strong>法人剛成立，供應商與營運配置可能尚未固定。</li>
+              <li><strong>增資：</strong>不是缺錢，而是資金已到位；後續擴產、擴編與採購值得追。</li>
+              <li><strong>產業異動：</strong>稅籍行業方向變化，可能代表新業務或收入結構改變，需再驗證。</li>
+            </ul>
+          </article>
+          <article class="about-card">
+            <h3>不再誤判的訊號</h3>
+            <ul>
+              <li><strong>地址變更：</strong>通常是搬完才登記，只能佐證擴張，不能拿來賣搬家與裝潢。</li>
+              <li><strong>名稱變更：</strong>本身幾乎不代表採購需求。</li>
+              <li><strong>一般公司異動：</strong>不知道改了什麼前，不進高優先名單。</li>
+              <li><strong>減資：</strong>較適合風險／授信監控，不是一般銷售商機。</li>
+            </ul>
+          </article>
+          <article class="about-card">
+            <h3>下一層要補的領先訊號</h3>
+            <ul>
+              <li><strong>已接：</strong>營業項目新增、新設分公司、巨額政府採購履約、台灣就業通徵才佐證。</li>
+              <li><strong>已接：</strong>工廠登記／新廠訊號（官方資料更新較慢，因此只在日期明確時升級）。</li>
+              <li><strong>下一階段：</strong>建照與使用執照、特許業許可。</li>
+              <li><strong>待專門介接：</strong>動產擔保目前是公開查詢網站而非穩定批次 API，需另外做查詢器與節流機制。</li>
+              <li><strong>不會亂接：</strong>一般搬遷、改名、不明變更維持低權重。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+  <aside id="detailDrawer" class="drawer" aria-hidden="true">
+    <button id="drawerClose" class="drawer-close" aria-label="關閉">×</button>
+    <div id="drawerContent"></div>
+  </aside>
+
+  <script src="./app.js"></script>
+</body>
+</html>

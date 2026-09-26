@@ -1,0 +1,1912 @@
+{
+  "generatedAt": "2026-09-26T13:06:48+08:00",
+  "date": "2026-09-26",
+  "baselineReady": true,
+  "rowCount": 1713640,
+  "stats": {
+    "detected": 31,
+    "actionable": 18,
+    "highPriority": 2,
+    "newCompanies": 0,
+    "capitalIncrease": 10,
+    "addressChange": 12,
+    "industryChange": 8,
+    "businessItemAdded": 0,
+    "newBranches": 0,
+    "giantProcurement": 0,
+    "newFactory": 0,
+    "laggingOnly": 13
+  },
+  "eventCounts": {
+    "搬遷": 12,
+    "增資": 10,
+    "產業異動": 8,
+    "減資": 2,
+    "名稱變更": 3
+  },
+  "sources": [
+    {
+      "name": "財政部財政資訊中心－全國營業(稅籍)登記資料集",
+      "url": "https://data.gov.tw/dataset/9400",
+      "refresh": "每日"
+    },
+    {
+      "name": "經濟部商業發展署－公司資料設立查詢",
+      "url": "https://data.gcis.nat.gov.tw/od/detail?oid=8D314711-6324-4CE7-A358-2FF284A9F84D",
+      "refresh": "API"
+    },
+    {
+      "name": "經濟部商業發展署－公司資料異動查詢",
+      "url": "https://data.gov.tw/dataset/84880",
+      "refresh": "API"
+    },
+    {
+      "name": "經濟部商業發展署－公司登記基本資料-應用三（營業項目）",
+      "url": "https://data.gov.tw/dataset/22198",
+      "refresh": "API"
+    },
+    {
+      "name": "經濟部商業發展署－統編查分公司資料",
+      "url": "https://data.gov.tw/dataset/84877",
+      "refresh": "API"
+    },
+    {
+      "name": "勞動部－台灣就業通網站職缺清單",
+      "url": "https://data.gov.tw/dataset/44062",
+      "refresh": "官方介面，最多1000筆/次"
+    },
+    {
+      "name": "公共工程委員會－與政府機關有巨額採購且在履約期間之廠商名單",
+      "url": "https://data.gov.tw/dataset/7264",
+      "refresh": "每上班日"
+    },
+    {
+      "name": "經濟部產業發展署－登記工廠名錄",
+      "url": "https://data.gov.tw/dataset/6569",
+      "refresh": "每季/不定期"
+    }
+  ],
+  "notes": [
+    "第一次成功執行會建立全台營業中稅籍 baseline；從下一次執行開始才可依前後快照辨識資本額、地址與產業欄位的實際變化。",
+    "商機分數改以『未來支出可能性』為核心：新設、增資、產業變化為主訊號；搬遷、改名與不明異動只作佐證或觀察。",
+    "地址變更通常屬落後訊號；系統不再把搬遷本身解讀成搬家、裝潢或網路佈建商機。",
+    "公司營業項目與分公司資料會對今日異動企業建立獨立快照；營業項目只有在有前次快照可比較時才標示『新增』，不把第一次看到的全部項目誤判成新增。",
+    "新設分公司可利用官方 BR_ESTAB_DATE 直接抓當日新據點；這類訊號比公司地址變更更接近展店/擴點商機。",
+    "台灣就業通單次最多 1000 筆，因此徵才命中只作加分佐證，不以沒命中推論公司沒有在招人。",
+    "公共工程委員會巨額採購履約資料是強專案訊號；命中時可直接提高商機優先級。",
+    "登記工廠名錄包含統編、工廠核准日期、產業類別與主要產品；因更新頻率較低，只在官方登記日期明確吻合時標成新工廠，避免把資料集延遲誤判成今天新設。",
+    "「其他公司登記異動」代表經濟部 API 確認今日有核准變更，但目前公開欄位差分不足以判定是哪一種異動。",
+    "前端最多載入分數最高的 5,000 筆；統計數字以全部偵測事件計算。"
+  ],
+  "companies": [
+    {
+      "id": "60381801",
+      "name": "森之卵股份有限公司",
+      "taxId": "60381801",
+      "city": "臺北市",
+      "district": "中正區",
+      "industry": "其他商品批發經紀",
+      "industries": [
+        "其他商品批發經紀",
+        "其他烘焙炊蒸食品製造",
+        "其他未分類食品製造"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 2036320000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 99,
+      "tier": "A",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 20000,
+          "after": 2036320000,
+          "delta": 2036300000
+        }
+      },
+      "setup": "1150206",
+      "owner": "",
+      "address": "臺北市中正區重慶南路１段８３號６樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 2 萬 增加至 20.4 億（+20.4 億）",
+        "目前公開資本額 20.4 億",
+        "主要稅籍行業：其他商品批發經紀"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "23560861",
+      "name": "芳源號營造股份有限公司",
+      "taxId": "23560861",
+      "city": "臺南市",
+      "district": "東 區",
+      "industry": "未分類其他土木工程",
+      "industries": [
+        "未分類其他土木工程",
+        "不動產投資開發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 222800000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 94,
+      "tier": "A",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "工程設備",
+        "車輛/機具",
+        "融資與保險",
+        "工安",
+        "供應商與人力"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 127300000,
+          "after": 222800000,
+          "delta": 95500000
+        }
+      },
+      "setup": "0790705",
+      "owner": "",
+      "address": "臺南市東 區東聖里中華東路２段７７號１４樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 1.3 億 增加至 2.2 億（+9,550 萬）",
+        "目前公開資本額 2.2 億",
+        "主要稅籍行業：未分類其他土木工程"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "90227648",
+      "name": "勤實精密股份有限公司",
+      "taxId": "90227648",
+      "city": "臺中市",
+      "district": "太平區",
+      "industry": "金屬用車床、銑床、鑽床製造",
+      "industries": [
+        "金屬用車床、銑床、鑽床製造"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 3000000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 79,
+      "tier": "B",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 1000000,
+          "after": 3000000,
+          "delta": 2000000
+        }
+      },
+      "setup": "1110318",
+      "owner": "",
+      "address": "臺中市太平區建興里鵬儀路３２８號",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 100 萬 增加至 300 萬（+200 萬）",
+        "目前公開資本額 300 萬",
+        "主要稅籍行業：金屬用車床、銑床、鑽床製造"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "27611784",
+      "name": "鎬宇金屬有限公司",
+      "taxId": "27611784",
+      "city": "臺中市",
+      "district": "大里區",
+      "industry": "其他回收物料批發",
+      "industries": [
+        "其他回收物料批發",
+        "基本金屬批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 2000000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 79,
+      "tier": "B",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 100000,
+          "after": 2000000,
+          "delta": 1900000
+        }
+      },
+      "setup": "0940201",
+      "owner": "",
+      "address": "臺中市大里區健民里健民路１００號１樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 10 萬 增加至 200 萬（+190 萬）",
+        "目前公開資本額 200 萬",
+        "主要稅籍行業：其他回收物料批發"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "00261731",
+      "name": "富祥企業社",
+      "taxId": "00261731",
+      "city": "臺南市",
+      "district": "安南區",
+      "industry": "其他未分類金屬製品製造",
+      "industries": [
+        "其他未分類金屬製品製造",
+        "其他未分類專用機械設備製造"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 2000000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 79,
+      "tier": "B",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 168000,
+          "after": 2000000,
+          "delta": 1832000
+        }
+      },
+      "setup": "1130708",
+      "owner": "",
+      "address": "臺南市安南區州北里安昌街７８號２樓",
+      "orgType": "獨資",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 17 萬 增加至 200 萬（+183 萬）",
+        "目前公開資本額 200 萬",
+        "主要稅籍行業：其他未分類金屬製品製造"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "61142879",
+      "name": "奧睿數位領航工作室",
+      "taxId": "61142879",
+      "city": "高雄市",
+      "district": "苓雅區",
+      "industry": "其他廣告服務",
+      "industries": [
+        "其他廣告服務"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1378000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 79,
+      "tier": "B",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 200000,
+          "after": 1378000,
+          "delta": 1178000
+        }
+      },
+      "setup": "1150513",
+      "owner": "",
+      "address": "高雄市苓雅區正心里建國一路１３４號５樓",
+      "orgType": "獨資",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 20 萬 增加至 138 萬（+118 萬）",
+        "目前公開資本額 138 萬",
+        "主要稅籍行業：其他廣告服務"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "60606626",
+      "name": "弓毅股份有限公司",
+      "taxId": "60606626",
+      "city": "臺北市",
+      "district": "中正區",
+      "industry": "其他運動用品及器材批發",
+      "industries": [
+        "其他運動用品及器材批發",
+        "其他運動用品及器材零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1100000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 79,
+      "tier": "B",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 300000,
+          "after": 1100000,
+          "delta": 800000
+        }
+      },
+      "setup": "1140619",
+      "owner": "",
+      "address": "臺北市中正區黎明里忠孝西路１段２１號７樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 30 萬 增加至 110 萬（+80 萬）",
+        "目前公開資本額 110 萬",
+        "主要稅籍行業：其他運動用品及器材批發"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "89312890",
+      "name": "黃大進企業股份有限公司",
+      "taxId": "89312890",
+      "city": "臺南市",
+      "district": "安南區",
+      "industry": "橡膠及塑膠加工用機械設備製造",
+      "industries": [
+        "橡膠及塑膠加工用機械設備製造"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 5000000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 78,
+      "tier": "B",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 3000000,
+          "after": 5000000,
+          "delta": 2000000
+        }
+      },
+      "setup": "0840208",
+      "owner": "",
+      "address": "臺南市安南區安順里開安三街６６號１樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 300 萬 增加至 500 萬（+200 萬）",
+        "目前公開資本額 500 萬",
+        "主要稅籍行業：橡膠及塑膠加工用機械設備製造"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "61186355",
+      "name": "美好食味店",
+      "taxId": "61186355",
+      "city": "高雄市",
+      "district": "岡山區",
+      "industry": "便當、自助餐店",
+      "industries": [
+        "便當、自助餐店"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 150000,
+      "event": "增資",
+      "eventTypes": [
+        "增資",
+        "名稱變更"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 76,
+      "tier": "B",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 4000,
+          "after": 150000,
+          "delta": 146000
+        },
+        "name": {
+          "before": "美好快餐岡山店",
+          "after": "美好食味店"
+        }
+      },
+      "setup": "1150630",
+      "owner": "",
+      "address": "高雄市岡山區仁壽里前峰路６６號１樓",
+      "orgType": "獨資",
+      "invoice": "N",
+      "reasons": [
+        "資本額由 4,000 增加至 15 萬（+15 萬）",
+        "名稱由「美好快餐岡山店」變更為「美好食味店」",
+        "目前公開資本額 15 萬",
+        "主要稅籍行業：便當、自助餐店"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "73920010",
+      "name": "憲政小吃店",
+      "taxId": "73920010",
+      "city": "高雄市",
+      "district": "苓雅區",
+      "industry": "早餐店",
+      "industries": [
+        "早餐店"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 50000,
+      "event": "增資",
+      "eventTypes": [
+        "增資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 72,
+      "tier": "B",
+      "signalClass": "資金到位",
+      "signalStage": "前中段訊號",
+      "commercialValue": "高",
+      "leadWindow": "未來 1–6 個月值得追蹤",
+      "commercialMeaning": "公司近期資本額增加。資金已到位，不代表缺錢；真正價值是後續可能進入擴產、擴編、設備或新專案支出期。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {
+        "capital": {
+          "before": 30000,
+          "after": 50000,
+          "delta": 20000
+        }
+      },
+      "setup": "0870612",
+      "owner": "",
+      "address": "高雄市苓雅區五福里憲政路１號１樓",
+      "orgType": "獨資",
+      "invoice": "N",
+      "reasons": [
+        "資本額由 3 萬 增加至 5 萬（+2 萬）",
+        "目前公開資本額 5 萬",
+        "主要稅籍行業：早餐店"
+      ],
+      "action": "先查增資幅度與產業，再問『這次資金主要投入哪個計畫？』；不要再用融資缺口當第一切角。"
+    },
+    {
+      "id": "93588764",
+      "name": "京璽秋雅股份有限公司",
+      "taxId": "93588764",
+      "city": "高雄市",
+      "district": "左營區",
+      "industry": "手搖飲店",
+      "industries": [
+        "手搖飲店"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 3500000,
+      "event": "產業異動",
+      "eventTypes": [
+        "產業異動"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 61,
+      "tier": "C",
+      "signalClass": "新業務訊號",
+      "signalStage": "前中段訊號",
+      "commercialValue": "中高",
+      "leadWindow": "未來 1–12 個月值得追蹤",
+      "commercialMeaning": "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {
+        "industry": {
+          "before": "飲料零售|未分類其他食品、飲料及菸草製品零售|未分類其他食品批發|非酒精飲料批發",
+          "after": "手搖飲店"
+        }
+      },
+      "setup": "1130124",
+      "owner": "",
+      "address": "高雄市左營區新超里至聖路３０２號",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "稅籍行業分類與前一日快照不同",
+        "目前公開資本額 350 萬",
+        "主要稅籍行業：手搖飲店"
+      ],
+      "action": "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    },
+    {
+      "id": "83089178",
+      "name": "鶴康食品有限公司",
+      "taxId": "83089178",
+      "city": "雲林縣",
+      "district": "斗南鎮",
+      "industry": "經營網路購物（食品、飲料類商品）",
+      "industries": [
+        "經營網路購物（食品、飲料類商品）",
+        "飲料零售",
+        "冰品零售",
+        "豆類製品零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 3140000,
+      "event": "產業異動",
+      "eventTypes": [
+        "產業異動"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 61,
+      "tier": "C",
+      "signalClass": "新業務訊號",
+      "signalStage": "前中段訊號",
+      "commercialValue": "中高",
+      "leadWindow": "未來 1–12 個月值得追蹤",
+      "commercialMeaning": "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。",
+      "likelyNeeds": [
+        "展店/通路",
+        "POS與支付",
+        "物流/倉儲",
+        "行銷",
+        "招募與員工保障"
+      ],
+      "actionable": true,
+      "changes": {
+        "industry": {
+          "before": "經營網路購物（食品、飲料類商品）",
+          "after": "經營網路購物（食品、飲料類商品）|飲料零售|冰品零售|豆類製品零售"
+        }
+      },
+      "setup": "1091019",
+      "owner": "",
+      "address": "雲林縣斗南鎮南昌里圓環街１２號",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "稅籍行業分類與前一日快照不同",
+        "目前公開資本額 314 萬",
+        "主要稅籍行業：經營網路購物（食品、飲料類商品）"
+      ],
+      "action": "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    },
+    {
+      "id": "73934730",
+      "name": "亞灣國際企業行",
+      "taxId": "73934730",
+      "city": "高雄市",
+      "district": "苓雅區",
+      "industry": "其他電子購物及郵購",
+      "industries": [
+        "其他電子購物及郵購"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1000000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷",
+        "產業異動"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 61,
+      "tier": "C",
+      "signalClass": "新業務訊號",
+      "signalStage": "前中段訊號",
+      "commercialValue": "中高",
+      "leadWindow": "未來 1–12 個月值得追蹤",
+      "commercialMeaning": "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。 同時出現地址變更，可作為組織/據點調整的佐證，但不單獨視為需求。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": true,
+      "changes": {
+        "address": {
+          "before": "高雄市前金區青山里中正四路１３９號７樓",
+          "after": "高雄市苓雅區安祥里和平一路２９８號１８樓"
+        },
+        "industry": {
+          "before": "家電材料批發|其他辦公用機械器具批發",
+          "after": "其他電子購物及郵購"
+        }
+      },
+      "setup": "0870701",
+      "owner": "",
+      "address": "高雄市苓雅區安祥里和平一路２９８號１８樓",
+      "orgType": "獨資",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「高雄市前金區青山里中正四路１３９號７樓」變更為「高雄市苓雅區安祥里和平一路２９８號１８樓」",
+        "稅籍行業分類與前一日快照不同",
+        "目前公開資本額 100 萬",
+        "主要稅籍行業：其他電子購物及郵購"
+      ],
+      "action": "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    },
+    {
+      "id": "83003094",
+      "name": "錦星地產有限公司",
+      "taxId": "83003094",
+      "city": "臺南市",
+      "district": "東 區",
+      "industry": "未分類其他專門營造",
+      "industries": [
+        "未分類其他專門營造",
+        "未分類其他建材批發",
+        "不動產投資開發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 500000,
+      "event": "產業異動",
+      "eventTypes": [
+        "產業異動",
+        "名稱變更"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 58,
+      "tier": "C",
+      "signalClass": "新業務訊號",
+      "signalStage": "前中段訊號",
+      "commercialValue": "中高",
+      "leadWindow": "未來 1–12 個月值得追蹤",
+      "commercialMeaning": "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。",
+      "likelyNeeds": [
+        "工程設備",
+        "車輛/機具",
+        "融資與保險",
+        "工安",
+        "供應商與人力"
+      ],
+      "actionable": true,
+      "changes": {
+        "industry": {
+          "before": "基本金屬批發|其他機電、電信及電路設備安裝|電力設備器材批發",
+          "after": "未分類其他專門營造|未分類其他建材批發|不動產投資開發"
+        },
+        "name": {
+          "before": "晶星材料有限公司",
+          "after": "錦星地產有限公司"
+        }
+      },
+      "setup": "1120325",
+      "owner": "",
+      "address": "臺南市東 區東明里怡東路７２巷３號１樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "稅籍行業分類與前一日快照不同",
+        "名稱由「晶星材料有限公司」變更為「錦星地產有限公司」",
+        "目前公開資本額 50 萬",
+        "主要稅籍行業：未分類其他專門營造"
+      ],
+      "action": "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    },
+    {
+      "id": "98907247",
+      "name": "豪季水餃專賣店",
+      "taxId": "98907247",
+      "city": "臺北市",
+      "district": "中正區",
+      "industry": "未分類其他食品、飲料及菸草製品零售",
+      "industries": [
+        "未分類其他食品、飲料及菸草製品零售",
+        "餐廳"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 230000,
+      "event": "產業異動",
+      "eventTypes": [
+        "產業異動"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 58,
+      "tier": "C",
+      "signalClass": "新業務訊號",
+      "signalStage": "前中段訊號",
+      "commercialValue": "中高",
+      "leadWindow": "未來 1–12 個月值得追蹤",
+      "commercialMeaning": "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。",
+      "likelyNeeds": [
+        "展店/通路",
+        "POS與支付",
+        "物流/倉儲",
+        "行銷",
+        "招募與員工保障"
+      ],
+      "actionable": true,
+      "changes": {
+        "industry": {
+          "before": "麵店、小吃店",
+          "after": "未分類其他食品、飲料及菸草製品零售|餐廳"
+        }
+      },
+      "setup": "0921003",
+      "owner": "",
+      "address": "臺北市中正區黎明里忠孝西路１段２９巷１號",
+      "orgType": "合夥",
+      "invoice": "Y",
+      "reasons": [
+        "稅籍行業分類與前一日快照不同",
+        "目前公開資本額 23 萬",
+        "主要稅籍行業：未分類其他食品、飲料及菸草製品零售"
+      ],
+      "action": "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    },
+    {
+      "id": "00886721",
+      "name": "鑫同乾企業社",
+      "taxId": "00886721",
+      "city": "高雄市",
+      "district": "岡山區",
+      "industry": "經營網路購物（食品、飲料類商品）",
+      "industries": [
+        "經營網路購物（食品、飲料類商品）",
+        "以自動販賣機零售商品"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 50000,
+      "event": "產業異動",
+      "eventTypes": [
+        "產業異動"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 58,
+      "tier": "C",
+      "signalClass": "新業務訊號",
+      "signalStage": "前中段訊號",
+      "commercialValue": "中高",
+      "leadWindow": "未來 1–12 個月值得追蹤",
+      "commercialMeaning": "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。",
+      "likelyNeeds": [
+        "展店/通路",
+        "POS與支付",
+        "物流/倉儲",
+        "行銷",
+        "招募與員工保障"
+      ],
+      "actionable": true,
+      "changes": {
+        "industry": {
+          "before": "經營網路購物（食品、飲料類商品）",
+          "after": "經營網路購物（食品、飲料類商品）|以自動販賣機零售商品"
+        }
+      },
+      "setup": "1140806",
+      "owner": "",
+      "address": "高雄市岡山區信義里仁壽路１８７號１樓",
+      "orgType": "獨資",
+      "invoice": "N",
+      "reasons": [
+        "稅籍行業分類與前一日快照不同",
+        "目前公開資本額 5 萬",
+        "主要稅籍行業：經營網路購物（食品、飲料類商品）"
+      ],
+      "action": "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    },
+    {
+      "id": "61570409",
+      "name": "嚕寶樂寵物用品店",
+      "taxId": "61570409",
+      "city": "臺南市",
+      "district": "安南區",
+      "industry": "其他電子購物及郵購",
+      "industries": [
+        "其他電子購物及郵購"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 30000,
+      "event": "產業異動",
+      "eventTypes": [
+        "產業異動"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 58,
+      "tier": "C",
+      "signalClass": "新業務訊號",
+      "signalStage": "前中段訊號",
+      "commercialValue": "中高",
+      "leadWindow": "未來 1–12 個月值得追蹤",
+      "commercialMeaning": "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": true,
+      "changes": {
+        "industry": {
+          "before": "寵物用品零售",
+          "after": "其他電子購物及郵購"
+        }
+      },
+      "setup": "1150910",
+      "owner": "",
+      "address": "臺南市安南區頂安里北安路２段６５６號",
+      "orgType": "獨資",
+      "invoice": "N",
+      "reasons": [
+        "稅籍行業分類與前一日快照不同",
+        "目前公開資本額 3 萬",
+        "主要稅籍行業：其他電子購物及郵購"
+      ],
+      "action": "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    },
+    {
+      "id": "17578245",
+      "name": "福良機車行",
+      "taxId": "17578245",
+      "city": "臺南市",
+      "district": "安南區",
+      "industry": "機車維修",
+      "industries": [
+        "機車維修",
+        "全新機車零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 5000,
+      "event": "產業異動",
+      "eventTypes": [
+        "產業異動"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 58,
+      "tier": "C",
+      "signalClass": "新業務訊號",
+      "signalStage": "前中段訊號",
+      "commercialValue": "中高",
+      "leadWindow": "未來 1–12 個月值得追蹤",
+      "commercialMeaning": "稅籍行業分類出現變化，可能是營運方向、產品線或收入結構改變的訊號；需再確認是否為真正的新事業。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": true,
+      "changes": {
+        "industry": {
+          "before": "全新機車零售",
+          "after": "機車維修|全新機車零售"
+        }
+      },
+      "setup": "0881227",
+      "owner": "",
+      "address": "臺南市安南區梅花里安中路１段７０３巷２號１樓",
+      "orgType": "獨資",
+      "invoice": "N",
+      "reasons": [
+        "稅籍行業分類與前一日快照不同",
+        "目前公開資本額 5,000",
+        "主要稅籍行業：機車維修"
+      ],
+      "action": "先確認新增/改變的業務方向，再找該新業務啟動必須購買的服務，而不是泛泛推銷。"
+    },
+    {
+      "id": "54274625",
+      "name": "鐳鼎科技股份有限公司",
+      "taxId": "54274625",
+      "city": "高雄市",
+      "district": "路竹區",
+      "industry": "未分類其他機械器具批發",
+      "industries": [
+        "未分類其他機械器具批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 20792520,
+      "event": "減資",
+      "eventTypes": [
+        "減資"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "風險訊號",
+      "signalStage": "後段/風險",
+      "commercialValue": "低",
+      "leadWindow": "不作一般銷售主名單",
+      "commercialMeaning": "減資更適合風險、授信與供應鏈監控，不代表公司正準備增加支出。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {
+        "capital": {
+          "before": 41585030,
+          "after": 20792520,
+          "delta": -20792510
+        }
+      },
+      "setup": "1020604",
+      "owner": "",
+      "address": "高雄市路竹區北嶺里路科五路９６號５樓",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 4,159 萬 變更為 2,079 萬",
+        "目前公開資本額 2,079 萬",
+        "主要稅籍行業：未分類其他機械器具批發"
+      ],
+      "action": "從一般銷售名單降權；若產品是徵信、授信、法遵或供應鏈風險服務才提高關注。"
+    },
+    {
+      "id": "83753531",
+      "name": "康醫生技國際股份有限公司",
+      "taxId": "83753531",
+      "city": "彰化縣",
+      "district": "大村鄉",
+      "industry": "其他電子購物及郵購",
+      "industries": [
+        "其他電子購物及郵購",
+        "其他藥品及醫療用品批發",
+        "寵物用品批發",
+        "清潔用品批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 10000000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "臺中市烏日區北里里太明路成豐巷２８－１號",
+          "after": "彰化縣大村鄉平和村中正東路２６９巷２７１弄２５２號"
+        }
+      },
+      "setup": "1090422",
+      "owner": "",
+      "address": "彰化縣大村鄉平和村中正東路２６９巷２７１弄２５２號",
+      "orgType": "股份有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「臺中市烏日區北里里太明路成豐巷２８－１號」變更為「彰化縣大村鄉平和村中正東路２６９巷２７１弄２５２號」",
+        "目前公開資本額 1,000 萬",
+        "主要稅籍行業：其他電子購物及郵購"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "90637087",
+      "name": "優豆科技有限公司",
+      "taxId": "90637087",
+      "city": "臺南市",
+      "district": "安南區",
+      "industry": "行銷管理顧問",
+      "industries": [
+        "行銷管理顧問"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 5000000,
+      "event": "減資",
+      "eventTypes": [
+        "減資",
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {
+        "capital": {
+          "before": 10000000,
+          "after": 5000000,
+          "delta": -5000000
+        },
+        "address": {
+          "before": "臺南市中西區赤嵌里中山路１９３號",
+          "after": "臺南市安南區頂安里安中二街２９號１樓"
+        }
+      },
+      "setup": "1110303",
+      "owner": "",
+      "address": "臺南市安南區頂安里安中二街２９號１樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "資本額由 1,000 萬 變更為 500 萬",
+        "營業地址由「臺南市中西區赤嵌里中山路１９３號」變更為「臺南市安南區頂安里安中二街２９號１樓」",
+        "目前公開資本額 500 萬",
+        "主要稅籍行業：行銷管理顧問"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "45133130",
+      "name": "飛式有限公司",
+      "taxId": "45133130",
+      "city": "高雄市",
+      "district": "左營區",
+      "industry": "電腦及電腦週邊設備批發",
+      "industries": [
+        "電腦及電腦週邊設備批發",
+        "樂器批發",
+        "電子器材、電子設備批發",
+        "通用電池零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 2000000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "雲端/資安",
+        "企業軟體",
+        "招募",
+        "行銷",
+        "辦公與員工保障"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "高雄市左營區新超里富民路４２０號４樓",
+          "after": "高雄市左營區菜福里文奇路１７０巷１０號"
+        }
+      },
+      "setup": "1050428",
+      "owner": "",
+      "address": "高雄市左營區菜福里文奇路１７０巷１０號",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「高雄市左營區新超里富民路４２０號４樓」變更為「高雄市左營區菜福里文奇路１７０巷１０號」",
+        "目前公開資本額 200 萬",
+        "主要稅籍行業：電腦及電腦週邊設備批發"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "93559727",
+      "name": "山哥工程有限公司",
+      "taxId": "93559727",
+      "city": "高雄市",
+      "district": "苓雅區",
+      "industry": "建築廢棄物清除",
+      "industries": [
+        "建築廢棄物清除",
+        "一般事業廢棄物處理"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 2000000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "工程設備",
+        "車輛/機具",
+        "融資與保險",
+        "工安",
+        "供應商與人力"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "高雄市鳥松區仁美里美山路５６之５號",
+          "after": "高雄市苓雅區意誠里三多四路６３號７樓之８"
+        }
+      },
+      "setup": "1130220",
+      "owner": "",
+      "address": "高雄市苓雅區意誠里三多四路６３號７樓之８",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「高雄市鳥松區仁美里美山路５６之５號」變更為「高雄市苓雅區意誠里三多四路６３號７樓之８」",
+        "目前公開資本額 200 萬",
+        "主要稅籍行業：建築廢棄物清除"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "00834490",
+      "name": "喬盛國際商行",
+      "taxId": "00834490",
+      "city": "高雄市",
+      "district": "左營區",
+      "industry": "手機及手機週邊零配件批發",
+      "industries": [
+        "手機及手機週邊零配件批發"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1500000,
+      "event": "名稱變更",
+      "eventTypes": [
+        "名稱變更"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "待確認",
+      "signalStage": "未知",
+      "commercialValue": "觀察",
+      "leadWindow": "先查明異動內容",
+      "commercialMeaning": "官方確認今日有公司登記異動，但目前欄位不足以判斷是否與未來支出有關。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {
+        "name": {
+          "before": "夏壹通訊",
+          "after": "喬盛國際商行"
+        }
+      },
+      "setup": "1140317",
+      "owner": "",
+      "address": "高雄市左營區菜福里文自路１８４號２樓",
+      "orgType": "獨資",
+      "invoice": "Y",
+      "reasons": [
+        "名稱由「夏壹通訊」變更為「喬盛國際商行」",
+        "目前公開資本額 150 萬",
+        "主要稅籍行業：手機及手機週邊零配件批發"
+      ],
+      "action": "先補查異動明細；沒有確認增資、新業務或其他成長訊號前，不列為高優先業務名單。"
+    },
+    {
+      "id": "62186396",
+      "name": "佩琦有限公司",
+      "taxId": "62186396",
+      "city": "高雄市",
+      "district": "左營區",
+      "industry": "咖啡飲料製造",
+      "industries": [
+        "咖啡飲料製造",
+        "畜肉零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1000000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "高雄市三民區黃興路２１３號１樓",
+          "after": "高雄市左營區新上里忠貞街４０號１樓"
+        }
+      },
+      "setup": "1150407",
+      "owner": "",
+      "address": "高雄市左營區新上里忠貞街４０號１樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「高雄市三民區黃興路２１３號１樓」變更為「高雄市左營區新上里忠貞街４０號１樓」",
+        "目前公開資本額 100 萬",
+        "主要稅籍行業：咖啡飲料製造"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "90322278",
+      "name": "鉅璽有限公司",
+      "taxId": "90322278",
+      "city": "高雄市",
+      "district": "左營區",
+      "industry": "寵物用品零售",
+      "industries": [
+        "寵物用品零售",
+        "其他機電、電信及電路設備安裝",
+        "文件打字、撰稿及速記等服務"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 1000000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "展店/通路",
+        "POS與支付",
+        "物流/倉儲",
+        "行銷",
+        "招募與員工保障"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "高雄市苓雅區林西里五權街１３７、１３７－１號",
+          "after": "高雄市左營區新下里新庄仔路６１４號２樓"
+        }
+      },
+      "setup": "1110902",
+      "owner": "",
+      "address": "高雄市左營區新下里新庄仔路６１４號２樓",
+      "orgType": "有限公司",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「高雄市苓雅區林西里五權街１３７、１３７－１號」變更為「高雄市左營區新下里新庄仔路６１４號２樓」",
+        "目前公開資本額 100 萬",
+        "主要稅籍行業：寵物用品零售"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "92455626",
+      "name": "捷泓實業社",
+      "taxId": "92455626",
+      "city": "臺南市",
+      "district": "安南區",
+      "industry": "其他未分類金屬製品製造",
+      "industries": [
+        "其他未分類金屬製品製造"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 240000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "臺南市永康區蔦松里００９鄰正北三路１３０巷１３號",
+          "after": "臺南市安南區安順里安和路３段１９０巷７５號"
+        }
+      },
+      "setup": "1120809",
+      "owner": "",
+      "address": "臺南市安南區安順里安和路３段１９０巷７５號",
+      "orgType": "獨資",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「臺南市永康區蔦松里００９鄰正北三路１３０巷１３號」變更為「臺南市安南區安順里安和路３段１９０巷７５號」",
+        "目前公開資本額 24 萬",
+        "主要稅籍行業：其他未分類金屬製品製造"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "62894829",
+      "name": "傾城小吃部",
+      "taxId": "62894829",
+      "city": "高雄市",
+      "district": "左營區",
+      "industry": "視唱中心（ＫＴＶ）",
+      "industries": [
+        "視唱中心（ＫＴＶ）",
+        "餐廳",
+        "菸酒零售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 200000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "高雄市左營區新上里明誠二路４１９號地下樓",
+          "after": "高雄市左營區新上里明誠二路４１９號地下層"
+        }
+      },
+      "setup": "1150914",
+      "owner": "",
+      "address": "高雄市左營區新上里明誠二路４１９號地下層",
+      "orgType": "獨資",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「高雄市左營區新上里明誠二路４１９號地下樓」變更為「高雄市左營區新上里明誠二路４１９號地下層」",
+        "目前公開資本額 20 萬",
+        "主要稅籍行業：視唱中心（ＫＴＶ）"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "00385542",
+      "name": "財富方舟商行",
+      "taxId": "00385542",
+      "city": "高雄市",
+      "district": "左營區",
+      "industry": "其他電子購物及郵購",
+      "industries": [
+        "其他電子購物及郵購"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 200000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "設備/自動化",
+        "原料與供應鏈",
+        "廠務/能源",
+        "物流",
+        "產險與員工保障"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "屏東縣萬丹鄉加興村加發路３５號２樓",
+          "after": "高雄市左營區新超里至聖路３１２號１７樓之３"
+        }
+      },
+      "setup": "1140627",
+      "owner": "",
+      "address": "高雄市左營區新超里至聖路３１２號１７樓之３",
+      "orgType": "獨資",
+      "invoice": "Y",
+      "reasons": [
+        "營業地址由「屏東縣萬丹鄉加興村加發路３５號２樓」變更為「高雄市左營區新超里至聖路３１２號１７樓之３」",
+        "目前公開資本額 20 萬",
+        "主要稅籍行業：其他電子購物及郵購"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "91513486",
+      "name": "朗富髮藝",
+      "taxId": "91513486",
+      "city": "高雄市",
+      "district": "左營區",
+      "industry": "美髮院及髮廊",
+      "industries": [
+        "美髮院及髮廊"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 100000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "高雄市左營區新超里德威街８８號",
+          "after": "高雄市左營區新超里富民路２１１號、德威街８８號"
+        }
+      },
+      "setup": "1101224",
+      "owner": "",
+      "address": "高雄市左營區新超里富民路２１１號、德威街８８號",
+      "orgType": "獨資",
+      "invoice": "N",
+      "reasons": [
+        "營業地址由「高雄市左營區新超里德威街８８號」變更為「高雄市左營區新超里富民路２１１號、德威街８８號」",
+        "目前公開資本額 10 萬",
+        "主要稅籍行業：美髮院及髮廊"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    },
+    {
+      "id": "93297702",
+      "name": "德富彩券行",
+      "taxId": "93297702",
+      "city": "高雄市",
+      "district": "苓雅區",
+      "industry": "彩券銷售",
+      "industries": [
+        "彩券銷售"
+      ],
+      "registeredBusinessItems": [],
+      "branches": [],
+      "hiringSignal": {
+        "postings": 0,
+        "people": 0,
+        "roles": []
+      },
+      "factories": [],
+      "capital": 50000,
+      "event": "搬遷",
+      "eventTypes": [
+        "搬遷"
+      ],
+      "eventDate": "2026-09-26",
+      "score": 18,
+      "tier": "觀察",
+      "signalClass": "落後佐證",
+      "signalStage": "後段訊號",
+      "commercialValue": "低",
+      "leadWindow": "事件多半已發生；只適合做擴張佐證",
+      "commercialMeaning": "地址變更通常在搬遷後才登記；不應拿來賣搬家、裝潢或首次網路佈建。",
+      "likelyNeeds": [
+        "企業軟體/電信",
+        "招募",
+        "金融與保險",
+        "行銷",
+        "設備與營運採購"
+      ],
+      "actionable": false,
+      "changes": {
+        "address": {
+          "before": "高雄市苓雅區福壽里福德三路１０４號",
+          "after": "高雄市苓雅區五福里大順三路２３８號"
+        }
+      },
+      "setup": "1120914",
+      "owner": "",
+      "address": "高雄市苓雅區五福里大順三路２３８號",
+      "orgType": "獨資",
+      "invoice": "N",
+      "reasons": [
+        "營業地址由「高雄市苓雅區福壽里福德三路１０４號」變更為「高雄市苓雅區五福里大順三路２３８號」",
+        "目前公開資本額 5 萬",
+        "主要稅籍行業：彩券銷售"
+      ],
+      "action": "不要把搬遷本身當主商機；只有搭配增資、產業變化等訊號時，才把它視為擴張的佐證。"
+    }
+  ]
+}
