@@ -1,44 +1,36 @@
-# 都更價值評估雷達
+# 0元土地／都更價值評估雷達
 
-網址（GitHub Pages）：
-https://hub-google.github.io/OpenData/urban-renewal-radar-web/
+GitHub Pages：https://hub-google.github.io/OpenData/urban-renewal-radar-web/
 
-## 第一版在做什麼
+## 目標
 
-這不是「預測一定都更成功」，而是把大量老屋先排序，回答：
+只用免費政府公開資料，找出『土地開發價值高＋所有權相對容易整合』的標的，作為都更、危老、土地整合前期雷達。
 
-> 如果整合人只能挑少數基地深入研究，哪些值得先查？
+目前不使用電子謄本、第二類謄本、地政電傳或任何逐筆收費土地資料。
 
-目前自動讀取臺北市「歷年使用執照摘要」，從以下欄位建立第一階段分數：
+## 已實際驗證的 ownership layer
 
-- 竣工/發照年份 → 屋齡
-- 地上層數 → 是否屬典型低樓層老公寓
-- 戶數 → 初步整合規模
-- 騎樓基地面積、其他基地面積 → 基地規模訊號
-- 使用分區 → 開發強度的初篩訊號
-- 地址、地段號 → 後續串地號、分區與謄本
+來源：臺北市申報地價。2026-09-29 實跑：
+- 1,425 筆原始列
+- 891 個不同 parcel key
+- 75 個地號觀察到至少 2 筆所有權登記次序
+- 已計算 observed_owner_records、max_share、top2_share、top3_share、observed_share_sum、share_hhi
+- 已隨機抽出 12 筆多持分土地做 validation
 
-## 最重要的限制
+輸出：
+- data/parcel_ownership.csv
+- data/parcel_ownership.json
+- data/ownership_validation.json
 
-**不會把戶數當成地主數。**
+## 資料誠信規則
 
-地主數、持分破碎程度、法人地主、抵押權與限制登記，要進入第二階段後，以第二類土地/建物謄本或可核對的公開持分資料確認。
+- observed_owner_records 不是地主總數。
+- 申報地價資料無法證明涵蓋該地號目前全部所有權登記。
+- 觀察持分合計不到 100% 時，HHI / Top3 只展示，不當成完整所有權結構。
+- 即使觀察持分剛好 100%，ownership_data_completeness 仍不直接標 confirmed。
 
-## 官方資料
+## 詳細來源審計
 
-- 臺北市歷年使用執照摘要  
-  https://data.taipei/dataset/detail?id=c876ff02-af2e-4eb8-bd33-d444f5052733
-- 臺北市土地使用分區  
-  https://data.taipei/dataset/detail?id=a132a433-db7c-4387-8085-83e6a093b17f
-- 臺北市申報地價  
-  https://data.taipei/dataset/detail?id=e434a75a-5692-4a41-bb29-edb97d7f624e
-- 全國地政電子謄本系統  
-  https://epaper.land.moi.gov.tw/Home/SNEpaperKind
+見 SOURCE_AUDIT.md。
 
-## 下一階段
-
-1. 由地址/地段號轉地號並核對宗地面積。
-2. 串臺北市土地使用分區，避免只依舊使照文字。
-3. 串實價登錄，加入周邊新屋/老屋價差。
-4. Top 候選才付費查謄本，產生 Ownership Complexity Score。
-5. 再估可開發樓地板、更新後價值與整合優先順序。
+沒有官方資料證明完整的欄位，一律標 partial / unknown，不補假資料。
