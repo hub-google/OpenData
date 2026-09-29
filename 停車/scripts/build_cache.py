@@ -26,11 +26,17 @@ def fetch_json(url):
         headers={
             "User-Agent": "OpenData-Parking/1.0",
             "Accept": "application/json,text/plain,*/*",
+            "Origin": "https://hub-google.github.io",
         },
     )
     with urllib.request.urlopen(req, timeout=45) as r:
         raw = r.read()
-    return json.loads(raw.decode("utf-8-sig"))
+        info = {
+            "status": r.status,
+            "cors": r.headers.get("Access-Control-Allow-Origin"),
+            "content_type": r.headers.get("Content-Type"),
+        }
+    return json.loads(raw.decode("utf-8-sig")), info
 
 def extract_rows(data):
     if isinstance(data, list):
@@ -67,12 +73,12 @@ def main():
 
     staged = {}
     for filename, url in SOURCES.items():
-        data = fetch_json(url)
+        data, info = fetch_json(url)
         count = count_records(data)
         if count < MIN_COUNTS[filename]:
             raise RuntimeError(f"{filename}: unexpected record count {count}")
         staged[filename] = data
-        meta["sources"][filename] = {"url": url, "count": count}
+        meta["sources"][filename] = {"url": url, "count": count, **info}
 
     for filename, data in staged.items():
         (out / filename).write_text(
