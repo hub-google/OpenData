@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Query a known public record and inspect result wiring
+      - name: Inspect PPSTRQ query, paging, and detail functions
         shell: bash
         run: |
           set -euo pipefail
@@ -33,74 +33,68 @@ jobs:
           s.headers.update({'User-Agent':UA})
           r=s.get(URL,timeout=30)
           r.raise_for_status()
-          print('GET',r.status_code,r.url,'bytes',len(r.content))
 
           soup=BeautifulSoup(r.text,'html.parser')
           form=soup.find('form',id='queryForm')
-          if not form:
-              raise SystemExit('queryForm not found')
-
           action=urljoin(r.url,form.get('action',''))
-          data={}
-          for el in form.find_all(['input','select','textarea']):
-              name=el.get('name')
-              if not name:
-                  continue
-              typ=(el.get('type') or '').lower()
-              if typ in {'button','submit','reset','radio','checkbox'}:
-                  continue
-              data[name]=el.get('value','')
 
+          def base_data(form):
+              d={}
+              for el in form.find_all(['input','select','textarea']):
+                  name=el.get('name')
+                  if not name:
+                      continue
+                  typ=(el.get('type') or '').lower()
+                  if typ in {'button','submit','reset','radio','checkbox'}:
+                      continue
+                  d[name]=el.get('value','')
+              return d
+
+          data=base_data(form)
           data.update({
               'method':'query',
               'currentPage':'0',
               'debtorType':'1',
               'debtorTypeRadio':'1',
-              'queryDebtorName':'杰祐',
+              'queryDebtorName':'杰',
               'queryDebtorNo':'',
               'creditorType':'',
               'queryCreditorName':'',
               'queryCreditorNo':'',
           })
 
-          print('POST_ACTION',action)
-          print('POST_KEYS',sorted(data))
-          print('TOKEN_PRESENT',bool(data.get('struts.token')))
-          r2=s.post(action,data=data,headers={'Referer':r.url},timeout=30,allow_redirects=True)
-          print('POST',r2.status_code,r2.url,'bytes',len(r2.content),'history',[(x.status_code,x.url) for x in r2.history])
-          open('result.html','wb').write(r2.content)
-
+          r2=s.post(action,data=data,headers={'Referer':r.url},timeout=45)
+          r2.raise_for_status()
           soup2=BeautifulSoup(r2.text,'html.parser')
-          text=' '.join(soup2.stripped_strings)
-          for pat in [r'此查詢總筆數[^<]{0,100}',r'總筆數[^<]{0,100}',r'杰祐[^<]{0,100}']:
-              m=re.search(pat,r2.text)
-              print('MATCH',pat,repr(m.group(0) if m else None))
 
-          print('=== TABLE ROWS ===')
-          for i,tr in enumerate(soup2.find_all('tr')[:30]):
-              cells=[' '.join(x.stripped_strings) for x in tr.find_all(['th','td'])]
-              if cells:
-                  print('ROW',i,json.dumps(cells,ensure_ascii=False))
+          print('QUERY_BYTES',len(r2.content))
+          m=re.search(r'此查詢總筆數：\s*([0-9,]+)筆',r2.text)
+          print('TOTAL_MATCH',m.group(1) if m else None)
+          cp=soup2.find('input',{'name':'currentPage'})
+          tp=soup2.find('input',{'name':'totalPage'})
+          print('CURRENT_PAGE',cp.get('value') if cp else None,'TOTAL_PAGE',tp.get('value') if tp else None)
 
-          print('=== FORMS ===')
-          for f in soup2.find_all('form'):
-              print('FORM',f.get('id'),f.get('name'),f.get('method'),f.get('action'))
-              for el in f.find_all('input'):
-                  n=el.get('name')
-                  if n in {'method','currentPage','totalPage','regUnitCode','certificateAppNoWord','struts.token','struts.token.name'}:
-                      print(' INPUT',n,repr(el.get('value')), 'onclick=',repr(el.get('onclick')))
+          print('=== FIRST RESULT ROWS ===')
+          rows=[]
+          for tr in soup2.find_all('tr'):
+              onclick=tr.get('onclick','')
+              if 'goDetail' in onclick:
+                  cells=[' '.join(x.stripped_strings) for x in tr.find_all(['td','th'])]
+                  print(json.dumps({'onclick':onclick,'cells':cells},ensure_ascii=False))
+                  rows.append((onclick,cells))
+          print('RESULT_ROW_COUNT_ON_PAGE',len(rows))
 
-          print('=== CLICKABLES / DETAIL HINTS ===')
-          seen=0
-          for tag in soup2.find_all(['a','tr','td','input','button']):
-              attrs={k:v for k,v in tag.attrs.items() if k in {'href','onclick','ondblclick','id','name','value','class'}}
-              blob=' '.join(map(str,attrs.values()))
-              if any(k in blob.lower() for k in ['detail','show','page','query','certificate','regunit']):
-                  txt=' '.join(tag.stripped_strings)
-                  print(tag.name,json.dumps(attrs,ensure_ascii=False),repr(txt[:160]))
-                  seen+=1
-                  if seen>=80:
-                      break
+          print('=== INLINE FUNCTION BODIES ===')
+          raw=r2.text
+          for fn in ['showList','gotoPage','goDetail','show']:
+              # non-greedy through the next closing brace is enough for these short functions
+              mm=re.search(r'function\s+'+re.escape(fn)+r'\s*\([^)]*\)\s*\{.*?\n\s*\}',raw,re.S)
+              print('FUNCTION',fn)
+              print(mm.group(0)[:4000] if mm else 'NOT_FOUND')
 
-          print('RESULT_HAS_COMPANY', '杰祐有限公司' in r2.text)
+          print('=== HIDDEN FIELDS AFTER QUERY ===')
+          qf=soup2.find('form',id='queryForm')
+          for n in ['method','regUnitCode','certificateAppNoWord','currentPage','totalPage','debtorType','creditorType','struts.token','struts.token.name']:
+              el=qf.find(attrs={'name':n}) if qf else None
+              print(n,repr(el.get('value') if el else None))
           PY
