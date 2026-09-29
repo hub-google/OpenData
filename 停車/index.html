@@ -105,7 +105,7 @@ function extractArray(obj){
 }
 function withBust(url){return url+(url.includes('?')?'&':'?')+'_ts='+Date.now()}
 async function getJSON(url){const r=await fetch(withBust(url),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
-async function getPagedJSON(base){const merged=[];for(let page=0;page<20;page++){const data=await getJSON(base+'?page='+page+'&size=1000');const rows=extractArray(data);merged.push(...rows);if(rows.length<1000)break}return merged}
+async function getPagedJSON(base){const merged=[],seen=new Set();for(let page=0;page<5;page++){const data=await getJSON(base+'?page='+page+'&size=1000');const rows=extractArray(data);const sig=JSON.stringify(rows.slice(0,3));if(!rows.length||seen.has(sig))break;seen.add(sig);merged.push(...rows);if(rows.length<1000)break}return merged}
 
 function twd97ToWgs84(x,y){
   x=Number(x);y=Number(y);if(!Number.isFinite(x)||!Number.isFinite(y)||x===0||y===0)return null;
