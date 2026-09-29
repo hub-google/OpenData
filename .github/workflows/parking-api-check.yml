@@ -20,8 +20,8 @@ jobs:
           urls = {
             "taipei_static": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json",
             "taipei_realtime": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json",
-            "ntpc_static": "https://data.ntpc.gov.tw/api/datasets/B1464EF0-9C7C-4A6F-ABF7-6BDF32847E68/json?size=2000",
-            "ntpc_realtime": "https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?size=2000",
+            "ntpc_static": "https://data.ntpc.gov.tw/api/datasets/b1464ef0-9c7c-4a6f-abf7-6bdf32847e68/json?page=0&size=2000",
+            "ntpc_realtime": "https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000",
             "taoyuan": "https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download",
           }
           for name, url in urls.items():
