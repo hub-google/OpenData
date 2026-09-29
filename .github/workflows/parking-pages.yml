@@ -1,0 +1,50 @@
+name: Publish parking page
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "停車/**"
+      - ".github/workflows/parking-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "parking-pages-publish"
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: source
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: public
+
+      - name: Copy parking site
+        run: |
+          rm -rf public/停車
+          mkdir -p public/停車
+          cp -R source/停車/. public/停車/
+          touch public/.nojekyll
+
+      - name: Publish parking site
+        working-directory: public
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 停車 .nojekyll
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish parking page"
+            git push origin gh-pages
+          fi
