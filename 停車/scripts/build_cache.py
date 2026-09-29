@@ -79,16 +79,21 @@ def fetch_paged(base_url):
     merged = []
     page = 0
     last_info = {}
-    while page < 20:
+    seen = set()
+    while page < 5:
         url = f"{base_url}?page={page}&size=1000"
         data, info = request_json(url)
         rows = extract_rows(data)
         last_info = info
+        signature = json.dumps(rows[:3], ensure_ascii=False, sort_keys=True) if rows else ""
+        if not rows or signature in seen:
+            break
+        seen.add(signature)
         merged.extend(rows)
         if len(rows) < 1000:
             break
         page += 1
-    return merged, {**last_info, "pages": page + 1}
+    return merged, {**last_info, "pages": len(seen)}
 
 def fetch_source(spec):
     if spec.get("paged"):
