@@ -62,33 +62,77 @@ def display_land_no(raw):
     return str(raw or "").strip()
 
 def complexity(p):
+    """
+    Score only what this free dataset can actually support.
+
+    A declared-land-price extract is not a complete ownership registry.
+    If observed shares do not approximately sum to 100%, concentration metrics
+    (max/top3/HHI) are descriptive only and MUST NOT be used as if they described
+    the full ownership structure.
+    """
     count=p["observed_owner_records"]
     mx=p["max_share"]
     top3=p["top3_share"]
     hhi=p["share_hhi"]
+    share_sum=p["observed_share_sum"]
+    has_common=p["has_common_ownership"]
+
+    if share_sum is None:
+        reliability="unknown"
+    elif has_common or share_sum>1.02:
+        reliability="special_or_overlapping"
+    elif 0.98<=share_sum<=1.02:
+        reliability="internally_complete"
+    else:
+        reliability="partial"
+
+    # Lower-bound evidence: if we can see many registration sequences, complexity
+    # cannot be lower than that observed minimum, even though more records may exist.
     score=0.0; reasons=[]
-    if count>=15:score+=35;reasons.append(f"公開資料觀察到 {count} 筆所有權登記，筆數很多")
-    elif count>=8:score+=27;reasons.append(f"公開資料觀察到 {count} 筆所有權登記")
-    elif count>=4:score+=18;reasons.append(f"公開資料觀察到 {count} 筆所有權登記")
-    elif count>=2:score+=9
-    if mx is not None:
-        if mx<.15:score+=25;reasons.append(f"最大觀察持分僅 {mx:.1%}")
-        elif mx<.30:score+=18
-        elif mx<.50:score+=10
-        elif mx>=.75:score-=8;reasons.append(f"存在高集中持分 {mx:.1%}")
-    if top3 is not None:
-        if top3<.50:score+=20;reasons.append(f"前三大觀察持分合計僅 {top3:.1%}")
-        elif top3<.75:score+=12
-        elif top3>=.90:score-=5
-    if hhi is not None:
-        if hhi<.10:score+=15;reasons.append(f"觀察持分 HHI {hhi:.3f}，分散度高")
-        elif hhi<.20:score+=10
-        elif hhi<.35:score+=5
-    if p["has_common_ownership"]:
-        score+=15;reasons.append("出現公同共有(B)紀錄，整合可能更複雜")
+    if count>=20:
+        score+=40; reasons.append(f"至少觀察到 {count} 筆所有權登記，已可確認結構複雜")
+    elif count>=10:
+        score+=30; reasons.append(f"至少觀察到 {count} 筆所有權登記")
+    elif count>=5:
+        score+=20; reasons.append(f"至少觀察到 {count} 筆所有權登記")
+    elif count>=2:
+        score+=8; reasons.append(f"至少觀察到 {count} 筆所有權登記")
+
+    if has_common:
+        score+=15; reasons.append("出現公同共有(B)紀錄，屬特殊共有結構")
+
+    # Only use concentration metrics when the observed fractions are internally
+    # consistent with ~100% and there is no special/overlapping share type.
+    if reliability=="internally_complete":
+        if mx is not None:
+            if mx<.15:score+=22;reasons.append(f"最大觀察持分 {mx:.1%}，完整性檢核下仍偏分散")
+            elif mx<.30:score+=15
+            elif mx<.50:score+=8
+            elif mx>=.75:score-=8;reasons.append(f"最大觀察持分達 {mx:.1%}，集中度較高")
+        if top3 is not None:
+            if top3<.50:score+=18;reasons.append(f"前三大觀察持分合計 {top3:.1%}")
+            elif top3<.75:score+=10
+            elif top3>=.90:score-=5
+        if hhi is not None:
+            if hhi<.10:score+=12;reasons.append(f"觀察持分 HHI {hhi:.3f}，集中度低")
+            elif hhi<.20:score+=7
+            elif hhi<.35:score+=3
+        confidence="medium"
+    else:
+        confidence="low"
+        if reliability=="partial":
+            reasons.append(f"公開資料持分合計僅 {share_sum:.1%}，集中度指標不納入難度分數")
+        elif reliability=="special_or_overlapping":
+            reasons.append(f"公開資料持分合計 {share_sum:.1%} 或含特殊共有，集中度指標不納入難度分數")
+        else:
+            reasons.append("持分完整性不足，集中度指標不納入難度分數")
+
     score=max(0,min(100,round(score)))
-    level="低" if score<30 else "中" if score<55 else "高" if score<75 else "很高"
-    return score,level,reasons
+    lower_level="低" if score<30 else "中" if score<55 else "高" if score<75 else "很高"
+    # Honest output: without internally-complete observed fractions, do not claim
+    # a final four-level integration difficulty. Preserve a lower-bound proxy.
+    level=lower_level if reliability=="internally_complete" else "資料不足"
+    return score,level,lower_level,confidence,reliability,reasons
 
 def main():
     blob=fetch(DOWNLOAD_URL)
@@ -176,9 +220,12 @@ def main():
             "declared_price_status":sorted(set(status)),
             "owner_records":owner_rows,
         }
-        s,l,rs=complexity(p)
+        s,l,lb,conf,rel,rs=complexity(p)
         p["ownership_complexity_score"]=s
         p["integration_difficulty"]=l
+        p["integration_difficulty_lower_bound"]=lb
+        p["ownership_score_confidence"]=conf
+        p["observed_share_reliability"]=rel
         p["complexity_reasons"]=rs
         parcels.append(p)
 
@@ -200,7 +247,7 @@ def main():
     (DATA/"parcel_ownership.json").write_text(json.dumps({"meta":meta,"parcels":parcels},ensure_ascii=False,indent=2),encoding="utf-8")
     (DATA/"ownership_validation.json").write_text(json.dumps({"meta":meta,"samples":samples},ensure_ascii=False,indent=2),encoding="utf-8")
     # compact CSV for the database layer
-    cols=["parcel_id","county","district","section","subsection","land_no","land_no_raw","land_area","announced_land_price","declared_land_price","observed_owner_records","max_share","top2_share","top3_share","observed_share_sum","share_hhi","share_hhi_normalized_observed","has_common_ownership","ownership_complexity_score","integration_difficulty","ownership_data_completeness"]
+    cols=["parcel_id","county","district","section","subsection","land_no","land_no_raw","land_area","announced_land_price","declared_land_price","observed_owner_records","max_share","top2_share","top3_share","observed_share_sum","share_hhi","share_hhi_normalized_observed","has_common_ownership","ownership_complexity_score","integration_difficulty","integration_difficulty_lower_bound","ownership_score_confidence","observed_share_reliability","ownership_data_completeness"]
     with (DATA/"parcel_ownership.csv").open("w",encoding="utf-8-sig",newline="") as f:
         w=csv.DictWriter(f,fieldnames=cols);w.writeheader()
         for p in parcels:w.writerow({k:p.get(k) for k in cols})
