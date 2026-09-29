@@ -119,7 +119,33 @@ def section_from_parts(major,minor):
     return (major if major.endswith("段") else major+"段")+zh_num(minor)+"小段"
 
 def zone_norm(s):
-    return clean(s).replace("（","(").replace("）",")")
+    """Canonicalize common Taipei zoning labels for joining parcel zoning to FAR/BCR rules."""
+    t=clean(s).replace("（","(").replace("）",")").replace("臺","台")
+    zh={"一":"1","二":"2","三":"3","四":"4","五":"5","六":"6","七":"7","八":"8","九":"9","十":"10"}
+    def zn(v):
+        v=str(v or "")
+        return zh.get(v,v)
+    # 第三種住宅區 / 第三之一種住宅區
+    m=re.search(r"第?([一二三四五六七八九十\\d]+)(?:之([一二三四五六七八九十\\d]+))?種住宅區",t)
+    if m:
+        k=zn(m.group(1)); sub=zn(m.group(2)) if m.group(2) else ""
+        return "住宅"+k+("-"+sub if sub else "")
+    m=re.search(r"住(?:宅)?([一二三四五六七八九十\\d]+)(?:之([一二三四五六七八九十\\d]+))?",t)
+    if m:
+        k=zn(m.group(1)); sub=zn(m.group(2)) if m.group(2) else ""
+        return "住宅"+k+("-"+sub if sub else "")
+    m=re.search(r"第?([一二三四五六七八九十\\d]+)(?:之([一二三四五六七八九十\\d]+))?種商業區",t)
+    if m:
+        k=zn(m.group(1)); sub=zn(m.group(2)) if m.group(2) else ""
+        return "商業"+k+("-"+sub if sub else "")
+    m=re.search(r"商(?:業)?([一二三四五六七八九十\\d]+)(?:之([一二三四五六七八九十\\d]+))?",t)
+    if m:
+        k=zn(m.group(1)); sub=zn(m.group(2)) if m.group(2) else ""
+        return "商業"+k+("-"+sub if sub else "")
+    # Generic cleanup for unnumbered/special zones.
+    t=t.replace("第一種","1").replace("第二種","2").replace("第三種","3").replace("第四種","4").replace("第五種","5")
+    t=t.replace("住宅區","住宅").replace("商業區","商業")
+    return re.sub(r"[^0-9A-Za-z一-龥-]","",t)
 
 def parse_ratio(s):
     t=clean(s)
