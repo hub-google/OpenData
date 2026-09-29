@@ -1,4 +1,4 @@
-name: PPSTRQ Probe
+name: PPSTRQ Sample
 
 on:
   workflow_dispatch:
@@ -7,94 +7,32 @@ on:
       - '.github/workflows/ppstrq-probe.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  probe:
+  sample:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify one PPSTRQ detail request
+      - uses: actions/checkout@v4
+
+      - name: Fetch 100 public company/business cases
         shell: bash
         run: |
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check -q requests beautifulsoup4
-          python3 - <<'PY'
-          import json,re
-          from urllib.parse import urljoin
-          import requests
-          from bs4 import BeautifulSoup
+          python3 ppstrq/scrape_sample.py
 
-          BASE='https://ppstrq.nat.gov.tw'
-          QUERY=BASE+'/pps/pubQuery/PropertyQuery/propertyQuery.do'
-          DETAIL=BASE+'/pps/pubQuery/PropertyQuery/propertyDetail.do'
-          s=requests.Session()
-          s.headers.update({'User-Agent':'Mozilla/5.0 Chrome/153 Safari/537.36'})
-
-          def fields(form):
-              d={}
-              for el in form.find_all(['input','select','textarea']):
-                  n=el.get('name')
-                  if not n: continue
-                  t=(el.get('type') or '').lower()
-                  if t in {'button','submit','reset','radio','checkbox'}: continue
-                  d[n]=el.get('value','')
-              return d
-
-          r=s.get(QUERY,timeout=30); r.raise_for_status()
-          soup=BeautifulSoup(r.text,'html.parser')
-          form=soup.find('form',id='queryForm')
-          d=fields(form)
-          d.update({
-              'method':'query','currentPage':'0',
-              'debtorType':'1','debtorTypeRadio':'1',
-              'queryDebtorName':'杰','queryDebtorNo':'',
-              'creditorType':'','queryCreditorName':'','queryCreditorNo':''
-          })
-          q=s.post(urljoin(r.url,form.get('action','')),data=d,headers={'Referer':r.url},timeout=45)
-          q.raise_for_status()
-          qs=BeautifulSoup(q.text,'html.parser')
-          tr=next(x for x in qs.find_all('tr') if 'goDetail' in x.get('onclick',''))
-          m=re.search(r"goDetail\('([^']+)','([^']+)'\)",tr.get('onclick',''))
-          reg,cert=m.groups()
-          print('KEY',reg,cert)
-          qform=qs.find('form',id='queryForm')
-          dd=fields(qform)
-          dd['regUnitCode']=reg
-          dd['certificateAppNoWord']=cert
-          det=s.post(DETAIL,data=dd,headers={'Referer':q.url},timeout=45)
-          det.raise_for_status()
-          print('DETAIL_STATUS',det.status_code,'BYTES',len(det.content),'URL',det.url)
-          ds=BeautifulSoup(det.text,'html.parser')
-          print('TITLE',ds.title.get_text(' ',strip=True) if ds.title else '')
-          print('=== DETAIL TABLES ===')
-          for ti,table in enumerate(ds.find_all('table')):
-              rows=[]
-              for rr in table.find_all('tr'):
-                  cells=[' '.join(c.stripped_strings) for c in rr.find_all(['th','td'])]
-                  if cells: rows.append(cells)
-              if rows:
-                  print('TABLE',ti)
-                  for row in rows[:60]:
-                      print(json.dumps(row,ensure_ascii=False))
-          print('=== LABEL DOM ===')
-          for needle in ['登記機關','案件類別','登記編號','登記核准日期','債務人','抵押權人','擔保債權金額','標的物所在地','標的物種類']:
-              node=ds.find(string=lambda x: x and needle in x)
-              print('NEEDLE',needle,'FOUND',bool(node))
-              if node:
-                  p=node.parent
-                  print('PARENT',p.name,p.attrs,repr(p.get_text(' ',strip=True)[:500]))
-                  gp=p.parent
-                  if gp:
-                      print('GRAND',gp.name,gp.attrs,repr(gp.get_text(' ',strip=True)[:1000]))
-                      print('HTML',str(gp)[:2500].replace('\n',' '))
-          print('=== INPUTS VALUES ===')
-          for el in ds.find_all(['input','textarea','select']):
-              n=el.get('name') or el.get('id')
-              v=el.get('value','')
-              txt=' '.join(el.stripped_strings)
-              if n or v or txt:
-                  print(json.dumps({'tag':el.name,'name':n,'value':v,'text':txt},ensure_ascii=False))
-          print('HAS_AMOUNT_LABEL', '擔保債權金額' in det.text)
-          print('HAS_DEBTOR', '杰程工程有限公司' in det.text)
-          PY
+      - name: Commit sample data
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ppstrq/data/sample_100_company_records.csv ppstrq/data/sample_100_company_records.json
+          if git diff --cached --quiet; then
+            echo "No data changes to commit"
+          else
+            git commit -m "data: add 100-record PPSTRQ public sample"
+            git push
+          fi
