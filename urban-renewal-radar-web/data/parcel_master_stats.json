@@ -1,0 +1,113 @@
+{
+  "generated_at": "2026-09-29T05:23:43.984535+00:00",
+  "parcel_count": 421038,
+  "radar_count": 148415,
+  "ownership_observation_count": 891,
+  "public_land_parcel_count": 147812,
+  "cadastral_cleanup_parcel_count": 19,
+  "zoning_join_count": 420700,
+  "far_bcr_join_count": 0,
+  "public_land_join_rows": 147812,
+  "cleanup_join_rows": 20,
+  "sources": {
+    "land_value": {
+      "bytes": 21251565,
+      "rows": 421031,
+      "encoding": "cp950/strict",
+      "page": "https://data.taipei/dataset/detail?id=7ac6eac3-a998-43ff-a289-6a4e3203c2c3",
+      "url": "https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=7802c9b4-fc64-466c-82fc-ec5884bb6871",
+      "headers": [
+        "縣市別",
+        "行政區",
+        "段小段",
+        "地號",
+        "公告土地現值（新臺幣元每平方公尺）",
+        "公告地價（新臺幣元每平方公尺）"
+      ]
+    },
+    "zoning": {
+      "bytes": 36273239,
+      "rows": 421880,
+      "encoding": "utf-8-sig/strict",
+      "page": "https://data.taipei/dataset/detail?id=a132a433-db7c-4387-8085-83e6a093b17f",
+      "url": "https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=bed9a0d3-cb43-438e-825b-93810f8f2b9d",
+      "headers": [
+        "項次",
+        "區段代碼",
+        "行政區代碼",
+        "行政區",
+        "大段",
+        "小段",
+        "母號",
+        "子號",
+        "分區說明"
+      ]
+    },
+    "far_bcr": {
+      "bytes": 36707,
+      "rows": 823,
+      "encoding": "utf-8-sig/strict",
+      "page": "https://data.taipei/dataset/detail?id=d61ca24b-7b2b-4e75-8004-c568902e6300",
+      "url": "https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=e2a43cdf-07c8-43db-9d37-62bb2e19654b",
+      "headers": [
+        "行政區",
+        "分區",
+        "筆數",
+        "建蔽率/百分比",
+        "容積率上限/百分比",
+        "面積/平方公尺"
+      ]
+    },
+    "public_land": {
+      "bytes": 15187316,
+      "rows": 148049,
+      "encoding": "cp950/replace",
+      "page": "https://data.taipei/dataset/detail?id=ca644935-035e-4ecf-bd93-3d8df351bdb7",
+      "url": "https://tpland.blob.core.windows.net/blobfs/publand.csv",
+      "headers": [
+        "行政區代碼",
+        "行政區",
+        "段代碼",
+        "段小段",
+        "地號",
+        "面積",
+        "當期公告現值金額",
+        "當期公告地價金額",
+        "土地權屬情形",
+        "土地權屬情形_比例",
+        "管理機關"
+      ]
+    },
+    "cadastral_cleanup": {
+      "bytes": 7647,
+      "rows": 65,
+      "encoding": "utf-8-sig/strict",
+      "page": "https://data.gov.tw/dataset/145830",
+      "url": "https://data.taipei/api/dataset/d1a8a4b8-f389-498b-a9bc-d93b64f2c2a9/resource/9f996b76-47e6-449c-9d0a-346cdc21bb42/download",
+      "headers": [
+        "標號",
+        "鄉鎮市區",
+        "段小段",
+        "地號",
+        "面積（平方公尺）",
+        "使用分區/使用地類別",
+        "權利範圍",
+        "原登記名義人",
+        "他項權利人姓名或名稱",
+        "權利種類",
+        "標售底價金額",
+        "標售總底價金額",
+        "保證金金額",
+        "備註"
+      ]
+    }
+  },
+  "field_policy": {
+    "ownership": "申報地價資料只作 observed ownership，不宣稱完整地主母體。",
+    "far_bcr": "由行政區＋土地使用分區連接的分區控制值，非個案最終法定可建量。",
+    "urban_renewal_flag": "尚未接完整全市都更地號母表，目前維持 false，不推論。",
+    "dangerous_old_building_flag": "尚未取得完整地號級免費清冊，目前維持 false，不推論。",
+    "unclaimed_inheritance_flag": "官方有年度公告，但尚未取得穩定結構化全量檔，目前維持 false。",
+    "land_act_34_1_flag": "尚未找到全市結構化免費母表，目前維持 false。"
+  }
+}
