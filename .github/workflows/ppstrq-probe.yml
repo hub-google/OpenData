@@ -77,6 +77,24 @@ jobs:
                   print('TABLE',ti)
                   for row in rows[:60]:
                       print(json.dumps(row,ensure_ascii=False))
+          print('=== LABEL DOM ===')
+          for needle in ['登記機關','案件類別','登記編號','登記核准日期','債務人','抵押權人','擔保債權金額','標的物所在地','標的物種類']:
+              node=ds.find(string=lambda x: x and needle in x)
+              print('NEEDLE',needle,'FOUND',bool(node))
+              if node:
+                  p=node.parent
+                  print('PARENT',p.name,p.attrs,repr(p.get_text(' ',strip=True)[:500]))
+                  gp=p.parent
+                  if gp:
+                      print('GRAND',gp.name,gp.attrs,repr(gp.get_text(' ',strip=True)[:1000]))
+                      print('HTML',str(gp)[:2500].replace('\n',' '))
+          print('=== INPUTS VALUES ===')
+          for el in ds.find_all(['input','textarea','select']):
+              n=el.get('name') or el.get('id')
+              v=el.get('value','')
+              txt=' '.join(el.stripped_strings)
+              if n or v or txt:
+                  print(json.dumps({'tag':el.name,'name':n,'value':v,'text':txt},ensure_ascii=False))
           print('HAS_AMOUNT_LABEL', '擔保債權金額' in det.text)
           print('HAS_DEBTOR', '杰程工程有限公司' in det.text)
           PY
