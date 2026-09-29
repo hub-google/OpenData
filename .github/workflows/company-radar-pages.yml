@@ -33,6 +33,9 @@ jobs:
         with:
           ref: main
 
+      - name: Build Taipei urban-renewal candidates
+        run: python3 urban-renewal-radar-web/scripts/update_urban_renewal.py
+
       - name: Restore company baseline
         id: restore-company-state
         uses: actions/cache/restore@v4
@@ -44,9 +47,6 @@ jobs:
 
       - name: Build real company opportunity feed
         run: python3 company-radar-web/scripts/update_company_radar.py
-
-      - name: Build Taipei urban-renewal candidates
-        run: python3 urban-renewal-radar-web/scripts/update_urban_renewal.py
 
       - name: Save company baseline
         uses: actions/cache/save@v4
