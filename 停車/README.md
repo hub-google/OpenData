@@ -1,7 +1,22 @@
 # 停車
+
 政府 Open Data 智慧找車位實驗專案。
 
 - [PRD](./PRD.md)
-- [GitHub Pages Demo](https://hub-google.github.io/OpenData/%E5%81%9C%E8%BB%8A/)
+- [GitHub Pages](https://hub-google.github.io/OpenData/%E5%81%9C%E8%BB%8A/)
 
-目前頁面使用示意車位資料驗證 UX，尚未宣稱為真實即時空位。下一步接 TDX / 各縣市 Open Data，並把 API secret 放在 serverless backend，而非 GitHub Pages 前端。
+## 目前架構
+
+- GitHub Pages：前端定位、附近搜尋、距離排序。
+- 瀏覽器查詢時優先直接呼叫地方政府即時停車 API，取得該官方來源目前最新的一版。
+- 若地方政府 API 因 CORS、暫時斷線或瀏覽器限制無法直連，自動改讀 GitHub Actions 每 5 分鐘產製的政府 API 快取。
+- GitHub Actions 同時保留停車場基本資料與即時資料快照，不使用示意車位數。
+- 搜尋採座標半徑，不以行政區硬切，因此縣市交界可以同時查多個政府來源並合併排序。
+
+## 已接來源
+
+- 臺北市政府停車 Open Data：靜態停車場 + 即時剩餘車位。
+- 新北市政府資料開放平臺：停車場 + 即時剩餘車位。
+- 桃園市政府資料開放平臺：路外停車即時資訊。
+
+頁面會標示每個來源本次是「官方 API 直連」或「Action 快取」，並顯示資料更新資訊。
