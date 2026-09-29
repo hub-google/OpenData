@@ -12,6 +12,7 @@ on:
       - "construction-radar-web/**"
       - "tender-intelligence-web/**"
       - "disaster-risk-web/**"
+      - "停車/**"
       - ".github/workflows/company-radar-pages.yml"
   workflow_dispatch:
 
@@ -75,11 +76,13 @@ jobs:
           mkdir -p /tmp/opendata-site/tender-intelligence-web
           mkdir -p /tmp/opendata-site/disaster-risk-web
           mkdir -p /tmp/opendata-site/urban-renewal-radar-web
+          mkdir -p /tmp/opendata-site/停車
           cp -R site-selection-web/. /tmp/opendata-site/site-selection-web/
           cp -R construction-radar-web/. /tmp/opendata-site/construction-radar-web/
           cp -R tender-intelligence-web/. /tmp/opendata-site/tender-intelligence-web/
           cp -R disaster-risk-web/. /tmp/opendata-site/disaster-risk-web/
           cp -R urban-renewal-radar-web/. /tmp/opendata-site/urban-renewal-radar-web/
+          cp -R 停車/. /tmp/opendata-site/停車/
           rm -rf /tmp/opendata-site/urban-renewal-radar-web/scripts
           touch /tmp/opendata-site/.nojekyll
 
