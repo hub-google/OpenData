@@ -34,10 +34,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf /tmp/urban-renewal-data
+          mkdir -p /tmp/urban-renewal-data
+          cp -R urban-renewal-radar-web/data/. /tmp/urban-renewal-data/
+          git fetch origin main
+          git reset --hard origin/main
+          rm -rf urban-renewal-radar-web/data
+          mkdir -p urban-renewal-radar-web/data
+          cp -R /tmp/urban-renewal-data/. urban-renewal-radar-web/data/
           git add urban-renewal-radar-web/data
           if ! git diff --cached --quiet; then
             git commit -m "data: refresh urban renewal radar [skip ci]"
-            git pull --rebase origin main
             git push origin HEAD:main
           fi
       - name: Prepare urban renewal site
