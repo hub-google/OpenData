@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: "opendata-pages-publish-v3"
+  group: "opendata-pages-publish-v4"
   cancel-in-progress: true
 
 jobs:
@@ -32,6 +32,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
+
+      - name: Build free parcel ownership observations
+        run: python3 urban-renewal-radar-web/scripts/update_parcel_ownership.py
 
       - name: Build Taipei urban-renewal candidates
         run: python3 urban-renewal-radar-web/scripts/update_urban_renewal.py
