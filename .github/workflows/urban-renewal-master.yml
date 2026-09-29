@@ -30,5 +30,6 @@ jobs:
           git add urban-renewal-radar-web/data/parcel_ownership.json urban-renewal-radar-web/data/parcel_ownership.csv urban-renewal-radar-web/data/ownership_validation.json urban-renewal-radar-web/data/parcel_master.csv.gz urban-renewal-radar-web/data/parcel_master_stats.json urban-renewal-radar-web/data/parcel_radar.json
           if ! git diff --cached --quiet; then
             git commit -m "data: refresh zero-cost Taipei parcel database [skip ci]"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
