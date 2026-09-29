@@ -1,11 +1,6 @@
 name: Build zero-cost parcel master
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
-    paths:
-      - "urban-renewal-radar-web/scripts/update_parcel_master.py"
-      - ".github/workflows/urban-renewal-master.yml"
 permissions:
   contents: write
 concurrency:
