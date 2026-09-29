@@ -1,5 +1,4 @@
-name: PPSTRQ Sample
-# Company-only sample; avoids natural-person records
+name: PPSTRQ Keyword Probe
 
 on:
   workflow_dispatch:
@@ -8,32 +7,61 @@ on:
       - '.github/workflows/ppstrq-probe.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  sample:
+  probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch 100 public company/business cases
+      - name: Probe safe company-oriented keywords
         shell: bash
         run: |
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check -q requests beautifulsoup4
-          python3 ppstrq/scrape_sample.py
+          python3 - <<'PY'
+          import re
+          from urllib.parse import urljoin
+          import requests
+          from bs4 import BeautifulSoup
 
-      - name: Commit sample data
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ppstrq/data/sample_100_company_records.csv ppstrq/data/sample_100_company_records.json
-          if git diff --cached --quiet; then
-            echo "No data changes to commit"
-          else
-            git commit -m "data: add 100-record PPSTRQ public sample"
-            git push
-          fi
+          URL='https://ppstrq.nat.gov.tw/pps/pubQuery/PropertyQuery/propertyQuery.do'
+          terms=['科技','工業','工程','企業','租賃','實業','國際','機械']
+
+          def fields(form):
+              out={}
+              for el in form.find_all(['input','select','textarea']):
+                  n=el.get('name')
+                  if not n: continue
+                  t=(el.get('type') or '').lower()
+                  if t in {'button','submit','reset','radio','checkbox'}: continue
+                  out[n]=el.get('value','')
+              return out
+
+          for term in terms:
+              s=requests.Session()
+              s.headers.update({'User-Agent':'Mozilla/5.0 Chrome/153 Safari/537.36'})
+              g=s.get(URL,timeout=30); g.raise_for_status()
+              soup=BeautifulSoup(g.text,'html.parser')
+              form=soup.find('form',id='queryForm')
+              data=fields(form)
+              data.update({
+                  'method':'query','currentPage':'0',
+                  'debtorType':'1','debtorTypeRadio':'1',
+                  'queryDebtorName':term,'queryDebtorNo':'',
+                  'creditorType':'','queryCreditorName':'','queryCreditorNo':''
+              })
+              r=s.post(urljoin(g.url,form.get('action','')),data=data,headers={'Referer':g.url},timeout=45)
+              r.raise_for_status()
+              m=re.search(r'此查詢總筆數：\s*([0-9,]+)筆',r.text)
+              soup2=BeautifulSoup(r.text,'html.parser')
+              tp=soup2.find('input',{'name':'totalPage'})
+              rows=sum(1 for tr in soup2.find_all('tr') if 'goDetail' in tr.get('onclick',''))
+              alerts=[]
+              for script in soup2.find_all('script'):
+                  txt=script.string or script.get_text()
+                  if term in txt or '查詢' in txt:
+                      for x in re.findall(r'alert\(["\']([^"\']+)',txt):
+                          alerts.append(x)
+              print(term,'total=',m.group(1) if m else None,'pages=',tp.get('value') if tp else None,'rows=',rows,'alerts=',alerts[:3])
+          PY
