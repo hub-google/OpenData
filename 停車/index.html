@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>停車｜找附近空位</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;background:#f5f7fb;color:#14213d}
+header{padding:18px 20px;background:#14213d;color:white;display:flex;justify-content:space-between;align-items:center}header b{font-size:22px}.tag{font-size:12px;background:#2ec4b6;padding:5px 9px;border-radius:99px}
+main{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 65px)}aside{padding:16px;overflow:auto;background:white;border-right:1px solid #e5e7eb}
+.search{display:flex;gap:8px}.search input{flex:1;padding:12px;border:1px solid #d8dee9;border-radius:10px}.btn{border:0;border-radius:10px;padding:11px 13px;background:#1769e0;color:white;font-weight:700;cursor:pointer}
+.filters{display:flex;gap:7px;margin:12px 0;flex-wrap:wrap}.filter{padding:8px 10px;border:1px solid #dce2ea;border-radius:99px;background:white;cursor:pointer}.filter.active{background:#14213d;color:white}
+.notice{font-size:12px;padding:10px;background:#fff7d6;border-radius:9px;margin-bottom:12px;color:#695b16}
+.card{border:1px solid #e5e7eb;border-radius:14px;padding:13px;margin:10px 0;cursor:pointer}.card:hover{border-color:#1769e0}.row{display:flex;justify-content:space-between;gap:8px}.name{font-weight:800}.available{font-weight:800;color:#087f5b}.muted{color:#6b7280;font-size:12px;margin-top:6px}.chips{display:flex;gap:5px;margin-top:8px}.chip{font-size:11px;padding:4px 7px;border-radius:6px;background:#eef2ff}.free{background:#dcfce7;color:#166534}
+#map{height:100%}.watch{position:absolute;z-index:1000;right:18px;bottom:24px;background:white;padding:14px;border-radius:15px;box-shadow:0 5px 24px #0002;width:260px}.watch strong{display:block;margin-bottom:5px}.watch p{font-size:12px;color:#6b7280;margin:5px 0 10px}
+@media(max-width:760px){main{display:block;height:auto}aside{height:48vh}#map{height:52vh}.watch{width:220px}}
+</style></head><body>
+<header><b>🚗 停車</b><span class="tag">Open Data MVP</span></header>
+<main><aside>
+<div class="search"><input id="q" placeholder="輸入目的地，例如：台北車站"><button class="btn" onclick="fakeSearch()">搜尋</button></div>
+<div class="filters"><button class="filter active" data-f="all">全部</button><button class="filter" data-f="available">目前有位</button><button class="filter" data-f="free">免費</button></div>
+<div class="notice">⚠️ 目前是 GitHub Pages UX Demo，車位數為示意資料；下一階段接 TDX / 縣市即時 Open Data。</div>
+<div id="list"></div>
+</aside><section style="position:relative"><div id="map"></div><div class="watch"><strong>🔔 不想一直重整？</strong><p>設定目的地周邊 800m，有空位時通知你。</p><button class="btn" style="width:100%" onclick="watch()">守候這區</button></div></section></main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const data=[
+{id:1,name:'市民大道公中段停車場',lat:25.0481,lng:121.5188,total:486,avail:37,fee:'40元/時',free:false,update:'2 分鐘前',dist:280},
+{id:2,name:'台北車站地下停車場',lat:25.0469,lng:121.5165,total:220,avail:8,fee:'50元/時',free:false,update:'1 分鐘前',dist:390},
+{id:3,name:'北門廣場周邊路邊格',lat:25.0496,lng:121.5107,total:26,avail:4,fee:'目前免費',free:true,update:'3 分鐘前',dist:720},
+{id:4,name:'中山北路路邊停車格',lat:25.0521,lng:121.5225,total:18,avail:0,fee:'30元/時',free:false,update:'4 分鐘前',dist:910},
+{id:5,name:'華陰街公有停車場',lat:25.0502,lng:121.5153,total:96,avail:21,fee:'30元/時',free:false,update:'2 分鐘前',dist:510}
+];
+const map=L.map('map').setView([25.048,121.517],15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+let markers=[];let filter='all';
+function render(){
+ markers.forEach(m=>map.removeLayer(m));markers=[];
+ const rows=data.filter(x=>filter==='all'||filter==='available'&&x.avail>0||filter==='free'&&x.free);
+ document.getElementById('list').innerHTML=rows.map(x=>'<div class="card" onclick="focusP('+x.id+')"><div class="row"><span class="name">'+x.name+'</span><span class="available">'+(x.avail>0?'剩 '+x.avail+' 格':'目前滿位')+'</span></div><div class="muted">'+x.dist+'m ・ '+x.fee+' ・ 更新 '+x.update+'</div><div class="chips"><span class="chip">總 '+x.total+' 格</span>'+(x.free?'<span class="chip free">免費</span>':'')+'<span class="chip">即時示意</span></div></div>').join('');
+ rows.forEach(x=>{let m=L.marker([x.lat,x.lng]).addTo(map).bindPopup('<b>'+x.name+'</b><br>剩餘 '+x.avail+' 格<br>'+x.fee+'<br><a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination='+x.lat+','+x.lng+'">開始導航</a>');markers.push(m)})
+}
+function focusP(id){const x=data.find(v=>v.id===id);map.setView([x.lat,x.lng],17);markers.find(m=>m.getLatLng().lat===x.lat)?.openPopup()}
+document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;render()});
+function fakeSearch(){const q=document.getElementById('q').value.trim();if(q) alert('Demo：下一版會把「'+q+'」做地理編碼，再搜尋半徑內真實停車資料。')}
+function watch(){alert('已建立 Demo 守候：800m 內出現空位時通知。正式版會由後端排程 + LINE MINI App Service Message 完成。')}
+render();
+</script></body></html>
