@@ -161,6 +161,8 @@ def main():
             p["data_flags"].append("declared_land_price_ownership_observation")
 
     zoning,zmeta=rows_for("zoning")
+    print("DEBUG land_value_keys", [(pick(r,"行政區"),pick(r,"段小段"),pick(r,"地號")) for r in lv[:5]])
+    print("DEBUG zoning_keys", [(pick(r,"行政區"),pick(r,"大段"),pick(r,"小段"),pick(r,"母號"),pick(r,"子號")) for r in zoning[:5]])
     zone_hits=0
     for r in zoning:
         district=pick(r,"行政區");section=clean(pick(r,"大段")+pick(r,"小段"))
@@ -192,6 +194,7 @@ def main():
             control_hits+=1
 
     pub,pubmeta=rows_for("public_land")
+    print("DEBUG public_land_keys", [(pick(r,"行政區"),pick(r,"段小段"),pick(r,"地號")) for r in pub[:5]])
     public_hits=0
     for r in pub:
         district=pick(r,"行政區");section=pick(r,"段小段");raw=raw_land_no(pick(r,"地號"))
