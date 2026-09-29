@@ -23,10 +23,27 @@ def fetch(url:str)->bytes:
         return r.read()
 
 def decode(blob:bytes)->str:
-    for enc in ("utf-8-sig","utf-8","cp950","big5"):
-        try:return blob.decode(enc)
-        except UnicodeDecodeError:pass
-    return blob.decode("utf-8",errors="replace")
+    # Taipei metadata marks this resource BIG5. Some rows may contain bytes that
+    # fail strict cp950 decoding, so choose the decoding by Chinese-header hits
+    # instead of accepting the first codec that merely does not throw.
+    candidates=[]
+    needles=["行政區","段小段","地號","所有權登記次序","所有權持分分母","所有權持分分子"]
+    for enc in ("cp950","big5hkscs","big5","utf-8-sig","utf-8"):
+        for errors in ("strict","replace"):
+            try:
+                s=blob.decode(enc,errors=errors)
+            except UnicodeDecodeError:
+                continue
+            head=s[:2000]
+            score=sum(1 for x in needles if x in head)
+            replacements=head.count("\ufffd")
+            candidates.append((score,-replacements,enc,errors,s))
+    if not candidates:
+        return blob.decode("cp950",errors="replace")
+    candidates.sort(key=lambda x:(x[0],x[1]),reverse=True)
+    score,_,enc,errors,s=candidates[0]
+    print(f"decode={enc}/{errors}; header_hits={score}")
+    return s
 
 def clean(s):
     return re.sub(r"\s+","",str(s or "").replace("\ufeff",""))
