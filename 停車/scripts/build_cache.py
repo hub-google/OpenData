@@ -122,11 +122,13 @@ def main():
                 **info,
             }
         except Exception as e:
+            previous = out / filename
             meta["sources"][filename] = {
                 "url": spec["url"],
                 "error": f"{type(e).__name__}: {e}",
+                "using_previous_cache": previous.exists(),
             }
-            if not spec.get("optional"):
+            if not spec.get("optional") and not previous.exists():
                 raise
 
     for filename, data in staged.items():
