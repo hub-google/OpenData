@@ -49,49 +49,21 @@ jobs:
             rm -rf 停車
             mkdir -p 停車/data
             cp -R ../source/停車/. 停車/
+            python3 ../source/停車/scripts/build_cache.py 停車/data
             rm -rf 停車/scripts
-            mkdir -p 停車/data
-
-            python3 - <<'PY'
-          import json, urllib.request
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          targets = {
-              "taipei-static.json": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json",
-              "taipei-realtime.json": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json",
-              "taoyuan.json": "https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download",
-          }
-          out = Path("停車/data")
-          out.mkdir(parents=True, exist_ok=True)
-          meta = {"fetched_at": datetime.now(timezone.utc).isoformat(), "sources": {}}
-          for fn, url in targets.items():
-              req = urllib.request.Request(url, headers={"User-Agent":"OpenData-Parking/1.0"})
-              with urllib.request.urlopen(req, timeout=45) as r:
-                  raw = r.read()
-              data = json.loads(raw.decode("utf-8-sig"))
-              (out / fn).write_text(json.dumps(data, ensure_ascii=False, separators=(",",":")), encoding="utf-8")
-              if isinstance(data, list):
-                  count = len(data)
-              elif isinstance(data, dict) and isinstance(data.get("data"), dict) and isinstance(data["data"].get("park"), list):
-                  count = len(data["data"]["park"])
-              else:
-                  count = None
-              meta["sources"][fn] = {"url": url, "count": count}
-          (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
-          print(json.dumps(meta, ensure_ascii=False))
-          PY
-
             touch .nojekyll
+
             git add 停車 .nojekyll
             if git diff --cached --quiet; then
               echo "No parking changes"
               exit 0
             fi
+
             git commit -m "Publish parking page with live Open Data"
             if git push --force-with-lease origin HEAD:gh-pages; then
               exit 0
             fi
+
             echo "Push raced with another publisher; retrying..."
             sleep $((attempt * 2))
           done
