@@ -1,0 +1,31 @@
+name: Validate free parcel ownership data
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "urban-renewal-radar-web/scripts/update_parcel_ownership.py"
+      - ".github/workflows/urban-renewal-validation.yml"
+permissions:
+  contents: write
+concurrency:
+  group: "urban-renewal-validation"
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Build parcel ownership observations
+        run: python3 urban-renewal-radar-web/scripts/update_parcel_ownership.py
+      - name: Commit validation outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add urban-renewal-radar-web/data/parcel_ownership.json urban-renewal-radar-web/data/parcel_ownership.csv urban-renewal-radar-web/data/ownership_validation.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: validate free Taipei parcel ownership observations [skip ci]"
+            git push origin HEAD:main
+          fi
