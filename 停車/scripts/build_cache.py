@@ -6,21 +6,36 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SOURCES = {
-    "taipei-static.json": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json",
-    "taipei-realtime.json": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json",
-    "ntpc-static.json": "https://data.ntpc.gov.tw/api/datasets/b1464ef0-9c7c-4a6f-abf7-6bdf32847e68/json?page=0&size=2000",
-    "ntpc-realtime.json": "https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000",
-    "taoyuan.json": "https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download",
-}
-MIN_COUNTS = {
-    "taipei-static.json": 1000,
-    "taipei-realtime.json": 500,
-    "ntpc-static.json": 100,
-    "ntpc-realtime.json": 50,
-    "taoyuan.json": 100,
+    "taipei-static.json": {
+        "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json",
+        "min": 1000,
+    },
+    "taipei-realtime.json": {
+        "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json",
+        "min": 500,
+    },
+    "ntpc-static.json": {
+        "url": "https://data.ntpc.gov.tw/api/datasets/b1464ef0-9c7c-4a6f-abf7-6bdf32847e68/json",
+        "min": 100,
+        "paged": True,
+    },
+    "ntpc-realtime.json": {
+        "url": "https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json",
+        "min": 50,
+        "paged": True,
+    },
+    "taoyuan.json": {
+        "url": "https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download",
+        "min": 100,
+    },
+    "taichung.json": {
+        "url": "https://motoretag.taichung.gov.tw/DataAPI/api/ParkingAPIV2/Opendata",
+        "min": 1,
+        "optional": True,
+    },
 }
 
-def fetch_json(url):
+def request_json(url):
     req = urllib.request.Request(
         url,
         headers={
@@ -60,8 +75,25 @@ def extract_rows(data):
             return data[key]
     return []
 
-def count_records(data):
-    return len(extract_rows(data))
+def fetch_paged(base_url):
+    merged = []
+    page = 0
+    last_info = {}
+    while page < 20:
+        url = f"{base_url}?page={page}&size=1000"
+        data, info = request_json(url)
+        rows = extract_rows(data)
+        last_info = info
+        merged.extend(rows)
+        if len(rows) < 1000:
+            break
+        page += 1
+    return merged, {**last_info, "pages": page + 1}
+
+def fetch_source(spec):
+    if spec.get("paged"):
+        return fetch_paged(spec["url"])
+    return request_json(spec["url"])
 
 def main():
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "data")
@@ -72,13 +104,25 @@ def main():
     }
 
     staged = {}
-    for filename, url in SOURCES.items():
-        data, info = fetch_json(url)
-        count = count_records(data)
-        if count < MIN_COUNTS[filename]:
-            raise RuntimeError(f"{filename}: unexpected record count {count}")
-        staged[filename] = data
-        meta["sources"][filename] = {"url": url, "count": count, **info}
+    for filename, spec in SOURCES.items():
+        try:
+            data, info = fetch_source(spec)
+            count = len(extract_rows(data))
+            if count < spec["min"]:
+                raise RuntimeError(f"unexpected record count {count}")
+            staged[filename] = data
+            meta["sources"][filename] = {
+                "url": spec["url"],
+                "count": count,
+                **info,
+            }
+        except Exception as e:
+            meta["sources"][filename] = {
+                "url": spec["url"],
+                "error": f"{type(e).__name__}: {e}",
+            }
+            if not spec.get("optional"):
+                raise
 
     for filename, data in staged.items():
         (out / filename).write_text(
