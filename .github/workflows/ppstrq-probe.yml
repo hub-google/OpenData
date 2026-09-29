@@ -1,4 +1,4 @@
-name: PPSTRQ Business Sample
+name: PPSTRQ Blank Query Probe
 
 on:
   workflow_dispatch:
@@ -7,32 +7,58 @@ on:
       - '.github/workflows/ppstrq-probe.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  sample:
+  probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch 100 public business cases
+      - name: Test server-side blank company query
         shell: bash
         run: |
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check -q requests beautifulsoup4
-          python3 ppstrq/scrape_sample.py
+          python3 - <<'PY'
+          import re
+          from urllib.parse import urljoin
+          import requests
+          from bs4 import BeautifulSoup
 
-      - name: Commit cleaned business-only sample
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ppstrq/data/sample_100_company_records.csv ppstrq/data/sample_100_company_records.json
-          if git diff --cached --quiet; then
-            echo "No data changes to commit"
-          else
-            git commit -m "data: refresh PPSTRQ 100-record business sample"
-            git push
-          fi
+          URL='https://ppstrq.nat.gov.tw/pps/pubQuery/PropertyQuery/propertyQuery.do'
+          s=requests.Session()
+          s.headers.update({'User-Agent':'Mozilla/5.0 Chrome/153 Safari/537.36'})
+          g=s.get(URL,timeout=30); g.raise_for_status()
+          soup=BeautifulSoup(g.text,'html.parser')
+          form=soup.find('form',id='queryForm')
+          data={}
+          for el in form.find_all(['input','select','textarea']):
+              n=el.get('name')
+              if not n: continue
+              t=(el.get('type') or '').lower()
+              if t in {'button','submit','reset','radio','checkbox'}: continue
+              data[n]=el.get('value','')
+          data.update({
+              'method':'query','currentPage':'0',
+              'debtorType':'1','debtorTypeRadio':'1',
+              'queryDebtorName':'','queryDebtorNo':'',
+              'creditorType':'','queryCreditorName':'','queryCreditorNo':''
+          })
+          r=s.post(urljoin(g.url,form.get('action','')),data=data,headers={'Referer':g.url},timeout=45)
+          r.raise_for_status()
+          out=BeautifulSoup(r.text,'html.parser')
+          m=re.search(r'此查詢總筆數：\s*([0-9,]+)筆',r.text)
+          cp=out.find('input',{'name':'currentPage'})
+          tp=out.find('input',{'name':'totalPage'})
+          rows=[tr for tr in out.find_all('tr') if 'goDetail' in tr.get('onclick','')]
+          print('TOTAL',m.group(1) if m else None)
+          print('CURRENT_PAGE',cp.get('value') if cp else None)
+          print('TOTAL_PAGE',tp.get('value') if tp else None)
+          print('ROWS',len(rows))
+          # print only validation/error messages, not record data
+          visible=' '.join(out.stripped_strings)
+          for phrase in ['請輸入債務人','查詢條件','查詢筆數','資料過多','無資料']:
+              if phrase in visible:
+                  i=visible.find(phrase)
+                  print('MESSAGE',visible[max(0,i-80):i+180])
+          PY
