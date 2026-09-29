@@ -1,0 +1,34 @@
+name: Build zero-cost parcel master
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "urban-renewal-radar-web/scripts/update_parcel_master.py"
+      - ".github/workflows/urban-renewal-master.yml"
+permissions:
+  contents: write
+concurrency:
+  group: "urban-renewal-master"
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Refresh ownership observations
+        run: python3 urban-renewal-radar-web/scripts/update_parcel_ownership.py
+      - name: Build parcel master
+        run: python3 urban-renewal-radar-web/scripts/update_parcel_master.py
+      - name: Commit generated parcel database
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add urban-renewal-radar-web/data/parcel_ownership.json urban-renewal-radar-web/data/parcel_ownership.csv urban-renewal-radar-web/data/ownership_validation.json urban-renewal-radar-web/data/parcel_master.csv.gz urban-renewal-radar-web/data/parcel_master_stats.json urban-renewal-radar-web/data/parcel_radar.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh zero-cost Taipei parcel database [skip ci]"
+            git push origin HEAD:main
+          fi
