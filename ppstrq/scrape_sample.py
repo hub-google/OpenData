@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 BASE = "https://ppstrq.nat.gov.tw"
 QUERY_URL = BASE + "/pps/pubQuery/PropertyQuery/propertyQuery.do"
 DETAIL_URL = BASE + "/pps/pubQuery/PropertyQuery/propertyDetail.do"
-KEYWORD = "杰"
+KEYWORD = "有限公司"
 LIMIT = 100
 DELAY_SECONDS = 0.8
 
@@ -275,7 +275,7 @@ def main():
 
     payload = {
         "source": QUERY_URL,
-        "scope": "company/business debtor records (debtorType=1)",
+        "scope": "company debtor records (debtorType=1; debtor name contains 有限公司)",
         "query_keyword": KEYWORD,
         "query_total_matches_at_run": total,
         "query_total_pages_at_run": total_pages,
