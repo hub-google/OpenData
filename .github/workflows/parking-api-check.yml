@@ -42,4 +42,16 @@ jobs:
                       print(f"{name}: json_ok count={count} sample_keys={list(sample)[:15] if isinstance(sample,dict) else type(sample).__name__}")
               except Exception as e:
                   print(f"{name}: ERROR {type(e).__name__}: {e}")
+          site = "https://hub-google.github.io/OpenData/%E5%81%9C%E8%BB%8A/"
+          with urllib.request.urlopen(site, timeout=30) as r:
+              html = r.read().decode("utf-8", errors="replace")
+              print(f"public_site: status={r.status} bytes={len(html)}")
+              assert "NO DEMO DATA" in html
+              assert "UX Demo" not in html
+          with urllib.request.urlopen(site + "data/meta.json", timeout=30) as r:
+              live_meta = json.loads(r.read().decode("utf-8"))
+              print("public_meta:", json.dumps(live_meta, ensure_ascii=False))
+              assert live_meta["sources"]["taipei-static.json"]["count"] >= 1000
+              assert live_meta["sources"]["taipei-realtime.json"]["count"] >= 500
+              assert live_meta["sources"]["taoyuan.json"]["count"] >= 100
           PY
