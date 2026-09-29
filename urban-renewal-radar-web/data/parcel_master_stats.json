@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-29T06:18:48.662527+00:00",
+  "generated_at": "2026-09-29T07:22:26.087157+00:00",
   "parcel_count": 421038,
   "radar_count": 148415,
   "ownership_observation_count": 891,
   "public_land_parcel_count": 147812,
   "cadastral_cleanup_parcel_count": 19,
   "zoning_join_count": 420700,
-  "far_bcr_join_count": 0,
+  "far_bcr_join_count": 218132,
   "public_land_join_rows": 147812,
   "cleanup_join_rows": 20,
   "sources": {
