@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-09-29T05:05:36.052315+00:00",
+    "generated_at": "2026-09-29T05:08:56.777219+00:00",
     "source_page": "https://data.taipei/dataset/detail?id=e434a75a-5692-4a41-bb29-edb97d7f624e",
     "download_url": "https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=e96325f8-7c25-4369-9ee2-04a0ad9fb551",
     "raw_bytes": 118151,
@@ -25,23 +25,23 @@
   },
   "samples": [
     {
-      "parcel_id": "北投區|關渡段一小段|05390000",
+      "parcel_id": "文山區|興隆段三小段|01710000",
       "county": "臺北市",
-      "district": "北投區",
-      "section": "關渡段一小段",
+      "district": "文山區",
+      "section": "興隆段三小段",
       "subsection": null,
-      "land_no": "539",
-      "land_no_raw": "05390000",
-      "land_area": 97.0,
-      "announced_land_price": 2700.0,
-      "declared_land_price": 3240.0,
+      "land_no": "171",
+      "land_no_raw": "01710000",
+      "land_area": 69.0,
+      "announced_land_price": 54778.0,
+      "declared_land_price": 65733.0,
       "observed_owner_records": 3,
       "observed_owner_rows": 3,
-      "max_share": 0.03777778,
-      "top2_share": 0.07555556,
-      "top3_share": 0.11333333,
-      "observed_share_sum": 0.11333333,
-      "share_hhi": 0.00428148,
+      "max_share": 0.01851852,
+      "top2_share": 0.03703704,
+      "top3_share": 0.05555556,
+      "observed_share_sum": 0.05555556,
+      "share_hhi": 0.00102881,
       "share_hhi_normalized_observed": 0.33333333,
       "has_common_ownership": false,
       "ownership_data_completeness": "partial",
@@ -52,44 +52,46 @@
       ],
       "owner_records": [
         {
-          "registration_seq": "0036",
+          "registration_seq": "0045",
           "share_type": null,
-          "share_numerator": 68.0,
-          "share_denominator": 1800.0,
-          "share": 0.03777778
+          "share_numerator": 1.0,
+          "share_denominator": 54.0,
+          "share": 0.01851852
         },
         {
-          "registration_seq": "0037",
+          "registration_seq": "0043",
           "share_type": null,
-          "share_numerator": 68.0,
-          "share_denominator": 1800.0,
-          "share": 0.03777778
+          "share_numerator": 1.0,
+          "share_denominator": 54.0,
+          "share": 0.01851852
         },
         {
           "registration_seq": "0044",
           "share_type": null,
-          "share_numerator": 68.0,
-          "share_denominator": 1800.0,
-          "share": 0.03777778
+          "share_numerator": 1.0,
+          "share_denominator": 54.0,
+          "share": 0.01851852
         }
       ],
-      "ownership_complexity_score": 69,
-      "integration_difficulty": "高",
+      "ownership_complexity_score": 8,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "低",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "最大觀察持分僅 3.8%",
-        "前三大觀察持分合計僅 11.3%",
-        "觀察持分 HHI 0.004，分散度高"
+        "至少觀察到 3 筆所有權登記",
+        "公開資料持分合計僅 5.6%，集中度指標不納入難度分數"
       ]
     },
     {
-      "parcel_id": "士林區|菁山段一小段|03140000",
+      "parcel_id": "士林區|菁山段二小段|01870000",
       "county": "臺北市",
       "district": "士林區",
-      "section": "菁山段一小段",
+      "section": "菁山段二小段",
       "subsection": null,
-      "land_no": "314",
-      "land_no_raw": "03140000",
-      "land_area": 735.41,
+      "land_no": "187",
+      "land_no_raw": "01870000",
+      "land_area": 1436.09,
       "announced_land_price": 3200.0,
       "declared_land_price": 3840.0,
       "observed_owner_records": 2,
@@ -109,37 +111,39 @@
       ],
       "owner_records": [
         {
-          "registration_seq": "0036",
+          "registration_seq": "0037",
           "share_type": null,
           "share_numerator": 1.0,
           "share_denominator": 64.0,
           "share": 0.015625
         },
         {
-          "registration_seq": "0035",
+          "registration_seq": "0036",
           "share_type": null,
           "share_numerator": 1.0,
           "share_denominator": 64.0,
           "share": 0.015625
         }
       ],
-      "ownership_complexity_score": 69,
-      "integration_difficulty": "高",
+      "ownership_complexity_score": 8,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "低",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "最大觀察持分僅 1.6%",
-        "前三大觀察持分合計僅 3.1%",
-        "觀察持分 HHI 0.000，分散度高"
+        "至少觀察到 2 筆所有權登記",
+        "公開資料持分合計僅 3.1%，集中度指標不納入難度分數"
       ]
     },
     {
-      "parcel_id": "北投區|關渡段一小段|05400000",
+      "parcel_id": "北投區|關渡段一小段|05470000",
       "county": "臺北市",
       "district": "北投區",
       "section": "關渡段一小段",
       "subsection": null,
-      "land_no": "540",
-      "land_no_raw": "05400000",
-      "land_area": 584.0,
+      "land_no": "547",
+      "land_no_raw": "05470000",
+      "land_area": 850.0,
       "announced_land_price": 2700.0,
       "declared_land_price": 3240.0,
       "observed_owner_records": 5,
@@ -194,31 +198,34 @@
           "share": 0.16666667
         }
       ],
-      "ownership_complexity_score": 45,
+      "ownership_complexity_score": 41,
       "integration_difficulty": "中",
+      "integration_difficulty_lower_bound": "中",
+      "ownership_score_confidence": "medium",
+      "observed_share_reliability": "internally_complete",
       "complexity_reasons": [
-        "公開資料觀察到 5 筆所有權登記"
+        "至少觀察到 5 筆所有權登記"
       ]
     },
     {
-      "parcel_id": "內湖區|碧湖段四小段|00860000",
+      "parcel_id": "內湖區|康寧段三小段|03500000",
       "county": "臺北市",
       "district": "內湖區",
-      "section": "碧湖段四小段",
+      "section": "康寧段三小段",
       "subsection": null,
-      "land_no": "86",
-      "land_no_raw": "00860000",
-      "land_area": 26.0,
-      "announced_land_price": 73100.0,
-      "declared_land_price": 87720.0,
+      "land_no": "350",
+      "land_no_raw": "03500000",
+      "land_area": 1061.0,
+      "announced_land_price": 14775.0,
+      "declared_land_price": 17730.0,
       "observed_owner_records": 2,
       "observed_owner_rows": 2,
-      "max_share": 0.06686508,
-      "top2_share": 0.07207341,
-      "top3_share": 0.07207341,
-      "observed_share_sum": 0.07207341,
-      "share_hhi": 0.00449807,
-      "share_hhi_normalized_observed": 0.86591569,
+      "max_share": 0.05,
+      "top2_share": 0.06428571,
+      "top3_share": 0.06428571,
+      "observed_share_sum": 0.06428571,
+      "share_hhi": 0.00270408,
+      "share_hhi_normalized_observed": 0.65432099,
       "has_common_ownership": false,
       "ownership_data_completeness": "partial",
       "ownership_completeness_note": "申報地價資料無法證明已涵蓋該地號目前全部所有權登記；即使觀察持分合計為100%，仍不標示confirmed。",
@@ -228,26 +235,28 @@
       ],
       "owner_records": [
         {
-          "registration_seq": "0094",
+          "registration_seq": "0081",
           "share_type": null,
-          "share_numerator": 10.0,
-          "share_denominator": 1920.0,
-          "share": 0.00520833
+          "share_numerator": 1.0,
+          "share_denominator": 70.0,
+          "share": 0.01428571
         },
         {
-          "registration_seq": "0074",
+          "registration_seq": "0036",
           "share_type": null,
-          "share_numerator": 337.0,
-          "share_denominator": 5040.0,
-          "share": 0.06686508
+          "share_numerator": 6.0,
+          "share_denominator": 120.0,
+          "share": 0.05
         }
       ],
-      "ownership_complexity_score": 69,
-      "integration_difficulty": "高",
+      "ownership_complexity_score": 8,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "低",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "最大觀察持分僅 6.7%",
-        "前三大觀察持分合計僅 7.2%",
-        "觀察持分 HHI 0.004，分散度高"
+        "至少觀察到 2 筆所有權登記",
+        "公開資料持分合計僅 6.4%，集中度指標不納入難度分數"
       ]
     },
     {
@@ -355,74 +364,77 @@
           "share": 0.0016374
         }
       ],
-      "ownership_complexity_score": 87,
-      "integration_difficulty": "很高",
+      "ownership_complexity_score": 30,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "中",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "公開資料觀察到 11 筆所有權登記",
-        "最大觀察持分僅 0.7%",
-        "前三大觀察持分合計僅 1.4%",
-        "觀察持分 HHI 0.000，分散度高"
+        "至少觀察到 11 筆所有權登記",
+        "公開資料持分合計僅 2.4%，集中度指標不納入難度分數"
       ]
     },
     {
-      "parcel_id": "中山區|北安段四小段|01470000",
+      "parcel_id": "大同區|大同段二小段|05670000",
       "county": "臺北市",
-      "district": "中山區",
-      "section": "北安段四小段",
+      "district": "大同區",
+      "section": "大同段二小段",
       "subsection": null,
-      "land_no": "147",
-      "land_no_raw": "01470000",
-      "land_area": 31069.0,
-      "announced_land_price": 2100.0,
-      "declared_land_price": 2520.0,
+      "land_no": "567",
+      "land_no_raw": "05670000",
+      "land_area": 14.0,
+      "announced_land_price": 61800.0,
+      "declared_land_price": 61800.0,
       "observed_owner_records": 2,
       "observed_owner_rows": 2,
-      "max_share": 0.03285714,
-      "top2_share": 0.05369048,
-      "top3_share": 0.05369048,
-      "observed_share_sum": 0.05369048,
-      "share_hhi": 0.00151362,
-      "share_hhi_normalized_observed": 0.52507608,
+      "max_share": 0.5,
+      "top2_share": 0.75,
+      "top3_share": 0.75,
+      "observed_share_sum": 0.75,
+      "share_hhi": 0.3125,
+      "share_hhi_normalized_observed": 0.55555556,
       "has_common_ownership": false,
       "ownership_data_completeness": "partial",
       "ownership_completeness_note": "申報地價資料無法證明已涵蓋該地號目前全部所有權登記；即使觀察持分合計為100%，仍不標示confirmed。",
       "observed_shares_sum_to_one": false,
       "declared_price_status": [
-        "按公告地價120%申報者"
+        "按公告地價100%申報者"
       ],
       "owner_records": [
         {
-          "registration_seq": "0080",
+          "registration_seq": "0002",
           "share_type": null,
-          "share_numerator": 3.0,
-          "share_denominator": 144.0,
-          "share": 0.02083333
+          "share_numerator": 1.0,
+          "share_denominator": 4.0,
+          "share": 0.25
         },
         {
-          "registration_seq": "0036",
+          "registration_seq": "0003",
           "share_type": null,
-          "share_numerator": 23.0,
-          "share_denominator": 700.0,
-          "share": 0.03285714
+          "share_numerator": 1.0,
+          "share_denominator": 2.0,
+          "share": 0.5
         }
       ],
-      "ownership_complexity_score": 69,
-      "integration_difficulty": "高",
+      "ownership_complexity_score": 8,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "低",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "最大觀察持分僅 3.3%",
-        "前三大觀察持分合計僅 5.4%",
-        "觀察持分 HHI 0.002，分散度高"
+        "至少觀察到 2 筆所有權登記",
+        "公開資料持分合計僅 75.0%，集中度指標不納入難度分數"
       ]
     },
     {
-      "parcel_id": "中山區|北安段四小段|01400000",
+      "parcel_id": "中山區|北安段四小段|01410000",
       "county": "臺北市",
       "district": "中山區",
       "section": "北安段四小段",
       "subsection": null,
-      "land_no": "140",
-      "land_no_raw": "01400000",
-      "land_area": 1298.0,
+      "land_no": "141",
+      "land_no_raw": "01410000",
+      "land_area": 1872.0,
       "announced_land_price": 2100.0,
       "declared_land_price": 2520.0,
       "observed_owner_records": 7,
@@ -430,9 +442,9 @@
       "max_share": 0.2,
       "top2_share": 0.4,
       "top3_share": 0.575,
-      "observed_share_sum": 0.74166667,
-      "share_hhi": 0.12210648,
-      "share_hhi_normalized_observed": 0.22198376,
+      "observed_share_sum": 0.775,
+      "share_hhi": 0.12395833,
+      "share_hhi_normalized_observed": 0.20638224,
       "has_common_ownership": false,
       "ownership_data_completeness": "partial",
       "ownership_completeness_note": "申報地價資料無法證明已涵蓋該地號目前全部所有權登記；即使觀察持分合計為100%，仍不標示confirmed。",
@@ -473,106 +485,111 @@
           "registration_seq": "0010",
           "share_type": null,
           "share_numerator": 1.0,
-          "share_denominator": 45.0,
-          "share": 0.02222222
+          "share_denominator": 30.0,
+          "share": 0.03333333
         },
         {
           "registration_seq": "0011",
           "share_type": null,
           "share_numerator": 1.0,
-          "share_denominator": 45.0,
-          "share": 0.02222222
-        },
-        {
-          "registration_seq": "0013",
-          "share_type": null,
-          "share_numerator": 1.0,
-          "share_denominator": 45.0,
-          "share": 0.02222222
-        }
-      ],
-      "ownership_complexity_score": 58,
-      "integration_difficulty": "高",
-      "complexity_reasons": [
-        "公開資料觀察到 7 筆所有權登記"
-      ]
-    },
-    {
-      "parcel_id": "文山區|興隆段三小段|01700000",
-      "county": "臺北市",
-      "district": "文山區",
-      "section": "興隆段三小段",
-      "subsection": null,
-      "land_no": "170",
-      "land_no_raw": "01700000",
-      "land_area": 92.0,
-      "announced_land_price": 66446.0,
-      "declared_land_price": 79735.0,
-      "observed_owner_records": 3,
-      "observed_owner_rows": 3,
-      "max_share": 0.11111111,
-      "top2_share": 0.22222222,
-      "top3_share": 0.33333333,
-      "observed_share_sum": 0.33333333,
-      "share_hhi": 0.03703704,
-      "share_hhi_normalized_observed": 0.33333333,
-      "has_common_ownership": false,
-      "ownership_data_completeness": "partial",
-      "ownership_completeness_note": "申報地價資料無法證明已涵蓋該地號目前全部所有權登記；即使觀察持分合計為100%，仍不標示confirmed。",
-      "observed_shares_sum_to_one": false,
-      "declared_price_status": [
-        "按公告地價120%申報者"
-      ],
-      "owner_records": [
-        {
-          "registration_seq": "0013",
-          "share_type": null,
-          "share_numerator": 1.0,
-          "share_denominator": 9.0,
-          "share": 0.11111111
-        },
-        {
-          "registration_seq": "0011",
-          "share_type": null,
-          "share_numerator": 1.0,
-          "share_denominator": 9.0,
-          "share": 0.11111111
+          "share_denominator": 30.0,
+          "share": 0.03333333
         },
         {
           "registration_seq": "0012",
           "share_type": null,
           "share_numerator": 1.0,
-          "share_denominator": 9.0,
-          "share": 0.11111111
+          "share_denominator": 30.0,
+          "share": 0.03333333
         }
       ],
-      "ownership_complexity_score": 69,
-      "integration_difficulty": "高",
+      "ownership_complexity_score": 20,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "低",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "最大觀察持分僅 11.1%",
-        "前三大觀察持分合計僅 33.3%",
-        "觀察持分 HHI 0.037，分散度高"
+        "至少觀察到 7 筆所有權登記",
+        "公開資料持分合計僅 77.5%，集中度指標不納入難度分數"
       ]
     },
     {
-      "parcel_id": "士林區|菁山段一小段|02810000",
+      "parcel_id": "北投區|關渡段一小段|04410001",
       "county": "臺北市",
-      "district": "士林區",
-      "section": "菁山段一小段",
+      "district": "北投區",
+      "section": "關渡段一小段",
       "subsection": null,
-      "land_no": "281",
-      "land_no_raw": "02810000",
-      "land_area": 1176.49,
-      "announced_land_price": 3200.0,
-      "declared_land_price": 3840.0,
+      "land_no": "441-1",
+      "land_no_raw": "04410001",
+      "land_area": 11.0,
+      "announced_land_price": 6166.0,
+      "declared_land_price": 7399.0,
+      "observed_owner_records": 3,
+      "observed_owner_rows": 3,
+      "max_share": 0.33333333,
+      "top2_share": 0.66666667,
+      "top3_share": 1.0,
+      "observed_share_sum": 1.0,
+      "share_hhi": 0.33333333,
+      "share_hhi_normalized_observed": 0.33333333,
+      "has_common_ownership": false,
+      "ownership_data_completeness": "partial",
+      "ownership_completeness_note": "申報地價資料無法證明已涵蓋該地號目前全部所有權登記；即使觀察持分合計為100%，仍不標示confirmed。",
+      "observed_shares_sum_to_one": true,
+      "declared_price_status": [
+        "按公告地價120%申報者"
+      ],
+      "owner_records": [
+        {
+          "registration_seq": "0002",
+          "share_type": null,
+          "share_numerator": 1.0,
+          "share_denominator": 3.0,
+          "share": 0.33333333
+        },
+        {
+          "registration_seq": "0003",
+          "share_type": null,
+          "share_numerator": 1.0,
+          "share_denominator": 3.0,
+          "share": 0.33333333
+        },
+        {
+          "registration_seq": "0004",
+          "share_type": null,
+          "share_numerator": 1.0,
+          "share_denominator": 3.0,
+          "share": 0.33333333
+        }
+      ],
+      "ownership_complexity_score": 14,
+      "integration_difficulty": "低",
+      "integration_difficulty_lower_bound": "低",
+      "ownership_score_confidence": "medium",
+      "observed_share_reliability": "internally_complete",
+      "complexity_reasons": [
+        "至少觀察到 3 筆所有權登記"
+      ]
+    },
+    {
+      "parcel_id": "內湖區|碧湖段四小段|00860000",
+      "county": "臺北市",
+      "district": "內湖區",
+      "section": "碧湖段四小段",
+      "subsection": null,
+      "land_no": "86",
+      "land_no_raw": "00860000",
+      "land_area": 26.0,
+      "announced_land_price": 73100.0,
+      "declared_land_price": 87720.0,
       "observed_owner_records": 2,
       "observed_owner_rows": 2,
-      "max_share": 0.015625,
-      "top2_share": 0.03125,
-      "top3_share": 0.03125,
-      "observed_share_sum": 0.03125,
-      "share_hhi": 0.00048828,
-      "share_hhi_normalized_observed": 0.5,
+      "max_share": 0.06686508,
+      "top2_share": 0.07207341,
+      "top3_share": 0.07207341,
+      "observed_share_sum": 0.07207341,
+      "share_hhi": 0.00449807,
+      "share_hhi_normalized_observed": 0.86591569,
       "has_common_ownership": false,
       "ownership_data_completeness": "partial",
       "ownership_completeness_note": "申報地價資料無法證明已涵蓋該地號目前全部所有權登記；即使觀察持分合計為100%，仍不標示confirmed。",
@@ -582,26 +599,28 @@
       ],
       "owner_records": [
         {
-          "registration_seq": "0034",
+          "registration_seq": "0094",
           "share_type": null,
-          "share_numerator": 1.0,
-          "share_denominator": 64.0,
-          "share": 0.015625
+          "share_numerator": 10.0,
+          "share_denominator": 1920.0,
+          "share": 0.00520833
         },
         {
-          "registration_seq": "0033",
+          "registration_seq": "0074",
           "share_type": null,
-          "share_numerator": 1.0,
-          "share_denominator": 64.0,
-          "share": 0.015625
+          "share_numerator": 337.0,
+          "share_denominator": 5040.0,
+          "share": 0.06686508
         }
       ],
-      "ownership_complexity_score": 69,
-      "integration_difficulty": "高",
+      "ownership_complexity_score": 8,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "低",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "最大觀察持分僅 1.6%",
-        "前三大觀察持分合計僅 3.1%",
-        "觀察持分 HHI 0.000，分散度高"
+        "至少觀察到 2 筆所有權登記",
+        "公開資料持分合計僅 7.2%，集中度指標不納入難度分數"
       ]
     },
     {
@@ -744,24 +763,25 @@
           "share": 0.0016374
         }
       ],
-      "ownership_complexity_score": 95,
-      "integration_difficulty": "很高",
+      "ownership_complexity_score": 30,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "中",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "公開資料觀察到 16 筆所有權登記，筆數很多",
-        "最大觀察持分僅 0.7%",
-        "前三大觀察持分合計僅 1.4%",
-        "觀察持分 HHI 0.000，分散度高"
+        "至少觀察到 16 筆所有權登記",
+        "公開資料持分合計僅 2.7%，集中度指標不納入難度分數"
       ]
     },
     {
-      "parcel_id": "士林區|菁山段二小段|01870000",
+      "parcel_id": "士林區|菁山段一小段|02900000",
       "county": "臺北市",
       "district": "士林區",
-      "section": "菁山段二小段",
+      "section": "菁山段一小段",
       "subsection": null,
-      "land_no": "187",
-      "land_no_raw": "01870000",
-      "land_area": 1436.09,
+      "land_no": "290",
+      "land_no_raw": "02900000",
+      "land_area": 6126.57,
       "announced_land_price": 3200.0,
       "declared_land_price": 3840.0,
       "observed_owner_records": 2,
@@ -781,26 +801,28 @@
       ],
       "owner_records": [
         {
-          "registration_seq": "0037",
+          "registration_seq": "0038",
           "share_type": null,
           "share_numerator": 1.0,
           "share_denominator": 64.0,
           "share": 0.015625
         },
         {
-          "registration_seq": "0036",
+          "registration_seq": "0037",
           "share_type": null,
           "share_numerator": 1.0,
           "share_denominator": 64.0,
           "share": 0.015625
         }
       ],
-      "ownership_complexity_score": 69,
-      "integration_difficulty": "高",
+      "ownership_complexity_score": 8,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "低",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "partial",
       "complexity_reasons": [
-        "最大觀察持分僅 1.6%",
-        "前三大觀察持分合計僅 3.1%",
-        "觀察持分 HHI 0.000，分散度高"
+        "至少觀察到 2 筆所有權登記",
+        "公開資料持分合計僅 3.1%，集中度指標不納入難度分數"
       ]
     },
     {
@@ -1153,13 +1175,15 @@
           "share": 0.02083333
         }
       ],
-      "ownership_complexity_score": 100,
-      "integration_difficulty": "很高",
+      "ownership_complexity_score": 55,
+      "integration_difficulty": "資料不足",
+      "integration_difficulty_lower_bound": "高",
+      "ownership_score_confidence": "low",
+      "observed_share_reliability": "special_or_overlapping",
       "complexity_reasons": [
-        "公開資料觀察到 46 筆所有權登記，筆數很多",
-        "前三大觀察持分合計僅 27.8%",
-        "觀察持分 HHI 0.054，分散度高",
-        "出現公同共有(B)紀錄，整合可能更複雜"
+        "至少觀察到 46 筆所有權登記，已可確認結構複雜",
+        "出現公同共有(B)紀錄，屬特殊共有結構",
+        "公開資料持分合計 103.2% 或含特殊共有，集中度指標不納入難度分數"
       ]
     }
   ]
