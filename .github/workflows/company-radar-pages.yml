@@ -12,6 +12,7 @@ on:
       - "construction-radar-web/**"
       - "tender-intelligence-web/**"
       - "disaster-risk-web/**"
+      - "urban-renewal-radar-web/**"
       - ".github/workflows/company-radar-pages.yml"
   workflow_dispatch:
 
@@ -19,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: "opendata-pages-publish-v2"
+  group: "opendata-pages-publish-v3"
   cancel-in-progress: true
 
 jobs:
@@ -44,6 +45,9 @@ jobs:
       - name: Build real company opportunity feed
         run: python3 company-radar-web/scripts/update_company_radar.py
 
+      - name: Build Taipei urban-renewal candidates
+        run: python3 urban-renewal-radar-web/scripts/update_urban_renewal.py
+
       - name: Save company baseline
         uses: actions/cache/save@v4
         with:
@@ -54,9 +58,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A company-radar-web/data
+          git add -A company-radar-web/data urban-renewal-radar-web/data
           if ! git diff --cached --quiet; then
-            git commit -m "data: refresh company radar $(date -u +%F) [skip ci]"
+            git commit -m "data: refresh OpenData feeds $(date -u +%F) [skip ci]"
             git push origin HEAD:main
           fi
 
@@ -70,10 +74,13 @@ jobs:
           mkdir -p /tmp/opendata-site/construction-radar-web
           mkdir -p /tmp/opendata-site/tender-intelligence-web
           mkdir -p /tmp/opendata-site/disaster-risk-web
+          mkdir -p /tmp/opendata-site/urban-renewal-radar-web
           cp -R site-selection-web/. /tmp/opendata-site/site-selection-web/
           cp -R construction-radar-web/. /tmp/opendata-site/construction-radar-web/
           cp -R tender-intelligence-web/. /tmp/opendata-site/tender-intelligence-web/
           cp -R disaster-risk-web/. /tmp/opendata-site/disaster-risk-web/
+          cp -R urban-renewal-radar-web/. /tmp/opendata-site/urban-renewal-radar-web/
+          rm -rf /tmp/opendata-site/urban-renewal-radar-web/scripts
           touch /tmp/opendata-site/.nojekyll
 
       - name: Publish gh-pages branch
