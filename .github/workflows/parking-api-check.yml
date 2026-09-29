@@ -48,10 +48,15 @@ jobs:
               print(f"public_site: status={r.status} bytes={len(html)}")
               assert "NO DEMO DATA" in html
               assert "UX Demo" not in html
+              assert "定位並查附近" in html
+              assert "ntpc-realtime.json" in html
+              assert "官方 API 直連" in html
           with urllib.request.urlopen(site + "data/meta.json", timeout=30) as r:
               live_meta = json.loads(r.read().decode("utf-8"))
               print("public_meta:", json.dumps(live_meta, ensure_ascii=False))
               assert live_meta["sources"]["taipei-static.json"]["count"] >= 1000
               assert live_meta["sources"]["taipei-realtime.json"]["count"] >= 500
+              assert live_meta["sources"]["ntpc-static.json"]["count"] >= 100
+              assert live_meta["sources"]["ntpc-realtime.json"]["count"] >= 50
               assert live_meta["sources"]["taoyuan.json"]["count"] >= 100
           PY
