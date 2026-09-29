@@ -14,87 +14,69 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect PPSTRQ query, paging, and detail functions
+      - name: Verify one PPSTRQ detail request
         shell: bash
         run: |
           set -euo pipefail
           python3 -m pip install --disable-pip-version-check -q requests beautifulsoup4
-
           python3 - <<'PY'
-          import json, re
+          import json,re
           from urllib.parse import urljoin
           import requests
           from bs4 import BeautifulSoup
 
-          URL='https://ppstrq.nat.gov.tw/pps/pubQuery/PropertyQuery/propertyQuery.do'
-          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/153 Safari/537.36'
-
+          BASE='https://ppstrq.nat.gov.tw'
+          QUERY=BASE+'/pps/pubQuery/PropertyQuery/propertyQuery.do'
+          DETAIL=BASE+'/pps/pubQuery/PropertyQuery/propertyDetail.do'
           s=requests.Session()
-          s.headers.update({'User-Agent':UA})
-          r=s.get(URL,timeout=30)
-          r.raise_for_status()
+          s.headers.update({'User-Agent':'Mozilla/5.0 Chrome/153 Safari/537.36'})
 
-          soup=BeautifulSoup(r.text,'html.parser')
-          form=soup.find('form',id='queryForm')
-          action=urljoin(r.url,form.get('action',''))
-
-          def base_data(form):
+          def fields(form):
               d={}
               for el in form.find_all(['input','select','textarea']):
-                  name=el.get('name')
-                  if not name:
-                      continue
-                  typ=(el.get('type') or '').lower()
-                  if typ in {'button','submit','reset','radio','checkbox'}:
-                      continue
-                  d[name]=el.get('value','')
+                  n=el.get('name')
+                  if not n: continue
+                  t=(el.get('type') or '').lower()
+                  if t in {'button','submit','reset','radio','checkbox'}: continue
+                  d[n]=el.get('value','')
               return d
 
-          data=base_data(form)
-          data.update({
-              'method':'query',
-              'currentPage':'0',
-              'debtorType':'1',
-              'debtorTypeRadio':'1',
-              'queryDebtorName':'杰',
-              'queryDebtorNo':'',
-              'creditorType':'',
-              'queryCreditorName':'',
-              'queryCreditorNo':'',
+          r=s.get(QUERY,timeout=30); r.raise_for_status()
+          soup=BeautifulSoup(r.text,'html.parser')
+          form=soup.find('form',id='queryForm')
+          d=fields(form)
+          d.update({
+              'method':'query','currentPage':'0',
+              'debtorType':'1','debtorTypeRadio':'1',
+              'queryDebtorName':'杰','queryDebtorNo':'',
+              'creditorType':'','queryCreditorName':'','queryCreditorNo':''
           })
-
-          r2=s.post(action,data=data,headers={'Referer':r.url},timeout=45)
-          r2.raise_for_status()
-          soup2=BeautifulSoup(r2.text,'html.parser')
-
-          print('QUERY_BYTES',len(r2.content))
-          m=re.search(r'此查詢總筆數：\s*([0-9,]+)筆',r2.text)
-          print('TOTAL_MATCH',m.group(1) if m else None)
-          cp=soup2.find('input',{'name':'currentPage'})
-          tp=soup2.find('input',{'name':'totalPage'})
-          print('CURRENT_PAGE',cp.get('value') if cp else None,'TOTAL_PAGE',tp.get('value') if tp else None)
-
-          print('=== FIRST RESULT ROWS ===')
-          rows=[]
-          for tr in soup2.find_all('tr'):
-              onclick=tr.get('onclick','')
-              if 'goDetail' in onclick:
-                  cells=[' '.join(x.stripped_strings) for x in tr.find_all(['td','th'])]
-                  print(json.dumps({'onclick':onclick,'cells':cells},ensure_ascii=False))
-                  rows.append((onclick,cells))
-          print('RESULT_ROW_COUNT_ON_PAGE',len(rows))
-
-          print('=== INLINE FUNCTION BODIES ===')
-          raw=r2.text
-          for fn in ['showList','gotoPage','goDetail','show']:
-              # non-greedy through the next closing brace is enough for these short functions
-              mm=re.search(r'function\s+'+re.escape(fn)+r'\s*\([^)]*\)\s*\{.*?\n\s*\}',raw,re.S)
-              print('FUNCTION',fn)
-              print(mm.group(0)[:4000] if mm else 'NOT_FOUND')
-
-          print('=== HIDDEN FIELDS AFTER QUERY ===')
-          qf=soup2.find('form',id='queryForm')
-          for n in ['method','regUnitCode','certificateAppNoWord','currentPage','totalPage','debtorType','creditorType','struts.token','struts.token.name']:
-              el=qf.find(attrs={'name':n}) if qf else None
-              print(n,repr(el.get('value') if el else None))
+          q=s.post(urljoin(r.url,form.get('action','')),data=d,headers={'Referer':r.url},timeout=45)
+          q.raise_for_status()
+          qs=BeautifulSoup(q.text,'html.parser')
+          tr=next(x for x in qs.find_all('tr') if 'goDetail' in x.get('onclick',''))
+          m=re.search(r"goDetail\('([^']+)','([^']+)'\)",tr.get('onclick',''))
+          reg,cert=m.groups()
+          print('KEY',reg,cert)
+          qform=qs.find('form',id='queryForm')
+          dd=fields(qform)
+          dd['regUnitCode']=reg
+          dd['certificateAppNoWord']=cert
+          det=s.post(DETAIL,data=dd,headers={'Referer':q.url},timeout=45)
+          det.raise_for_status()
+          print('DETAIL_STATUS',det.status_code,'BYTES',len(det.content),'URL',det.url)
+          ds=BeautifulSoup(det.text,'html.parser')
+          print('TITLE',ds.title.get_text(' ',strip=True) if ds.title else '')
+          print('=== DETAIL TABLES ===')
+          for ti,table in enumerate(ds.find_all('table')):
+              rows=[]
+              for rr in table.find_all('tr'):
+                  cells=[' '.join(c.stripped_strings) for c in rr.find_all(['th','td'])]
+                  if cells: rows.append(cells)
+              if rows:
+                  print('TABLE',ti)
+                  for row in rows[:60]:
+                      print(json.dumps(row,ensure_ascii=False))
+          print('HAS_AMOUNT_LABEL', '擔保債權金額' in det.text)
+          print('HAS_DEBTOR', '杰程工程有限公司' in det.text)
           PY
