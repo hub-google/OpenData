@@ -63,8 +63,9 @@ const API={
     bbox:[24.90,25.25,121.38,121.72]
   },
   ntpc:{
-    static:'https://data.ntpc.gov.tw/api/datasets/b1464ef0-9c7c-4a6f-abf7-6bdf32847e68/json?page=0&size=2000',
-    realtime:'https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000',
+    static:'https://data.ntpc.gov.tw/api/datasets/b1464ef0-9c7c-4a6f-abf7-6bdf32847e68/json',
+    realtime:'https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json',
+    paged:true,
     staticCache:'./data/ntpc-static.json',realtimeCache:'./data/ntpc-realtime.json',
     label:'新北市',official:'https://data.ntpc.gov.tw/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78',
     bbox:[24.55,25.35,121.15,122.10]
@@ -104,6 +105,7 @@ function extractArray(obj){
 }
 function withBust(url){return url+(url.includes('?')?'&':'?')+'_ts='+Date.now()}
 async function getJSON(url){const r=await fetch(withBust(url),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+async function getPagedJSON(base){const merged=[];for(let page=0;page<20;page++){const data=await getJSON(base+'?page='+page+'&size=1000');const rows=extractArray(data);merged.push(...rows);if(rows.length<1000)break}return merged}
 
 function twd97ToWgs84(x,y){
   x=Number(x);y=Number(y);if(!Number.isFinite(x)||!Number.isFinite(y)||x===0||y===0)return null;
@@ -152,7 +154,7 @@ async function loadMeta(){try{meta=await getJSON('./data/meta.json')}catch(e){me
 
 async function directOrCachePair(cfg){
   try{
-    const [s,r]=await Promise.all([getJSON(cfg.static),getJSON(cfg.realtime)]);
+    const [s,r]=cfg.paged?await Promise.all([getPagedJSON(cfg.static),getPagedJSON(cfg.realtime)]):await Promise.all([getJSON(cfg.static),getJSON(cfg.realtime)]);
     return{s,r,mode:'官方 API 直連'};
   }catch(e){
     const [s,r]=await Promise.all([getJSON(cfg.staticCache),getJSON(cfg.realtimeCache)]);
