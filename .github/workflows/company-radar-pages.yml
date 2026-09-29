@@ -12,7 +12,6 @@ on:
       - "construction-radar-web/**"
       - "tender-intelligence-web/**"
       - "disaster-risk-web/**"
-      - "停車/**"
       - ".github/workflows/company-radar-pages.yml"
   workflow_dispatch:
 
