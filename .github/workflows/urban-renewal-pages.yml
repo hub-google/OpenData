@@ -1,0 +1,58 @@
+name: Build and publish urban renewal radar
+on:
+  schedule:
+    # 08:50 Asia/Taipei daily
+    - cron: "50 0 * * *"
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "urban-renewal-radar-web/index.html"
+      - "urban-renewal-radar-web/README.md"
+      - "urban-renewal-radar-web/DATA_SOURCES.md"
+      - "urban-renewal-radar-web/scripts/**"
+      - ".github/workflows/urban-renewal-pages.yml"
+permissions:
+  contents: write
+concurrency:
+  group: "urban-renewal-pages"
+  cancel-in-progress: true
+jobs:
+  build-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Build ownership observations
+        run: python3 urban-renewal-radar-web/scripts/update_parcel_ownership.py
+      - name: Build parcel master
+        run: python3 urban-renewal-radar-web/scripts/update_parcel_master.py
+      - name: Commit generated data to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add urban-renewal-radar-web/data
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh urban renewal radar [skip ci]"
+            git push origin HEAD:main
+          fi
+      - name: Prepare urban renewal site
+        run: |
+          rm -rf /tmp/urban-renewal-radar-web
+          cp -R urban-renewal-radar-web /tmp/urban-renewal-radar-web
+          rm -rf /tmp/urban-renewal-radar-web/scripts
+      - name: Update gh-pages subdirectory
+        run: |
+          git fetch origin gh-pages:gh-pages
+          git checkout gh-pages
+          rm -rf urban-renewal-radar-web
+          cp -R /tmp/urban-renewal-radar-web urban-renewal-radar-web
+          touch .nojekyll
+          git add urban-renewal-radar-web .nojekyll
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish urban renewal radar"
+            git push origin gh-pages
+          fi
