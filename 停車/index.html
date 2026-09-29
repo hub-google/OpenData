@@ -1,46 +1,247 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>停車｜找附近空位</title>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>停車｜政府 Open Data 即時車位</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;background:#f5f7fb;color:#14213d}
-header{padding:18px 20px;background:#14213d;color:white;display:flex;justify-content:space-between;align-items:center}header b{font-size:22px}.tag{font-size:12px;background:#2ec4b6;padding:5px 9px;border-radius:99px}
-main{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 65px)}aside{padding:16px;overflow:auto;background:white;border-right:1px solid #e5e7eb}
-.search{display:flex;gap:8px}.search input{flex:1;padding:12px;border:1px solid #d8dee9;border-radius:10px}.btn{border:0;border-radius:10px;padding:11px 13px;background:#1769e0;color:white;font-weight:700;cursor:pointer}
-.filters{display:flex;gap:7px;margin:12px 0;flex-wrap:wrap}.filter{padding:8px 10px;border:1px solid #dce2ea;border-radius:99px;background:white;cursor:pointer}.filter.active{background:#14213d;color:white}
-.notice{font-size:12px;padding:10px;background:#fff7d6;border-radius:9px;margin-bottom:12px;color:#695b16}
-.card{border:1px solid #e5e7eb;border-radius:14px;padding:13px;margin:10px 0;cursor:pointer}.card:hover{border-color:#1769e0}.row{display:flex;justify-content:space-between;gap:8px}.name{font-weight:800}.available{font-weight:800;color:#087f5b}.muted{color:#6b7280;font-size:12px;margin-top:6px}.chips{display:flex;gap:5px;margin-top:8px}.chip{font-size:11px;padding:4px 7px;border-radius:6px;background:#eef2ff}.free{background:#dcfce7;color:#166534}
-#map{height:100%}.watch{position:absolute;z-index:1000;right:18px;bottom:24px;background:white;padding:14px;border-radius:15px;box-shadow:0 5px 24px #0002;width:260px}.watch strong{display:block;margin-bottom:5px}.watch p{font-size:12px;color:#6b7280;margin:5px 0 10px}
-@media(max-width:760px){main{display:block;height:auto}aside{height:48vh}#map{height:52vh}.watch{width:220px}}
-</style></head><body>
-<header><b>🚗 停車</b><span class="tag">Open Data MVP</span></header>
-<main><aside>
-<div class="search"><input id="q" placeholder="輸入目的地，例如：台北車站"><button class="btn" onclick="fakeSearch()">搜尋</button></div>
-<div class="filters"><button class="filter active" data-f="all">全部</button><button class="filter" data-f="available">目前有位</button><button class="filter" data-f="free">免費</button></div>
-<div class="notice">⚠️ 目前是 GitHub Pages UX Demo，車位數為示意資料；下一階段接 TDX / 縣市即時 Open Data。</div>
-<div id="list"></div>
-</aside><section style="position:relative"><div id="map"></div><div class="watch"><strong>🔔 不想一直重整？</strong><p>設定目的地周邊 800m，有空位時通知你。</p><button class="btn" style="width:100%" onclick="watch()">守候這區</button></div></section></main>
+header{padding:14px 18px;background:#14213d;color:#fff;display:flex;gap:12px;justify-content:space-between;align-items:center}header b{font-size:21px}.tag{font-size:12px;background:#14b8a6;padding:5px 9px;border-radius:99px}
+main{display:grid;grid-template-columns:390px 1fr;height:calc(100vh - 58px)}aside{padding:14px;overflow:auto;background:#fff;border-right:1px solid #e5e7eb}
+.controls{display:grid;grid-template-columns:130px 1fr;gap:8px}.controls select,.controls input{min-width:0;padding:11px;border:1px solid #d8dee9;border-radius:10px;background:#fff}
+.filters{display:flex;gap:7px;margin:11px 0;flex-wrap:wrap}.filter{padding:7px 9px;border:1px solid #dce2ea;border-radius:99px;background:#fff;cursor:pointer;font-size:12px}.filter.active{background:#14213d;color:#fff}
+.status{font-size:12px;padding:10px 11px;background:#eef6ff;border-radius:10px;margin-bottom:10px;line-height:1.55}.status.error{background:#fff1f2;color:#9f1239}.status strong{font-weight:800}.source-note{color:#64748b}
+.summary{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:8px 0;font-size:12px;color:#64748b}.locate{border:1px solid #d8dee9;background:#fff;border-radius:8px;padding:6px 8px;cursor:pointer}
+.card{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin:9px 0;cursor:pointer}.card:hover{border-color:#1769e0}.row{display:flex;justify-content:space-between;gap:8px}.name{font-weight:800;line-height:1.35}.available{font-weight:800;color:#087f5b;white-space:nowrap}.unknown{color:#64748b}.full{color:#b42318}.muted{color:#6b7280;font-size:12px;margin-top:5px;line-height:1.45}.chips{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}.chip{font-size:11px;padding:4px 7px;border-radius:6px;background:#eef2ff}.live{background:#dcfce7;color:#166534}.cached{background:#fef3c7;color:#92400e}.free{background:#ecfdf5;color:#047857}
+#map{height:100%}.loading{padding:18px;text-align:center;color:#64748b}.empty{padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center}
+.legend{position:absolute;z-index:900;right:12px;bottom:12px;background:#fff;padding:9px 11px;border-radius:10px;box-shadow:0 4px 18px #0002;font-size:11px;line-height:1.5}
+@media(max-width:780px){main{display:block;height:auto}aside{height:49vh}.controls{grid-template-columns:120px 1fr}#map{height:51vh}}
+</style>
+</head>
+<body>
+<header><b>🚗 停車｜真實 Open Data</b><span class="tag">NO DEMO DATA</span></header>
+<main>
+<aside>
+  <div class="controls">
+    <select id="city">
+      <option value="taipei">臺北市</option>
+      <option value="taoyuan">桃園市</option>
+    </select>
+    <input id="q" placeholder="搜尋停車場、行政區或地址">
+  </div>
+  <div class="filters">
+    <button class="filter active" data-f="all">全部</button>
+    <button class="filter" data-f="available">目前有位</button>
+    <button class="filter" data-f="realtime">有即時數字</button>
+    <button class="filter" data-f="free">費率含「免費」</button>
+  </div>
+  <div id="status" class="status">正在連接政府 Open Data…</div>
+  <div class="summary"><span id="summary"></span><button class="locate" id="locate">📍 依我的位置排序</button></div>
+  <div id="list"><div class="loading">載入中…</div></div>
+</aside>
+<section style="position:relative">
+  <div id="map"></div>
+  <div class="legend">綠：有即時空位<br>紅：即時顯示 0<br>灰：沒有即時數字</div>
+</section>
+</main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const data=[
-{id:1,name:'市民大道公中段停車場',lat:25.0481,lng:121.5188,total:486,avail:37,fee:'40元/時',free:false,update:'2 分鐘前',dist:280},
-{id:2,name:'台北車站地下停車場',lat:25.0469,lng:121.5165,total:220,avail:8,fee:'50元/時',free:false,update:'1 分鐘前',dist:390},
-{id:3,name:'北門廣場周邊路邊格',lat:25.0496,lng:121.5107,total:26,avail:4,fee:'目前免費',free:true,update:'3 分鐘前',dist:720},
-{id:4,name:'中山北路路邊停車格',lat:25.0521,lng:121.5225,total:18,avail:0,fee:'30元/時',free:false,update:'4 分鐘前',dist:910},
-{id:5,name:'華陰街公有停車場',lat:25.0502,lng:121.5153,total:96,avail:21,fee:'30元/時',free:false,update:'2 分鐘前',dist:510}
-];
-const map=L.map('map').setView([25.048,121.517],15);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-let markers=[];let filter='all';
-function render(){
- markers.forEach(m=>map.removeLayer(m));markers=[];
- const rows=data.filter(x=>filter==='all'||filter==='available'&&x.avail>0||filter==='free'&&x.free);
- document.getElementById('list').innerHTML=rows.map(x=>'<div class="card" onclick="focusP('+x.id+')"><div class="row"><span class="name">'+x.name+'</span><span class="available">'+(x.avail>0?'剩 '+x.avail+' 格':'目前滿位')+'</span></div><div class="muted">'+x.dist+'m ・ '+x.fee+' ・ 更新 '+x.update+'</div><div class="chips"><span class="chip">總 '+x.total+' 格</span>'+(x.free?'<span class="chip free">免費</span>':'')+'<span class="chip">即時示意</span></div></div>').join('');
- rows.forEach(x=>{let m=L.marker([x.lat,x.lng]).addTo(map).bindPopup('<b>'+x.name+'</b><br>剩餘 '+x.avail+' 格<br>'+x.fee+'<br><a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination='+x.lat+','+x.lng+'">開始導航</a>');markers.push(m)})
+const API={
+  taipeiStatic:'https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json',
+  taipeiRealtime:'https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json'
+};
+const SOURCE_URLS={
+  taipei:'https://data.taipei/dataset/detail?id=d5c0656b-5250-4179-a491-c94daa56ef2c',
+  taoyuan:'https://data.gov.tw/dataset/25940'
+};
+const centers={taipei:[25.0478,121.517],taoyuan:[24.9937,121.301]};
+const map=L.map('map',{preferCanvas:true}).setView(centers.taipei,13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(map);
+const layer=L.layerGroup().addTo(map);
+
+let allData=[],filter='all',query='',userPos=null,currentCity='taipei',meta=null,loadToken=0;
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function n(v){const x=Number(v);return Number.isFinite(x)?x:null}
+function availableNumber(v){const x=Number(v);return Number.isFinite(x)&&x>=0?Math.trunc(x):null}
+function extractArray(obj){return Array.isArray(obj)?obj:(obj&&obj.data&&Array.isArray(obj.data.park)?obj.data.park:[])}
+async function getJSON(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+
+function twd97ToWgs84(x,y){
+  x=Number(x);y=Number(y);if(!Number.isFinite(x)||!Number.isFinite(y)||x===0||y===0)return null;
+  const a=6378137.0,b=6356752.314245,lng0=121*Math.PI/180,k0=0.9999,dx=250000,dy=0;
+  x-=dx;y-=dy;
+  const e=Math.sqrt(1-(b*b)/(a*a)),M=y/k0;
+  const mu=M/(a*(1-e*e/4-3*Math.pow(e,4)/64-5*Math.pow(e,6)/256));
+  const e1=(1-Math.sqrt(1-e*e))/(1+Math.sqrt(1-e*e));
+  const J1=3*e1/2-27*Math.pow(e1,3)/32,J2=21*e1*e1/16-55*Math.pow(e1,4)/32;
+  const J3=151*Math.pow(e1,3)/96,J4=1097*Math.pow(e1,4)/512;
+  const fp=mu+J1*Math.sin(2*mu)+J2*Math.sin(4*mu)+J3*Math.sin(6*mu)+J4*Math.sin(8*mu);
+  const e2=e*e/(1-e*e),C1=e2*Math.pow(Math.cos(fp),2),T1=Math.pow(Math.tan(fp),2);
+  const R1=a*(1-e*e)/Math.pow(1-e*e*Math.pow(Math.sin(fp),2),1.5);
+  const N1=a/Math.sqrt(1-e*e*Math.pow(Math.sin(fp),2)),D=x/(N1*k0);
+  const lat=fp-(N1*Math.tan(fp)/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*e2)*Math.pow(D,4)/24+(61+90*T1+298*C1+45*T1*T1-252*e2-3*C1*C1)*Math.pow(D,6)/720);
+  const lng=lng0+(D-(1+2*T1+C1)*Math.pow(D,3)/6+(5-2*C1+28*T1-3*C1*C1+8*e2+24*T1*T1)*Math.pow(D,5)/120)/Math.cos(fp);
+  const out=[lat*180/Math.PI,lng*180/Math.PI];
+  return out[0]>20&&out[0]<27&&out[1]>118&&out[1]<123?out:null;
 }
-function focusP(id){const x=data.find(v=>v.id===id);map.setView([x.lat,x.lng],17);markers.find(m=>m.getLatLng().lat===x.lat)?.openPopup()}
-document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;render()});
-function fakeSearch(){const q=document.getElementById('q').value.trim();if(q) alert('Demo：下一版會把「'+q+'」做地理編碼，再搜尋半徑內真實停車資料。')}
-function watch(){alert('已建立 Demo 守候：800m 內出現空位時通知。正式版會由後端排程 + LINE MINI App Service Message 完成。')}
-render();
-</script></body></html>
+function taipeiCoord(p){
+  const info=p?.EntranceCoord?.EntrancecoordInfo?.[0];
+  let a=n(info?.Xcod),b=n(info?.Ycod);
+  if(a&&b){
+    if(a>20&&a<27&&b>118&&b<123)return[a,b];
+    if(b>20&&b<27&&a>118&&a<123)return[b,a];
+  }
+  return twd97ToWgs84(p.tw97x,p.tw97y);
+}
+function hav(lat1,lng1,lat2,lng2){
+  const R=6371000,toRad=x=>x*Math.PI/180,dLat=toRad(lat2-lat1),dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function sourceTimeText(iso){
+  if(!iso)return'';
+  const d=new Date(iso);return Number.isNaN(d.getTime())?'':d.toLocaleString('zh-TW',{hour12:false});
+}
+
+async function loadMeta(){try{meta=await getJSON('./data/meta.json?ts='+Date.now())}catch(e){meta=null}}
+
+async function loadTaipei(){
+  let s,r,mode='官方 API 直連';
+  try{
+    [s,r]=await Promise.all([getJSON(API.taipeiStatic),getJSON(API.taipeiRealtime)]);
+  }catch(e){
+    mode='5 分鐘政府 API 快取';
+    [s,r]=await Promise.all([getJSON('./data/taipei-static.json?ts='+Date.now()),getJSON('./data/taipei-realtime.json?ts='+Date.now())]);
+  }
+  const staticRows=extractArray(s),liveRows=extractArray(r),liveMap=new Map(liveRows.map(x=>[String(x.id),x]));
+  const rows=[];
+  for(const p of staticRows){
+    const c=taipeiCoord(p);if(!c)continue;
+    const rt=liveMap.get(String(p.id));
+    const av=availableNumber(rt?.availablecar);
+    rows.push({
+      id:'tp-'+p.id,name:p.name||'未命名停車場',area:p.area||'',address:p.address||'',lat:c[0],lng:c[1],
+      total:n(p.totalcar),avail:av,fee:p.payex||'',service:p.serviceTime||'',sourceMode:mode,
+      hasRealtime:av!==null,freeText:String(p.payex||'').includes('免費'),rawStatus:rt?'有動態回傳':'無動態回傳'
+    });
+  }
+  return{rows,mode,staticCount:staticRows.length,realtimeCount:liveRows.length};
+}
+async function loadTaoyuan(){
+  const rowsRaw=await getJSON('./data/taoyuan.json?ts='+Date.now());
+  const rows=(Array.isArray(rowsRaw)?rowsRaw:[]).map(p=>{
+    const lat=n(p.wgsX),lng=n(p.wgsY),av=availableNumber(p.surplusSpace);
+    return{
+      id:'ty-'+p.parkId,name:p.parkName||'未命名停車場',area:p.areaName||'',address:p.address||'',lat,lng,
+      total:n(p.totalSpace),avail:av,fee:p.payGuide||'',service:'',sourceMode:'GitHub 5 分鐘政府 API 快取',
+      hasRealtime:av!==null,freeText:String(p.payGuide||'').includes('免費'),rawStatus:av!==null?'即時剩餘 '+av:String(p.surplusSpace||p.Display||'無即時數字')
+    };
+  }).filter(x=>x.lat&&x.lng);
+  return{rows,mode:'GitHub 5 分鐘政府 API 快取',staticCount:rows.length,realtimeCount:rows.filter(x=>x.hasRealtime).length};
+}
+
+async function loadCity(city){
+  const token=++loadToken;currentCity=city;userPos=null;
+  document.getElementById('status').className='status';
+  document.getElementById('status').innerHTML='正在連接政府 Open Data…';
+  document.getElementById('list').innerHTML='<div class="loading">載入中…</div>';
+  layer.clearLayers();map.setView(centers[city],13);
+  try{
+    await loadMeta();
+    const result=city==='taipei'?await loadTaipei():await loadTaoyuan();
+    if(token!==loadToken)return;
+    allData=result.rows;
+    const cacheTime=sourceTimeText(meta?.fetched_at);
+    const cityName=city==='taipei'?'臺北市':'桃園市';
+    const detail=city==='taipei'
+      ? result.mode+'；政府資料 '+result.staticCount+' 場，其中 '+result.realtimeCount+' 場有動態回傳。'
+      : result.mode+'；目前 '+result.staticCount+' 場，'+result.realtimeCount+' 場有數字型剩餘車位。';
+    document.getElementById('status').innerHTML='<strong>'+cityName+'｜真實政府資料</strong><br>'+esc(detail)+(cacheTime?'<br><span class="source-note">快取抓取時間：'+esc(cacheTime)+'</span>':'')+'<br><a href="'+SOURCE_URLS[city]+'" target="_blank" rel="noopener">查看官方資料來源</a>';
+    render();
+  }catch(e){
+    if(token!==loadToken)return;
+    allData=[];
+    document.getElementById('status').className='status error';
+    document.getElementById('status').innerHTML='<strong>資料載入失敗</strong><br>'+esc(e.message)+'。沒有使用任何假資料或備援示意數字。';
+    document.getElementById('list').innerHTML='<div class="empty">目前無法取得政府資料，請稍後重新整理。</div>';
+    document.getElementById('summary').textContent='0 筆';
+  }
+}
+
+function filteredRows(){
+  let rows=allData.filter(x=>{
+    const q=query.toLowerCase();
+    const hit=!q||[x.name,x.area,x.address].some(v=>String(v||'').toLowerCase().includes(q));
+    if(!hit)return false;
+    if(filter==='available')return x.avail!==null&&x.avail>0;
+    if(filter==='realtime')return x.hasRealtime;
+    if(filter==='free')return x.freeText;
+    return true;
+  });
+  if(userPos){
+    rows=rows.map(x=>({...x,dist:hav(userPos[0],userPos[1],x.lat,x.lng)})).sort((a,b)=>a.dist-b.dist);
+  }else{
+    rows.sort((a,b)=>(b.hasRealtime-a.hasRealtime)||((b.avail??-1)-(a.avail??-1))||a.name.localeCompare(b.name,'zh-Hant'));
+  }
+  return rows;
+}
+function availLabel(x){
+  if(x.avail===null)return'<span class="available unknown">無即時數字</span>';
+  if(x.avail===0)return'<span class="available full">0 格</span>';
+  return'<span class="available">剩 '+x.avail+' 格</span>';
+}
+function cardHTML(x){
+  const dist=x.dist!=null?' ・ '+(x.dist<1000?Math.round(x.dist)+'m':(x.dist/1000).toFixed(1)+'km'):'';
+  return '<div class="card" data-id="'+esc(x.id)+'"><div class="row"><span class="name">'+esc(x.name)+'</span>'+availLabel(x)+'</div>'+
+    '<div class="muted">'+esc([x.area,x.address].filter(Boolean).join(' ・ '))+dist+'</div>'+
+    '<div class="muted">'+esc(x.fee||'費率未提供')+'</div>'+
+    '<div class="chips">'+
+      (x.total!==null?'<span class="chip">總 '+esc(x.total)+' 格</span>':'')+
+      '<span class="chip '+(x.sourceMode.includes('直連')?'live':'cached')+'">'+esc(x.sourceMode)+'</span>'+
+      (x.freeText?'<span class="chip free">費率文字含免費</span>':'')+
+    '</div></div>';
+}
+function popupHTML(x){
+  const nav='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(x.lat+','+x.lng);
+  return '<b>'+esc(x.name)+'</b><br>'+esc(x.address||x.area)+'<br>'+
+    (x.avail===null?'剩餘：無即時數字':'剩餘：'+x.avail+' 格')+'<br>'+
+    esc(x.fee||'費率未提供')+'<br><a target="_blank" rel="noopener" href="'+nav+'">Google Maps 導航</a>';
+}
+function render(){
+  const rows=filteredRows();
+  document.getElementById('summary').textContent='符合 '+rows.length+' / '+allData.length+' 筆'+(rows.length>250?'（列表顯示前 250）':'');
+  const shown=rows.slice(0,250);
+  document.getElementById('list').innerHTML=shown.length?shown.map(cardHTML).join(''):'<div class="empty">沒有符合條件的停車場。</div>';
+  layer.clearLayers();
+  rows.forEach(x=>{
+    let color='#64748b';if(x.avail===0)color='#dc2626';else if(x.avail>0)color='#16a34a';
+    L.circleMarker([x.lat,x.lng],{radius:5,weight:1,color,fillColor:color,fillOpacity:.78})
+      .bindPopup(popupHTML(x)).addTo(layer).parkingId=x.id;
+  });
+  document.querySelectorAll('.card').forEach(el=>el.onclick=()=>{
+    const x=allData.find(v=>v.id===el.dataset.id);if(!x)return;
+    map.setView([x.lat,x.lng],17);
+    layer.eachLayer(m=>{if(m.parkingId===x.id)m.openPopup()});
+  });
+}
+
+document.getElementById('city').addEventListener('change',e=>loadCity(e.target.value));
+document.getElementById('q').addEventListener('input',e=>{query=e.target.value.trim();render()});
+document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;render();
+});
+document.getElementById('locate').onclick=()=>{
+  if(!navigator.geolocation){alert('瀏覽器不支援定位');return}
+  navigator.geolocation.getCurrentPosition(p=>{
+    userPos=[p.coords.latitude,p.coords.longitude];
+    L.circleMarker(userPos,{radius:7,weight:2,color:'#2563eb',fillColor:'#60a5fa',fillOpacity:.9}).addTo(map).bindPopup('你的位置').openPopup();
+    map.setView(userPos,14);render();
+  },()=>alert('無法取得定位，請確認瀏覽器定位權限。'),{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
+};
+
+loadCity('taipei');
+</script>
+</body>
+</html>
