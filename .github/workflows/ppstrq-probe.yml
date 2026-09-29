@@ -1,4 +1,5 @@
 name: PPSTRQ Sample
+# Company-only sample; avoids natural-person records
 
 on:
   workflow_dispatch:
