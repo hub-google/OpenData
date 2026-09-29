@@ -67,8 +67,20 @@ def rows_for(name):
     return rows,{"bytes":len(blob),"rows":len(rows),"encoding":enc,"page":cfg["page"],"url":cfg["url"],"headers":[clean(x) for x in (rd.fieldnames or [])]}
 
 def raw_land_no(v):
-    s=re.sub(r"\D","",str(v or ""))
-    return s.zfill(8)[-8:] if s else ""
+    t=str(v or "").strip()
+    if not t:return ""
+    # Already canonical 8-digit form: MMMMSSSS.
+    digits=re.sub(r"\D","",t)
+    if re.fullmatch(r"\d{8}",digits):
+        return digits
+    # Human-readable forms such as 180-12, 0180-0012.
+    m=re.match(r"^\s*(\d+)\s*[-之]\s*(\d+)\s*$",t)
+    if m:
+        return f"{int(m.group(1)):04d}{int(m.group(2)):04d}"
+    # Main number only.
+    if re.fullmatch(r"\d+",t):
+        return f"{int(t):04d}0000"
+    return ""
 
 def raw_from_parts(main,sub):
     def i(v):
@@ -86,10 +98,25 @@ def parcel_id(district,section,raw):
     return "|".join([clean(district),clean(section),raw_land_no(raw)])
 
 def pick(row,prefix):
+    if prefix in row and str(row.get(prefix) or "").strip():
+        return str(row[prefix]).strip()
     for k,v in row.items():
-        if k==prefix or k.startswith(prefix):
-            if str(v).strip():return str(v).strip()
+        if k.startswith(prefix) and str(v or "").strip():
+            return str(v).strip()
     return ""
+
+def zh_num(n):
+    vals={1:"一",2:"二",3:"三",4:"四",5:"五",6:"六",7:"七",8:"八",9:"九",10:"十"}
+    try:return vals.get(int(str(n).strip()),str(n).strip())
+    except:return str(n).strip()
+
+def section_from_parts(major,minor):
+    major=clean(major)
+    minor=clean(minor)
+    if not major:return ""
+    if not minor or minor in ("0","00"):
+        return major if major.endswith("段") else major+"段"
+    return (major if major.endswith("段") else major+"段")+zh_num(minor)+"小段"
 
 def zone_norm(s):
     return clean(s).replace("（","(").replace("）",")")
@@ -161,11 +188,9 @@ def main():
             p["data_flags"].append("declared_land_price_ownership_observation")
 
     zoning,zmeta=rows_for("zoning")
-    print("DEBUG land_value_keys", [(pick(r,"行政區"),pick(r,"段小段"),pick(r,"地號")) for r in lv[:5]])
-    print("DEBUG zoning_keys", [(pick(r,"行政區"),pick(r,"大段"),pick(r,"小段"),pick(r,"母號"),pick(r,"子號")) for r in zoning[:5]])
     zone_hits=0
     for r in zoning:
-        district=pick(r,"行政區");section=clean(pick(r,"大段")+pick(r,"小段"))
+        district=pick(r,"行政區");section=section_from_parts(pick(r,"大段"),pick(r,"小段"))
         raw=raw_from_parts(pick(r,"母號"),pick(r,"子號"))
         pid=parcel_id(district,section,raw)
         if pid in parcels:
@@ -194,7 +219,6 @@ def main():
             control_hits+=1
 
     pub,pubmeta=rows_for("public_land")
-    print("DEBUG public_land_keys", [(pick(r,"行政區"),pick(r,"段小段"),pick(r,"地號")) for r in pub[:5]])
     public_hits=0
     for r in pub:
         district=pick(r,"行政區");section=pick(r,"段小段");raw=raw_land_no(pick(r,"地號"))
