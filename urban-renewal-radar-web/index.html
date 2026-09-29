@@ -1,138 +1,32 @@
 <!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>都更價值評估雷達｜OpenData</title>
-<meta name="description" content="用臺北市政府公開資料初篩值得進一步整合的老屋基地，再以謄本補齊產權難度。">
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>0元土地／都更價值雷達｜OpenData</title>
 <style>
-:root{--bg:#08111f;--panel:#0f1b2d;--panel2:#132238;--line:#263b57;--text:#edf5ff;--muted:#9fb2ca;--blue:#4da3ff;--green:#57d9a3;--yellow:#ffd166;--red:#ff7b7b;--white:#fff;--shadow:0 18px 60px rgba(0,0,0,.28)}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;background:linear-gradient(135deg,#06101d 0%,#0b1727 55%,#091321 100%);color:var(--text)}
-a{color:#8ec5ff}.shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}.side{padding:28px 20px;border-right:1px solid var(--line);background:rgba(5,14,26,.82);position:sticky;top:0;height:100vh}.brand{display:flex;gap:12px;align-items:center;margin-bottom:34px}.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#4da3ff,#57d9a3);display:grid;place-items:center;font-weight:900;color:#05111d}.brand strong{display:block;font-size:17px}.brand span{color:var(--muted);font-size:12px}.nav button{width:100%;border:0;background:transparent;color:var(--muted);padding:12px 14px;text-align:left;border-radius:11px;margin:4px 0;cursor:pointer}.nav button.active,.nav button:hover{background:#14243a;color:#fff}.side-note{position:absolute;bottom:24px;left:20px;right:20px;border:1px solid var(--line);background:#0d1929;border-radius:14px;padding:13px;font-size:12px;color:var(--muted);line-height:1.6}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}.main{padding:30px 34px 60px;max-width:1540px;width:100%;margin:auto}.hero{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:24px}.eyebrow{color:#73b9ff;font-size:12px;font-weight:800;letter-spacing:.14em}.hero h1{font-size:34px;margin:6px 0 10px}.hero p{margin:0;color:var(--muted);max-width:820px;line-height:1.7}.badge{display:inline-flex;gap:7px;align-items:center;background:#0f2632;border:1px solid #245a57;color:#92ebc9;padding:8px 11px;border-radius:999px;font-size:12px;white-space:nowrap}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.stat,.card{background:linear-gradient(180deg,rgba(20,35,57,.98),rgba(12,24,40,.98));border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.stat{padding:17px}.stat span{color:var(--muted);font-size:12px}.stat strong{display:block;font-size:28px;margin-top:7px}.stat small{color:#7188a3}.notice{padding:14px 16px;border-radius:13px;background:#1a2430;border:1px solid #38475a;color:#b9c8d8;margin-bottom:18px;font-size:13px;line-height:1.65}.toolbar{display:grid;grid-template-columns:1.4fr .8fr .8fr auto;gap:10px;padding:14px;margin-bottom:16px}.toolbar input,.toolbar select,.est input,.est select{width:100%;background:#081522;border:1px solid #30445f;color:#fff;padding:10px 11px;border-radius:9px}.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer;background:#4da3ff;color:#07111c}.layout{display:grid;grid-template-columns:1.45fr .8fr;gap:16px}.card{padding:17px}.card h2{margin:0 0 13px;font-size:18px}.table-wrap{overflow:auto;max-height:620px}table{width:100%;border-collapse:collapse;font-size:13px}th{position:sticky;top:0;background:#122138;color:#8fa7c3;text-align:left;padding:11px 9px;border-bottom:1px solid var(--line)}td{padding:12px 9px;border-bottom:1px solid #1d3049;vertical-align:top}tr.data-row{cursor:pointer}tr.data-row:hover{background:#12253a}.score{display:inline-grid;place-items:center;width:44px;height:30px;border-radius:9px;font-weight:900}.a{background:#123d31;color:#74e4b7}.b{background:#3d3416;color:#ffe08a}.c{background:#3d2525;color:#ffaaaa}.pill{display:inline-block;padding:4px 7px;border-radius:999px;font-size:11px;background:#1d314b;color:#bdd5ef;margin:2px}.detail-empty{color:var(--muted);line-height:1.8}.detail-title{font-size:20px;font-weight:900;margin-bottom:6px}.detail-sub{color:var(--muted);font-size:12px;margin-bottom:16px}.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kv div{background:#0a1726;border:1px solid #213650;border-radius:10px;padding:10px}.kv span{display:block;color:#7f96b1;font-size:11px}.kv strong{display:block;margin-top:5px}.explain{margin-top:12px;padding:12px;background:#0b1828;border-radius:11px;color:#afc2d8;line-height:1.7;font-size:12px}.section{margin-top:20px}.est{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}.est label{font-size:11px;color:#90a7c2;display:block;margin-bottom:5px}.result{margin-top:14px;display:grid;grid-template-columns:180px 1fr;gap:14px;align-items:center}.big-score{height:140px;border-radius:18px;background:linear-gradient(135deg,#16304b,#103c35);display:grid;place-items:center}.big-score strong{font-size:54px}.big-score span{display:block;text-align:center;color:#97b8c9;font-size:11px}.bars{display:grid;gap:8px}.bar-row{display:grid;grid-template-columns:90px 1fr 38px;gap:8px;align-items:center;font-size:12px;color:#a8bdd5}.bar{height:8px;background:#0a1725;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#4da3ff,#57d9a3);border-radius:999px}.sources{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.source{padding:13px;border:1px solid var(--line);border-radius:12px;background:#0a1726}.source strong{display:block;margin-bottom:4px}.source p{font-size:12px;color:var(--muted);line-height:1.6;margin:0}.muted{color:var(--muted)}.warn{color:#ffd88a}.good{color:#73e2b6}@media(max-width:1050px){.shell{display:block}.side{height:auto;position:relative;border-right:0;border-bottom:1px solid var(--line)}.side-note{display:none}.nav{display:flex;gap:7px}.nav button{width:auto}.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.est{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.main{padding:22px 14px}.hero{display:block}.hero h1{font-size:27px}.stats{grid-template-columns:1fr 1fr}.toolbar{grid-template-columns:1fr 1fr}.est{grid-template-columns:1fr 1fr}.result{grid-template-columns:1fr}.sources{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<div class="shell">
-<aside class="side">
-  <div class="brand"><div class="logo">UR</div><div><strong>都更價值雷達</strong><span>Urban Renewal Radar</span></div></div>
-  <div class="nav">
-    <button class="active" data-target="ranking">候選基地</button>
-    <button data-target="estimator">單案試算</button>
-    <button data-target="sources">資料與限制</button>
-  </div>
-  <div class="side-note"><span class="dot"></span><b>公開資料初篩工具</b><br>不是都更可行性正式意見。產權、建築線、法定容積、耐震與地主意願仍需逐案查證。</div>
-</aside>
-<main class="main">
-  <div class="hero">
-    <div><div class="eyebrow">TAIPEI URBAN RENEWAL OPPORTUNITY RADAR</div><h1>先找最值得花時間整合的老屋基地</h1><p>用臺北市使用執照等公開資料先排出「屋齡高、基地不小、戶數可控、分區較有開發空間」的候選標的；真正進場前再用第二類謄本確認地主與持分結構。</p></div>
-    <div class="badge"><span class="dot"></span><span id="statusBadge">資料載入中</span></div>
-  </div>
-
-  <section id="ranking">
-    <div class="stats">
-      <div class="stat"><span>公開資料候選</span><strong id="sTotal">—</strong><small>老屋初篩後</small></div>
-      <div class="stat"><span>A級候選</span><strong id="sA">—</strong><small>分數 ≥ 80</small></div>
-      <div class="stat"><span>平均屋齡</span><strong id="sAge">—</strong><small>年</small></div>
-      <div class="stat"><span>尚待產權查證</span><strong id="sOwner">—</strong><small>不假裝知道地主</small></div>
-    </div>
-    <div class="notice"><b>你現在看到的「候選」不是說一定能都更。</b> 第一階段只回答：如果整合人今天只能挑 100 個基地去研究，哪些更值得先查？「地主數、最大持分、公司地主、抵押權」只有真的取得謄本或可核對的公開持分資料後才會加入正式分數。</div>
-    <div class="card toolbar">
-      <input id="q" placeholder="搜尋地址、地段、執照號碼">
-      <select id="district"><option value="">全部行政區</option></select>
-      <select id="grade"><option value="">全部等級</option><option value="A">A級 ≥80</option><option value="B">B級 65–79</option><option value="C">C級 <65</option></select>
-      <button class="btn" id="reload">重新載入</button>
-    </div>
-    <div class="layout">
-      <div class="card"><h2>候選基地排名</h2><div class="table-wrap"><table><thead><tr><th>分數</th><th>地址</th><th>屋齡</th><th>戶數</th><th>基地</th><th>分區</th><th>產權</th></tr></thead><tbody id="rows"></tbody></table></div></div>
-      <div class="card"><h2>基地判讀</h2><div id="detail" class="detail-empty">點左邊任一候選基地，我會把「為什麼被排前面」拆給你看。</div></div>
-    </div>
-  </section>
-
-  <section id="estimator" class="section">
-    <div class="card">
-      <h2>單一基地試算器</h2>
-      <p class="muted">這裡可以把第二階段的產權資料也放進來。這個分數是「值得優先研究／整合」的排序，不是鑑價或都更核准機率。</p>
-      <div class="est">
-        <div><label>屋齡（年）</label><input id="eAge" type="number" value="48"></div>
-        <div><label>基地面積（坪）</label><input id="eArea" type="number" value="145"></div>
-        <div><label>現況樓層</label><input id="eFloors" type="number" value="4"></div>
-        <div><label>戶數</label><input id="eUnits" type="number" value="16"></div>
-        <div><label>使用分區</label><select id="eZone"><option>第三種住宅區</option><option>第四種住宅區</option><option>第二種住宅區</option><option>商業區</option><option>其他</option></select></div>
-        <div><label>土地所有權登記數</label><input id="eOwners" type="number" value="10"></div>
-        <div><label>最大地主持分（%）</label><input id="eMaxShare" type="number" value="28"></div>
-        <div><label>新屋/舊屋單價價差（%）</label><input id="eGap" type="number" value="75"></div>
-      </div>
-      <div class="result"><div class="big-score"><div><strong id="eScore">—</strong><span>整合優先分數 / 100</span></div></div><div class="bars" id="bars"></div></div>
-    </div>
-  </section>
-
-  <section id="sources" class="section">
-    <div class="card">
-      <h2>資料來源與目前做到哪裡</h2>
-      <div class="sources">
-        <div class="source"><strong>臺北市歷年使用執照摘要</strong><p>第一版已接：竣工/發照年份、樓層、戶數、基地相關面積、地址、地段號、使用分區。<br><a target="_blank" href="https://data.taipei/dataset/detail?id=c876ff02-af2e-4eb8-bd33-d444f5052733">官方資料</a></p></div>
-        <div class="source"><strong>臺北市土地使用分區</strong><p>下一層交叉核對：以地號確認分區，不只相信舊使照內的文字。<br><a target="_blank" href="https://data.taipei/dataset/detail?id=a132a433-db7c-4387-8085-83e6a093b17f">官方資料</a></p></div>
-        <div class="source"><strong>臺北市申報地價</strong><p>可看到部分申報案件的所有權登記次序與持分，但不是全市完整產權，因此只可當佐證，不能當「沒出現＝單一地主」。<br><a target="_blank" href="https://data.taipei/dataset/detail?id=e434a75a-5692-4a41-bb29-edb97d7f624e">官方資料</a></p></div>
-        <div class="source"><strong>第二類土地／建物謄本</strong><p>真正進入 Top 標的後才付費查：登記次序、權利範圍、抵押與限制登記。自然人姓名會遮蔽部分資訊，但足以做產權複雜度分析。<br><a target="_blank" href="https://epaper.land.moi.gov.tw/Home/SNEpaperKind">官方說明</a></p></div>
-      </div>
-      <div class="explain"><b>目前限制：</b> 本站第一版的候選排名主要來自使照公開資料。基地面積欄位若原始資料缺漏，系統不會硬補假數字；產權欄位沒有謄本就顯示「待查」。接下來才是把地號、土地使用分區、實價登錄與謄本工作流串進來。</div>
-    </div>
-  </section>
-</main>
-</div>
+:root{--bg:#07111d;--panel:#0d1a2a;--line:#263a55;--txt:#edf5ff;--muted:#9db0c7;--blue:#56a8ff;--green:#55d6a2;--yellow:#ffd166;--red:#ff8585}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#06101c,#0a1727 58%,#07111d);color:var(--txt);font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}.shell{display:grid;grid-template-columns:250px 1fr;min-height:100vh}.side{height:100vh;position:sticky;top:0;padding:26px 18px;border-right:1px solid var(--line);background:rgba(5,13,24,.86)}.brand{display:flex;gap:11px;align-items:center;margin-bottom:30px}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--green));display:grid;place-items:center;color:#06111d;font-weight:950}.brand b{display:block}.brand span{font-size:11px;color:var(--muted)}.nav button{width:100%;border:0;background:transparent;color:var(--muted);padding:11px 12px;border-radius:10px;text-align:left;cursor:pointer;margin:3px 0}.nav button:hover,.nav button.active{background:#14243a;color:#fff}.note{position:absolute;left:18px;right:18px;bottom:22px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#0b1828;font-size:11px;line-height:1.6;color:var(--muted)}.main{padding:28px 32px 60px;max-width:1600px;width:100%;margin:auto}.hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:20px}.eyebrow{font-size:11px;font-weight:900;color:#74baff;letter-spacing:.14em}.hero h1{font-size:32px;margin:6px 0 10px}.hero p{max-width:900px;color:var(--muted);line-height:1.7;margin:0}.status{padding:8px 11px;border:1px solid #24544d;background:#0c2925;color:#82e6c0;border-radius:999px;font-size:11px;white-space:nowrap}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.card,.stat{background:linear-gradient(180deg,rgba(18,34,56,.97),rgba(10,22,37,.98));border:1px solid var(--line);border-radius:15px}.stat{padding:15px}.stat span{font-size:11px;color:var(--muted)}.stat strong{display:block;font-size:27px;margin:6px 0 2px}.stat small{color:#6f86a1}.warnbox{padding:13px 15px;border:1px solid #5a4e2a;background:#211f16;border-radius:12px;color:#d9cca0;font-size:12px;line-height:1.7;margin-bottom:14px}.toolbar{display:grid;grid-template-columns:1.5fr .7fr .8fr .9fr auto;gap:9px;padding:13px;margin-bottom:14px}.toolbar input,.toolbar select{width:100%;background:#071522;border:1px solid #2f435d;color:#fff;border-radius:9px;padding:9px 10px}.btn{border:0;border-radius:9px;background:var(--blue);color:#06101c;font-weight:900;padding:9px 13px;cursor:pointer}.layout{display:grid;grid-template-columns:1.5fr .82fr;gap:14px}.card{padding:15px}.card h2{font-size:17px;margin:0 0 11px}.scroll{max-height:660px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}th{position:sticky;top:0;background:#12233a;color:#8fa6c1;text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);z-index:2}td{padding:10px 8px;border-bottom:1px solid #1c3049;vertical-align:top}.row{cursor:pointer}.row:hover{background:#12243a}.pill{display:inline-block;padding:3px 7px;border-radius:999px;font-size:10px;margin:1px;background:#1a3048;color:#c5dcf3}.pill.good{background:#103a30;color:#82e5bd}.pill.warn{background:#3c3213;color:#ffe08b}.pill.bad{background:#3b2228;color:#ffb0b8}.score{display:inline-grid;place-items:center;min-width:38px;height:28px;border-radius:8px;font-weight:950;background:#19344f}.muted{color:var(--muted)}.detail-title{font-size:20px;font-weight:900;margin-bottom:4px}.sub{color:var(--muted);font-size:11px;margin-bottom:12px}.kv{display:grid;grid-template-columns:1fr 1fr;gap:7px}.kv div{padding:9px;background:#081625;border:1px solid #20354f;border-radius:9px}.kv span{display:block;color:#7e95af;font-size:10px}.kv b{display:block;margin-top:4px}.reason{padding:11px;margin-top:10px;border-radius:10px;background:#0a1828;color:#b8c9db;line-height:1.7;font-size:11px}.owners{margin-top:12px}.section{margin-top:18px}.sources{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.src{padding:12px;border:1px solid var(--line);background:#081625;border-radius:11px}.src b{display:block;margin-bottom:5px}.src p{margin:0;color:var(--muted);font-size:11px;line-height:1.6}.tag{font-size:10px;padding:2px 6px;border-radius:6px;background:#1b2f45;color:#bcd4ed}@media(max-width:1050px){.shell{display:block}.side{height:auto;position:relative}.note{display:none}.layout{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}.toolbar{grid-template-columns:1fr 1fr}.sources{grid-template-columns:1fr 1fr}}@media(max-width:650px){.main{padding:20px 12px}.hero{display:block}.hero h1{font-size:26px}.sources{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+</style></head><body>
+<div class="shell"><aside class="side"><div class="brand"><div class="logo">0$</div><div><b>土地／都更雷達</b><span>FREE OPEN DATA ONLY</span></div></div><div class="nav"><button class="active" data-go="ownership">持分觀察</button><button data-go="sources">免費資料來源</button></div><div class="note"><b>關鍵原則</b><br>observed_owner_records 是公開資料可觀察到的登記筆數，不是地主總數。沒有證明完整，就不標 confirmed。</div></aside>
+<main class="main"><header class="hero"><div><div class="eyebrow">TAIPEI ZERO-COST PARCEL INTELLIGENCE</div><h1>用免費政府資料先看「哪塊地值得研究」</h1><p>第一個已實際驗證的 ownership layer 來自臺北市「申報地價」原始 CSV。系統依行政區＋段小段＋地號聚合，計算觀察到的登記筆數、持分、Top 2/3、HHI；只有觀察持分合計內部一致時，才讓集中度影響難度判讀。</p></div><div class="status" id="status">資料讀取中</div></header>
+<section id="ownership"><div class="grid4"><div class="stat"><span>申報地價原始列</span><strong id="rawRows">—</strong><small>真實官方 CSV</small></div><div class="stat"><span>可建立 parcel key</span><strong id="parcelCount">—</strong><small>地號層級</small></div><div class="stat"><span>觀察到 ≥2 登記次序</span><strong id="multiCount">—</strong><small>不是地主總數</small></div><div class="stat"><span>資料成本</span><strong>$0</strong><small>未用任何付費謄本</small></div></div>
+<div class="warnbox"><b>為什麼某些土地顯示「資料不足」？</b> 例如公開資料只觀察到 2 筆、合計 3.1% 持分，不能據此說剩下 96.9% 是誰、共有幾人，也不能拿這 3.1% 當完整 HHI。因此集中度保留為觀察值，但不進入最終難度判斷。</div>
+<div class="card toolbar"><input id="q" placeholder="搜尋行政區、段小段、地號"><select id="district"><option value="">全部行政區</option></select><select id="multi"><option value="">全部</option><option value="2">只看 ≥2 筆登記</option><option value="5">只看 ≥5 筆登記</option><option value="10">只看 ≥10 筆登記</option></select><select id="reliability"><option value="">全部完整性</option><option value="internally_complete">持分合計≈100%</option><option value="partial">持分合計不足</option><option value="special_or_overlapping">特殊/重疊</option></select><button class="btn" id="reload">重新載入</button></div>
+<div class="layout"><div class="card"><h2>地號持分觀察表</h2><div class="scroll"><table><thead><tr><th>Proxy</th><th>地號</th><th>面積</th><th>觀察登記</th><th>最大持分</th><th>Top3</th><th>持分合計</th><th>HHI</th><th>判讀</th></tr></thead><tbody id="rows"></tbody></table></div></div><div class="card"><h2>土地詳情</h2><div id="detail" class="muted">點左側任一地號查看實際分子／分母與判讀依據。</div></div></div></section>
+<section class="section" id="sources"><div class="card"><h2>0元資料來源矩陣（已驗證／正在接）</h2><div class="sources">
+<div class="src"><b>① 臺北市申報地價 <span class="tag">已實跑</span></b><p>有：地號、面積、登記次序、持分分子/分母、公告/申報地價。限制：不是完整所有權母體。</p></div>
+<div class="src"><b>② 公告現值／公告地價 <span class="tag">主表</span></b><p>全市地號級資料，可建立 parcel master；沒有所有權持分。</p></div>
+<div class="src"><b>③ 土地使用分區 <span class="tag">可地號JOIN</span></b><p>行政區、大段、小段、母號、子號、分區說明，可建立 land_use_zone。</p></div>
+<div class="src"><b>④ 容積／建蔽率 <span class="tag">區域規則</span></b><p>行政區＋分區可取得建蔽率與容積率上限；不是單筆土地最終可建量。</p></div>
+<div class="src"><b>⑤ 臺北市公有土地 <span class="tag">共有補強</span></b><p>有地號、面積、土地權屬情形、權屬比例、管理機關，可補公有持分訊號。</p></div>
+<div class="src"><b>⑥ 地籍清理公告標售 <span class="tag">特殊風險</span></b><p>有地號、面積、使用分區與權利範圍，可加 cadastral_cleanup_flag。</p></div>
+<div class="src"><b>⑦ 市有地參與都更 <span class="tag">部分都更旗標</span></b><p>公開市有土地地號與更新進度；不能當成全臺北都更案件全集。</p></div>
+<div class="src"><b>⑧ 未辦繼承 <span class="tag">官方有公告</span></b><p>每年 4/1–6/30 公告，但尚未找到穩定全量、可直接以地號 JOIN 的結構化 Open Data。</p></div>
+<div class="src"><b>⑨ 土地法34-1 <span class="tag">尚未找到母表</span></b><p>目前有法規與個案，尚無已驗證的全市地號級免費 Open Data。</p></div>
+<div class="src"><b>⑩ 危老 <span class="tag">尚在驗證</span></b><p>官方案例與統計存在，但目前尚未找到完整地號級核准清冊，暫不宣稱完整。</p></div>
+</div></div></section></main></div>
 <script>
-let all=[];
-const $=id=>document.getElementById(id);
-const fmt=n=>Number.isFinite(+n)?Math.round(+n).toLocaleString():"—";
-const grade=s=>s>=80?"A":s>=65?"B":"C";
-function render(){
-  const q=$("q").value.trim().toLowerCase(), d=$("district").value, g=$("grade").value;
-  const data=all.filter(x=>(!q||[x.address,x.land_lot,x.license_no].join(" ").toLowerCase().includes(q))&&(!d||x.district===d)&&(!g||grade(x.score)===g));
-  $("rows").innerHTML=data.slice(0,250).map(x=>`<tr class="data-row" data-id="${x.id}"><td><span class="score ${grade(x.score).toLowerCase()}">${x.score}</span></td><td><b>${x.address||"地址未完整"}</b><br><span class="muted">${x.land_lot||"地段號待補"}</span></td><td>${fmt(x.age)}年</td><td>${fmt(x.households)}</td><td>${x.site_area_sqm?fmt(x.site_area_sqm/3.3058)+"坪":"—"}</td><td>${x.zone||"—"}</td><td><span class="pill warn">待謄本</span></td></tr>`).join("")||'<tr><td colspan="7" class="muted">沒有符合條件的候選。</td></tr>';
-  document.querySelectorAll(".data-row").forEach(tr=>tr.onclick=()=>showDetail(tr.dataset.id));
-}
-function showDetail(id){
- const x=all.find(v=>v.id===id); if(!x)return;
- $("detail").innerHTML=`<div class="detail-title"><span class="score ${grade(x.score).toLowerCase()}">${x.score}</span> ${x.address||"地址未完整"}</div>
- <div class="detail-sub">${x.license_no||""} · ${x.land_lot||"地段號未提供"}</div>
- <div class="kv">
- <div><span>屋齡</span><strong>${fmt(x.age)} 年</strong></div><div><span>地上層數</span><strong>${fmt(x.floors)} 樓</strong></div>
- <div><span>戶數</span><strong>${fmt(x.households)} 戶</strong></div><div><span>基地面積</span><strong>${x.site_area_sqm?fmt(x.site_area_sqm/3.3058)+" 坪":"原始資料缺漏"}</strong></div>
- <div><span>使用分區</span><strong>${x.zone||"待核對"}</strong></div><div><span>產權難度</span><strong class="warn">待謄本確認</strong></div>
- </div>
- <div class="explain"><b>為什麼排到這裡：</b><br>${(x.reasons||[]).map(r=>"• "+r).join("<br>")||"公開欄位不足，建議先查地號與謄本。"}<br><br><b>下一步：</b> 先確認地號/分區 → 查土地與建物第二類謄本 → 計算所有權登記數、最大持分與限制登記，再決定是否值得實際敲門。</div>`;
-}
-async function load(){
- try{
-   $("statusBadge").textContent="讀取官方資料產生的候選";
-   const r=await fetch("./data/candidates.json?ts="+Date.now()); const j=await r.json();
-   all=j.candidates||[];
-   $("statusBadge").textContent=j.meta?.mode==="live"?"官方公開資料已更新":"原型資料";
-   $("sTotal").textContent=fmt(all.length); $("sA").textContent=fmt(all.filter(x=>x.score>=80).length);
-   $("sAge").textContent=all.length?Math.round(all.reduce((a,b)=>a+(+b.age||0),0)/all.length):"—";
-   $("sOwner").textContent=fmt(all.filter(x=>!x.ownership_verified).length);
-   const ds=[...new Set(all.map(x=>x.district).filter(Boolean))].sort();
-   $("district").innerHTML='<option value="">全部行政區</option>'+ds.map(x=>`<option>${x}</option>`).join("");
-   render(); if(all[0])showDetail(all[0].id);
- }catch(e){$("statusBadge").textContent="資料尚未建立";$("rows").innerHTML='<tr><td colspan="7" class="muted">GitHub Actions 尚未產生候選資料，但下方「單一基地試算器」可先使用。</td></tr>';}
-}
-function est(){
- const age=+$("eAge").value||0, area=+$("eArea").value||0, floors=+$("eFloors").value||0, units=+$("eUnits").value||0, owners=+$("eOwners").value||0, share=+$("eMaxShare").value||0, gap=+$("eGap").value||0, z=$("eZone").value;
- const p={};
- p["屋齡"] = Math.min(20,Math.max(0,(age-25)*.55));
- p["基地規模"] = Math.min(18, area>=180?18:area>=120?15:area>=80?11:area>=50?7:3);
- p["樓層/戶數"] = Math.max(2, (floors>=3&&floors<=5?9:5)+(units>=8&&units<=24?9:units<=40?6:3));
- p["分區"] = z.includes("商業")?14:z.includes("第四")?13:z.includes("第三")?11:z.includes("第二")?8:5;
- p["市場價差"] = Math.min(15,Math.max(0,gap/7));
- p["產權可整合性"] = Math.max(0,15-(owners>20?10:owners>12?7:owners>6?4:1)+(share>=50?5:share>=30?3:0));
- const score=Math.min(100,Math.round(Object.values(p).reduce((a,b)=>a+b,0)));
- $("eScore").textContent=score;
- $("bars").innerHTML=Object.entries(p).map(([k,v])=>`<div class="bar-row"><span>${k}</span><div class="bar"><i style="width:${Math.min(100,v/20*100)}%"></i></div><b>${Math.round(v)}</b></div>`).join("");
-}
-["q","district","grade"].forEach(id=>$(id).addEventListener("input",render)); $("reload").onclick=load;
-document.querySelectorAll(".est input,.est select").forEach(x=>x.addEventListener("input",est));
-document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById(b.dataset.target).scrollIntoView({behavior:"smooth"});});
-load();est();
-</script>
-</body></html>
+let all=[],meta={};const $=id=>document.getElementById(id);const pct=v=>v==null?"—":(v*100).toFixed(v<.01?2:1)+"%";const num=v=>v==null?"—":Number(v).toLocaleString(undefined,{maximumFractionDigits:2});
+function relLabel(r){return r==="internally_complete"?"內部一致≈100%":r==="partial"?"僅部分持分":r==="special_or_overlapping"?"特殊/重疊":"未知"}function pill(r){return r==="internally_complete"?"good":r==="partial"?"warn":"bad"}
+function render(){const q=$("q").value.trim().toLowerCase(),d=$("district").value,m=+$("multi").value||0,rel=$("reliability").value;const data=all.filter(x=>(!q||[x.district,x.section,x.land_no,x.land_no_raw].join(" ").toLowerCase().includes(q))&&(!d||x.district===d)&&(!m||x.observed_owner_records>=m)&&(!rel||x.observed_share_reliability===rel));data.sort((a,b)=>(b.observed_owner_records-a.observed_owner_records)||(b.ownership_complexity_score-a.ownership_complexity_score));$("rows").innerHTML=data.slice(0,500).map(x=>`<tr class="row" data-id="${encodeURIComponent(x.parcel_id)}"><td><span class="score">${x.ownership_complexity_score}</span></td><td><b>${x.district} ${x.section} ${x.land_no}地號</b><br><span class="muted">${x.land_no_raw}</span></td><td>${num(x.land_area)}㎡</td><td><b>${x.observed_owner_records}</b></td><td>${pct(x.max_share)}</td><td>${pct(x.top3_share)}</td><td>${pct(x.observed_share_sum)}</td><td>${x.share_hhi==null?"—":x.share_hhi.toFixed(4)}</td><td><span class="pill ${pill(x.observed_share_reliability)}">${relLabel(x.observed_share_reliability)}</span><br><span class="muted">${x.integration_difficulty==="資料不足"?"難度：資料不足（下限 "+x.integration_difficulty_lower_bound+"）":"難度："+x.integration_difficulty}</span></td></tr>`).join("")||'<tr><td colspan="9" class="muted">沒有符合條件的土地。</td></tr>';document.querySelectorAll(".row").forEach(r=>r.onclick=()=>show(decodeURIComponent(r.dataset.id)))}
+function show(id){const x=all.find(v=>v.parcel_id===id);if(!x)return;const ownerRows=(x.owner_records||[]).slice().sort((a,b)=>(b.share||0)-(a.share||0));$("detail").innerHTML=`<div class="detail-title">${x.district} ${x.section} ${x.land_no}地號</div><div class="sub">parcel_id = ${x.parcel_id}</div><div class="kv"><div><span>土地面積</span><b>${num(x.land_area)} ㎡</b></div><div><span>觀察登記筆數</span><b>${x.observed_owner_records} 筆</b></div><div><span>最大觀察持分</span><b>${pct(x.max_share)}</b></div><div><span>Top 3 觀察持分</span><b>${pct(x.top3_share)}</b></div><div><span>觀察持分合計</span><b>${pct(x.observed_share_sum)}</b></div><div><span>HHI（觀察值）</span><b>${x.share_hhi==null?"—":x.share_hhi.toFixed(6)}</b></div><div><span>所有權資料完整性</span><b>${x.ownership_data_completeness}</b></div><div><span>集中度可否進入分數</span><b>${x.observed_share_reliability==="internally_complete"?"可作中信賴 proxy":"否，只展示觀察值"}</b></div></div><div class="reason"><b>判讀：</b><br>${(x.complexity_reasons||[]).map(v=>"• "+v).join("<br>")}<br><br><b>限制：</b> ${x.ownership_completeness_note}</div><div class="owners"><b>官方資料實際觀察到的登記次序／持分</b><div class="scroll" style="max-height:270px;margin-top:7px"><table><thead><tr><th>登記次序</th><th>類別</th><th>分子</th><th>分母</th><th>持分</th></tr></thead><tbody>${ownerRows.map(o=>`<tr><td>${o.registration_seq||"—"}</td><td>${o.share_type||"—"}</td><td>${num(o.share_numerator)}</td><td>${num(o.share_denominator)}</td><td>${pct(o.share)}</td></tr>`).join("")}</tbody></table></div></div>`}
+async function load(){try{$("status").textContent="讀取真實官方資料…";const r=await fetch("./data/parcel_ownership.json?ts="+Date.now());const j=await r.json();meta=j.meta||{};all=j.parcels||[];$("rawRows").textContent=num(meta.raw_rows);$("parcelCount").textContent=num(meta.parcel_count);$("multiCount").textContent=num(meta.multi_owner_observed_parcels);$("status").textContent="官方 CSV 已驗證 · $0";const ds=[...new Set(all.map(x=>x.district).filter(Boolean))].sort();$("district").innerHTML='<option value="">全部行政區</option>'+ds.map(x=>`<option>${x}</option>`).join("");render();const first=all.slice().sort((a,b)=>b.observed_owner_records-a.observed_owner_records)[0];if(first)show(first.parcel_id)}catch(e){$("status").textContent="資料讀取失敗";$("rows").innerHTML='<tr><td colspan="9" class="muted">parcel_ownership.json 尚未發布。</td></tr>'}}
+["q","district","multi","reliability"].forEach(id=>$(id).addEventListener("input",render));$("reload").onclick=load;document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById(b.dataset.go).scrollIntoView({behavior:"smooth"})});load();
+</script></body></html>
