@@ -6,7 +6,7 @@ Generates 停車/全台縣市停車API盤點.md.
 Fees remain raw source text; no semantic price parsing.
 """
 from __future__ import annotations
-import csv, io, json, math, re, time, urllib.request
+import csv, io, json, math, re, time, urllib.request, subprocess, shutil, html
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -329,6 +329,73 @@ def audit_city(cfg):
     except Exception as e:res["errors"].append(f"{type(e).__name__}: {e}")
     return res
 
+TDX_PROBE_CITIES = [
+    ("高雄市","Kaohsiung"),("基隆市","Keelung"),("嘉義市","Chiayi"),
+    ("新竹縣","HsinchuCounty"),("苗栗縣","MiaoliCounty"),("彰化縣","ChanghuaCounty"),
+    ("南投縣","NantouCounty"),("雲林縣","YunlinCounty"),("嘉義縣","ChiayiCounty"),
+    ("屏東縣","PingtungCounty"),("花蓮縣","HualienCounty"),("臺東縣","TaitungCounty"),
+    ("澎湖縣","PenghuCounty"),("金門縣","KinmenCounty"),("連江縣","LienchiangCounty"),
+]
+
+def _chrome_cmd():
+    for c in ("google-chrome","google-chrome-stable","chromium","chromium-browser"):
+        if shutil.which(c):
+            return c
+    return None
+
+def _extract_json_from_dom(dom):
+    m=re.search(r"<pre[^>]*>(.*?)</pre>",dom,re.I|re.S)
+    txt=html.unescape(re.sub(r"<[^>]+>","",m.group(1))) if m else dom.strip()
+    starts=[x for x in (txt.find("["),txt.find("{")) if x>=0]
+    if starts:
+        txt=txt[min(starts):]
+    try:return json.loads(txt)
+    except Exception:return None
+
+def probe_tdx_unresolved():
+    chrome=_chrome_cmd()
+    out=[]
+    if not chrome:
+        return [{"city":"全部","code":"—","url":"—","count":0,"numeric":False,"update":"","status":"NO_CHROME","body":"GitHub runner 找不到 Chrome/Chromium"}]
+    for city,code in TDX_PROBE_CITIES:
+        url=f"https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/{code}?%24top=5&%24format=JSON"
+        obj=None; body=""; attempts=[]
+        for attempt in range(1,4):
+            try:
+                p=subprocess.run([
+                    chrome,"--headless=new","--disable-gpu","--no-sandbox","--disable-dev-shm-usage",
+                    "--dump-dom",url
+                ],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=25)
+                body=p.stdout
+                obj=_extract_json_from_dom(body)
+                count=len(obj) if isinstance(obj,list) else (1 if isinstance(obj,dict) else 0)
+                attempts.append(f"{attempt}:rc={p.returncode},json={isinstance(obj,(list,dict))},count={count}")
+                if isinstance(obj,(list,dict)):
+                    break
+            except Exception as e:
+                attempts.append(f"{attempt}:{type(e).__name__}:{e}")
+            time.sleep(attempt)
+        rows=obj if isinstance(obj,list) else ([obj] if isinstance(obj,dict) else [])
+        numeric=False; update=""
+        for r in rows:
+            if not isinstance(r,dict):continue
+            candidates=[r]
+            for k in ("ParkingAvailabilities","ParkingAvailability","Availabilities"):
+                if isinstance(r.get(k),list):
+                    candidates += [x for x in r[k] if isinstance(x,dict)]
+            for x in candidates:
+                for k,v in x.items():
+                    lk=str(k).lower()
+                    if ("available" in lk or "spaces" in lk) and isinstance(v,(int,float)):
+                        numeric=True
+                    if lk in ("updatetime","srcupdatetime","update_time") and v:
+                        update=str(v)
+        count=len(rows)
+        body_text=re.sub(r"\s+"," ",body)[:240]
+        status="OK" if count else ("AUTH_OR_BLOCKED" if ("401" in body_text or "403" in body_text or "Unauthorized" in body_text or "Forbidden" in body_text) else "NO_ROWS_OR_PARSE_FAIL")
+        out.append({"city":city,"code":code,"url":url,"count":count,"numeric":numeric,"update":update,"status":status,"attempts":"；".join(attempts),"body":body_text})
+    return out
+
 def mapping_lines(cfg):
     mp={}
     if cfg["mode"] in ("pair","pair_paged","yilan_pair"):
@@ -398,13 +465,24 @@ ParkBoss 公開列出的資料來源包含多個縣市政府與 TDX。它不能�
 - 其他縣市：改成 ⚪ 未證實，而不是直接宣告沒有；TDX 需要 API Key 逐縣 query 後才能下定論。
 """.strip()
 
-def render_report(audits):
+def render_report(audits,tdx_probe=None):
     now=datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds");L=[]
     L += ["# 全台 22 縣市免費停車資料 API／Open Data 實測盤點","",f"> 產生時間：{now}  ","> 原則：完全排除 TDX；只評估免費官方地方政府 API、官方 Open Data 下載端點與 data.gov.tw 轉載的地方政府資料。  ","> 本報告只盤點與實測資料源，沒有修改現有停車網站。  ","> 價格欄位採 raw passthrough，不把自然語言費率硬解析成每小時價格；沒有 numeric 剩餘格就不推算。  ",
 "> 明確 API/JSON/CSV 端點若呼叫失敗，單次稽核最多連續嘗試 3 次；3 次皆失敗才記錄錯誤。  ",
 "> 判讀分層：A=已找到可直連且可驗證的官方資料端點；B/B*=有官方資料或官方即時服務，但即時 availability 公開端點仍不完整；C/C*=目前只確認管理系統/線索，尚無可驗證的公開即時空位端點。  ",
 "> 注意：TDX 有某縣市資料，代表存在上游資料交換，不等於該上游一定是對一般開發者公開的免費地方 API。",""]
     L += ["", DYNAMIC_PRODUCT_SECTION, ""]
+    if tdx_probe:
+        L += ["## 0-4. TDX 原始 ParkingAvailability 本次實打結果","",
+              "> 這不是搜尋結果，也不是第三方旁證；是 GitHub Actions 用 headless Chrome 直接開 TDX 訪客模式的指定縣市路外 ParkingAvailability endpoint。每個端點最多重試 3 次。","",
+              "| 縣市 | TDX code | top=5 回傳筆數 | numeric availability | 更新時間樣本 | 狀態 | 完整 URL |",
+              "|---|---|---:|---|---|---|---|"]
+        for r in tdx_probe:
+            L.append(f"| {r['city']} | {r['code']} | {r['count']} | {'✅' if r['numeric'] else '❌'} | {md(r['update'])} | {r['status']} | {r['url']} |")
+        L += ["","<details><summary>TDX 實打原始嘗試摘要</summary>",""]
+        for r in tdx_probe:
+            L.append(f"- {r['city']}：{r.get('attempts','')}；body={md(r.get('body',''))}")
+        L += ["","</details>",""]
     L += ["## 1. 統一格式","","| 統一欄位 | 意義 | 轉換規則 |","|---|---|---|"]
     for k,d,r in UNIFIED_FIELDS:L.append(f"| {k} | {d} | {r} |")
     L += ["","### 嚴格資料規則","","1. available_car 只接受官方明確提供的數值剩餘格；紅黃綠燈、滿/未滿、感測器狀態都不換算成格數。","2. fee_* 保留官方原文；來源分平日/假日/月租就分欄保存，不做語意解析。","3. 跨資料表只允許官方共同 ID exact join；不做停車場名稱模糊比對。","4. 地址不拿去地理編碼補座標；TWD97→WGS84 只做固定數學轉換。","5. 來源缺核心欄位就留空，不自行猜。",""]
@@ -455,6 +533,8 @@ def main():
     audits=[]
     for cfg in SOURCES:
         print("AUDIT",cfg["city"],flush=True);res=audit_city(cfg);audits.append((cfg,res));print(" ->",len(res["norm_rows"]),"rows",res["errors"],flush=True)
-    OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text(render_report(audits),encoding="utf-8");print("WROTE",OUT,OUT.stat().st_size)
+    print("PROBE TDX unresolved cities",flush=True);tdx_probe=probe_tdx_unresolved()
+    for r in tdx_probe: print(" TDX",r["city"],r["status"],r["count"],r["numeric"],flush=True)
+    OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text(render_report(audits,tdx_probe),encoding="utf-8");print("WROTE",OUT,OUT.stat().st_size)
 
 if __name__=="__main__":main()
