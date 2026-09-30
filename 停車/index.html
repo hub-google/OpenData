@@ -108,6 +108,21 @@ const API={
   penghu:{
     label:'澎湖縣',official:'https://parking.penghu.gov.tw/',
     bbox:[23.15,23.85,119.28,119.75]
+  },
+  yunlin:{
+    data:'https://parking.yunlin.gov.tw/ParkingLocation/ParkingLotPost',
+    label:'雲林縣',official:'https://parking.yunlin.gov.tw/',
+    bbox:[23.42,23.90,120.08,120.75]
+  },
+  nantou:{
+    data:'https://parking.nantou.gov.tw/ParkingLocation/ParkingLotPost',
+    label:'南投縣',official:'https://parking.nantou.gov.tw/',
+    bbox:[23.40,24.28,120.58,121.38]
+  },
+  hualien:{
+    data:'https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView',
+    label:'花蓮縣',official:'https://traffic.hl.gov.tw/Home/CheckParkingDetail',
+    bbox:[22.95,24.40,121.05,121.90]
   }
 };
 
@@ -163,6 +178,21 @@ async function postJSON(url,body='',maxAttempts=3){
       const r=await fetch(url,{method:'POST',body,cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'}});
       if(!r.ok)throw new Error('HTTP '+r.status);
       return await r.json();
+    }catch(e){
+      lastError=e;
+      if(attempt<maxAttempts)await sleep(attempt*500);
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
+async function postText(url,body='',maxAttempts=3){
+  let lastError=null;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(url,{method:'POST',body,cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.text();
     }catch(e){
       lastError=e;
       if(attempt<maxAttempts)await sleep(attempt*500);
@@ -340,6 +370,31 @@ async function loadPenghu(){
   });
   return{key:'penghu',rows,mode:'官方 API 直連'};
 }
+async function loadSimpleParkingLotPost(key,source){
+  const cfg=API[key],raw=await postJSON(cfg.data,''),rows=extractArray(raw).map((p,i)=>{
+    const lat=n(first(p,['positionLat','lat','Latitude'])),lng=n(first(p,['positionLon','lng','Longitude']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:null,id:key+'-'+(first(p,['id','carParkId','parkingId'])??i),name:first(p,['carParkName','ParkingName','name']),address:first(p,['address','location']),
+      total:first(p,['totalNum','total','TotalSpace']),avail:first(p,['remaining','SurplusSpace','available']),fee:first(p,['fareDescription','description','fee']),updated:first(p,['updateTime','UpdateTime']),source,official:cfg.official});
+  }).filter(Boolean);
+  return{key,rows,mode:rows.some(x=>x.hasRealtime)?'官方 API 直連':'官方 API（無 numeric 即時格）'};
+}
+async function loadHualien(){
+  const cfg=API.hualien;
+  const body='page=1&pageNumber=100&action=DynamicParking&currentGroup=1&dataModel%5BKeyWord%5D=';
+  const raw=await postText(cfg.data,body),rows=[];
+  const blocks=raw.split('parking_space_list_item').slice(1);
+  blocks.forEach((block,i)=>{
+    const name=(block.match(/class="parking_space_item_title"[^>]*>[\s\S]*?<a [^>]*>([^<]+)<\/a>/)||[])[1];
+    const coords=block.match(/q=([0-9.-]+),([0-9.-]+)/);
+    if(!name||!coords)return;
+    const total=(block.match(/總停車位：<\/div>\s*<div class="text_content">(\d+)<\/div>/)||[])[1];
+    const fee=(block.match(/收費方式：<\/div>\s*<div class="text_content">([^<]+)<\/div>/)||[])[1];
+    const remaining=(block.match(/(?:剩餘車位|剩餘|可停)：<\/div>\s*<div class="text_content">(\d+)<\/div>/)||[])[1];
+    const row=normalizedRow({}, {coord:[Number(coords[1]),Number(coords[2])],id:'hl-'+i+'-'+name,name,total,avail:remaining,fee:fee||'',source:'花蓮縣政府',official:cfg.official});
+    if(row)rows.push(row);
+  });
+  return{key:'hualien',rows,mode:rows.some(x=>x.hasRealtime)?'官方動態頁面直連':'官方動態頁面（無 numeric 即時格）'};
+}
 
 function candidateSources(pos,radiusM){
   const pad=Math.max(5,radiusM/1000+3),out=[];
@@ -357,6 +412,9 @@ async function loadSource(key,radius){
   if(key==='yilan')return loadYilan();
   if(key==='taitung')return loadTaitung(radius);
   if(key==='penghu')return loadPenghu();
+  if(key==='yunlin')return loadSimpleParkingLotPost('yunlin','雲林縣政府');
+  if(key==='nantou')return loadSimpleParkingLotPost('nantou','南投縣政府');
+  if(key==='hualien')return loadHualien();
   throw new Error('unknown source '+key);
 }
 async function refreshNearby(){
@@ -370,7 +428,7 @@ async function refreshNearby(){
     const keys=candidateSources(userPos,radius);
     if(!keys.length){
       allData=[];lastSources=[];render();
-      document.getElementById('status').innerHTML='<strong>目前此位置尚未接入地方政府即時來源</strong><br>已接 A 級來源：臺北、新北、桃園、臺南、新竹市、高雄、彰化、宜蘭、臺東、澎湖。';
+      document.getElementById('status').innerHTML='<strong>目前此位置尚未接入地方政府即時來源</strong><br>已接來源：臺北、新北、桃園、臺南、新竹市、高雄、彰化、宜蘭、臺東、澎湖、雲林、南投、花蓮。';
       return;
     }
     const settled=await Promise.allSettled(keys.map(key=>loadSource(key,radius)));
