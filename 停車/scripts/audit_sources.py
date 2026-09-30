@@ -6,7 +6,7 @@ Generates 停車/全台縣市停車API盤點.md.
 Fees remain raw source text; no semantic price parsing.
 """
 from __future__ import annotations
-import csv, io, json, math, re, urllib.request
+import csv, io, json, math, re, time, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -36,10 +36,24 @@ UNIFIED_FIELDS = [
     ("realtime","是否有數值型即時剩餘格","只有 available_car 可直接取得才為 true"),
 ]
 
-def req_bytes(url, timeout=15):
-    req=urllib.request.Request(url,headers={"User-Agent":UA,"Accept":"application/json,text/csv,text/plain,*/*","Origin":"https://hub-google.github.io"})
-    with urllib.request.urlopen(req,timeout=timeout) as r:
-        return r.read(),{"http_status":getattr(r,"status",None),"content_type":r.headers.get("Content-Type",""),"cors":r.headers.get("Access-Control-Allow-Origin",""),"final_url":r.geturl()}
+def req_bytes(url, timeout=20, attempts=3):
+    last=None
+    for attempt in range(1, attempts+1):
+        req=urllib.request.Request(url,headers={
+            "User-Agent":UA,
+            "Accept":"application/json,text/csv,text/plain,*/*",
+            "Origin":"https://hub-google.github.io",
+            "Referer":"https://data.gov.tw/",
+            "Cache-Control":"no-cache",
+        })
+        try:
+            with urllib.request.urlopen(req,timeout=timeout) as r:
+                return r.read(),{"http_status":getattr(r,"status",None),"content_type":r.headers.get("Content-Type",""),"cors":r.headers.get("Access-Control-Allow-Origin",""),"final_url":r.geturl(),"attempt":attempt}
+        except Exception as e:
+            last=e
+            if attempt < attempts:
+                time.sleep(attempt)
+    raise last
 
 def decode_text(raw):
     for enc in ("utf-8-sig","utf-8","cp950","big5"):
@@ -257,23 +271,23 @@ SOURCES = [
 {"city":"桃園市","grade":"A","kind":"單一官方 JSON API","source_name":"桃園市政府","urls":["https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download"],"note":"欄位幾乎 1:1 對應，不解析 payGuide。","mode":"direct","map":{"parking_id":"parkId","name":"parkName","district":"areaName","address":"address","lat":"wgsX","lng":"wgsY","total_car":"totalSpace","available_car":"surplusSpace","fee_text":"payGuide","data_time":"updateTime"}},
 {"city":"臺中市","grade":"B","kind":"官方 JSON API（沒有確切剩餘格）","source_name":"臺中市政府交通局","urls":["https://motoretag.taichung.gov.tw/DataAPI/api/ParkingAPIV2/Opendata"],"dataset_ids":[116052,84195,158166],"note":"路外 API 只有 AvailableCarRGB 狀態/燈號，沒有 numeric available_car；收費資料是另一份且沒有可靠共同 ID，不做名稱模糊 join。","mode":"direct","map":{"parking_id":"ID","name":"Position","lat":"Lat","lng":"Lng","total_car":"TotalCar"}},
 {"city":"臺南市","grade":"A","kind":"官方即時 JSON","source_name":"臺南市政府交通局","urls":["https://parkweb.tainan.gov.tw/api/parking.php"],"dataset_ids":[102772,102773],"note":"本次直連可取得大量停車資料；但每筆 data_time 新鮮度不一，必須逐筆保留來源時間，不能把整包資料一律當成當下即時。","mode":"direct","coord_strategy":"pair","coord_fields":["lnglat"],"map":{"parking_id":"id","name":"name","district":"zone","address":"address","total_car":"car_total","available_car":"car","fee_text":"chargeFee","service_time":"chargeTime","data_time":"update_time"}},
-{"city":"高雄市","grade":"B","kind":"官方靜態 Open Data；官方稱有即時 API 但公開 endpoint/文件未找到","source_name":"高雄市政府交通局","dataset_ids":[46944],"urls":["https://data.gov.tw/dataset/46944"],"note":"不抓 kpp 網頁 HTML、不逆向私有 API。現有靜態資料可直取名稱/位置/座標/費率/小車總格。","mode":"datagov","map":{"name":"場名","district":"行政區","address":"位置","lat":"緯度","lng":"經度","total_car":"小車","fee_text":"收費標準"}},
+{"city":"高雄市","grade":"B*","kind":"官方靜態 Open Data + 官方即時停車服務（公開資料交換 API endpoint 待定位）","source_name":"高雄市政府交通局","dataset_ids":[46944],"urls":["https://data.gov.tw/dataset/46944","https://kpp.tbkc.gov.tw/ParkingLocation/ParkingLocation"],"note":"交通局明確表示已建置停車資訊資料交換 API，且官方服務網有即時剩餘格位；但本輪仍未找到對一般開發者公開且有文件的 availability endpoint。先保留官方靜態 Open Data，禁止把網站內部請求當公開 API。","mode":"datagov","map":{"name":"場名","district":"行政區","address":"位置","lat":"緯度","lng":"經度","total_car":"小車","fee_text":"收費標準"}},
 {"city":"基隆市","grade":"B","kind":"官方 CSV/ODS 靜態資料","source_name":"基隆市政府交通處","dataset_ids":[45757],"urls":["https://www.klcg.gov.tw/tw/tourism/2644-293255.html"],"note":"只有停車場名稱、車格位、地址、聯絡電話；沒有價格、座標、即時剩餘格。","mode":"datagov","map":{"name":"停車場名稱","address":"地址","total_car":"車格位"}},
 {"city":"新竹市","grade":"A","kind":"單一官方動態 API","source_name":"新竹市政府","urls":["https://hispark.hccg.gov.tw/OpenData/GetParkInfo"],"dataset_ids":[129136],"note":"WEEKDAYS/HOLIDAY 保留兩個 raw 欄位，不自行解析。","mode":"direct","map":{"parking_id":"PARKNO","name":"PARKINGNAME","address":"ADDRESS","lat":"LATITUDE","lng":"LONGITUDE","total_car":"TOTALQUANTITY","available_car":"FREEQUANTITY","fee_weekday_text":"WEEKDAYS","fee_holiday_text":"HOLIDAY","service_time":"BUSINESSHOURS","data_time":"UPDATETIME"}},
-{"city":"嘉義市","grade":"B","kind":"官方靜態資料","source_name":"嘉義市政府","dataset_ids":[52317,127381],"urls":["https://data.chiayi.gov.tw"],"note":"路外資料有名稱、收費、月租、小型車格、座標、地址，但沒有 available_car。","mode":"datagov","map":{"parking_id":"項次","name":"停車場名稱","address":"地址","total_car":"小型車","fee_text":"收費方式","fee_monthly_text":"月租費用"},"coord_strategy":"pair","coord_fields":["座標位置"]},
-{"city":"新竹縣","grade":"B","kind":"官方 Open Data 靜態 JSON/CSV","source_name":"新竹縣政府交通旅遊處","urls":["https://www.hsinchu.gov.tw/OpenDataDetail.aspx?n=902&s=271"],"note":"官方欄位沒有座標及 numeric available_car；不適合正式附近即時功能。","mode":"no_direct","declared_fields":["編號","證號","公司名稱","電話","分機","停車場名稱","行政區","停車場地址-地號","型式","停車格數量","收費方式","備註"],"map":{"parking_id":"編號","name":"停車場名稱","district":"行政區","address":"停車場地址-地號","total_car":"停車格數量","fee_text":"收費方式"}},
+{"city":"嘉義市","grade":"B*","kind":"官方靜態 Open Data + 官方智慧停車即時服務","source_name":"嘉義市政府","dataset_ids":[52317,127381],"urls":["https://data.chiayi.gov.tw"],"note":"官方已有智慧停車管理雲端平台與剩餘車位揭露；本輪尚未定位到有正式公開文件的 availability API。靜態資料可取得名稱、收費、月租、小型車格、座標、地址。","mode":"datagov","map":{"parking_id":"項次","name":"停車場名稱","address":"地址","total_car":"小型車","fee_text":"收費方式","fee_monthly_text":"月租費用"},"coord_strategy":"pair","coord_fields":["座標位置"]},
+{"city":"新竹縣","grade":"B*","kind":"官方 Open Data 靜態資料 + 大新竹好停車即時服務","source_name":"新竹縣政府交通旅遊處","urls":["https://www.hsinchu.gov.tw/OpenDataDetail.aspx?n=902&s=271","https://play.google.com/store/apps/details?id=com.hsinchu.parking"],"note":"官方 App 明確提供新竹縣/市即時格位查詢，但目前未找到對外公開且有文件的縣端 availability API；既有 Open Data 欄位沒有座標及 numeric available_car。","mode":"no_direct","declared_fields":["編號","證號","公司名稱","電話","分機","停車場名稱","行政區","停車場地址-地號","型式","停車格數量","收費方式","備註"],"map":{"parking_id":"編號","name":"停車場名稱","district":"行政區","address":"停車場地址-地號","total_car":"停車格數量","fee_text":"收費方式"}},
 {"city":"苗栗縣","grade":"C","kind":"未找到符合需求的縣府免費公開停車結構化 API","source_name":"苗栗縣政府","urls":["https://data.gov.tw/"],"note":"本輪官方資料目錄搜尋未找到可直接提供核心欄位的苗栗縣來源；不以一般網頁或第三方資料補。","mode":"none","map":{}},
 {"city":"彰化縣","grade":"B","kind":"官方靜態停車場登記資料","source_name":"彰化縣政府","dataset_ids":[29243],"urls":["https://data.gov.tw/dataset/29243"],"note":"具名稱、地點、各車種格數與計時/月租等欄位，但沒有 WGS84 座標及即時剩餘格。","mode":"datagov","map":{"parking_id":"登記證號碼","name":"停車場名稱","district":"鄉鎮市","address":"停車場地點","total_car":"小車停車格數量","fee_text":"計時","fee_monthly_text":"月租"}},
 {"city":"南投縣","grade":"C","kind":"未找到符合需求的縣府免費公開停車結構化 API","source_name":"南投縣政府","urls":["https://data.gov.tw/"],"note":"本輪官方資料目錄未找到可直接支援核心欄位的來源；不抓一般網頁。","mode":"none","map":{}},
-{"city":"雲林縣","grade":"B","kind":"官方 JSON/CSV 靜態資料","source_name":"雲林縣政府","dataset_ids":[160687],"urls":["https://data.gov.tw/dataset/160687"],"note":"欄位結構化，但沒有 numeric available_car；費率保留計次/月票/其它三欄。","mode":"datagov","map":{"name":"停車場名稱","district":"鄉鎮","address":"地址或地號","lng":"座標東經","total_car":"小型車位數","fee_text":"計次費率","fee_monthly_text":"月票費率","fee_other_text":"其它費率","service_time":"開放時間"}},
+{"city":"雲林縣","grade":"B","kind":"官方 JSON 直連靜態資料","source_name":"雲林縣政府","dataset_ids":[160687],"urls":["https://ws.yunlin.gov.tw/001/Upload/539/opendata/15369/1518/015d7bf0-48f5-41af-a2f3-c03826b122de.json","https://data.gov.tw/dataset/160687"],"note":"已改用 data.gov.tw 頁面所列的雲林縣政府官方 JSON 直連，避免 metadata resource 選取造成 403 誤判。欄位結構化，但沒有 numeric available_car。","mode":"direct","coord_strategy":"pair","coord_fields":["座標東經"],"map":{"name":"停車場名稱","district":"鄉鎮","address":"地址或地號","total_car":"小型車位數","fee_text":"計次費率","fee_monthly_text":"月票費率","fee_other_text":"其它費率","service_time":"開放時間"}},
 {"city":"嘉義縣","grade":"B","kind":"官方靜態資料","source_name":"嘉義縣政府","dataset_ids":[134172],"urls":["https://data.gov.tw/dataset/134172"],"note":"具鄉鎮、名稱、車格數、收費狀況；缺座標與 available_car。","mode":"datagov","map":{"name":"停車場名稱","district":"鄉鎮市","total_car":"小客車(席)","fee_text":"收費狀況"}},
-{"city":"屏東縣","grade":"B","kind":"官方靜態資料","source_name":"屏東縣政府","dataset_ids":[163066,138733,163131],"urls":["https://data.gov.tw/dataset/163066","https://data.gov.tw/dataset/138733"],"note":"163066 有名稱/地址/費率/汽車總格但無座標；138733 有座標但沒有經驗證共同 ID，因此不做名稱模糊 join。","mode":"datagov","map":{"parking_id":"項次","name":"停車場名稱","address":"停車場地址","total_car":"停車格總數（含專用車位）-汽車","fee_text":"收費標準"}},
+{"city":"屏東縣","grade":"B*","kind":"官方靜態 Open Data + 智慧停車即時服務/TDX 有即時資料","source_name":"屏東縣政府","dataset_ids":[163066,138733,163131],"urls":["https://data.gov.tw/dataset/163066","https://data.gov.tw/dataset/138733"],"note":"屏東已有官方智慧停車與剩餘格位服務，TDX 亦可見路外/路邊即時資料；但本輪尚未定位到縣府正式公開 availability API。163066 有名稱/地址/費率/汽車總格；138733 有座標，無共同 ID 不做模糊 join。","mode":"datagov","map":{"parking_id":"項次","name":"停車場名稱","address":"停車場地址","total_car":"停車格總數（含專用車位）-汽車","fee_text":"收費標準"}},
 {"city":"宜蘭縣","grade":"A*（需驗證新鮮度）","kind":"兩份官方資料以編號精確 join","source_name":"宜蘭縣政府","dataset_ids":[85833,79981],"urls":["https://data.gov.tw/dataset/85833","https://data.gov.tw/dataset/79981"],"note":"靜態資料供地址/平假日費率/經緯度；動態資料供小車總數/剩餘數/更新時間。只用相同編號 exact join。","mode":"yilan_pair","basic_dataset":85833,"live_dataset":79981,"basic":{"join_key":"編號","map":{"parking_id":"編號","name":"名稱","address":"地址","lat":"緯度","lng":"經度","total_car":"小車位總數","fee_weekday_text":"平日費率","fee_holiday_text":"假日費率"}},"live":{"join_key":"編號","map":{"available_car":"小車位剩餘數","data_time":"更新時間"}}},
-{"city":"花蓮縣","grade":"C","kind":"未找到符合需求的縣府免費公開停車結構化 API","source_name":"花蓮縣政府","urls":["https://data.gov.tw/"],"note":"本輪官方資料目錄未找到可直接支援核心欄位的花蓮縣來源。","mode":"none","map":{}},
+{"city":"花蓮縣","grade":"B*","kind":"官方「花蓮交通e點通」有即時路外/路邊停車服務（公開 API endpoint 待定位）","source_name":"花蓮縣政府","urls":["https://traffic.hl.gov.tw/Home/CheckParkingDetail","https://traffic.hl.gov.tw/Home/ParkingSpaceInfo"],"note":"前版寫成『未找到來源』不精確：官方網站明確提供動態停車場、靜態停車場與停車格資訊，TDX 也有花蓮即時路外/路邊資料；目前差的是可公開直連、具文件的地方 availability endpoint。","mode":"none","map":{}},
 {"city":"臺東縣","grade":"C","kind":"尚未確認到符合需求的縣府免費公開停車 API","source_name":"臺東縣政府","urls":["https://data.gov.tw/"],"note":"本輪未確認到同時具名稱、座標、價格、總格、剩餘格且可穩定呼叫的縣府 API。","mode":"none","map":{}},
-{"city":"澎湖縣","grade":"C（網站有即時資訊）","kind":"縣府有即時剩餘車位服務，但未找到公開 API 文件/穩定 endpoint","source_name":"澎湖縣政府","urls":["https://www.penghu.gov.tw/ch/home.jsp?id=10549","https://apparking.penghu.gov.tw/TrafficPayBill/swagger/index.html"],"note":"官方網站有地下停車場即時剩餘車位；Swagger API definition 目前讀取失敗。依規則不逆向私有請求。","mode":"none","map":{}},
-{"city":"金門縣","grade":"C","kind":"未找到符合需求的縣府免費公開停車結構化 API","source_name":"金門縣政府","urls":["https://data.gov.tw/"],"note":"本輪官方資料目錄未找到核心停車 API。","mode":"none","map":{}},
-{"city":"連江縣","grade":"C","kind":"未找到符合需求的縣府免費公開停車結構化 API","source_name":"連江縣政府","urls":["https://data.gov.tw/"],"note":"本輪官方資料目錄未找到核心停車 API。","mode":"none","map":{}},
+{"city":"澎湖縣","grade":"B*","kind":"縣府停車平台/停車管理中心存在；availability 公開 API 待定位","source_name":"澎湖縣政府","urls":["https://parking.penghu.gov.tw/","https://opendata.penghu.gov.tw/pages/guide","https://apparking.penghu.gov.tw/TrafficPayBill/swagger/index.html"],"note":"澎湖有官方停車管理中心，開放資料平台也支援 API；但目前找到的 Swagger/TrafficPayBill 主要是停車費服務，尚未確認公開的即時剩餘格位 endpoint。","mode":"none","map":{}},
+{"city":"金門縣","grade":"B*","kind":"官方即時停車導引/金好停服務存在（公開 API endpoint 待定位）","source_name":"金門縣政府","urls":["https://www.kinmen.gov.tw/News_Content2.aspx?Create=1&n=98E3CA7358C89100&s=92E98D4AFE5A7A2B&sms=BF7D6D478B935644"],"note":"金門縣政府已建即時停車導引並提供金好停查詢空位；TDX 亦有金門停車相關資料。前版直接寫『未找到核心停車 API』過度簡化，應改為『服務存在，但公開地方 endpoint 待定位』。","mode":"none","map":{}},
+{"city":"連江縣","grade":"B*","kind":"官方智慧停車平台有即時找車位（公開 API endpoint 待定位）","source_name":"連江縣交通旅遊局","urls":["https://parking.matsu.gov.tw/find-parking","https://parking.matsu.gov.tw/"],"note":"2026 年已上線官方智慧停車平台，可即時查看各停車場剩餘車位並導航；目前尚未找到公開 API 文件，因此不能把網站內部呼叫直接當成可穩定介接的 Open Data API。","mode":"none","map":{}},
 ]
 
 def fetch_paged(base):
