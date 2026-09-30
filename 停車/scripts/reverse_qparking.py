@@ -19,11 +19,11 @@ for pat in [
     r'["\']([^"\']+\.js)["\']',
 ]:
     for x in re.findall(pat,page,re.I):
-        urls.add(urljoin(base,html.unescape(x).replace("\\u002F","/")))
+        urls.add(urljoin("https://www.qparking.com.tw/",html.unescape(x).replace("\\u002F","/").lstrip("/")))
 
 # Gatsby page data and app data are often more stable than chunk hashes.
 urls.add("https://www.qparking.com.tw/page-data/parking/page-data.json")
-urls.add("https://www.qparking.com.tw/page-data/app-data.json")
+urls.add("https://www.qparking.com.tw/page-data/app-data.json")\nurls.add("https://www.qparking.com.tw/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js")
 
 records=[]
 all_text=[("PAGE",page)]
@@ -34,7 +34,7 @@ for u in sorted(urls):
         all_text.append((u,body))
         # If page-data points to component chunk, fetch it too.
         for x in re.findall(r'["\']([^"\']*component---[^"\']+\.js)["\']',body,re.I):
-            uu=urljoin(u,html.unescape(x))
+            uu=urljoin("https://www.qparking.com.tw/",html.unescape(x).lstrip("/"))
             if uu not in [r["url"] for r in records]:
                 rc2,b2,e2=curl(uu)
                 records.append({"url":uu,"rc":rc2,"bytes":len(b2.encode()),"stderr":e2[-300:]})
