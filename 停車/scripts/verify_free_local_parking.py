@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-import json, re, subprocess, time, html
+import json, re, subprocess, time, html, concurrent.futures
 from pathlib import Path
 from urllib.parse import urlencode
 
 UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/153 Safari/537.36"
 
-def curl(method,url,data=None,timeout=25):
+def curl(method,url,data=None,timeout=8):
     cmd=["curl","-4","-k","-L","--compressed","--max-time",str(timeout),"-A",UA,
          "-H","Accept: application/json,text/html,*/*","-sS","-w","\n__HTTP_STATUS__:%{http_code}\n__CONTENT_TYPE__:%{content_type}\n"]
     if method=="POST":
         cmd += ["-X","POST","-H","Content-Type: application/x-www-form-urlencoded; charset=UTF-8",
                 "-H","X-Requested-With: XMLHttpRequest","--data",data or ""]
     cmd.append(url)
-    p=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=timeout+10)
+    p=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=timeout+3)
     out=p.stdout
     ms=re.search(r"\n__HTTP_STATUS__:(\d+)\n__CONTENT_TYPE__:(.*?)\n?$",out,re.S)
     status=int(ms.group(1)) if ms else None
@@ -118,19 +118,22 @@ for u in [
 ]:
     tests.append(("金門候選","POST",u,"",parse_parkinglotpost))
 
-results=[]
-for name,method,url,data,parser in tests:
+def run_test(t):
+    name,method,url,data,parser=t
     print("TEST",name,url,flush=True)
     r=attempt(method,url,data,parser)
     r.update({"name":name,"method":method,"url":url})
-    results.append(r)
-    print(" ->",r.get("status"),r.get("usable"),r.get("rows"),r.get("numeric_count") or r.get("remaining_numeric") or r.get("availability_number_hits"),flush=True)
+    print(" ->",name,r.get("status"),r.get("usable"),r.get("rows"),r.get("numeric_count") or r.get("remaining_numeric") or r.get("availability_number_hits"),flush=True)
+    return r
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
+    results=list(ex.map(run_test,tests))
 
 # If Taitung list works, fetch first 5 details and validate vacancy.
 lot_result=next((r for r in results if r["name"]=="臺東-路外清單" and r.get("sample")),None)
 if lot_result:
     # Refetch list to get IDs
-    st,ct,body,err=curl("GET","https://trafficweb.ttcpb.gov.tw/api/parking-lots")
+    st,ct,body,err=curl("GET","https://trafficweb.ttcpb.gov.tw/api/parking-lots",timeout=8)
     try: rows=json.loads(body).get("data",[])
     except: rows=[]
     for item in rows[:5]:
