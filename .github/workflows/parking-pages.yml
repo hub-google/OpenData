@@ -1,9 +1,6 @@
 name: Publish parking page
-# live-parking-v2
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
   push:
     branches: ["main"]
     paths:
@@ -35,7 +32,7 @@ jobs:
           ref: gh-pages
           path: public
 
-      - name: Publish parking site with real government data
+      - name: Publish parking site
         shell: bash
         run: |
           set -euo pipefail
@@ -47,27 +44,19 @@ jobs:
             git fetch origin gh-pages
             git reset --hard origin/gh-pages
 
-            rm -rf /tmp/parking-prev
-            mkdir -p /tmp/parking-prev
-            if [ -d 停車/data ]; then
-              cp -R 停車/data/. /tmp/parking-prev/
-            fi
-
             rm -rf 停車
-            mkdir -p 停車/data
-            cp -R /tmp/parking-prev/. 停車/data/ 2>/dev/null || true
+            mkdir -p 停車
             cp -R ../source/停車/. 停車/
-            python3 ../source/停車/scripts/build_cache.py 停車/data
             rm -rf 停車/scripts
             touch .nojekyll
 
-            git add 停車 .nojekyll
+            git add -A 停車 .nojekyll
             if git diff --cached --quiet; then
               echo "No parking changes"
               exit 0
             fi
 
-            git commit -m "Publish parking page with live Open Data"
+            git commit -m "Publish parking page"
             if git push --force-with-lease origin HEAD:gh-pages; then
               exit 0
             fi
