@@ -36,14 +36,28 @@ def attempt(method,url,data=None,parser=None):
         except Exception as e:
             attempts.append({"attempt":i,"error":f"{type(e).__name__}: {e}"})
             if i<3: time.sleep(i)
-    return {"usable":False,"attempts":attempts,"last_body_head":locals().get("body","")[:1000] if "body" in locals() else ""}
+    out=locals().get("result",{}) if isinstance(locals().get("result",{}),dict) else {}
+    out=dict(out)
+    out["usable"]=False
+    out["attempts"]=attempts
+    out["last_body_head"]=locals().get("body","")[:1000] if "body" in locals() else ""
+    return out
 
 def parse_json_avail(keys):
     def _p(body,st,ct):
         try: obj=json.loads(body)
         except Exception:
             return {"usable":False,"json":False,"body_head":re.sub(r"\s+"," ",body)[:800]}
-        rows=obj if isinstance(obj,list) else (obj.get("data",[]) if isinstance(obj,dict) and isinstance(obj.get("data"),list) else [obj] if isinstance(obj,dict) else [])
+        if isinstance(obj,list):
+            rows=obj
+        elif isinstance(obj,dict) and isinstance(obj.get("data"),list):
+            rows=obj.get("data",[])
+        elif isinstance(obj,dict) and isinstance(obj.get("data"),dict):
+            rows=[obj["data"]]
+        elif isinstance(obj,dict):
+            rows=[obj]
+        else:
+            rows=[]
         nums=[]
         for r in rows:
             if not isinstance(r,dict): continue
