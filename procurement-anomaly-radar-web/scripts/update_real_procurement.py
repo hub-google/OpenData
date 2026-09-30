@@ -644,6 +644,15 @@ def build():
         "cases": cases,
     }
     OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    preview = {
+        "generated_at": payload["generated_at"],
+        "summary": payload["summary"],
+        "sources": payload["sources"],
+        "cases": payload["cases"][:12],
+    }
+    (OUT_DIR / "procurement-preview.json").write_text(
+        json.dumps(preview, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(json.dumps(payload["summary"], ensure_ascii=False))
     for s in statuses:
         print(f"{'OK' if s['ok'] else 'FAIL'} {s['key']}: {s['records']} {s.get('error','')}")
