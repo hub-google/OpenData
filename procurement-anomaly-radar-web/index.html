@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>政府採購異常雷達｜OpenData Lab</title>
+<style>
+:root{
+  --nav:#101828;--bg:#f6f8fb;--card:#fff;--text:#182230;--muted:#667085;--line:#e4e7ec;
+  --blue:#2563eb;--red:#d92d20;--orange:#f79009;--green:#039855;--purple:#7f56d9;--cyan:#0e9384;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.side{background:var(--nav);color:#fff;padding:26px 18px;position:sticky;top:0;height:100vh}
+.brand{font-weight:850;font-size:20px}.sub{font-size:12px;color:#98a2b3;line-height:1.65;margin-top:8px}
+.nav{margin-top:28px}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;padding:12px;border-radius:9px;text-align:left;margin:4px 0;cursor:pointer}
+.nav button.active,.nav button:hover{background:#1d2939;color:#fff}
+.legend{margin-top:30px;padding-top:20px;border-top:1px solid #344054;font-size:11px;color:#98a2b3;line-height:1.7}
+.main{padding:26px 30px 50px;max-width:1550px;width:100%}
+.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.eyebrow{color:var(--blue);font-weight:800;font-size:12px;letter-spacing:.05em}
+h1{margin:5px 0 7px;font-size:30px}.muted{color:var(--muted);font-size:13px;line-height:1.6}.pill{background:#fff1f0;color:#b42318;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid #fecdca;white-space:nowrap}
+.notice{margin:18px 0;background:#fffaeb;border:1px solid #fedf89;padding:12px 14px;border-radius:10px;font-size:12px;color:#7a2e0e;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:13px}
+.stat{padding:16px}.stat span{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:25px;margin-top:6px}.stat small{font-size:11px;color:var(--muted)}
+.panel{margin-top:14px;padding:16px}.panel h2{font-size:16px;margin:0 0 4px}.panel-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.detectors{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.detector{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;cursor:pointer;text-align:left}
+.detector:hover,.detector.active{border-color:#84adff;background:#f5f8ff}
+.detector b{display:block;font-size:13px;margin:5px 0}.detector span{font-size:11px;color:var(--muted);line-height:1.5}.detector .ico{font-size:20px}
+.filters{display:grid;grid-template-columns:1.6fr repeat(3,1fr) auto;gap:9px;margin-top:12px}
+.filters input,.filters select{border:1px solid #d0d5dd;border-radius:8px;padding:10px;background:#fff;width:100%}
+.btn{border:1px solid #d0d5dd;background:#fff;color:#344054;border-radius:8px;padding:10px 14px;font-weight:750;cursor:pointer}.btn:hover{background:#f9fafb}
+.tablehead,.row{display:grid;grid-template-columns:78px 1.7fr 1fr .9fr 1.1fr 1.2fr 48px;align-items:center;gap:10px}
+.tablehead{padding:12px 10px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--line);margin-top:8px}
+.row{padding:13px 10px;border-bottom:1px solid #f0f2f5}.row:hover{background:#fafbfc}
+.priority{width:56px;height:48px;border-radius:12px;display:grid;place-items:center;font-weight:850;font-size:18px;background:#f2f4f7;color:#344054}
+.priority.high{background:#fff1f0;color:#b42318}.priority.mid{background:#fffaeb;color:#b54708}.priority.low{background:#ecfdf3;color:#027a48}
+.case{border:0;background:none;padding:0;font-size:14px;font-weight:780;cursor:pointer;text-align:left;color:#182230}
+.small{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{font-size:13px}
+.tags{display:flex;gap:5px;flex-wrap:wrap}.tag{display:inline-block;padding:4px 7px;border-radius:999px;background:#f2f4f7;font-size:10px;color:#344054}
+.tag.red{background:#fff1f0;color:#b42318}.tag.orange{background:#fffaeb;color:#b54708}.tag.blue{background:#eff8ff;color:#175cd3}.tag.purple{background:#f4f3ff;color:#5925dc}.tag.green{background:#ecfdf3;color:#027a48}
+.more{border:0;background:transparent;font-size:22px;cursor:pointer;color:#667085}
+.drawerback{position:fixed;inset:0;background:#10182870;z-index:9}.drawer{position:fixed;right:0;top:0;width:min(650px,94vw);height:100vh;background:#fff;padding:26px;overflow:auto;box-shadow:-12px 0 30px #0002;z-index:10}
+.hidden{display:none}.close{float:right;border:0;background:#f2f4f7;width:36px;height:36px;border-radius:9px;cursor:pointer}
+.detail-head{display:flex;gap:14px;align-items:center;margin:18px 0}.detail-score{width:80px;height:80px;border-radius:16px;display:grid;place-items:center;background:#fff1f0;color:#b42318;font-weight:900;font-size:29px}
+.reason{background:#f8fafc;border:1px solid var(--line);padding:11px;border-radius:9px;margin:8px 0;font-size:13px;line-height:1.55}
+.evidence{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.evidence>div{border:1px solid var(--line);padding:11px;border-radius:9px}.evidence span{display:block;color:var(--muted);font-size:11px}.evidence b{font-size:14px}
+.timeline{border-left:2px solid #e4e7ec;margin:12px 0 12px 6px;padding-left:17px}.timeline div{margin:0 0 12px;position:relative;font-size:12px;line-height:1.55}.timeline div:before{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:#98a2b3;left:-22px;top:5px}
+.disclaimer{background:#f9fafb;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6}
+.section{margin-top:20px}.section h3{font-size:14px;margin:0 0 8px}
+.combo{margin-top:12px;border:1px solid #fecdca;background:#fff8f7;border-radius:11px;padding:13px}.combo b{font-size:13px}.combo p{font-size:12px;color:#7a271a;line-height:1.55;margin:5px 0 0}
+@media(max-width:1050px){.shell{grid-template-columns:1fr}.side{display:none}.main{padding:18px}.grid{grid-template-columns:1fr 1fr}.detectors{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.tablehead{display:none}.row{grid-template-columns:62px 1fr 1fr}.row .hide-sm{display:none}}
+@media(max-width:640px){.grid,.detectors,.filters,.evidence{grid-template-columns:1fr}.row{grid-template-columns:58px 1fr 38px}.row .metric,.row .tags{display:none}.top{display:block}.pill{display:inline-block;margin-top:10px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="side">
+  <div class="brand">OpenData Lab</div>
+  <div class="sub">政府採購監督專案<br>採購異常雷達</div>
+  <div class="nav">
+    <button class="active" onclick="showMode('all',this)">今日異常</button>
+    <button onclick="showMode('combo',this)">組合異常</button>
+    <button onclick="showMode('agency',this)">機關觀察</button>
+    <button onclick="showMode('vendor',this)">廠商觀察</button>
+  </div>
+  <div class="legend">
+    <b style="color:#fff">判讀原則</b><br>
+    異常 ≠ 違法<br>
+    高分 = 優先人工查核<br>
+    每一筆警示都要能回到原始公告與計算依據
+  </div>
+</aside>
+
+<main class="main">
+  <div class="top">
+    <div>
+      <div class="eyebrow">PUBLIC PROCUREMENT ANOMALY RADAR</div>
+      <h1>政府採購異常雷達</h1>
+      <div class="muted">用公開採購資料自動找出「統計上不尋常」的案件，協助媒體、民間監督、稽核與研究人員把時間花在最值得查的地方。</div>
+    </div>
+    <div class="pill">不是弊案判定器</div>
+  </div>
+
+  <div class="notice"><b>MVP 示意版：</b>本頁案件、機關、廠商皆為模擬資料，用來驗證偵測邏輯與介面。正式版才會串政府採購公告／決標、公司登記、拒絕往來廠商與歷史價格資料。</div>
+
+  <div class="grid">
+    <div class="stat"><span>今日觸發警示</span><strong id="sTotal">0</strong><small>符合至少 1 種異常規則</small></div>
+    <div class="stat"><span>高優先查核</span><strong id="sHigh">0</strong><small>查核優先度 ≥ 80</small></div>
+    <div class="stat"><span>組合異常</span><strong id="sCombo">0</strong><small>同時觸發 ≥ 3 種訊號</small></div>
+    <div class="stat"><span>涉及採購金額</span><strong id="sAmount">—</strong><small>僅代表警示案件總額</small></div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-title">
+      <div><h2>7 種異常偵測器</h2><div class="muted">可單獨篩選；實務上最值得查的是多種訊號同時出現。</div></div>
+      <button class="btn" onclick="setDetector('all')">清除篩選</button>
+    </div>
+    <div class="detectors" id="detectors">
+      <button class="detector" data-key="concentration" onclick="setDetector('concentration')"><div class="ico">🎯</div><b>廠商集中</b><span>同機關、同類型標案長期由少數廠商取得。</span></button>
+      <button class="detector" data-key="split" onclick="setDetector('split')"><div class="ico">🧩</div><b>疑似拆單</b><span>短期內出現高度相似、金額接近門檻的多筆採購。</span></button>
+      <button class="detector" data-key="restricted" onclick="setDetector('restricted')"><div class="ico">🔒</div><b>限制性招標集中</b><span>限制性招標比例偏高，且反覆指向同一廠商。</span></button>
+      <button class="detector" data-key="ratio" onclick="setDetector('ratio')"><div class="ico">📏</div><b>標比異常</b><span>決標金額長期貼近預算／底價，且分布異常集中。</span></button>
+      <button class="detector" data-key="price" onclick="setDetector('price')"><div class="ico">💸</div><b>價格異常</b><span>相似規格、數量與服務條件下，單價明顯偏離同類案件。</span></button>
+      <button class="detector" data-key="relation" onclick="setDetector('relation')"><div class="ico">🕸️</div><b>廠商關聯</b><span>不同投標廠商公開登記資訊出現高度重疊關係。</span></button>
+      <button class="detector" data-key="debarred" onclick="setDetector('debarred')"><div class="ico">⛔</div><b>拒絕往來紀錄</b><span>廠商曾出現在政府採購拒絕往來公告或相關期間紀錄。</span></button>
+      <button class="detector" data-key="combo" onclick="showMode('combo')"><div class="ico">🚨</div><b>組合異常</b><span>三種以上訊號同時出現，列為優先人工查核。</span></button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><div><h2 id="listTitle">異常案件清單</h2><div class="muted" id="listSub">依查核優先度排序；分數只用於排序，不代表違法機率。</div></div></div>
+    <div class="filters">
+      <input id="q" placeholder="搜尋標案、機關、廠商或關鍵字">
+      <select id="level"><option value="all">所有優先度</option><option value="high">80 以上</option><option value="mid">60–79</option><option value="low">59 以下</option></select>
+      <select id="type"><option value="all">所有採購類型</option><option>資訊設備</option><option>工程</option><option>辦公設備</option><option>醫療設備</option><option>維護服務</option></select>
+      <select id="sort"><option value="score">依查核優先度</option><option value="amount">依決標金額</option><option value="signals">依異常訊號數</option></select>
+      <button class="btn" onclick="exportCsv()">匯出 CSV</button>
+    </div>
+    <div class="tablehead"><div>優先度</div><div>案件</div><div>機關</div><div>決標金額</div><div>主要廠商</div><div>觸發訊號</div><div></div></div>
+    <div id="list"></div>
+  </section>
+</main>
+</div>
+
+<div id="back" class="drawerback hidden" onclick="closeDrawer()"></div>
+<aside id="drawer" class="drawer hidden"><button class="close" onclick="closeDrawer()">×</button><div id="drawerBody"></div></aside>
+
+<script>
+const signalLabels={
+  concentration:["廠商集中","red"],
+  split:["疑似拆單","orange"],
+  restricted:["限制性招標","purple"],
+  ratio:["標比異常","blue"],
+  price:["價格異常","orange"],
+  relation:["廠商關聯","purple"],
+  debarred:["拒絕往來紀錄","red"]
+};
+const cases=[
+ {id:1,title:"資訊設備汰換整合採購",agency:"示意市政府資訊處",type:"資訊設備",amount:2860,vendor:"甲○科技",score:94,signals:["concentration","restricted","ratio","relation"],summary:"同類採購高度集中於同一廠商，限制性招標比例高，且多次決標金額貼近預算。",metrics:[["近 3 年同類案","27 件"],["甲○科技得標","21 件 / 78%"],["限制性招標","14 件 / 52%"],["決標／預算中位","98.7%"]],reasons:["同機關同類型 27 案中，甲○科技取得 21 案。","甲○科技得標案件中 14 案採限制性招標。","21 案決標／預算比集中在 97.9%～99.6%。","公開公司登記資料顯示，兩家常見陪標廠商與主得標商出現地址／人員關聯訊號。"],timeline:["2024-02｜網路設備更新｜甲○科技｜980 萬","2024-11｜核心交換器擴充｜甲○科技｜1,240 萬","2025-08｜網路設備汰換｜乙○系統｜760 萬","2026-03｜資料中心設備更新｜甲○科技｜1,920 萬","2026-09｜資訊設備汰換整合採購｜甲○科技｜2,860 萬"]},
+ {id:2,title:"辦公設備分批更新採購",agency:"示意中央機關 A",type:"辦公設備",amount:468,vendor:"乙○商行",score:91,signals:["split","price","concentration"],summary:"45 天內出現 5 筆名稱與規格高度相似案件，金額均落在接近門檻區間。",metrics:[["45 日內相似案","5 件"],["合計金額","2,214 萬"],["同一廠商取得","4 / 5 件"],["名稱相似度","92%"]],reasons:["短期內連續出現 5 筆高度相似採購。","5 案規格與品項描述高度重疊，但被拆成不同案號。","其中 4 案由乙○商行取得。","部分品項換算單價高於同類採購中位數 34%。"],timeline:["08/04｜桌上型電腦更新｜438 萬","08/16｜顯示器設備更新｜441 萬","08/27｜辦公電腦更新第二批｜452 萬","09/05｜資訊周邊設備採購｜415 萬","09/18｜辦公設備分批更新｜468 萬"]},
+ {id:3,title:"年度系統維護與授權續約",agency:"示意公立醫院 B",type:"維護服務",amount:1950,vendor:"丙○資訊",score:88,signals:["restricted","concentration","ratio"],summary:"連續 6 年採限制性招標續約同一廠商，且決標金額每年均接近預算。",metrics:[["連續得標","6 年"],["限制性招標","6 / 6 件"],["累計金額","9,860 萬"],["平均標比","99.1%"]],reasons:["同一系統維護連續 6 年由丙○資訊得標。","6 年均採限制性招標。","決標／預算比介於 98.6%～99.7%。","需進一步確認是否存在原廠相容性、專屬權利或其他合法必要性。"],timeline:["2021｜1,420 萬｜丙○資訊","2022｜1,510 萬｜丙○資訊","2023｜1,580 萬｜丙○資訊","2024｜1,650 萬｜丙○資訊","2025｜1,750 萬｜丙○資訊","2026｜1,950 萬｜丙○資訊"]},
+ {id:4,title:"校舍防水改善工程",agency:"示意縣立高中",type:"工程",amount:1280,vendor:"丁○營造",score:84,signals:["price","ratio","concentration"],summary:"相近規模工程的單位面積造價偏高，且同校近年工程多由同一廠商取得。",metrics:[["單位造價","8,420 元/㎡"],["同類中位","5,980 元/㎡"],["偏離中位","＋40.8%"],["近 4 年得標占比","67%"]],reasons:["換算單位面積造價高於相近規模案件中位數 40.8%。","同校近 4 年 9 件相關工程中，丁○營造取得 6 件。","本案決標／預算比 99.3%。","需進一步比對材料、工法、保固與施工難度，價格偏高本身不代表不當。"],timeline:["2023｜東棟防水改善｜丁○營造｜760 萬","2024｜行政樓屋頂整修｜戊○工程｜520 萬","2025｜教學樓外牆防水｜丁○營造｜930 萬","2026｜校舍防水改善工程｜丁○營造｜1,280 萬"]},
+ {id:5,title:"醫療影像設備採購",agency:"示意醫療中心 C",type:"醫療設備",amount:4380,vendor:"己○醫材",score:82,signals:["relation","price"],summary:"三家投標廠商的公開登記資訊出現重疊訊號，且得標單價偏離同型設備案件。",metrics:[["投標廠商","3 家"],["關聯訊號","2 組"],["單價偏離","＋29%"],["決標金額","4,380 萬"]],reasons:["三家投標廠商中，有兩組公開登記資訊出現地址或人員重疊。","得標設備在規格標準化後，單價高於同類案件中位數約 29%。","關聯訊號僅表示值得進一步確認，不等於認定為關係企業或陪標。"],timeline:["投標｜己○醫材｜4,380 萬","投標｜庚○科技｜4,420 萬","投標｜辛○儀器｜4,460 萬","公司登記比對｜發現地址／人員重疊訊號"]},
+ {id:6,title:"資訊安全軟體授權採購",agency:"示意公營事業 D",type:"資訊設備",amount:920,vendor:"壬○資訊",score:77,signals:["ratio","restricted"],summary:"連續多案決標價貼近底價，且同類產品多使用限制性採購。",metrics:[["近 8 案平均標比","99.4%"],["標準差","0.32%"],["限制性招標","6 / 8 件"],["本案決標","920 萬"]],reasons:["近 8 次同類採購標比分布異常集中。","其中 6 案採限制性招標。","需比對是否屬固定授權價格、原廠報價或框架契約，避免把正常價格機制誤判成異常。"],timeline:["2024 Q1｜98.9%","2024 Q4｜99.2%","2025 Q2｜99.6%","2025 Q4｜99.5%","2026 Q2｜99.7%","2026 Q3｜99.4%"]},
+ {id:7,title:"道路維護零星工程",agency:"示意鄉公所 E",type:"工程",amount:730,vendor:"癸○土木",score:71,signals:["concentration","split"],summary:"一年內多筆零星工程由同一廠商取得，部分案件時間與地點高度接近。",metrics:[["12 月內同類案","11 件"],["同一廠商得標","8 件"],["得標金額占比","74%"],["30 日內相似案","3 件"]],reasons:["一年內 11 件道路零星工程中，癸○土木取得 8 件。","其中 3 件在 30 日內公告，地點相鄰且工作內容相似。","需進一步確認是否因年度預算、災修需求或工程區域切分而合理分案。"],timeline:["01/18｜北區道路修繕｜癸○土木","03/09｜南區道路修繕｜癸○土木","07/02｜A 路段改善｜癸○土木","07/18｜B 路段改善｜癸○土木","07/29｜C 路段改善｜癸○土木"]},
+ {id:8,title:"伺服器設備更新",agency:"示意研究機構 F",type:"資訊設備",amount:1560,vendor:"子○系統",score:68,signals:["debarred","price"],summary:"得標廠商曾有拒絕往來公告紀錄；本案採購時間不在示意停權期間內，但仍列為背景風險提示。",metrics:[["拒絕往來歷史","曾有紀錄"],["示意有效期間","已屆滿"],["本案單價偏離","＋18%"],["決標金額","1,560 萬"]],reasons:["公開資料比對到過往拒絕往來公告紀錄。","示意停權期間已屆滿，因此不是『違規得標』判定。","本案單價高於同類中位數約 18%，列為背景風險資訊。"],timeline:["2022｜拒絕往來公告（示意）","2023｜示意期間屆滿","2026｜伺服器設備更新｜1,560 萬"]},
+ {id:9,title:"空調設備汰換採購",agency:"示意區公所 G",type:"辦公設備",amount:640,vendor:"丑○工程",score:58,signals:["price"],summary:"同規格換算後單價偏高，但僅觸發單一訊號，優先度較低。",metrics:[["單位價格","12.8 萬/台"],["同類中位","10.6 萬/台"],["偏離中位","＋20.8%"],["訊號數","1"]],reasons:["經規格與數量標準化後，單位價格高於同類中位數約 20.8%。","僅觸發價格訊號，應優先檢查品牌、施工、保固與附加服務差異。"],timeline:["同類樣本｜42 案","價格區間｜8.9～13.5 萬/台","本案｜12.8 萬/台"]}
+];
+
+let detector="all", mode="all", current=[];
+const el=id=>document.getElementById(id);
+function priorityClass(s){return s>=80?"high":s>=60?"mid":"low"}
+function render(){
+ const q=el("q").value.trim().toLowerCase(),level=el("level").value,type=el("type").value,sort=el("sort").value;
+ current=cases.filter(c=>{
+   if(detector!=="all" && detector!=="combo" && !c.signals.includes(detector)) return false;
+   if(mode==="combo" && c.signals.length<3) return false;
+   if(mode==="agency" && c.score<70) return false;
+   if(mode==="vendor" && !c.signals.includes("concentration")) return false;
+   if(q && !(c.title+c.agency+c.vendor+c.summary).toLowerCase().includes(q)) return false;
+   if(level==="high" && c.score<80) return false;
+   if(level==="mid" && (c.score<60||c.score>=80)) return false;
+   if(level==="low" && c.score>=60) return false;
+   if(type!=="all" && c.type!==type) return false;
+   return true;
+ });
+ current.sort((a,b)=>sort==="amount"?b.amount-a.amount:sort==="signals"?b.signals.length-a.signals.length:b.score-a.score);
+ el("list").innerHTML=current.map(c=>`
+ <div class="row">
+   <div class="priority ${priorityClass(c.score)}">${c.score}</div>
+   <div><button class="case" onclick="openDrawer(${c.id})">${c.title}</button><div class="small">${c.type} ・ ${c.summary}</div></div>
+   <div class="tagwrap"><span class="tag">${c.agency}</span></div>
+   <div class="metric"><span>決標金額</span><b>${c.amount.toLocaleString()} 萬</b></div>
+   <div class="metric hide-sm"><span>主要廠商</span><b>${c.vendor}</b></div>
+   <div class="tags hide-sm">${c.signals.map(s=>`<span class="tag ${signalLabels[s][1]}">${signalLabels[s][0]}</span>`).join("")}</div>
+   <button class="more" onclick="openDrawer(${c.id})">›</button>
+ </div>`).join("") || '<div style="padding:28px;text-align:center;color:#667085">目前篩選條件沒有案件</div>';
+ el("sTotal").textContent=cases.length;
+ el("sHigh").textContent=cases.filter(c=>c.score>=80).length;
+ el("sCombo").textContent=cases.filter(c=>c.signals.length>=3).length;
+ el("sAmount").textContent=(cases.reduce((s,c)=>s+c.amount,0)/10000).toFixed(1)+" 億";
+}
+function setDetector(k){
+ detector=k; if(k==="combo") mode="combo";
+ document.querySelectorAll(".detector").forEach(x=>x.classList.toggle("active",x.dataset.key===k));
+ render();
+}
+function showMode(m,btn){
+ mode=m; detector=m==="combo"?"combo":"all";
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
+ if(btn) btn.classList.add("active");
+ document.querySelectorAll(".detector").forEach(x=>x.classList.toggle("active",x.dataset.key===detector));
+ if(m==="combo"){el("listTitle").textContent="組合異常案件";el("listSub").textContent="同時觸發至少 3 種異常訊號，優先進入人工查核。";}
+ else if(m==="agency"){el("listTitle").textContent="機關觀察";el("listSub").textContent="聚焦高優先度案件，觀察同一機關的採購結構與異常模式。";}
+ else if(m==="vendor"){el("listTitle").textContent="廠商觀察";el("listSub").textContent="聚焦廠商集中訊號，觀察長期得標結構與相關採購。";}
+ else {el("listTitle").textContent="異常案件清單";el("listSub").textContent="依查核優先度排序；分數只用於排序，不代表違法機率。";}
+ render();
+}
+function openDrawer(id){
+ const c=cases.find(x=>x.id===id);
+ el("drawerBody").innerHTML=`
+  <div class="eyebrow">${c.type} ・ ${c.agency}</div>
+  <h2 style="font-size:24px;margin:6px 0">${c.title}</h2>
+  <div class="muted">主要廠商：${c.vendor}</div>
+  <div class="detail-head"><div class="detail-score">${c.score}</div><div><b>查核優先度</b><div class="muted">用來排序人工查核順序，不是違法機率。</div><div class="tags" style="margin-top:8px">${c.signals.map(s=>`<span class="tag ${signalLabels[s][1]}">${signalLabels[s][0]}</span>`).join("")}</div></div></div>
+  <div class="combo"><b>為什麼值得看？</b><p>${c.summary}</p></div>
+  <div class="section"><h3>觸發原因</h3>${c.reasons.map(r=>`<div class="reason">✓ ${r}</div>`).join("")}</div>
+  <div class="section"><h3>關鍵數據</h3><div class="evidence">${c.metrics.map(m=>`<div><span>${m[0]}</span><b>${m[1]}</b></div>`).join("")}</div></div>
+  <div class="section"><h3>歷史脈絡</h3><div class="timeline">${c.timeline.map(t=>`<div>${t}</div>`).join("")}</div></div>
+  <div class="section"><h3>正式版應回鏈的證據</h3>
+   <div class="reason">原始招標／決標公告</div><div class="reason">預算、底價、決標金額與投標家數</div><div class="reason">同機關同類型歷史標案</div><div class="reason">公司登記與拒絕往來公告</div>
+  </div>
+  <div class="disclaimer">系統只指出公開資料中的異常模式。限制性招標、長期由同一廠商得標、價格偏高或廠商間存在公開關聯，都可能有合法合理原因；任何違法或弊案結論都必須由完整文件、程序與調查證據判斷。</div>`;
+ el("back").classList.remove("hidden");el("drawer").classList.remove("hidden");
+}
+function closeDrawer(){el("back").classList.add("hidden");el("drawer").classList.add("hidden")}
+function exportCsv(){
+ const rows=[["查核優先度","標案","機關","類型","決標金額萬元","主要廠商","異常訊號"],...current.map(c=>[c.score,c.title,c.agency,c.type,c.amount,c.vendor,c.signals.map(s=>signalLabels[s][0]).join("、")])];
+ const csv="\ufeff"+rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(",")).join("\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="政府採購異常雷達.csv";a.click();
+}
+["q","level","type","sort"].forEach(id=>el(id).addEventListener(id==="q"?"input":"change",render));
+render();
+</script>
+</body>
+</html>
