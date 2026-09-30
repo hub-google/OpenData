@@ -1,0 +1,35 @@
+name: Verify free local parking dynamic endpoints
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "停車/scripts/verify_free_local_parking.py"
+      - ".github/workflows/verify-free-local-parking.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verify-free-local-parking
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: python3 "停車/scripts/verify_free_local_parking.py"
+      - name: commit result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "停車/免費地方動態端點實測.md"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Verify free local parking dynamic endpoints"
+          git pull --rebase origin main
+          git push origin HEAD:main
