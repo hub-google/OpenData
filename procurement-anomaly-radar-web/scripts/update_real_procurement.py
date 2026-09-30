@@ -361,6 +361,26 @@ def ymd_value(s):
         y += 1911
     return y*10000+m*100+d
 
+def date_ordinal(s):
+    nums = [int(x) for x in re.findall(r"\\d+", str(s))]
+    if len(nums) < 3:
+        return None
+    y,m,d = nums[:3]
+    if y < 1912:
+        y += 1911
+    try:
+        return datetime(y,m,d).toordinal()
+    except Exception:
+        return None
+
+def title_similarity(a, b):
+    def clean(s):
+        return re.sub(r"[第\\d０-９一二三四五六七八九十百千批期次年度年月\\s()（）【】\\-_/]+", "", str(s))
+    aa, bb = clean(a), clean(b)
+    if not aa or not bb:
+        return 0.0
+    return difflib.SequenceMatcher(None, aa, bb).ratio()
+
 def active_debarment(d):
     # Prefer explicit expiry date; if unknown, report history without claiming current exclusion.
     ex = ymd_value(d.get("expire",""))
