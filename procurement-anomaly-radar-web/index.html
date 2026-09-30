@@ -47,7 +47,8 @@ h1{margin:5px 0 7px;font-size:30px}.muted{color:var(--muted);font-size:13px;line
 .detail-head{display:flex;gap:14px;align-items:center;margin:18px 0}.detail-score{width:80px;height:80px;border-radius:16px;display:grid;place-items:center;background:#fff1f0;color:#b42318;font-weight:900;font-size:29px}
 .reason{background:#f8fafc;border:1px solid var(--line);padding:11px;border-radius:9px;margin:8px 0;font-size:13px;line-height:1.55}
 .evidence{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.evidence>div{border:1px solid var(--line);padding:11px;border-radius:9px}.evidence span{display:block;color:var(--muted);font-size:11px}.evidence b{font-size:14px}
-.timeline{border-left:2px solid #e4e7ec;margin:12px 0 12px 6px;padding-left:17px}.timeline div{margin:0 0 12px;position:relative;font-size:12px;line-height:1.55}.timeline div:before{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:#98a2b3;left:-22px;top:5px}
+.timeline{border-left:2px solid #e4e7ec;margin:12px 0 12px 6px;padding-left:17px}.timeline .event{margin:0 0 14px;position:relative;font-size:12px;line-height:1.55}.timeline .event:before{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:#98a2b3;left:-22px;top:5px}
+.source-links{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px}.source-link{display:inline-flex;align-items:center;gap:4px;text-decoration:none;border:1px solid #b2ccff;background:#eff8ff;color:#175cd3;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:750}.source-link:hover{background:#d1e9ff}.source-missing{display:inline-flex;align-items:center;border:1px solid #fecdca;background:#fff1f0;color:#b42318;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:750}.tender-no{display:inline-block;margin-left:6px;color:#667085;font-size:11px}.proof-note{background:#f0f9ff;border:1px solid #b9e6fe;color:#0b4a6f;border-radius:9px;padding:10px;font-size:11px;line-height:1.6;margin-bottom:10px}
 .disclaimer{background:#f9fafb;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6}
 .section{margin-top:20px}.section h3{font-size:14px;margin:0 0 8px}
 .combo{margin-top:12px;border:1px solid #fecdca;background:#fff8f7;border-radius:11px;padding:13px}.combo b{font-size:13px}.combo p{font-size:12px;color:#7a271a;line-height:1.55;margin:5px 0 0}
@@ -84,7 +85,7 @@ h1{margin:5px 0 7px;font-size:30px}.muted{color:var(--muted);font-size:13px;line
     <div class="pill">不是弊案判定器</div>
   </div>
 
-  <div class="notice"><b>MVP 示意版：</b>本頁案件、機關、廠商皆為模擬資料，用來驗證偵測邏輯與介面。正式版才會串政府採購公告／決標、公司登記、拒絕往來廠商與歷史價格資料。</div>
+  <div class="notice"><b>MVP 示意版：</b>本頁案件、機關、廠商皆為模擬資料，用來驗證偵測邏輯與介面。正式版才會串政府採購公告／決標、公司登記、拒絕往來廠商與歷史價格資料；每一筆歷史紀錄都必須保留可直接點開查證的官方原始網址。</div>
 
   <div class="grid">
     <div class="stat"><span>今日觸發警示</span><strong id="sTotal">0</strong><small>符合至少 1 種異常規則</small></div>
@@ -138,6 +139,19 @@ const signalLabels={
   relation:["廠商關聯","purple"],
   debarred:["拒絕往來紀錄","red"]
 };
+const PCC_HOME="https://web.pcc.gov.tw/pis/";
+function normalizeTimelineItem(x){
+  if(typeof x==="string") return {text:x,tenderNo:null,tenderUrl:null,awardUrl:null,agencyUrl:null};
+  return x;
+}
+function sourceButtons(item){
+  const links=[];
+  if(item.tenderUrl) links.push('<a class="source-link" href="'+item.tenderUrl+'" target="_blank" rel="noopener noreferrer">↗ 招標公告</a>');
+  if(item.awardUrl) links.push('<a class="source-link" href="'+item.awardUrl+'" target="_blank" rel="noopener noreferrer">↗ 決標公告</a>');
+  if(item.agencyUrl) links.push('<a class="source-link" href="'+item.agencyUrl+'" target="_blank" rel="noopener noreferrer">↗ 機關公告</a>');
+  if(!links.length) return '<span class="source-missing">示意資料｜無真實公告可查證</span>';
+  return links.join("");
+}
 const cases=[
  {id:1,title:"資訊設備汰換整合採購",agency:"示意市政府資訊處",type:"資訊設備",amount:2860,vendor:"甲○科技",score:94,signals:["concentration","restricted","ratio","relation"],summary:"同類採購高度集中於同一廠商，限制性招標比例高，且多次決標金額貼近預算。",metrics:[["近 3 年同類案","27 件"],["甲○科技得標","21 件 / 78%"],["限制性招標","14 件 / 52%"],["決標／預算中位","98.7%"]],reasons:["同機關同類型 27 案中，甲○科技取得 21 案。","甲○科技得標案件中 14 案採限制性招標。","21 案決標／預算比集中在 97.9%～99.6%。","公開公司登記資料顯示，兩家常見陪標廠商與主得標商出現地址／人員關聯訊號。"],timeline:["2024-02｜網路設備更新｜甲○科技｜980 萬","2024-11｜核心交換器擴充｜甲○科技｜1,240 萬","2025-08｜網路設備汰換｜乙○系統｜760 萬","2026-03｜資料中心設備更新｜甲○科技｜1,920 萬","2026-09｜資訊設備汰換整合採購｜甲○科技｜2,860 萬"]},
  {id:2,title:"辦公設備分批更新採購",agency:"示意中央機關 A",type:"辦公設備",amount:468,vendor:"乙○商行",score:91,signals:["split","price","concentration"],summary:"45 天內出現 5 筆名稱與規格高度相似案件，金額均落在接近門檻區間。",metrics:[["45 日內相似案","5 件"],["合計金額","2,214 萬"],["同一廠商取得","4 / 5 件"],["名稱相似度","92%"]],reasons:["短期內連續出現 5 筆高度相似採購。","5 案規格與品項描述高度重疊，但被拆成不同案號。","其中 4 案由乙○商行取得。","部分品項換算單價高於同類採購中位數 34%。"],timeline:["08/04｜桌上型電腦更新｜438 萬","08/16｜顯示器設備更新｜441 萬","08/27｜辦公電腦更新第二批｜452 萬","09/05｜資訊周邊設備採購｜415 萬","09/18｜辦公設備分批更新｜468 萬"]},
@@ -209,9 +223,15 @@ function openDrawer(id){
   <div class="combo"><b>為什麼值得看？</b><p>${c.summary}</p></div>
   <div class="section"><h3>觸發原因</h3>${c.reasons.map(r=>`<div class="reason">✓ ${r}</div>`).join("")}</div>
   <div class="section"><h3>關鍵數據</h3><div class="evidence">${c.metrics.map(m=>`<div><span>${m[0]}</span><b>${m[1]}</b></div>`).join("")}</div></div>
-  <div class="section"><h3>歷史脈絡</h3><div class="timeline">${c.timeline.map(t=>`<div>${t}</div>`).join("")}</div></div>
+  <div class="section"><h3>歷史脈絡與原始證據</h3>
+   <div class="proof-note"><b>證據鏈規則：</b>正式資料的每一筆歷史紀錄都必須保存標案案號與原始公告網址；至少要能直接回到政府電子採購網的招標公告或決標公告。沒有來源網址的資料不得作為異常判讀證據。</div>
+   <div class="timeline">${c.timeline.map(raw=>{const t=normalizeTimelineItem(raw);return `<div class="event"><div>${t.text}${t.tenderNo?'<span class="tender-no">案號 '+t.tenderNo+'</span>':''}</div><div class="source-links">${sourceButtons(t)}</div></div>`}).join("")}</div>
+  </div>
   <div class="section"><h3>正式版應回鏈的證據</h3>
-   <div class="reason">原始招標／決標公告</div><div class="reason">預算、底價、決標金額與投標家數</div><div class="reason">同機關同類型歷史標案</div><div class="reason">公司登記與拒絕往來公告</div>
+   <div class="reason">每筆歷史紀錄：標案案號＋招標公告 URL＋決標公告 URL</div>
+   <div class="reason">原始公告中的預算、底價、決標金額、投標家數與得標廠商</div>
+   <div class="reason">同機關同類型歷史標案，逐筆保留官方 permalink</div>
+   <div class="reason">公司登記、拒絕往來公告等外部交叉資料也保留原始來源 URL</div>
   </div>
   <div class="disclaimer">系統只指出公開資料中的異常模式。限制性招標、長期由同一廠商得標、價格偏高或廠商間存在公開關聯，都可能有合法合理原因；任何違法或弊案結論都必須由完整文件、程序與調查證據判斷。</div>`;
  el("back").classList.remove("hidden");el("drawer").classList.remove("hidden");
