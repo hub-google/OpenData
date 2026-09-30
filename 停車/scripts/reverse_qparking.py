@@ -23,7 +23,8 @@ for pat in [
 
 # Gatsby page data and app data are often more stable than chunk hashes.
 urls.add("https://www.qparking.com.tw/page-data/parking/page-data.json")
-urls.add("https://www.qparking.com.tw/page-data/app-data.json")\nurls.add("https://www.qparking.com.tw/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js")
+urls.add("https://www.qparking.com.tw/page-data/app-data.json")
+urls.add("https://www.qparking.com.tw/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js")
 
 records=[]
 all_text=[("PAGE",page)]
