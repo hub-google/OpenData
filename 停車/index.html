@@ -123,6 +123,21 @@ const API={
     data:'https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView',
     label:'花蓮縣',official:'https://traffic.hl.gov.tw/Home/CheckParkingDetail',
     bbox:[22.95,24.40,121.05,121.90]
+  },
+  taichung:{
+    data:'https://motoretag.taichung.gov.tw/DataAPI/api/ParkingAPIV2/Opendata',
+    label:'臺中市',official:'https://motoretag.taichung.gov.tw/',
+    bbox:[23.95,24.45,120.45,121.05]
+  },
+  chiayiCity:{
+    data:'https://data.chiayi.gov.tw/opendata/api/getResource?oid=d206db33-3ae7-489e-b709-5555222fb767&rid=4e0c8e01-9844-4da6-991b-a3382b51b71b',
+    label:'嘉義市',official:'https://data.gov.tw/dataset/52317',
+    bbox:[23.42,23.55,120.35,120.55]
+  },
+  pingtungHengchun:{
+    data:'https://www-ws.pthg.gov.tw/Upload/2015pthg/0/relfile/0/0/0a83a598-d9a2-4a00-814c-9c255ea02ae9.csv',
+    label:'屏東縣',official:'https://data.gov.tw/dataset/138733',
+    bbox:[21.85,22.20,120.65,120.95]
   }
 };
 
@@ -199,6 +214,53 @@ async function postText(url,body='',maxAttempts=3){
     }finally{clearTimeout(timer)}
   }
   throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
+async function getText(url,maxAttempts=3){
+  let lastError=null;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(withBust(url),{cache:'no-store',signal:controller.signal});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.text();
+    }catch(e){
+      lastError=e;
+      if(attempt<maxAttempts)await sleep(attempt*500);
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
+function parseCSV(text){
+  const rows=[];let row=[],cell='',q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],next=text[i+1];
+    if(q){
+      if(ch==='"'&&next==='"'){cell+='"';i++}
+      else if(ch==='"')q=false;
+      else cell+=ch;
+    }else{
+      if(ch==='"')q=true;
+      else if(ch===','){row.push(cell);cell=''}
+      else if(ch==='\n'){row.push(cell.replace(/\r$/,''));rows.push(row);row=[];cell=''}
+      else cell+=ch;
+    }
+  }
+  if(cell.length||row.length){row.push(cell.replace(/\r$/,''));rows.push(row)}
+  if(!rows.length)return[];
+  const head=rows[0].map(x=>x.trim());
+  return rows.slice(1).filter(r=>r.some(x=>String(x||'').trim())).map(r=>{
+    const o={};head.forEach((h,i)=>o[h]=r[i]??'');return o;
+  });
+}
+function coordPair(v){
+  const nums=String(v||'').match(/-?\d+(?:\.\d+)?/g)?.map(Number)||[];
+  if(nums.length<2)return null;
+  for(let i=0;i<nums.length-1;i++){
+    const a=nums[i],b=nums[i+1];
+    if(a>20&&a<27&&b>118&&b<123)return[a,b];
+    if(b>20&&b<27&&a>118&&a<123)return[b,a];
+  }
+  return null;
 }
 
 function twd97ToWgs84(x,y){
@@ -395,6 +457,30 @@ async function loadHualien(){
   });
   return{key:'hualien',rows,mode:rows.some(x=>x.hasRealtime)?'官方動態頁面直連':'官方動態頁面（無 numeric 即時格）'};
 }
+async function loadTaichung(){
+  const cfg=API.taichung,raw=await getJSON(cfg.data),rows=extractArray(raw).map((p,i)=>{
+    const lat=n(first(p,['Lat','lat','Latitude'])),lng=n(first(p,['Lng','lng','Longitude']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:null,id:'tc-'+(first(p,['ID','id'])??i),name:first(p,['Position','Name','name'])||'臺中停車場',
+      total:first(p,['TotalCar','totalCar','total']),avail:null,fee:'',source:'臺中市政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'taichung',rows,mode:'官方 API（路外僅狀態，無 numeric 即時格）'};
+}
+async function loadChiayiCity(){
+  const cfg=API.chiayiCity,raw=await getText(cfg.data),rows=parseCSV(raw).map((p,i)=>{
+    const coord=coordPair(first(p,['座標位置','座標','經緯度','location']));
+    return normalizedRow(p,{coord,id:'cy-'+(first(p,['項次','序號','id'])??i),name:first(p,['停車場名稱','名稱','name']),address:first(p,['地址','位置']),
+      total:first(p,['小型車','小客車','總車位']),avail:null,fee:first(p,['收費方式','收費標準']),source:'嘉義市政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'chiayiCity',rows,mode:'官方 Open Data（無 numeric 即時格）'};
+}
+async function loadPingtungHengchun(){
+  const cfg=API.pingtungHengchun,raw=await getText(cfg.data),rows=parseCSV(raw).map((p,i)=>{
+    const lat=n(first(p,['entranceLatitude','exitLatitude','Latitude','lat'])),lng=n(first(p,['entranceLongitude','exitLongitude','Longitude','lng']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:null,id:'pth-'+(first(p,['parkingLotId','id'])??i),name:first(p,['parkingLotName','停車場名稱','name']),
+      total:first(p,['totalCar','停車格數量']),avail:null,fee:first(p,['fee','收費方式']),source:'屏東縣政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'pingtungHengchun',rows,mode:'官方 Open Data（無 numeric 即時格）'};
+}
 
 function candidateSources(pos,radiusM){
   const pad=Math.max(5,radiusM/1000+3),out=[];
@@ -415,6 +501,9 @@ async function loadSource(key,radius){
   if(key==='yunlin')return loadSimpleParkingLotPost('yunlin','雲林縣政府');
   if(key==='nantou')return loadSimpleParkingLotPost('nantou','南投縣政府');
   if(key==='hualien')return loadHualien();
+  if(key==='taichung')return loadTaichung();
+  if(key==='chiayiCity')return loadChiayiCity();
+  if(key==='pingtungHengchun')return loadPingtungHengchun();
   throw new Error('unknown source '+key);
 }
 async function refreshNearby(){
@@ -428,7 +517,7 @@ async function refreshNearby(){
     const keys=candidateSources(userPos,radius);
     if(!keys.length){
       allData=[];lastSources=[];render();
-      document.getElementById('status').innerHTML='<strong>目前此位置尚未接入地方政府即時來源</strong><br>已接來源：臺北、新北、桃園、臺南、新竹市、高雄、彰化、宜蘭、臺東、澎湖、雲林、南投、花蓮。';
+      document.getElementById('status').innerHTML='<strong>目前此位置尚未接入地方政府即時來源</strong><br>已接來源：臺北、新北、桃園、臺中、臺南、新竹市、高雄、彰化、宜蘭、臺東、澎湖、雲林、南投、花蓮、嘉義市、屏東恆春。';
       return;
     }
     const settled=await Promise.allSettled(keys.map(key=>loadSource(key,radius)));
