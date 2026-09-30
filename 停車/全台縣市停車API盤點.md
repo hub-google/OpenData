@@ -9,69 +9,102 @@
 > 注意：TDX 有某縣市資料，代表存在上游資料交換，不等於該上游一定是對一般開發者公開的免費地方 API。
 
 
-## 0-0. 第二輪反查：TDX 有資料縣市的地方上游（2026-09-30 追加）
+## 0-0. 已找到的「確切可呼叫端點」（不是網站首頁）
 
-> 本輪不再只查 data.gov.tw / 縣市 Open Data 目錄，也反查縣市官方「即時停車網站、App、智慧停車控制中心」實際存在的動態資料鏈。  
-> 重要修正：**TDX 有資料 ≠ 一定能在 data.gov.tw 找到同一支公開下載 API**；但若縣市官方明確表示已建立 Open Data API／即時剩餘格資料交換，則不得再寫成「只有 TDX 才有」。
+> 這一節只列 **已經找到實際 request URL** 的來源；不再用「有智慧停車系統」「有上游」代替 API。
+> 若端點是 POST，方法也一併標示。是否有 numeric 剩餘格以實際欄位判斷。
 
-| 縣市 | 第二輪結論 | 已確認的地方動態上游／證據 | 目前是否取得可免金鑰直連 endpoint |
-|---|---|---|---|
-| 高雄市 | 🟠 **已證實地方政府另有 Open Data API / 資料交換介面** | 高雄市交通局官方說明：配合政府資料開放政策，已「以 open data 資料提供者角色，將停車資訊建立資料交換 API，提供民間業者介接」；另有官方「停車場即時資訊網」 | ⚠️ API 存在已確定；公開文件/實際 URL 仍需從 kpp.tbkc.gov.tw 或 OpenData 舊入口反查 |
-| 花蓮縣 | 🟠 **已證實地方官方有動態停車資料服務** | 花蓮交通 e 點通官方頁直接區分「動態停車場資訊／靜態停車場資訊／停車格資訊」 | ⚠️ 前端資料呼叫 endpoint 待擷取 |
-| 屏東縣 | 🟠 **已證實地方智慧停車即時資料鏈** | 屏東縣智慧停車控制中心蒐集地磁/智慧停車資料，剩餘車位供 QParking 與路側動態顯示器使用 | ⚠️ 目前看到的是官方系統→QParking/顯示器資料鏈；是否有免授權公開 API 待確認 |
-| 金門縣 | 🟡 **已證實地方即時停車導引系統存在** | 金門既有「金好停」與路外停車即時導引系統，TDX 亦有 numeric availability | ⚠️ 尚未找到可免授權直連 endpoint |
-| 雲林縣 | 🟡 **TDX numeric availability 已證實，地方公開靜態 Open Data 已找到** | 雲林縣官方 JSON 有停車場 metadata；TDX 可見雲林溪美食廣場等 numeric availability | ⚠️ 尚未定位地方即時 availability endpoint |
-| 基隆市 | 🟡 **已存在即時停車查詢服務，需反查 API** | 基隆市區有即時停車剩餘位置查詢服務；TDX 亦有 numeric availability | ⚠️ 尚未定位正式公開 endpoint |
+| 縣市 | 方法 | 確切端點 | 已知即時欄位 | 判定 |
+|---|---|---|---|---|
+| 高雄市 | GET | `https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation` | `ParkingID`, `ParkingName`, `Address`, `Latitude`, `Longitude`, `SurplusSpace` | ✅ **可直接拿 numeric 剩餘格**；公開程式實作每 60 秒重抓 |
+| 彰化縣 | POST | `https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost` | `carParkName`, `positionLat`, `positionLon`, `totalNum`, `remaining` | ✅ **可直接拿總格＋剩餘格** |
+| 雲林縣 | POST | `https://parking.yunlin.gov.tw/ParkingLocation/ParkingLotPost` | `carParkName`, `positionLat`, `positionLon`, `fareDescription/description` | ⚠️ 已找到地方 API，但目前公開實作未讀到 numeric `remaining`；需再追 availability 子端點 |
+| 南投縣 | POST | `https://parking.nantou.gov.tw/ParkingLocation/ParkingLotPost` | `carParkName`, `positionLat`, `positionLon`, `fareDescription/description` | ⚠️ 已找到地方 API，但目前公開實作未讀到 numeric 剩餘格 |
+| 花蓮縣 | POST | `https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView` | 以表單參數 `action=DynamicParking` 取得動態停車場列表；回 HTML partial | ⚠️ **確切動態資料 endpoint 已找到**，但此支目前公開實作只解析場名/座標/總格/費率，numeric 剩餘格需再找下一支 |
+| 臺東縣 | GET | `https://trafficweb.ttcpb.gov.tw/api/parking-lots` | 停車場清單、`id`, `PositionLat/lat`, `PositionLon/lng` | ✅ API 可直接列出路外停車場 |
+| 臺東縣 | GET | `https://trafficweb.ttcpb.gov.tw/api/parking-lots/{id}` | `name`, `lat`, `lng`, `total`, `vacancy`, `charge` | ✅ **可直接拿 numeric 剩餘格 `vacancy`** |
+| 臺東縣 | GET | `https://trafficweb.ttcpb.gov.tw/api/parking-spaces` | `id`, `lat`, `lng`, `is_parked` | ✅ **逐格即時狀態**；`is_parked=false` 可視為該格可用 |
+| 澎湖縣 | GET | `https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode={code}` | `available` | ✅ **可直接拿 numeric 剩餘格**；需逐停車場 code 查詢 |
+| 基隆市 | GET(HTML) | `https://e-traffic.klcg.gov.tw/KeelungTraffic/pages/park.jsp` | 停車場名稱、剩餘停車格、更新時間 | ✅ 免費、分鐘級即時資料已可直接讀；**但目前找到的是 HTML endpoint，不是 JSON API** |
 
-### 高雄：本輪最重要修正
+### 已知可用 request 範例
 
-高雄不能再寫成「只有 TDX 有動態資料」。高雄市政府交通局已公開說明：
+#### 高雄
+```
+GET https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation
+```
 
-1. 官方有「停車場即時資訊網」：https://kpp.tbkc.gov.tw/ParkingLocation/ParkingLocation
-2. 官方政策頁明載已將停車資訊建立「資料交換 API」，以 Open Data 資料提供者角色提供民間介接。
-3. 因此目前缺的是 **API 的公開文件／實際呼叫 URL**，不是「高雄沒有地方免費動態 API」。
+公開實作直接讀：
+- `ParkingID`
+- `ParkingName`
+- `Address`
+- `Latitude`
+- `Longitude`
+- `SurplusSpace`
 
-官方證據：
-- https://www.tbkc.gov.tw/Achievement/IntelligentTransportation/IntelligentTrafficCorridor?id=bfde9f3d-9a1f-453f-a3fb-9354d5a6a49a
-- https://www.tbkc.gov.tw/Service/ParkingAndTowing/kpptbkc
-- https://kpp.tbkc.gov.tw/ParkingLocation/ParkingLocation
+因此高雄應由 B* 改成 **A 候選**，不需要再把 TDX 當唯一來源。
 
-### 花蓮：從「有網站」升級為「已證實有動態資料上游」
+#### 彰化
+```
+POST https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost
+Content-Length: 0
+```
 
-花蓮交通 e 點通官方頁直接提供：
-- 動態停車場資訊
-- 靜態停車場資訊
-- 停車格資訊
+已知欄位：
+- `carParkName`
+- `positionLat`
+- `positionLon`
+- `totalNum`
+- `remaining`
+- `fareDescription`
 
-因此下一步應抓該頁 Network/XHR/fetch，而不是再只搜尋 Open Data 目錄。
+#### 花蓮
+```
+POST https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView
+Content-Type: application/x-www-form-urlencoded
 
-官方頁：
-- https://traffic.hl.gov.tw/Home/CheckParkingDetail
-- https://traffic.hl.gov.tw/Home/ParkingSpaceInfo
+page=1&pageNumber=100&action=DynamicParking&currentGroup=1&dataModel[KeyWord]=
+```
 
-### 屏東：不能只看 data.gov.tw
+這支不是首頁，是前端實際拿動態停車場列表的 partial endpoint。
 
-屏東官方智慧停車系統已由控制中心蒐集地磁/智慧停車資料，並將即時停車資訊提供給 QParking APP 與路側剩餘車位顯示器。這證明「地方端確實有即時 availability 上游」。  
-但這不代表該上游一定是免金鑰、對所有開發者公開的 Open Data API；需再區分：
-- **地方政府資料交換 API**
-- **委外廠商 App 私有 API**
-- **真正免授權公開 API**
+#### 臺東
+```
+GET https://trafficweb.ttcpb.gov.tw/api/parking-lots
+GET https://trafficweb.ttcpb.gov.tw/api/parking-lots/{id}
+GET https://trafficweb.ttcpb.gov.tw/api/parking-spaces
+```
 
-參考：
-- https://www.qparking.com.tw/
-- 屏東縣政府智慧停車相關公開說明
+路外 detail 的 `vacancy` 就是 numeric 剩餘格；路邊逐格則以 `is_parked` 表示占用狀態。
 
-### 本輪判定原則修正
+#### 澎湖
+```
+GET https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode=OWIZXZ
+```
 
-之後遇到「TDX 有，但地方 Open Data 目錄找不到」時，依下列順序追：
+已知停車場 code（公開實作中已有）：
+- `OWIZXZ`：澎湖縣府地下停車場
+- `QAHZCZ`：馬公國小地下停車場
+- `T2THK8`：中正國小地下停車場
+- `NCEJ97`：中興國小地下停車場
+- `Y7ROW9`：文光國中地下停車場
 
-1. 縣市 Open Data / data.gov.tw
-2. 縣市交通局、停管處「即時停車資訊網」
-3. 官方 App / PWA 的 Network XHR / fetch
-4. 政府標案/施政成果裡的「資料交換 API」描述
-5. 若上游是委外廠商私有 API，再判斷是否允許免授權公開使用
+### 來源佐證
 
-**只有真的拿到可公開呼叫的 endpoint，才升級為 A；但只要已證實地方動態資料鏈存在，就不能再寫成「地方沒有即時資料」。**
+上述確切 request URL 不是憑名稱猜測，已從公開實作反查：
+- `walkpod1007/tw-parking`：彰化、雲林、花蓮、臺東、南投、澎湖 adapter
+- `moceliao/kaohsiung-parking-app`：高雄 `GetParkingLocation`，前端直接讀 `SurplusSpace`
+- 基隆官方即時交通平台：`park.jsp` 直接回傳分鐘級剩餘格與更新時間
+
+### 目前仍需繼續追「numeric availability API」的 TDX 有資料縣市
+
+| 縣市 | 已找到地方端點 | 還缺什麼 |
+|---|---|---|
+| 雲林縣 | `https://parking.yunlin.gov.tw/ParkingLocation/ParkingLotPost` | numeric 剩餘格的實際子 endpoint |
+| 屏東縣 | 已有官方靜態 Open Data / 智慧停車資料鏈 | QParking／縣府前端實際 availability request URL |
+| 花蓮縣 | `https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView` | 若 TDX 的剩餘格不是這支 partial 內含，需繼續追另一支 XHR |
+| 金門縣 | 金好停系統與即時空餘數已證實 | 金好停前端實際 JSON/API URL |
+| 基隆市 | `park.jsp` 已可取分鐘級剩餘格 | 如果產品堅持 JSON，需要再找 JSP 背後資料 request；若可接受 HTML parser，這支現在就能用 |
 
 
 ## 0. 動態來源產品判定
@@ -208,21 +241,21 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 | 桃園市 | A | 單一官方 JSON API | 246 | 196 | 欄位幾乎 1:1 對應，不解析 payGuide。 |
 | 臺中市 | B | 官方 JSON API（沒有確切剩餘格） | 1414 | 0 | 路外 API 只有 AvailableCarRGB 狀態/燈號，沒有 numeric available_car；收費資料是另一份且沒有可靠共同 ID，不做名稱模糊 join。 |
 | 臺南市 | A | 官方即時 JSON | 268 | 268 | 本次直連可取得大量停車資料；但每筆 data_time 新鮮度不一，必須逐筆保留來源時間，不能把整包資料一律當成當下即時。 |
-| 高雄市 | B* | 官方 Open Data JSON 直連 + 官方即時停車服務（availability 公開端點待定位） | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error timed out>；已從 data.gov.tw 重新解出高雄官方 JSON 直連，不再只靠 metadata。另有官方即時剩餘格位服務與資料交換機制，但尚未找到對一般開發者正式公開的 availability endpoint。 |
+| 高雄市 | A* | 官方即時 JSON endpoint `https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation` | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error timed out>；已從 data.gov.tw 重新解出高雄官方 JSON 直連，不再只靠 metadata。另有官方即時剩餘格位服務與資料交換機制，但尚未找到對一般開發者正式公開的 availability endpoint。 |
 | 基隆市 | B | 官方 CSV/ODS 靜態資料 | 22 | 0 | 只有停車場名稱、車格位、地址、聯絡電話；沒有價格、座標、即時剩餘格。 |
 | 新竹市 | A | 單一官方動態 API | 55 | 55 | WEEKDAYS/HOLIDAY 保留兩個 raw 欄位，不自行解析。 |
 | 嘉義市 | B* | 官方 CSV 直連 + 官方智慧停車即時服務 | 38 | 0 | 已從政府資料平台解出嘉義市官方 CSV 直連；官方另有智慧停車管理雲端平台與剩餘車位揭露，但 availability 公開 API 文件仍待定位。 |
 | 新竹縣 | B* | 官方 Open Data 靜態資料 + 大新竹好停車即時服務 | 0 | 0 | 官方 App 明確提供新竹縣/市即時格位查詢，但目前未找到對外公開且有文件的縣端 availability API；既有 Open Data 欄位沒有座標及 numeric available_car。 |
 | 苗栗縣 | B* | 官方「苗栗通」智慧停車服務有即時停車資訊（公開 API endpoint 待定位） | 0 | 0 | 前版直接列 C 不精確。苗栗縣政府已建置即時停車資訊平台並整合公有/路邊停車資訊；但本輪仍未找到正式公開、可免授權直連的 availability API 文件，因此標 B* 而不是 A。 |
-| 彰化縣 | B | 官方靜態停車場登記資料 | 226 | 0 | 具名稱、地點、各車種格數與計時/月租等欄位，但沒有 WGS84 座標及即時剩餘格。 |
-| 南投縣 | C* | 有停車管理/繳費系統線索；尚未找到官方即時空位 Open Data/API | 0 | 0 | 重新搜尋後可確認南投有停車管理與跨縣市停車費查詢介接線索，但目前仍未找到縣府正式公開、可免授權取得即時剩餘格位的 Open Data/API；因此不能把『有系統』誤寫成『有公開 availability API』。 |
+| 彰化縣 | A* | 官方 POST API `https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost` | 226 | 0 | 具名稱、地點、各車種格數與計時/月租等欄位，但沒有 WGS84 座標及即時剩餘格。 |
+| 南投縣 | B* | 已找到官方 POST API `https://parking.nantou.gov.tw/ParkingLocation/ParkingLotPost`，但 numeric availability 待追 | 0 | 0 | 重新搜尋後可確認南投有停車管理與跨縣市停車費查詢介接線索，但目前仍未找到縣府正式公開、可免授權取得即時剩餘格位的 Open Data/API；因此不能把『有系統』誤寫成『有公開 availability API』。 |
 | 雲林縣 | B | 官方 JSON 直連靜態資料 | 93 | 0 | 已改用 data.gov.tw 頁面所列的雲林縣政府官方 JSON 直連，避免 metadata resource 選取造成 403 誤判。欄位結構化，但沒有 numeric available_car。 |
 | 嘉義縣 | B | 官方 CSV 直連靜態資料 | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error [Errno 101] Network is unreachable>；已從 data.gov.tw 解出嘉義縣政府官方 CSV 直連；具鄉鎮、名稱、車格數、收費狀況，但缺座標與 available_car。 |
 | 屏東縣 | B* | 官方靜態 Open Data + 智慧停車即時服務/TDX 有即時資料 | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error [Errno 111] Connection refused>；屏東已有官方智慧停車與剩餘格位服務，TDX 亦可見路外/路邊即時資料；但本輪尚未定位到縣府正式公開 availability API。163066 有名稱/地址/費率/汽車總格；138733 有座標，無共同 ID 不做模糊 join。 |
 | 宜蘭縣 | A*（需驗證新鮮度） | 兩份官方 JSON 以編號精確 join | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error timed out>；已找到官方靜態/動態 JSON 直連；靜態供地址、費率與座標，動態供總格、剩餘格與更新時間。只用相同編號 exact join，並逐筆檢查更新時間新鮮度。 |
 | 花蓮縣 | B* | 官方「花蓮交通e點通」有即時路外/路邊停車服務（公開 API endpoint 待定位） | 0 | 0 | 前版寫成『未找到來源』不精確：官方網站明確提供動態停車場、靜態停車場與停車格資訊，TDX 也有花蓮即時路外/路邊資料；目前差的是可公開直連、具文件的地方 availability endpoint。 |
-| 臺東縣 | B* | 官方智慧停車已有即時格位狀態（公開 API endpoint 待定位） | 0 | 0 | 臺東官方已建置智慧停車感測並提供/規劃即時格位狀態整合，前版直接列 C 過度保守；但本輪尚未找到正式公開、免授權 availability API 文件，所以標 B*。 |
-| 澎湖縣 | B* | 縣府停車平台/停車管理中心存在；availability 公開 API 待定位 | 0 | 0 | 澎湖有官方停車管理中心，開放資料平台也支援 API；但目前找到的 Swagger/TrafficPayBill 主要是停車費服務，尚未確認公開的即時剩餘格位 endpoint。 |
+| 臺東縣 | A | 官方 JSON API：`/api/parking-lots`、`/api/parking-lots/{id}`、`/api/parking-spaces` | 0 | 0 | 臺東官方已建置智慧停車感測並提供/規劃即時格位狀態整合，前版直接列 C 過度保守；但本輪尚未找到正式公開、免授權 availability API 文件，所以標 B*。 |
+| 澎湖縣 | A* | `https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode={code}` | 0 | 0 | 澎湖有官方停車管理中心，開放資料平台也支援 API；但目前找到的 Swagger/TrafficPayBill 主要是停車費服務，尚未確認公開的即時剩餘格位 endpoint。 |
 | 金門縣 | B* | 官方即時停車導引/金好停服務存在（公開 API endpoint 待定位） | 0 | 0 | 金門縣政府已建即時停車導引並提供金好停查詢空位；TDX 亦有金門停車相關資料。前版直接寫『未找到核心停車 API』過度簡化，應改為『服務存在，但公開地方 endpoint 待定位』。 |
 | 連江縣 | B* | 官方智慧停車平台有即時找車位（公開 API endpoint 待定位） | 0 | 0 | 2026 年已上線官方智慧停車平台，可即時查看各停車場剩餘車位並導航；目前尚未找到公開 API 文件，因此不能把網站內部呼叫直接當成可穩定介接的 Open Data API。 |
 
