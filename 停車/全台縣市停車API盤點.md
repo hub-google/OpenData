@@ -9,6 +9,71 @@
 > 注意：TDX 有某縣市資料，代表存在上游資料交換，不等於該上游一定是對一般開發者公開的免費地方 API。
 
 
+## 0-0. 第二輪反查：TDX 有資料縣市的地方上游（2026-09-30 追加）
+
+> 本輪不再只查 data.gov.tw / 縣市 Open Data 目錄，也反查縣市官方「即時停車網站、App、智慧停車控制中心」實際存在的動態資料鏈。  
+> 重要修正：**TDX 有資料 ≠ 一定能在 data.gov.tw 找到同一支公開下載 API**；但若縣市官方明確表示已建立 Open Data API／即時剩餘格資料交換，則不得再寫成「只有 TDX 才有」。
+
+| 縣市 | 第二輪結論 | 已確認的地方動態上游／證據 | 目前是否取得可免金鑰直連 endpoint |
+|---|---|---|---|
+| 高雄市 | 🟠 **已證實地方政府另有 Open Data API / 資料交換介面** | 高雄市交通局官方說明：配合政府資料開放政策，已「以 open data 資料提供者角色，將停車資訊建立資料交換 API，提供民間業者介接」；另有官方「停車場即時資訊網」 | ⚠️ API 存在已確定；公開文件/實際 URL 仍需從 kpp.tbkc.gov.tw 或 OpenData 舊入口反查 |
+| 花蓮縣 | 🟠 **已證實地方官方有動態停車資料服務** | 花蓮交通 e 點通官方頁直接區分「動態停車場資訊／靜態停車場資訊／停車格資訊」 | ⚠️ 前端資料呼叫 endpoint 待擷取 |
+| 屏東縣 | 🟠 **已證實地方智慧停車即時資料鏈** | 屏東縣智慧停車控制中心蒐集地磁/智慧停車資料，剩餘車位供 QParking 與路側動態顯示器使用 | ⚠️ 目前看到的是官方系統→QParking/顯示器資料鏈；是否有免授權公開 API 待確認 |
+| 金門縣 | 🟡 **已證實地方即時停車導引系統存在** | 金門既有「金好停」與路外停車即時導引系統，TDX 亦有 numeric availability | ⚠️ 尚未找到可免授權直連 endpoint |
+| 雲林縣 | 🟡 **TDX numeric availability 已證實，地方公開靜態 Open Data 已找到** | 雲林縣官方 JSON 有停車場 metadata；TDX 可見雲林溪美食廣場等 numeric availability | ⚠️ 尚未定位地方即時 availability endpoint |
+| 基隆市 | 🟡 **已存在即時停車查詢服務，需反查 API** | 基隆市區有即時停車剩餘位置查詢服務；TDX 亦有 numeric availability | ⚠️ 尚未定位正式公開 endpoint |
+
+### 高雄：本輪最重要修正
+
+高雄不能再寫成「只有 TDX 有動態資料」。高雄市政府交通局已公開說明：
+
+1. 官方有「停車場即時資訊網」：https://kpp.tbkc.gov.tw/ParkingLocation/ParkingLocation
+2. 官方政策頁明載已將停車資訊建立「資料交換 API」，以 Open Data 資料提供者角色提供民間介接。
+3. 因此目前缺的是 **API 的公開文件／實際呼叫 URL**，不是「高雄沒有地方免費動態 API」。
+
+官方證據：
+- https://www.tbkc.gov.tw/Achievement/IntelligentTransportation/IntelligentTrafficCorridor?id=bfde9f3d-9a1f-453f-a3fb-9354d5a6a49a
+- https://www.tbkc.gov.tw/Service/ParkingAndTowing/kpptbkc
+- https://kpp.tbkc.gov.tw/ParkingLocation/ParkingLocation
+
+### 花蓮：從「有網站」升級為「已證實有動態資料上游」
+
+花蓮交通 e 點通官方頁直接提供：
+- 動態停車場資訊
+- 靜態停車場資訊
+- 停車格資訊
+
+因此下一步應抓該頁 Network/XHR/fetch，而不是再只搜尋 Open Data 目錄。
+
+官方頁：
+- https://traffic.hl.gov.tw/Home/CheckParkingDetail
+- https://traffic.hl.gov.tw/Home/ParkingSpaceInfo
+
+### 屏東：不能只看 data.gov.tw
+
+屏東官方智慧停車系統已由控制中心蒐集地磁/智慧停車資料，並將即時停車資訊提供給 QParking APP 與路側剩餘車位顯示器。這證明「地方端確實有即時 availability 上游」。  
+但這不代表該上游一定是免金鑰、對所有開發者公開的 Open Data API；需再區分：
+- **地方政府資料交換 API**
+- **委外廠商 App 私有 API**
+- **真正免授權公開 API**
+
+參考：
+- https://www.qparking.com.tw/
+- 屏東縣政府智慧停車相關公開說明
+
+### 本輪判定原則修正
+
+之後遇到「TDX 有，但地方 Open Data 目錄找不到」時，依下列順序追：
+
+1. 縣市 Open Data / data.gov.tw
+2. 縣市交通局、停管處「即時停車資訊網」
+3. 官方 App / PWA 的 Network XHR / fetch
+4. 政府標案/施政成果裡的「資料交換 API」描述
+5. 若上游是委外廠商私有 API，再判斷是否允許免授權公開使用
+
+**只有真的拿到可公開呼叫的 endpoint，才升級為 A；但只要已證實地方動態資料鏈存在，就不能再寫成「地方沒有即時資料」。**
+
+
 ## 0. 動態來源產品判定
 
 > 產品只接受：有 numeric 剩餘格，且為動態 API，或官方／資料時間可驗證為分鐘級更新。純靜態 JSON/CSV 只可當 metadata，不算可用即時來源。
@@ -48,7 +113,7 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 | 南投縣 | ❌ 尚未證實 usable numeric availability | 第三方曾回以現場為準/異常總格 | — |
 | 新竹縣、苗栗縣、嘉義縣、臺東縣、澎湖縣、連江縣 | ⚪ 尚未證實 | 尚未取得可核對的 TDX numeric 動態頁面 | — |
 
-高雄的正確結論：已確認 TDX 有官方動態 API 可取剩餘格；目前未找到的是高雄市政府自己另行公開的免費原始 availability endpoint。
+高雄的正確結論：除 TDX 外，高雄市交通局已明確證實地方端另有 Open Data／資料交換 API 與官方即時停車資訊網；目前缺的是公開文件或可免授權直連的實際 endpoint URL，而不是『高雄沒有地方動態 API』。
 
 ### 0-3. spotping.autoit.studio
 
