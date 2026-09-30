@@ -9,32 +9,54 @@
 > 注意：TDX 有某縣市資料，代表存在上游資料交換，不等於該上游一定是對一般開發者公開的免費地方 API。
 
 
-## 0-0. 已找到的「確切可呼叫端點」（不是網站首頁）
+## 0. 免費地方停車 API 最終盤點
 
-> 這一節只列 **已經找到實際 request URL** 的來源；不再用「有智慧停車系統」「有上游」代替 API。
-> 若端點是 POST，方法也一併標示。是否有 numeric 剩餘格以實際欄位判斷。
+> 這一章只保留「目前最終判定」，不再把「找到網站」「找到動態上游」「找到可呼叫 API」拆成不同章節。
+> 每個縣市只看五件事：**確切端點、HTTP 方法、是否有 numeric 剩餘格、主要欄位、能不能直接接產品**。
+> 
+> 判定：
+> - **A：可直接接產品**＝已找到可呼叫端點，且可取得 numeric 即時剩餘格。
+> - **B：已找到地方 API，但缺 numeric availability**＝可取得場站/座標/費率等資料，但尚不能直接當即時剩餘格來源。
+> - **C：尚未找到可公開呼叫的地方 API**＝即使官方網站/TDX 有資料，也還沒有找到可直接介接的地方 endpoint。
+> 
+> 產品規則：純靜態 JSON/CSV 只算 metadata，不算即時來源；紅黃綠狀態不換算成剩餘格。
 
-| 縣市 | 方法 | 確切端點 | 已知即時欄位 | 判定 |
-|---|---|---|---|---|
-| 高雄市 | GET | `https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation` | `ParkingID`, `ParkingName`, `Address`, `Latitude`, `Longitude`, `SurplusSpace` | ✅ **可直接拿 numeric 剩餘格**；公開程式實作每 60 秒重抓 |
-| 彰化縣 | POST | `https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost` | `carParkName`, `positionLat`, `positionLon`, `totalNum`, `remaining` | ✅ **可直接拿總格＋剩餘格** |
-| 雲林縣 | POST | `https://parking.yunlin.gov.tw/ParkingLocation/ParkingLotPost` | `carParkName`, `positionLat`, `positionLon`, `fareDescription/description` | ⚠️ 已找到地方 API，但目前公開實作未讀到 numeric `remaining`；需再追 availability 子端點 |
-| 南投縣 | POST | `https://parking.nantou.gov.tw/ParkingLocation/ParkingLotPost` | `carParkName`, `positionLat`, `positionLon`, `fareDescription/description` | ⚠️ 已找到地方 API，但目前公開實作未讀到 numeric 剩餘格 |
-| 花蓮縣 | POST | `https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView` | 以表單參數 `action=DynamicParking` 取得動態停車場列表；回 HTML partial | ⚠️ **確切動態資料 endpoint 已找到**，但此支目前公開實作只解析場名/座標/總格/費率，numeric 剩餘格需再找下一支 |
-| 臺東縣 | GET | `https://trafficweb.ttcpb.gov.tw/api/parking-lots` | 停車場清單、`id`, `PositionLat/lat`, `PositionLon/lng` | ✅ API 可直接列出路外停車場 |
-| 臺東縣 | GET | `https://trafficweb.ttcpb.gov.tw/api/parking-lots/{id}` | `name`, `lat`, `lng`, `total`, `vacancy`, `charge` | ✅ **可直接拿 numeric 剩餘格 `vacancy`** |
-| 臺東縣 | GET | `https://trafficweb.ttcpb.gov.tw/api/parking-spaces` | `id`, `lat`, `lng`, `is_parked` | ✅ **逐格即時狀態**；`is_parked=false` 可視為該格可用 |
-| 澎湖縣 | GET | `https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode={code}` | `available` | ✅ **可直接拿 numeric 剩餘格**；需逐停車場 code 查詢 |
-| 基隆市 | GET(HTML) | `https://e-traffic.klcg.gov.tw/KeelungTraffic/pages/park.jsp` | 停車場名稱、剩餘停車格、更新時間 | ✅ 免費、分鐘級即時資料已可直接讀；**但目前找到的是 HTML endpoint，不是 JSON API** |
+| 縣市 | 等級 | 方法 | 確切 API / endpoint | numeric 即時剩餘格 | 主要欄位 / 備註 | 產品判定 |
+|---|---:|---|---|---|---|---|
+| 臺北市 | A | GET | `https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json` | ✅ | 官方動態剩餘格 JSON | ✅ 可接 |
+| 新北市 | A | GET | `https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000` | ✅ | 路外；約每 3 分鐘 | ✅ 可接 |
+| 新北市－路邊 | A | GET | `https://data.ntpc.gov.tw/api/datasets/54A507C4-C038-41B5-BF60-BBECB9D052C6/json?page=0&size=2000` | ✅ | 逐格；約每 2 分鐘 | ✅ 可接 |
+| 桃園市 | A | GET | `https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download` | ✅ | `surplusSpace` | ✅ 可接 |
+| 臺中市 | B | GET | `https://newdatacenter.taichung.gov.tw/api/v1/no-auth/resource.download?rid=1744bc00-cd16-48f3-9632-309f364662bb` | ❌ | 路邊逐格可用；路外僅 RGB/狀態，不是 numeric 剩餘格 | ⚠️ 部分可用，路外不可直接當 availability |
+| 臺南市 | A | GET | `https://parkweb.tainan.gov.tw/api/parking.php` | ✅ | `car`, `update_time` | ✅ 可接 |
+| 高雄市 | A | GET | `https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation` | ✅ | `ParkingID`, `ParkingName`, `Address`, `Latitude`, `Longitude`, `SurplusSpace` | ✅ 可接 |
+| 基隆市 | B | GET(HTML) | `https://e-traffic.klcg.gov.tw/KeelungTraffic/pages/park.jsp` | ✅（頁面內） | 免費、分鐘級剩餘格與更新時間；目前拿到的是 HTML endpoint，不是 JSON | ⚠️ 可 parser 接；若堅持 JSON 需再反查背後 request |
+| 新竹市 | A | GET | `https://hispark.hccg.gov.tw/OpenData/GetParkInfo` | ✅ | `FREEQUANTITY`, `UPDATETIME` | ✅ 可接 |
+| 嘉義市 | B | — | 尚未找到公開 numeric availability API | ❌ | 已有官方智慧停車服務與靜態 CSV | ❌ 暫不可接即時格 |
+| 新竹縣 | B | — | 尚未找到公開 numeric availability API | ❌ | 官方 App 有即時資訊，但公開 endpoint 未定位 | ❌ 暫不可接即時格 |
+| 苗栗縣 | C | — | 尚未找到公開地方 availability API | ❌ | 官方智慧停車服務存在 | ❌ 暫不可接 |
+| 彰化縣 | A | POST | `https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost` | ✅ | `carParkName`, `positionLat`, `positionLon`, `totalNum`, `remaining`, `fareDescription` | ✅ 可接 |
+| 南投縣 | B | POST | `https://parking.nantou.gov.tw/ParkingLocation/ParkingLotPost` | ❌ | 可拿場站/座標/費率；目前未確認 numeric `remaining` | ⚠️ metadata 可接，availability 不可 |
+| 雲林縣 | B | POST | `https://parking.yunlin.gov.tw/ParkingLocation/ParkingLotPost` | ❌ | 可拿 `carParkName`, `positionLat`, `positionLon`, 費率 | ⚠️ metadata 可接，availability 不可 |
+| 嘉義縣 | B | GET | `https://ws-tm.cyhg.gov.tw/001/Upload/0/relfile/0/0/63b9dee0-2c99-4868-9650-97bc3bc0fbca.csv` | ❌ | 靜態場站資料 | ❌ 不算即時 |
+| 屏東縣 | B | GET | `https://www-ws.pthg.gov.tw/Upload/2015pthg/0/relfile/0/0/01d6b4f2-84a1-44d7-bf4e-158a70fabe4d.csv` | ❌ | 靜態路外停車場資料；即時 availability endpoint 尚未定位 | ❌ 不算即時 |
+| 屏東縣－恆春 | B | GET | `https://www-ws.pthg.gov.tw/Upload/2015pthg/0/relfile/0/0/0a83a598-d9a2-4a00-814c-9c255ea02ae9.csv` | ❌ | 有停車場與座標欄位，無 numeric 剩餘格 | ❌ 不算即時 |
+| 宜蘭縣 | A | GET | `https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json` | ✅ | `小車位總數`, `小車位剩餘數`, `更新時間`；需與靜態場資以編號 exact join | ✅ 可接 |
+| 花蓮縣 | B | POST | `https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView` | ❌（目前解析未取得） | body: `page=1&pageNumber=100&action=DynamicParking&currentGroup=1&dataModel[KeyWord]=`；目前可拿動態停車場列表、場名、座標、總格、費率 | ⚠️ endpoint 已找到，但還缺 numeric availability |
+| 臺東縣－路外 | A | GET | `https://trafficweb.ttcpb.gov.tw/api/parking-lots` + `https://trafficweb.ttcpb.gov.tw/api/parking-lots/{id}` | ✅ | detail：`name`, `lat`, `lng`, `total`, `vacancy`, `charge` | ✅ 可接 |
+| 臺東縣－路邊 | A | GET | `https://trafficweb.ttcpb.gov.tw/api/parking-spaces` | ✅（逐格） | `id`, `lat`, `lng`, `is_parked` | ✅ 可接 |
+| 澎湖縣 | A | GET | `https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode={code}` | ✅ | 回 `available`；逐停車場 code 查詢 | ✅ 可接 |
+| 金門縣 | C | — | 尚未找到公開地方 JSON/API endpoint | ❌ | 金好停與即時導引存在，但實際 request URL 尚未定位 | ❌ 暫不可接 |
+| 連江縣 | C | — | 尚未找到公開地方 JSON/API endpoint | ❌ | 官方智慧停車平台存在，但 API 未定位 | ❌ 暫不可接 |
 
-### 已知可用 request 範例
+### 已確認 request 範例
 
 #### 高雄
-```
+```http
 GET https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation
 ```
 
-公開實作直接讀：
+主要欄位：
 - `ParkingID`
 - `ParkingName`
 - `Address`
@@ -42,15 +64,13 @@ GET https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation
 - `Longitude`
 - `SurplusSpace`
 
-因此高雄應由 B* 改成 **A 候選**，不需要再把 TDX 當唯一來源。
-
 #### 彰化
-```
+```http
 POST https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost
 Content-Length: 0
 ```
 
-已知欄位：
+主要欄位：
 - `carParkName`
 - `positionLat`
 - `positionLon`
@@ -59,146 +79,51 @@ Content-Length: 0
 - `fareDescription`
 
 #### 花蓮
-```
+```http
 POST https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView
 Content-Type: application/x-www-form-urlencoded
 
 page=1&pageNumber=100&action=DynamicParking&currentGroup=1&dataModel[KeyWord]=
 ```
 
-這支不是首頁，是前端實際拿動態停車場列表的 partial endpoint。
+目前此 endpoint 已確認是前端拿「動態停車場」資料用，但現有公開實作未解析到 numeric 剩餘格，所以暫列 B。
 
 #### 臺東
-```
+```http
 GET https://trafficweb.ttcpb.gov.tw/api/parking-lots
 GET https://trafficweb.ttcpb.gov.tw/api/parking-lots/{id}
 GET https://trafficweb.ttcpb.gov.tw/api/parking-spaces
 ```
 
-路外 detail 的 `vacancy` 就是 numeric 剩餘格；路邊逐格則以 `is_parked` 表示占用狀態。
+路外 detail 的 `vacancy` 是 numeric 剩餘格；路邊用 `is_parked` 表示單格占用狀態。
 
 #### 澎湖
-```
+```http
 GET https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode=OWIZXZ
 ```
 
-已知停車場 code（公開實作中已有）：
+已知 code：
 - `OWIZXZ`：澎湖縣府地下停車場
 - `QAHZCZ`：馬公國小地下停車場
 - `T2THK8`：中正國小地下停車場
 - `NCEJ97`：中興國小地下停車場
 - `Y7ROW9`：文光國中地下停車場
 
-### 來源佐證
+### 尚未完成的反查清單
 
-上述確切 request URL 不是憑名稱猜測，已從公開實作反查：
-- `walkpod1007/tw-parking`：彰化、雲林、花蓮、臺東、南投、澎湖 adapter
-- `moceliao/kaohsiung-parking-app`：高雄 `GetParkingLocation`，前端直接讀 `SurplusSpace`
-- 基隆官方即時交通平台：`park.jsp` 直接回傳分鐘級剩餘格與更新時間
+只剩下真正還沒有「可直接拿 numeric availability 的地方 API」者需要繼續追：
 
-### 目前仍需繼續追「numeric availability API」的 TDX 有資料縣市
+1. 嘉義市
+2. 新竹縣
+3. 苗栗縣
+4. 南投縣
+5. 雲林縣
+6. 屏東縣
+7. 花蓮縣
+8. 金門縣
+9. 連江縣
+10. 基隆市（若產品堅持 JSON；HTML parser 已可用）
 
-| 縣市 | 已找到地方端點 | 還缺什麼 |
-|---|---|---|
-| 雲林縣 | `https://parking.yunlin.gov.tw/ParkingLocation/ParkingLotPost` | numeric 剩餘格的實際子 endpoint |
-| 屏東縣 | 已有官方靜態 Open Data / 智慧停車資料鏈 | QParking／縣府前端實際 availability request URL |
-| 花蓮縣 | `https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView` | 若 TDX 的剩餘格不是這支 partial 內含，需繼續追另一支 XHR |
-| 金門縣 | 金好停系統與即時空餘數已證實 | 金好停前端實際 JSON/API URL |
-| 基隆市 | `park.jsp` 已可取分鐘級剩餘格 | 如果產品堅持 JSON，需要再找 JSP 背後資料 request；若可接受 HTML parser，這支現在就能用 |
-
-
-## 0. 動態來源產品判定
-
-> 產品只接受：有 numeric 剩餘格，且為動態 API，或官方／資料時間可驗證為分鐘級更新。純靜態 JSON/CSV 只可當 metadata，不算可用即時來源。
-> 明確 endpoint 失敗時最多重試 3 次。
-> 地方免費 API 與 TDX／第三方聚合動態資料分開判定，避免把「地方 endpoint 未找到」誤寫成「該縣市沒有動態資料」。
-
-### 0-1. 已找到地方免費動態端點，可直接做 adapter
-
-| 縣市 | 即時產品判定 | 動態端點 | 更新／限制 |
-|---|---|---|---|
-| 臺北市 | ✅ 可接 | https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json | 官方動態剩餘格 JSON；產品加 freshness/異常值保護 |
-| 新北市 | ✅ 可接 | https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000 | 路外每 3 分鐘 |
-| 新北市－路邊 | ✅ 可接 | https://data.ntpc.gov.tw/api/datasets/54A507C4-C038-41B5-BF60-BBECB9D052C6/json?page=0&size=2000 | 路邊逐格每 2 分鐘 |
-| 桃園市 | ✅ 可接 | https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download | 每 1 分鐘；surplusSpace |
-| 臺中市 | ⚠️ 部分可接 | https://newdatacenter.taichung.gov.tw/api/v1/no-auth/resource.download?rid=1744bc00-cd16-48f3-9632-309f364662bb | 路邊逐格每 10 分鐘；路外 RGB 不算 numeric 剩餘格 |
-| 臺南市 | ✅ 可接 | https://parkweb.tainan.gov.tw/api/parking.php | car + update_time，逐筆 freshness gate |
-| 新竹市 | ✅ 可接 | https://hispark.hccg.gov.tw/OpenData/GetParkInfo | FREEQUANTITY + UPDATETIME，逐筆 freshness gate |
-| 宜蘭縣 | ✅ 可接 | https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json | 官方備註最慢約 1 分鐘刷新 |
-
-### 0-2. TDX 動態資料交叉驗證（已把「待逐縣 query」改成實際結果）
-
-TDX 官方停車資訊 v1 提供指定縣市的路外 ParkingAvailability API：
-https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/{City}?%24format=JSON
-
-本輪另外用明確標示資料來自 TDX 的公開查詢頁交叉驗證 numeric 剩餘格。
-
-| 縣市 | TDX 動態剩餘格 | 實際驗證結果 | 驗證頁 |
-|---|---|---|---|
-| 高雄市 | ✅ 有 | 多座高雄停車場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/Kaohsiung |
-| 基隆市 | ✅ 有 | 多座基隆停車場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/Keelung |
-| 雲林縣 | ✅ 有 | 雲林溪美食廣場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/YunlinCounty |
-| 屏東縣 | ✅ 有 | 多座路外與路邊停車有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/PingtungCounty |
-| 花蓮縣 | ✅ 有 | 多座路外與路邊停車有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/HualienCounty |
-| 金門縣 | ✅ 有 | 金門航三、金門高中、山外車站、北堤等有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/KinmenCounty |
-| 彰化縣 | ⚠️ 有 TDX 消費端支援，但本輪頁面無 numeric rows | 先不算產品可用 | https://www.opendata.vip/tdx/parking/ChanghuaCounty |
-| 嘉義市 | ⚠️ 有其他聚合服務 numeric 動態資料，但本輪未用 TDX 專頁證實 | 不把有動態直接等同 TDX 有 | — |
-| 南投縣 | ❌ 尚未證實 usable numeric availability | 第三方曾回以現場為準/異常總格 | — |
-| 新竹縣、苗栗縣、嘉義縣、臺東縣、澎湖縣、連江縣 | ⚪ 尚未證實 | 尚未取得可核對的 TDX numeric 動態頁面 | — |
-
-高雄的正確結論：除 TDX 外，高雄市交通局已明確證實地方端另有 Open Data／資料交換 API 與官方即時停車資訊網；目前缺的是公開文件或可免授權直連的實際 endpoint URL，而不是『高雄沒有地方動態 API』。
-
-### 0-3. spotping.autoit.studio
-
-本稽核環境目前無法直接抓取 https://spotping.autoit.studio/，因此不能可靠檢查它實際呼叫的 XHR/fetch API。若能取得該站瀏覽器 Network 的 API URL，應再反查其上游是 TDX、縣市 Open Data 或自有 proxy。
-
-### 結論
-
-- 高雄、基隆、嘉義市：不再標成「沒有動態資料」，改為 🟡「動態上游已證實，地方免費 endpoint 待反查」。
-- 南投：第三方也沒有 numeric 剩餘格證據，暫維持 ❌。
-- 其他縣市：改成 ⚪ 未證實，而不是直接宣告沒有；TDX 需要 API Key 逐縣 query 後才能下定論。
-
-## 0-4. TDX 原始 ParkingAvailability 本次實打結果
-
-> 這不是搜尋結果，也不是第三方旁證；是 GitHub Actions 用 headless Chrome 直接開 TDX 訪客模式的指定縣市路外 ParkingAvailability endpoint。每個端點最多重試 3 次。
-
-| 縣市 | TDX code | top=5 回傳筆數 | numeric availability | 更新時間樣本 | 狀態 | 完整 URL |
-|---|---|---:|---|---|---|---|
-| 高雄市 | Kaohsiung | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/Kaohsiung?%24top=5&%24format=JSON |
-| 基隆市 | Keelung | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/Keelung?%24top=5&%24format=JSON |
-| 嘉義市 | Chiayi | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/Chiayi?%24top=5&%24format=JSON |
-| 新竹縣 | HsinchuCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/HsinchuCounty?%24top=5&%24format=JSON |
-| 苗栗縣 | MiaoliCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/MiaoliCounty?%24top=5&%24format=JSON |
-| 彰化縣 | ChanghuaCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/ChanghuaCounty?%24top=5&%24format=JSON |
-| 南投縣 | NantouCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/NantouCounty?%24top=5&%24format=JSON |
-| 雲林縣 | YunlinCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/YunlinCounty?%24top=5&%24format=JSON |
-| 嘉義縣 | ChiayiCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/ChiayiCounty?%24top=5&%24format=JSON |
-| 屏東縣 | PingtungCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/PingtungCounty?%24top=5&%24format=JSON |
-| 花蓮縣 | HualienCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/HualienCounty?%24top=5&%24format=JSON |
-| 臺東縣 | TaitungCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/TaitungCounty?%24top=5&%24format=JSON |
-| 澎湖縣 | PenghuCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/PenghuCounty?%24top=5&%24format=JSON |
-| 金門縣 | KinmenCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/KinmenCounty?%24top=5&%24format=JSON |
-| 連江縣 | LienchiangCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/LienchiangCounty?%24top=5&%24format=JSON |
-
-<details><summary>TDX 實打原始嘗試摘要</summary>
-
-- 高雄市：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 基隆市：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 嘉義市：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 新竹縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 苗栗縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 彰化縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 南投縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 雲林縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 嘉義縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 屏東縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 花蓮縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 臺東縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 澎湖縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 金門縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-- 連江縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
-
-</details>
 
 ## 1. 統一格式
 
@@ -231,33 +156,6 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 3. 跨資料表只允許官方共同 ID exact join；不做停車場名稱模糊比對。
 4. 地址不拿去地理編碼補座標；TWD97→WGS84 只做固定數學轉換。
 5. 來源缺核心欄位就留空，不自行猜。
-
-## 2. 22 縣市總覽
-
-| 縣市 | 等級 | 規劃來源 | 本次抓到 | numeric 即時格 | 結論 |
-|---|---:|---|---:|---:|---|
-| 臺北市 | A | 官方 API 直連 + ID 精確 join | 1775 | 1115 | 費率 payex 原文直出；座標優先 EntranceCoord 既有座標，缺值才做 TWD97→WGS84 固定數學轉換。 |
-| 新北市 | A* | 官方 API 直連 + ID 精確 join（端點穩定性待修） | 0 | 0 | AVAILABLECAR < 0 視為未知。座標若只有 TW97，只做固定數學轉換。 |
-| 桃園市 | A | 單一官方 JSON API | 246 | 196 | 欄位幾乎 1:1 對應，不解析 payGuide。 |
-| 臺中市 | B | 官方 JSON API（沒有確切剩餘格） | 1414 | 0 | 路外 API 只有 AvailableCarRGB 狀態/燈號，沒有 numeric available_car；收費資料是另一份且沒有可靠共同 ID，不做名稱模糊 join。 |
-| 臺南市 | A | 官方即時 JSON | 268 | 268 | 本次直連可取得大量停車資料；但每筆 data_time 新鮮度不一，必須逐筆保留來源時間，不能把整包資料一律當成當下即時。 |
-| 高雄市 | A* | 官方即時 JSON endpoint `https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation` | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error timed out>；已從 data.gov.tw 重新解出高雄官方 JSON 直連，不再只靠 metadata。另有官方即時剩餘格位服務與資料交換機制，但尚未找到對一般開發者正式公開的 availability endpoint。 |
-| 基隆市 | B | 官方 CSV/ODS 靜態資料 | 22 | 0 | 只有停車場名稱、車格位、地址、聯絡電話；沒有價格、座標、即時剩餘格。 |
-| 新竹市 | A | 單一官方動態 API | 55 | 55 | WEEKDAYS/HOLIDAY 保留兩個 raw 欄位，不自行解析。 |
-| 嘉義市 | B* | 官方 CSV 直連 + 官方智慧停車即時服務 | 38 | 0 | 已從政府資料平台解出嘉義市官方 CSV 直連；官方另有智慧停車管理雲端平台與剩餘車位揭露，但 availability 公開 API 文件仍待定位。 |
-| 新竹縣 | B* | 官方 Open Data 靜態資料 + 大新竹好停車即時服務 | 0 | 0 | 官方 App 明確提供新竹縣/市即時格位查詢，但目前未找到對外公開且有文件的縣端 availability API；既有 Open Data 欄位沒有座標及 numeric available_car。 |
-| 苗栗縣 | B* | 官方「苗栗通」智慧停車服務有即時停車資訊（公開 API endpoint 待定位） | 0 | 0 | 前版直接列 C 不精確。苗栗縣政府已建置即時停車資訊平台並整合公有/路邊停車資訊；但本輪仍未找到正式公開、可免授權直連的 availability API 文件，因此標 B* 而不是 A。 |
-| 彰化縣 | A* | 官方 POST API `https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost` | 226 | 0 | 具名稱、地點、各車種格數與計時/月租等欄位，但沒有 WGS84 座標及即時剩餘格。 |
-| 南投縣 | B* | 已找到官方 POST API `https://parking.nantou.gov.tw/ParkingLocation/ParkingLotPost`，但 numeric availability 待追 | 0 | 0 | 重新搜尋後可確認南投有停車管理與跨縣市停車費查詢介接線索，但目前仍未找到縣府正式公開、可免授權取得即時剩餘格位的 Open Data/API；因此不能把『有系統』誤寫成『有公開 availability API』。 |
-| 雲林縣 | B | 官方 JSON 直連靜態資料 | 93 | 0 | 已改用 data.gov.tw 頁面所列的雲林縣政府官方 JSON 直連，避免 metadata resource 選取造成 403 誤判。欄位結構化，但沒有 numeric available_car。 |
-| 嘉義縣 | B | 官方 CSV 直連靜態資料 | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error [Errno 101] Network is unreachable>；已從 data.gov.tw 解出嘉義縣政府官方 CSV 直連；具鄉鎮、名稱、車格數、收費狀況，但缺座標與 available_car。 |
-| 屏東縣 | B* | 官方靜態 Open Data + 智慧停車即時服務/TDX 有即時資料 | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error [Errno 111] Connection refused>；屏東已有官方智慧停車與剩餘格位服務，TDX 亦可見路外/路邊即時資料；但本輪尚未定位到縣府正式公開 availability API。163066 有名稱/地址/費率/汽車總格；138733 有座標，無共同 ID 不做模糊 join。 |
-| 宜蘭縣 | A*（需驗證新鮮度） | 兩份官方 JSON 以編號精確 join | 0 | 0 | 試抓錯誤：RuntimeError: 3 attempts failed: URLError: <urlopen error timed out>；已找到官方靜態/動態 JSON 直連；靜態供地址、費率與座標，動態供總格、剩餘格與更新時間。只用相同編號 exact join，並逐筆檢查更新時間新鮮度。 |
-| 花蓮縣 | B* | 官方「花蓮交通e點通」有即時路外/路邊停車服務（公開 API endpoint 待定位） | 0 | 0 | 前版寫成『未找到來源』不精確：官方網站明確提供動態停車場、靜態停車場與停車格資訊，TDX 也有花蓮即時路外/路邊資料；目前差的是可公開直連、具文件的地方 availability endpoint。 |
-| 臺東縣 | A | 官方 JSON API：`/api/parking-lots`、`/api/parking-lots/{id}`、`/api/parking-spaces` | 0 | 0 | 臺東官方已建置智慧停車感測並提供/規劃即時格位狀態整合，前版直接列 C 過度保守；但本輪尚未找到正式公開、免授權 availability API 文件，所以標 B*。 |
-| 澎湖縣 | A* | `https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode={code}` | 0 | 0 | 澎湖有官方停車管理中心，開放資料平台也支援 API；但目前找到的 Swagger/TrafficPayBill 主要是停車費服務，尚未確認公開的即時剩餘格位 endpoint。 |
-| 金門縣 | B* | 官方即時停車導引/金好停服務存在（公開 API endpoint 待定位） | 0 | 0 | 金門縣政府已建即時停車導引並提供金好停查詢空位；TDX 亦有金門停車相關資料。前版直接寫『未找到核心停車 API』過度簡化，應改為『服務存在，但公開地方 endpoint 待定位』。 |
-| 連江縣 | B* | 官方智慧停車平台有即時找車位（公開 API endpoint 待定位） | 0 | 0 | 2026 年已上線官方智慧停車平台，可即時查看各停車場剩餘車位並導航；目前尚未找到公開 API 文件，因此不能把網站內部呼叫直接當成可穩定介接的 Open Data API。 |
 
 ## 3. 各縣市欄位對應與 20 筆分散試抓
 
