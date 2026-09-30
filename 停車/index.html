@@ -43,7 +43,7 @@ main{display:grid;grid-template-columns:410px 1fr;height:calc(100vh - 58px)}asid
     <button class="filter" data-f="realtime">有即時數字</button>
     <button class="filter" data-f="free">免費</button>
   </div>
-  <div id="status" class="status"><strong>按「定位並查附近」</strong><br>查詢時優先直接連地方政府即時 API；若瀏覽器無法直連，才改讀 GitHub Actions 的政府資料快取。</div>
+  <div id="status" class="status"><strong>按「定位並查附近」</strong><br>定位後會當下直接呼叫附近地方政府 API；單一請求失敗會自動重試 3 次，不讀舊快取。</div>
   <div class="summary"><span id="summary">尚未定位</span></div>
   <div id="list"><div class="empty">定位後會依距離顯示附近停車場；縣市交界會自動合併多個政府來源。</div></div>
 </aside>
@@ -58,7 +58,6 @@ const API={
   taipei:{
     static:'https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json',
     realtime:'https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json',
-    staticCache:'./data/taipei-static.json',realtimeCache:'./data/taipei-realtime.json',
     label:'臺北市',official:'https://data.taipei/dataset/detail?id=d5c0656b-5250-4179-a491-c94daa56ef2c',
     bbox:[24.90,25.25,121.38,121.72]
   },
@@ -66,13 +65,11 @@ const API={
     static:'https://data.ntpc.gov.tw/api/datasets/b1464ef0-9c7c-4a6f-abf7-6bdf32847e68/json',
     realtime:'https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json',
     paged:true,
-    staticCache:'./data/ntpc-static.json',realtimeCache:'./data/ntpc-realtime.json',
     label:'新北市',official:'https://data.ntpc.gov.tw/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78',
     bbox:[24.55,25.35,121.15,122.10]
   },
   taoyuan:{
     data:'https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download',
-    cache:'./data/taoyuan.json',
     label:'桃園市',official:'https://opendata.tycg.gov.tw/datalist/f4cc0b12-86ac-40f9-8745-885bddc18f79',
     bbox:[24.65,25.20,120.95,121.55]
   }
@@ -83,7 +80,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'�
 const layer=L.layerGroup().addTo(map);
 const userLayer=L.layerGroup().addTo(map);
 
-let allData=[],filter='all',query='',userPos=null,meta=null,lastSources=[],loading=false;
+let allData=[],filter='all',query='',userPos=null,lastSources=[],loading=false;
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function n(v){if(v===null||v===undefined||v==='')return null;const x=Number(String(v).replace(/,/g,''));return Number.isFinite(x)?x:null}
@@ -104,7 +101,23 @@ function extractArray(obj){
   return[];
 }
 function withBust(url){return url+(url.includes('?')?'&':'?')+'_ts='+Date.now()}
-async function getJSON(url){const r=await fetch(withBust(url),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+async function getJSON(url,maxAttempts=3){
+  let lastError=null;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(withBust(url),{cache:'no-store',signal:controller.signal});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.json();
+    }catch(e){
+      lastError=e;
+      if(attempt<maxAttempts)await sleep(attempt*500);
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
 async function getPagedJSON(base){const merged=[],seen=new Set();for(let page=0;page<5;page++){const data=await getJSON(base+'?page='+page+'&size=1000');const rows=extractArray(data);const sig=JSON.stringify(rows.slice(0,3));if(!rows.length||seen.has(sig))break;seen.add(sig);merged.push(...rows);if(rows.length<1000)break}return merged}
 
 function twd97ToWgs84(x,y){
@@ -150,19 +163,12 @@ function inBBox(pos,bbox,padKm){
   const latPad=padKm/111,lngPad=padKm/(111*Math.max(.2,Math.cos(pos[0]*Math.PI/180)));
   return pos[0]>=bbox[0]-latPad&&pos[0]<=bbox[1]+latPad&&pos[1]>=bbox[2]-lngPad&&pos[1]<=bbox[3]+lngPad;
 }
-async function loadMeta(){try{meta=await getJSON('./data/meta.json')}catch(e){meta=null}}
-
-async function directOrCachePair(cfg){
-  try{
-    const [s,r]=cfg.paged?await Promise.all([getPagedJSON(cfg.static),getPagedJSON(cfg.realtime)]):await Promise.all([getJSON(cfg.static),getJSON(cfg.realtime)]);
-    return{s,r,mode:'官方 API 直連'};
-  }catch(e){
-    const [s,r]=await Promise.all([getJSON(cfg.staticCache),getJSON(cfg.realtimeCache)]);
-    return{s,r,mode:'Action 快取',directError:e.message};
-  }
+async function directPair(cfg){
+  const [s,r]=cfg.paged?await Promise.all([getPagedJSON(cfg.static),getPagedJSON(cfg.realtime)]):await Promise.all([getJSON(cfg.static),getJSON(cfg.realtime)]);
+  return{s,r,mode:'官方 API 直連'};
 }
 async function loadTaipei(){
-  const cfg=API.taipei,res=await directOrCachePair(cfg),stat=extractArray(res.s),live=extractArray(res.r);
+  const cfg=API.taipei,res=await directPair(cfg),stat=extractArray(res.s),live=extractArray(res.r);
   const lm=new Map(live.map(x=>[idOf(x),x]).filter(x=>x[0]));
   const rows=[];
   for(const p of stat){
@@ -170,10 +176,10 @@ async function loadTaipei(){
     const av=availableNumber(first(rt,['availablecar','availableCar','AvailableCar','AVAILABLECAR','available','Available']));
     rows.push({id:'tp-'+idOf(p),name:first(p,['name','Name','NAME'])||'未命名停車場',area:first(p,['area','Area','AREA'])||'',address:first(p,['address','Address','ADDRESS'])||'',lat:c[0],lng:c[1],total:n(first(p,['totalcar','totalCar','TotalCar','TOTALCAR'])),avail:av,fee:first(p,['payex','PayEx','PAYEX','fee','Fee'])||'',source:'臺北市政府',sourceMode:res.mode,hasRealtime:av!==null,updated:sourceTime(rt),official:cfg.official});
   }
-  return{key:'taipei',rows,mode:res.mode,error:res.directError};
+  return{key:'taipei',rows,mode:res.mode};
 }
 async function loadNtpc(){
-  const cfg=API.ntpc,res=await directOrCachePair(cfg),stat=extractArray(res.s),live=extractArray(res.r);
+  const cfg=API.ntpc,res=await directPair(cfg),stat=extractArray(res.s),live=extractArray(res.r);
   const lm=new Map(live.map(x=>[idOf(x),x]).filter(x=>x[0]));
   const rows=[];
   for(const p of stat){
@@ -181,17 +187,16 @@ async function loadNtpc(){
     const av=availableNumber(first(rt,['AVAILABLECAR','AvailableCar','availableCar','availablecar','AVAILABLE','available','surplusSpace']));
     rows.push({id:'ntpc-'+idOf(p),name:first(p,['NAME','Name','name','parkName','PARKINGNAME'])||'未命名停車場',area:first(p,['AREA','Area','area','areaName'])||'',address:first(p,['ADDRESS','Address','address'])||'',lat:c[0],lng:c[1],total:n(first(p,['TOTALCAR','TotalCar','totalCar','totalSpace','TOTALSPACE'])),avail:av,fee:first(p,['PAYEX','PayEx','payex','payGuide','FEE','fee'])||'',source:'新北市政府',sourceMode:res.mode,hasRealtime:av!==null,updated:sourceTime(rt),official:cfg.official});
   }
-  return{key:'ntpc',rows,mode:res.mode,error:res.directError};
+  return{key:'ntpc',rows,mode:res.mode};
 }
 async function loadTaoyuan(){
-  const cfg=API.taoyuan;let raw,mode='官方 API 直連',directError='';
-  try{raw=await getJSON(cfg.data)}catch(e){directError=e.message;mode='Action 快取';raw=await getJSON(cfg.cache)}
+  const cfg=API.taoyuan,raw=await getJSON(cfg.data),mode='官方 API 直連';
   const rows=extractArray(raw).map(p=>{
     const c=coordFromRow(p),av=availableNumber(first(p,['surplusSpace','AVAILABLECAR','availableCar','available']));
     if(!c)return null;
     return{id:'ty-'+idOf(p),name:first(p,['parkName','name','NAME'])||'未命名停車場',area:first(p,['areaName','area','AREA'])||'',address:first(p,['address','ADDRESS'])||'',lat:c[0],lng:c[1],total:n(first(p,['totalSpace','TOTALSPACE','totalCar'])),avail:av,fee:first(p,['payGuide','PAYGUIDE','fee','payex'])||'',source:'桃園市政府',sourceMode:mode,hasRealtime:av!==null,updated:sourceTime(p),official:cfg.official};
   }).filter(Boolean);
-  return{key:'taoyuan',rows,mode,error:directError};
+  return{key:'taoyuan',rows,mode};
 }
 
 function candidateSources(pos,radiusM){
@@ -212,7 +217,6 @@ async function refreshNearby(){
   document.getElementById('status').innerHTML='正在向附近政府即時 API 取得最新車位…';
   document.getElementById('list').innerHTML='<div class="loading">載入中…</div>';
   try{
-    await loadMeta();
     const radius=Number(document.getElementById('radius').value);
     const keys=candidateSources(userPos,radius);
     if(!keys.length){
@@ -222,14 +226,14 @@ async function refreshNearby(){
     }
     const settled=await Promise.allSettled(keys.map(loadSource));
     const ok=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);
-    const bad=settled.filter(x=>x.status==='rejected');
+    const bad=settled.map((x,i)=>({result:x,key:keys[i]})).filter(x=>x.result.status==='rejected');
     lastSources=ok;
     allData=ok.flatMap(x=>x.rows).map(x=>({...x,dist:hav(userPos[0],userPos[1],x.lat,x.lng)})).filter(x=>x.dist<=radius).sort((a,b)=>a.dist-b.dist);
     render();
-    const parts=ok.map(x=>API[x.key].label+'：'+x.mode+(x.error?'（直連失敗→快取）':''));
-    const cacheTime=meta?.fetched_at?new Date(meta.fetched_at).toLocaleString('zh-TW',{hour12:false}):'';
+    const parts=ok.map(x=>API[x.key].label+'：'+x.mode);
+    const failed=bad.map(x=>API[x.key].label+'：連續 3 次失敗').join('；');
     document.getElementById('status').className=bad.length?'status error':'status';
-    document.getElementById('status').innerHTML='<strong>已查 '+ok.length+' 個政府來源</strong><br>'+esc(parts.join('；'))+(cacheTime?'<br><span class="source-note">Action 快取最後抓取：'+esc(cacheTime)+'</span>':'')+(bad.length?'<br>另有 '+bad.length+' 個來源載入失敗。':'');
+    document.getElementById('status').innerHTML='<strong>已即時查詢 '+ok.length+' 個政府來源</strong><br>'+esc(parts.join('；'))+(failed?'<br>'+esc(failed):'');
   }catch(e){
     allData=[];render();
     document.getElementById('status').className='status error';
