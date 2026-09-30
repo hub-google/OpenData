@@ -1,6 +1,6 @@
 # 全台 22 縣市免費停車資料 API／Open Data 實測盤點
 
-> 產生時間：2026-09-30T02:01:43+00:00  
+> 產生時間：2026-09-30T02:20:08+00:00  
 > 原則：完全排除 TDX；只評估免費官方地方政府 API、官方 Open Data 下載端點與 data.gov.tw 轉載的地方政府資料。  
 > 本報告只盤點與實測資料源，沒有修改現有停車網站。  
 > 價格欄位採 raw passthrough，不把自然語言費率硬解析成每小時價格；沒有 numeric 剩餘格就不推算。  
@@ -30,25 +30,25 @@
 
 ### 0-2. TDX 動態資料交叉驗證（已把「待逐縣 query」改成實際結果）
 
-TDX 官方停車資訊 v1 本來就提供指定縣市的路外 ParkingAvailability API：
+TDX 官方停車資訊 v1 提供指定縣市的路外 ParkingAvailability API：
 https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/{City}?%24format=JSON
 
-本輪另外用「明確標示資料來自 TDX」的公開查詢頁交叉驗證 numeric 剩餘格，避免只看 API 文件就猜有沒有資料。
+本輪另外用明確標示資料來自 TDX 的公開查詢頁交叉驗證 numeric 剩餘格。
 
 | 縣市 | TDX 動態剩餘格 | 實際驗證結果 | 驗證頁 |
 |---|---|---|---|
-| **高雄市** | ✅ 有 | 可看到高雄車站南側地下法定停車場、Times高雄車站前、高雄棧貳庫等 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/Kaohsiung |
-| **基隆市** | ✅ 有 | 力揚基隆信二、正濱國小、東岸等皆有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/Keelung |
-| **雲林縣** | ✅ 有 | 雲林溪美食廣場停車場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/YunlinCounty |
-| **屏東縣** | ✅ 有 | 多座路外停車場有 numeric 剩餘/總格；另有路邊即時剩餘格頁 | https://www.opendata.vip/tdx/parking/PingtungCounty |
-| **花蓮縣** | ✅ 有 | 多座路外停車場有 numeric 剩餘/總格；另有路邊即時剩餘格頁 | https://www.opendata.vip/tdx/parking/HualienCounty |
-| **金門縣** | ✅ 有 | 金門航三、金門高中、山外車站、北堤等有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/KinmenCounty |
-| 彰化縣 | ⚠️ 有 TDX 消費端支援，但本輪頁面沒有 numeric rows | 頁面存在但目前表格空白，先不算可用 | https://www.opendata.vip/tdx/parking/ChanghuaCounty |
-| 嘉義市 | ⚠️ 有其他聚合服務 numeric 動態資料，但本輪尚未用 TDX 專頁證實 | 不把「有動態」直接等同「TDX有」 | — |
-| 南投縣 | ❌ 尚未證實 usable numeric availability | 第三方頁面曾顯示「以現場為準」/異常總格，不算可用 | — |
-| 新竹縣、苗栗縣、嘉義縣、臺東縣、澎湖縣、連江縣 | ⚪ 尚未證實 | 目前沒有拿到可核對的 TDX numeric 動態頁面 | — |
+| 高雄市 | ✅ 有 | 多座高雄停車場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/Kaohsiung |
+| 基隆市 | ✅ 有 | 多座基隆停車場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/Keelung |
+| 雲林縣 | ✅ 有 | 雲林溪美食廣場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/YunlinCounty |
+| 屏東縣 | ✅ 有 | 多座路外與路邊停車有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/PingtungCounty |
+| 花蓮縣 | ✅ 有 | 多座路外與路邊停車有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/HualienCounty |
+| 金門縣 | ✅ 有 | 金門航三、金門高中、山外車站、北堤等有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/KinmenCounty |
+| 彰化縣 | ⚠️ 有 TDX 消費端支援，但本輪頁面無 numeric rows | 先不算產品可用 | https://www.opendata.vip/tdx/parking/ChanghuaCounty |
+| 嘉義市 | ⚠️ 有其他聚合服務 numeric 動態資料，但本輪未用 TDX 專頁證實 | 不把有動態直接等同 TDX 有 | — |
+| 南投縣 | ❌ 尚未證實 usable numeric availability | 第三方曾回以現場為準/異常總格 | — |
+| 新竹縣、苗栗縣、嘉義縣、臺東縣、澎湖縣、連江縣 | ⚪ 尚未證實 | 尚未取得可核對的 TDX numeric 動態頁面 | — |
 
-**因此高雄的正確結論不是「沒有 API」。高雄已確認有 TDX 官方 API 可取動態剩餘格。現在真正還沒找到的是「高雄市政府自己另外公開的免費原始 availability endpoint」。**
+高雄的正確結論：已確認 TDX 有官方動態 API 可取剩餘格；目前未找到的是高雄市政府自己另行公開的免費原始 availability endpoint。
 
 ### 0-3. spotping.autoit.studio
 
@@ -59,6 +59,48 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 - 高雄、基隆、嘉義市：不再標成「沒有動態資料」，改為 🟡「動態上游已證實，地方免費 endpoint 待反查」。
 - 南投：第三方也沒有 numeric 剩餘格證據，暫維持 ❌。
 - 其他縣市：改成 ⚪ 未證實，而不是直接宣告沒有；TDX 需要 API Key 逐縣 query 後才能下定論。
+
+## 0-4. TDX 原始 ParkingAvailability 本次實打結果
+
+> 這不是搜尋結果，也不是第三方旁證；是 GitHub Actions 用 headless Chrome 直接開 TDX 訪客模式的指定縣市路外 ParkingAvailability endpoint。每個端點最多重試 3 次。
+
+| 縣市 | TDX code | top=5 回傳筆數 | numeric availability | 更新時間樣本 | 狀態 | 完整 URL |
+|---|---|---:|---|---|---|---|
+| 高雄市 | Kaohsiung | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/Kaohsiung?%24top=5&%24format=JSON |
+| 基隆市 | Keelung | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/Keelung?%24top=5&%24format=JSON |
+| 嘉義市 | Chiayi | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/Chiayi?%24top=5&%24format=JSON |
+| 新竹縣 | HsinchuCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/HsinchuCounty?%24top=5&%24format=JSON |
+| 苗栗縣 | MiaoliCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/MiaoliCounty?%24top=5&%24format=JSON |
+| 彰化縣 | ChanghuaCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/ChanghuaCounty?%24top=5&%24format=JSON |
+| 南投縣 | NantouCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/NantouCounty?%24top=5&%24format=JSON |
+| 雲林縣 | YunlinCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/YunlinCounty?%24top=5&%24format=JSON |
+| 嘉義縣 | ChiayiCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/ChiayiCounty?%24top=5&%24format=JSON |
+| 屏東縣 | PingtungCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/PingtungCounty?%24top=5&%24format=JSON |
+| 花蓮縣 | HualienCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/HualienCounty?%24top=5&%24format=JSON |
+| 臺東縣 | TaitungCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/TaitungCounty?%24top=5&%24format=JSON |
+| 澎湖縣 | PenghuCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/PenghuCounty?%24top=5&%24format=JSON |
+| 金門縣 | KinmenCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/KinmenCounty?%24top=5&%24format=JSON |
+| 連江縣 | LienchiangCounty | 0 | ❌ | — | AUTH_OR_BLOCKED | https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/LienchiangCounty?%24top=5&%24format=JSON |
+
+<details><summary>TDX 實打原始嘗試摘要</summary>
+
+- 高雄市：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 基隆市：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 嘉義市：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 新竹縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 苗栗縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 彰化縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 南投縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 雲林縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 嘉義縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 屏東縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 花蓮縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 臺東縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 澎湖縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 金門縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+- 連江縣：1:rc=0,json=False,count=0；2:rc=0,json=False,count=0；3:rc=0,json=False,count=0；body=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd"> <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, us
+
+</details>
 
 ## 1. 統一格式
 
@@ -96,7 +138,7 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 
 | 縣市 | 等級 | 規劃來源 | 本次抓到 | numeric 即時格 | 結論 |
 |---|---:|---|---:|---:|---|
-| 臺北市 | A | 官方 API 直連 + ID 精確 join | 1774 | 1114 | 費率 payex 原文直出；座標優先 EntranceCoord 既有座標，缺值才做 TWD97→WGS84 固定數學轉換。 |
+| 臺北市 | A | 官方 API 直連 + ID 精確 join | 1775 | 1115 | 費率 payex 原文直出；座標優先 EntranceCoord 既有座標，缺值才做 TWD97→WGS84 固定數學轉換。 |
 | 新北市 | A* | 官方 API 直連 + ID 精確 join（端點穩定性待修） | 0 | 0 | AVAILABLECAR < 0 視為未知。座標若只有 TW97，只做固定數學轉換。 |
 | 桃園市 | A | 單一官方 JSON API | 246 | 196 | 欄位幾乎 1:1 對應，不解析 payGuide。 |
 | 臺中市 | B | 官方 JSON API（沒有確切剩餘格） | 1414 | 0 | 路外 API 只有 AvailableCarRGB 狀態/燈號，沒有 numeric available_car；收費資料是另一份且沒有可靠共同 ID，不做名稱模糊 join。 |
@@ -130,7 +172,7 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
   - https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json
   - https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json
 - 判斷：費率 payex 原文直出；座標優先 EntranceCoord 既有座標，缺值才做 TWD97→WGS84 固定數學轉換。
-- 本次解析筆數：1774
+- 本次解析筆數：1775
 - 本次實際看到的來源欄位：id、area、name、type、type2、ptype、summary、address、tel、payex、serviceTime、tw97x、tw97y、totalcar、totalmotor、totalbike、totalbus、Pregnancy_First、Handicap_First、totallargemotor、ChargingStation、Taxi_OneHR_Free、AED_Equipment、CellSignal_Enhancement、Accessibility_Elevator、Phone_Charge、Child_Pickup_Area、Handicap_Discount、FareInfo、EntranceCoord、[live] id、[live] availablecar、[live] availablemotor、[live] availablebus、[live] availablehandicap、[live] availablepregnancy、[live] availableheavymotor、[live] ChargeStation
 
 ### 欄位 → 統一格式
@@ -163,25 +205,25 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 
 | # | 名稱 | 行政區 | 地址 | 總汽車格 | 剩餘汽車格 | 費率原文 | 平日費率 | 假日費率 | 月租 | lat | lng | 更新時間 |
 |---:|---|---|---|---:|---:|---|---|---|---|---:|---:|---|
-| 1 | 樟新水岸社會住宅地下停車場 | 文山區 | 樟新街65號（地下1-3層） | 154 | 46 | 小型車(含大型重型機車)：計時 20元/時，停車全程以半小時計；月租 全日4,200元。機車：10元/時，當日單次停車最高收費上限20元/次，隔日另計；月租300元/月。 | — | — | — | 24.977582 | 121.55646 | — |
+| 1 | 樟新水岸社會住宅地下停車場 | 文山區 | 樟新街65號（地下1-3層） | 154 | 47 | 小型車(含大型重型機車)：計時 20元/時，停車全程以半小時計；月租 全日4,200元。機車：10元/時，當日單次停車最高收費上限20元/次，隔日另計；月租300元/月。 | — | — | — | 24.977582 | 121.55646 | — |
 | 2 | 歐特儀股份有限公司小觀音停車場 | 北投區 | 竹子湖路座標25.179915,121.546050 | 16 | 16 | 小型車：計時 30元/時，停車全程以半小時計。機車：免費停車。 | — | — | — | 25.1799 | 121.5461 | — |
-| 3 | 康樂合署大樓地下停車場 | 內湖區 | 康樂街150號地下（地下共3層） | 53 | 11 | 計時：小型車30元/時，機車10元/時，當日單次停車最高收費上限20元/次（隔日另計），停車全程以半小時計。月租：小型車全日4,000元/月，機車全日300元/月。 | — | — | — | 25.0724 | 121.619 | — |
+| 3 | 康樂合署大樓地下停車場 | 內湖區 | 康樂街150號地下（地下共3層） | 53 | 10 | 計時：小型車30元/時，機車10元/時，當日單次停車最高收費上限20元/次（隔日另計），停車全程以半小時計。月租：小型車全日4,000元/月，機車全日300元/月。 | — | — | — | 25.0724 | 121.619 | — |
 | 4 | 延平北路5段1巷平面停車場 | 士林區 | 延平北路5段1巷內 | 155 | — | 小型車：計時 週一至週六20元/時(09-17)，停車全程以半小時計。機車：免費停車。 | — | — | — | 25.0788 | 121.5098 | — |
 | 5 | 明德平面停車場 | 北投區 | 明德路315號對面 | 30 | — | 小型車：計時 30元/時，停車全程以半小時計；月租 全日7,200元。 | — | — | — | 24.9839 | 121.4662 | — |
 | 6 | 臺北藝術大學停車場 | 北投區 | 學園路1號 | 47 | 47 | 計時：小型車週一至週五30元/時，週六至週日及政府行政機關放假之紀念日、民俗節日50元/時，停車未滿1小時以1小時計，逾1小時以上，未滿半小時以半小時計。計次：機車10元/次。月租：小型車全日5,000元/月，機車全日500元/月。 | — | — | — | 25.1318 | 121.4684 | — |
-| 7 | 臺北大巨蛋園區停車場 | 信義區 | 忠孝東路4段515號地下1、3至5層 | 1902 | 1051 | 計時：小型車150元/時，機車20元/時，大客車150元/時，停車全程以半小時計。月租：小型車全日9,600元/月，機車全日600元/月。 | — | — | — | 25.0413 | 121.5617 | — |
-| 8 | 古亭國中地下停車場 | 萬華區 | 中華路2段606巷1號地下 | 260 | 54 | 小型車(含大型重型機車)：計時 30元/時，停車全程以半小時計；月租 全日5,250元，夜間2,800元(18時~08時)。 | — | — | — | 25.0239 | 121.5099 | — |
+| 7 | 臺北大巨蛋園區停車場 | 信義區 | 忠孝東路4段515號地下1、3至5層 | 1902 | 1044 | 計時：小型車150元/時，機車20元/時，大客車150元/時，停車全程以半小時計。月租：小型車全日9,600元/月，機車全日600元/月。 | — | — | — | 25.0413 | 121.5617 | — |
+| 8 | 古亭國中地下停車場 | 萬華區 | 中華路2段606巷1號地下 | 260 | 56 | 小型車(含大型重型機車)：計時 30元/時，停車全程以半小時計；月租 全日5,250元，夜間2,800元(18時~08時)。 | — | — | — | 25.0239 | 121.5099 | — |
 | 9 | 天母公園平面停車場 | 士林區 | 中山北路7段191巷21號對面 | 14 | 9 | 小型車：計時 30元/時，停車全程以半小時計；月租 全日7,200元。 | — | — | — | 25.1252 | 121.5308 | — |
 | 10 | 西湖停車場 | 內湖區 | 文湖街21巷68弄17號旁空地 | 45 | — | 小型車：計時 50元/時，停車全程以半小時計；月租 全日4,000元。 | — | — | — | 25.087878 | 121.560922 | — |
 | 11 | 嘟嘟房捷運木柵機廠站停車場 | 文山區 | 新光路2段19號地上2至4層 | 678 | 0 | 計次：小型車120元/次(08-16)。 | — | — | — | 25.0016 | 121.5858 | — |
-| 12 | 國立臺灣大學芳蘭第一平面停車場 | 大安區 | 芳蘭路71號(環境研究大樓) | 36 | 0 | 計時：小型車40元/時，停車全程以半小時計。月租：小型車全日7,000元/月，日間(07-18)5,500元/月，夜間(18-08)3,000元/月。 | — | — | — | 25.0119 | 121.5443 | — |
+| 12 | 國立臺灣大學芳蘭第一平面停車場 | 大安區 | 芳蘭路71號(環境研究大樓) | 36 | 1 | 計時：小型車40元/時，停車全程以半小時計。月租：小型車全日7,000元/月，日間(07-18)5,500元/月，夜間(18-08)3,000元/月。 | — | — | — | 25.0119 | 121.5443 | — |
 | 13 | 秀山國小臨時平面停車場 | 北投區 | 中和街錫安巷 | 19 | 2 | 小型車： 計次 30元/次，隔日另計，以0時為基準。 | — | — | — | 25.1462 | 121.4988 | — |
 | 14 | 及拓行善停車場 | 內湖區 | 行善路383巷37號旁空地 | 49 | 25 | 小型車：計時 150元/時，停車全程以半小時計；月租 全日15,000元。 | — | — | — | 25.0637 | 121.5867 | — |
 | 15 | 洲美運動公園地下停車場 | 北投區 | 洲美街271號地下1層 | 88 | 30 | 小型車：計時 20元/時，停車全程以半小時計，未滿30分鐘免費；月租 全日1,500元。 | — | — | — | 25.1103 | 121.499 | — |
 | 16 | Times 美侖商旅 | 中山區 | 吉林路49號 | 43 | 20 | 計時:200元/時，全程以半小時計。月租:全日10,000元/月。 | — | — | — | 25.0529 | 121.5305 | — |
 | 17 | 北台國際開發股份有限公司舊莊停車場 | 南港區 | 舊莊街1段91巷11號地下1-2層 | 23 | 29 | 小型車：計時 30元/時，停車全程以半小時計；月租 全日7,200元。機車：20元/次，隔日另計。 | — | — | — | 25.0414 | 121.6197 | — |
-| 18 | 歐特儀股份有限公司擎天崗停車場 | 士林區 | 菁山路101巷246號 | 81 | 53 | 小型車：計時 30元/時，大客車60元/時，停車全程以半小時計。機車：20元/次，隔日另計。 | — | — | — | 25.1669 | 121.5736 | — |
-| 19 | 福林路平面停車場 | 士林區 | 福林路與中正路交叉口南側空地 | 88 | 56 | 計時：小型車(含大型重型機車)20元/時，週六至週日及政府行政機關放假之紀念日、民俗節日40元/時，停車全程以半小時計。月租：小型車全日3,500元/月。免費停車：機車。 | — | — | — | 25.0964 | 121.5332 | — |
+| 18 | 歐特儀股份有限公司擎天崗停車場 | 士林區 | 菁山路101巷246號 | 81 | 46 | 小型車：計時 30元/時，大客車60元/時，停車全程以半小時計。機車：20元/次，隔日另計。 | — | — | — | 25.1669 | 121.5736 | — |
+| 19 | 福林路平面停車場 | 士林區 | 福林路與中正路交叉口南側空地 | 88 | 55 | 計時：小型車(含大型重型機車)20元/時，週六至週日及政府行政機關放假之紀念日、民俗節日40元/時，停車全程以半小時計。月租：小型車全日3,500元/月。免費停車：機車。 | — | — | — | 25.0964 | 121.5332 | — |
 | 20 | 陽明山立體停車場 | 北投區 | 湖山路(陽明山公園大門口旁) | 209 | — | 計時：週一至週五小型車20元/時，週六至週日、政府行政機關放假之紀念日及民俗節日小型車30元/時，全程以半小時計費。計次：機車20元/次。每日19時至翌日7時開放免費停車。 | — | — | — | 25.1545 | 121.5391 | — |
 
 <details><summary>本次 HTTP 實測</summary>
@@ -409,26 +451,26 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 
 | # | 名稱 | 行政區 | 地址 | 總汽車格 | 剩餘汽車格 | 費率原文 | 平日費率 | 假日費率 | 月租 | lat | lng | 更新時間 |
 |---:|---|---|---|---:|---:|---|---|---|---|---:|---:|---|
-| 1 | 大臺南會展中心停車場 | 歸仁區 | 歸仁十二路3號 | 456 | 450 | — | — | — | — | 22.920306 | 120.285439 | 2026-09-30 09:51:31 |
-| 2 | 民治市政中心第三區停車場 | 新營區 | 民治市政中心南瀛大樓後方、行政大樓東側 | 4 | 4 | 每小時 20 元 | — | — | — | 23.312701 | 120.314531 | 2026-09-30 09:56:52 |
-| 3 | 目加溜灣橋下停車場 | 善化區 | 台南市善化區目加溜灣大道與善新西路交叉路口 | 67 | 34 | — | — | — | — | 23.119193 | 120.30497 | 2026-09-30 09:54:01 |
-| 4 | 水景停車場 | 安平區 | 安北路水景公園旁 | 137 | 137 | — | — | — | — | 22.999175 | 120.157886 | 2026-09-30 09:51:30 |
+| 1 | 大臺南會展中心停車場 | 歸仁區 | 歸仁十二路3號 | 456 | 450 | — | — | — | — | 22.920306 | 120.285439 | 2026-09-30 10:07:31 |
+| 2 | 民治市政中心第三區停車場 | 新營區 | 民治市政中心南瀛大樓後方、行政大樓東側 | 4 | 4 | 每小時 20 元 | — | — | — | 23.312701 | 120.314531 | 2026-09-30 10:09:08 |
+| 3 | 目加溜灣橋下停車場 | 善化區 | 台南市善化區目加溜灣大道與善新西路交叉路口 | 67 | 34 | — | — | — | — | 23.119193 | 120.30497 | 2026-09-30 10:12:02 |
+| 4 | 水景停車場 | 安平區 | 安北路水景公園旁 | 137 | 137 | — | — | — | — | 22.999175 | 120.157886 | 2026-09-30 10:07:30 |
 | 5 | 和館停車場 | 安南區 | 臺南市安南區環館路與環館五路交叉口(和館段27-1地號) | 297 | 133 | — | — | — | — | 23.063163 | 120.229902 | 2026-05-29 14:00:03 |
-| 6 | 新化大目降文化園區 | 新化區 | 大目降園區周邊 | 41 | 20 | 每小時 20 元 | — | — | — | 23.034905 | 120.308183 | 2026-09-30 09:52:54 |
-| 7 | 關聖里停車場 | 東區 | 台南市東區裕平路39號旁 | 59 | 6 | 每小時20元,當日最高120元 | — | — | — | 22.985058 | 120.240714 | 2026-09-30 09:53:59 |
-| 8 | 萬年五街停車場 | 南區 | 台南市南區萬年五街與萬年七街102巷交叉路口 | 145 | 142 | — | — | — | — | 22.930504 | 120.189146 | 2026-09-30 09:55:44 |
+| 6 | 新化大目降文化園區 | 新化區 | 大目降園區周邊 | 41 | 13 | 每小時 20 元 | — | — | — | 23.034905 | 120.308183 | 2026-09-30 10:09:00 |
+| 7 | 關聖里停車場 | 東區 | 台南市東區裕平路39號旁 | 59 | 7 | 每小時20元,當日最高120元 | — | — | — | 22.985058 | 120.240714 | 2026-09-30 10:12:02 |
+| 8 | 萬年五街停車場 | 南區 | 台南市南區萬年五街與萬年七街102巷交叉路口 | 145 | 142 | — | — | — | — | 22.930504 | 120.189146 | 2026-09-30 10:10:44 |
 | 9 | 成德里立體停車場 | 北區 | 臺南市北區海安路三段338巷與育德二路55巷口(原成德停4停車場) | 176 | 82 | 小型車：每小時 元,平日入場24小時內最高上限 元,假日入場24小時內最高上限 元。機車：每次 元，隔日、離場另計。月繳：小型車 元/月、機車 元/月。 | — | — | — | 23.00877 | 120.202556 | 2026-09-30 05:22:25 |
 | 10 | 富中街停車場 | 新市區 | 富中街與民生路交叉路口 | 122 | 36 | 每半小時10元當日最高上限100元 | — | — | — | 23.079851 | 120.288075 | 2025-11-26 14:01:18 |
-| 11 | 鹽埕路停車場 | 南區 | 台南市南區鹽埕路291巷及鹽埕路口 | 48 | 19 | 每半小時10元當日最高上限120元 | — | — | — | 22.971243 | 120.190218 | 2026-09-30 09:56:50 |
+| 11 | 鹽埕路停車場 | 南區 | 台南市南區鹽埕路291巷及鹽埕路口 | 48 | 21 | 每半小時10元當日最高上限120元 | — | — | — | 22.971243 | 120.190218 | 2026-09-30 10:08:52 |
 | 12 | 東橋十一路停車場 | 永康區 | 台南市永康區東橋十一路與東橋十街口(市圖旁)停車場 | 78 | 57 | — | — | — | — | 23.024742 | 120.237669 | 2024-09-18 15:44:25 |
-| 13 | 城市車旅家樂福新仁店停車場 | 仁德區 | 台南市仁德區大同路三段755號 | 725 | 643 | — | — | — | — | 22.946223 | 120.220602 | 2026-09-30 09:54:01 |
-| 14 | 立德臨時停車場-B區 | 東區 | 臺南市東區立德一路至立德路交叉入口(立德一路東側) | 25 | 22 | 1小時20元 | — | — | — | 22.976603 | 120.214869 | 2026-09-30 09:57:47 |
-| 15 | 建平十一街-2 | 安平區 | 建平路至文平路(怡平路140巷) | 33 | 17 | 每小時 20 元 | — | — | — | 22.994538 | 120.18252 | 2026-09-30 09:52:47 |
-| 16 | 東豐路-4(路邊停車格) | 東區 | 林森路口-桌球館南側 | 29 | 28 | 每小時 20 元 | — | — | — | 23.002441 | 120.226031 | 2026-09-30 09:56:21 |
-| 17 | 復華一街停車場 | 永康區 | 復華一街與復華一街19巷路口處 | 55 | 32 | — | — | — | — | 23.005201 | 120.245162 | 2026-09-30 09:54:01 |
-| 18 | 永福路停車場 | 中西區 | 台南市中西區永福路一段與永福路一段359巷交叉口 | 27 | 9 | $20/H，當日當次最高上限$380 | — | — | — | 22.989641 | 120.200203 | 2026-09-30 09:56:47 |
+| 13 | 城市車旅家樂福新仁店停車場 | 仁德區 | 台南市仁德區大同路三段755號 | 725 | 641 | — | — | — | — | 22.946223 | 120.220602 | 2026-09-30 10:12:01 |
+| 14 | 立德臨時停車場-B區 | 東區 | 臺南市東區立德一路至立德路交叉入口(立德一路東側) | 25 | 23 | 1小時20元 | — | — | — | 22.976603 | 120.214869 | 2026-09-30 10:12:48 |
+| 15 | 建平十一街-2 | 安平區 | 建平路至文平路(怡平路140巷) | 33 | 19 | 每小時 20 元 | — | — | — | 22.994538 | 120.18252 | 2026-09-30 10:08:56 |
+| 16 | 東豐路-4(路邊停車格) | 東區 | 林森路口-桌球館南側 | 29 | 23 | 每小時 20 元 | — | — | — | 23.002441 | 120.226031 | 2026-09-30 10:12:15 |
+| 17 | 復華一街停車場 | 永康區 | 復華一街與復華一街19巷路口處 | 55 | 31 | — | — | — | — | 23.005201 | 120.245162 | 2026-09-30 10:12:01 |
+| 18 | 永福路停車場 | 中西區 | 台南市中西區永福路一段與永福路一段359巷交叉口 | 27 | 3 | $20/H，當日當次最高上限$380 | — | — | — | 22.989641 | 120.200203 | 2026-09-30 10:11:47 |
 | 19 | 德祥街停車場 | 東區 | 德祥街與德昌二街交叉口 | 76 | 43 | 每小時20元，平日入場24小時內最高上限240元，假日入場24小時內最高上限360元。停車時數未滿1小時者，以1小時計算收費。停車時數逾1小時以上，如不逾30分鐘者，以半小時計算；如逾30分鐘者，仍以1小時計算收費。月繳2200元/月 | — | — | — | 22.967332 | 120.237104 | 2026-09-30 05:22:24 |
-| 20 | 竑穗善化中正停車場 | 善化區 | 台南市善化區光明路70號旁 | 15 | 7 | — | — | — | — | 23.130541 | 120.291666 | 2026-09-30 09:54:01 |
+| 20 | 竑穗善化中正停車場 | 善化區 | 台南市善化區光明路70號旁 | 15 | 7 | — | — | — | — | 23.130541 | 120.291666 | 2026-09-30 10:12:01 |
 
 <details><summary>本次 HTTP 實測</summary>
 
@@ -590,26 +632,26 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 
 | # | 名稱 | 行政區 | 地址 | 總汽車格 | 剩餘汽車格 | 費率原文 | 平日費率 | 假日費率 | 月租 | lat | lng | 更新時間 |
 |---:|---|---|---|---:|---:|---|---|---|---|---:|---:|---|
-| 1 | 青草湖停車場 | — | 新竹市東區明湖路1075巷82號 | 66 | 28 | — | 汽車：30元/H | 汽車：30元/H<br>  充電設備資訊：<br>  AC交流慢充(Type1(J1772)) | — | 24.77355 | 120.97048 | 2026-09-30T09:57:01.823 |
-| 2 | 新竹漁港第一 | — | 新竹市北區新港三路3號對面 | 229 | 229 | — | 汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天 | 汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天 | — | 24.84903 | 120.92706 | 2026-09-30T09:57:01.63 |
-| 3 | 新科國中 | — | 新竹市東區光復路一段89巷108號 | 466 | 100 | — | 汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天 | 汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天<br>  充電設備資訊：<br>  慢充：7kw:<br>日間(7時至20時)8元/度夜間(20時至隔日7時)6元/度<br>快充：30kw 12元/度<br>120/180kw:14元/度 | — | 24.7793569 | 121.024708 | 2026-09-30T09:57:01.607 |
-| 4 | 武陵路73巷停車場 | — | 新竹市北區武陵路73巷及武陵西二路交叉口 | 63 | 18 | — | 汽車：20元/H | 汽車：20元/H汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天<br>  充電設備資訊：<br>  慢充：7kw:<br>日間(7時至20時)8元/度夜間(20時至隔日7時)6元/度<br>快充：30kw 12元/度<br>120/180kw:14元/度 | — | 24.81935 | 120.96481 | 2026-09-30T09:58:39.66 |
-| 5 | 赤土崎地下停車場 | — | 新竹市東區建中路2號 | 592 | 94 | — | 汽車：20元/H，機車：20元/次 | 汽車：20元/H，機車：20元/次<br>  充電設備資訊：<br>  AC交流慢充(Type1(J1772))<br>  DC直流電快充(CCS1)充電設備資訊:慢充:7KW 7元/度 快充:30KW 9元/度 | — | 24.799174 | 120.993878 | 2026-09-30T09:57:01.803 |
-| 6 | 香山區行政大樓地下停車場 | — | 新竹市香山區育德街188號 | 85 | 23 | — | 汽車：20元/H | 汽車：20元/H | — | 24.794092 | 120.942501 | 2026-09-30T09:58:45.32 |
-| 7 | 研發二路立體停車場 | — | 新竹市東區研發二路12-1號停車場 | 429 | 125 | — | 汽車：30元/H | 汽車：30元/H | — | 24.7774165 | 121.001092 | 2026-09-30T09:58:11.78 |
-| 8 | 西大路立體停車場 | — | 新竹市東區西大路41號 | 284 | 211 | — | 汽車：30元/H 限高210cm，機車：20元/天 | 汽車：30元/H 限高210cm，機車：20元/天<br>充電設備資訊：<br>慢充：7kw 8元/度 | — | 24.7953961 | 120.971734 | 2026-09-30T09:58:36.367 |
-| 9 | 好市多-新竹店 | — | 新竹市東區慈雲路188號 | 615 | 222 | — | 汽車：100元/H | 汽車：100元/H | — | 24.79324 | 121.01338 | 2026-09-30T09:58:55.687 |
-| 10 | 延平停車場 | — | 新竹市北區延平路1段131號旁 | 101 | 27 | — | 汽車：20元/H | 汽車：20元/H | — | 24.804128 | 120.957007 | 2026-09-30T09:58:37.407 |
-| 11 | 台大醫院新竹分院停車場 | — | 新竹市東區經國路一段442巷25號 | 585 | 142 | — | 汽車：30元/H，機車：免費 | 汽車：30元/H，機車：免費 | — | 24.815456 | 120.980414 | 2026-09-30T09:57:01.847 |
-| 12 | 府後地下停車場 | — | 新竹市北區府後街42號 | 287 | 10 | — | 汽車：20元/H | 汽車：20元/H<br>  充電設備資訊：<br>  AC交流慢充(Type1(J1772)) | — | 24.80726 | 120.969783 | 2026-09-30T09:58:42.343 |
-| 13 | 興業二路地下停車場 | — | 新竹市東區興業二路1號地下停車場 | 509 | 75 | — | 汽車：30元/H，機車：30元/次 | 汽車：30元/H，機車：30元/次 | — | 24.7782719 | 120.989419 | 2026-09-30T09:58:46.15 |
-| 14 | 東園市場停車場 | — | 新竹市東區忠孝路434巷3號對面 | 32 | 9 | — | 汽車：20元/H | 汽車：20元/H汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天<br>  充電設備資訊：<br>  慢充：7kw:<br>日間(7時至20時)8元/度夜間(20時至隔日7時)6元/度<br>快充：30kw 12元/度<br>120/180kw:14元/度 | — | 24.803051 | 120.983042 | 2026-09-30T09:58:52.957 |
-| 15 | 生命園區停車場 | — | 新竹市北區成德路132號 | 148 | 9 | — | 汽車：20元/H | 汽車：20元/H | — | 24.79388 | 120.95746 | 2026-09-30T09:58:36.993 |
-| 16 | 火車站後站汽車停車場-4 | — | 新竹市東區南大路140巷 | 58 | 0 | — | 汽車：20元/H | 汽車：20元/H | — | 24.802148 | 120.975447 | 2026-09-30T09:58:54.11 |
-| 17 | 矽導竹科研發中心營業所停車場 | — | 新竹市東區力行二路2號停車場 | 887 | 294 | — | 汽車：30元/H | 汽車：30元/H | — | 24.774883 | 121.018687 | 2026-09-30T09:58:21.887 |
-| 18 | 湳雅街停車場 | — | 新竹市北區湳雅街86巷旁 | 63 | 36 | — | 汽車：20元/H | 汽車：20元/H | — | 24.81866 | 120.97177 | 2026-09-30T09:58:59.337 |
-| 19 | 中正市場停車場 | — | 新竹市北區中正路245號 | 262 | 149 | — | 汽車：20元/H，限高210cm | 汽車：20元/H，限高210cm | — | 24.81247 | 120.96393 | 2026-09-30T09:58:58.85 |
-| 20 | 新竹明志書院停車場 | — | 新竹市東區西大路317號1樓~7樓停車場 | 605 | 255 | — | 汽車：30元/H，機車：10元/H(當日上限30元) | 汽車：30元/H，機車：10元/H(當日上限30元)<br>  充電設備資訊：<br>  AC交流慢充(Type1(J1772)) | — | 24.80174 | 120.96567 | 2026-09-30T09:58:35.253 |
+| 1 | 青草湖停車場 | — | 新竹市東區明湖路1075巷82號 | 66 | 28 | — | 汽車：30元/H | 汽車：30元/H<br>  充電設備資訊：<br>  AC交流慢充(Type1(J1772)) | — | 24.77355 | 120.97048 | 2026-09-30T10:12:02.627 |
+| 2 | 新竹漁港第一 | — | 新竹市北區新港三路3號對面 | 229 | 229 | — | 汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天 | 汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天 | — | 24.84903 | 120.92706 | 2026-09-30T10:12:02.263 |
+| 3 | 新科國中 | — | 新竹市東區光復路一段89巷108號 | 466 | 97 | — | 汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天 | 汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天<br>  充電設備資訊：<br>  慢充：7kw:<br>日間(7時至20時)8元/度夜間(20時至隔日7時)6元/度<br>快充：30kw 12元/度<br>120/180kw:14元/度 | — | 24.7793569 | 121.024708 | 2026-09-30T10:12:02.227 |
+| 4 | 武陵路73巷停車場 | — | 新竹市北區武陵路73巷及武陵西二路交叉口 | 63 | 16 | — | 汽車：20元/H | 汽車：20元/H汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天<br>  充電設備資訊：<br>  慢充：7kw:<br>日間(7時至20時)8元/度夜間(20時至隔日7時)6元/度<br>快充：30kw 12元/度<br>120/180kw:14元/度 | — | 24.81935 | 120.96481 | 2026-09-30T10:14:39.967 |
+| 5 | 赤土崎地下停車場 | — | 新竹市東區建中路2號 | 592 | 95 | — | 汽車：20元/H，機車：20元/次 | 汽車：20元/H，機車：20元/次<br>  充電設備資訊：<br>  AC交流慢充(Type1(J1772))<br>  DC直流電快充(CCS1)充電設備資訊:慢充:7KW 7元/度 快充:30KW 9元/度 | — | 24.799174 | 120.993878 | 2026-09-30T10:12:02.597 |
+| 6 | 香山區行政大樓地下停車場 | — | 新竹市香山區育德街188號 | 85 | 16 | — | 汽車：20元/H | 汽車：20元/H | — | 24.794092 | 120.942501 | 2026-09-30T10:14:15.683 |
+| 7 | 研發二路立體停車場 | — | 新竹市東區研發二路12-1號停車場 | 429 | 121 | — | 汽車：30元/H | 汽車：30元/H | — | 24.7774165 | 121.001092 | 2026-09-30T10:13:44.663 |
+| 8 | 西大路立體停車場 | — | 新竹市東區西大路41號 | 284 | 208 | — | 汽車：30元/H 限高210cm，機車：20元/天 | 汽車：30元/H 限高210cm，機車：20元/天<br>充電設備資訊：<br>慢充：7kw 8元/度 | — | 24.7953961 | 120.971734 | 2026-09-30T10:14:36.79 |
+| 9 | 好市多-新竹店 | — | 新竹市東區慈雲路188號 | 615 | 159 | — | 汽車：100元/H | 汽車：100元/H | — | 24.79324 | 121.01338 | 2026-09-30T10:14:39.8 |
+| 10 | 延平停車場 | — | 新竹市北區延平路1段131號旁 | 101 | 27 | — | 汽車：20元/H | 汽車：20元/H | — | 24.804128 | 120.957007 | 2026-09-30T10:14:37.68 |
+| 11 | 台大醫院新竹分院停車場 | — | 新竹市東區經國路一段442巷25號 | 585 | 130 | — | 汽車：30元/H，機車：免費 | 汽車：30元/H，機車：免費 | — | 24.815456 | 120.980414 | 2026-09-30T10:12:02.58 |
+| 12 | 府後地下停車場 | — | 新竹市北區府後街42號 | 287 | 6 | — | 汽車：20元/H | 汽車：20元/H<br>  充電設備資訊：<br>  AC交流慢充(Type1(J1772)) | — | 24.80726 | 120.969783 | 2026-09-30T10:14:31.173 |
+| 13 | 興業二路地下停車場 | — | 新竹市東區興業二路1號地下停車場 | 509 | 55 | — | 汽車：30元/H，機車：30元/次 | 汽車：30元/H，機車：30元/次 | — | 24.7782719 | 120.989419 | 2026-09-30T10:14:40.69 |
+| 14 | 東園市場停車場 | — | 新竹市東區忠孝路434巷3號對面 | 32 | 10 | — | 汽車：20元/H | 汽車：20元/H汽車：20元/H(夜間22-08時止上限60元)，機車：20元/天<br>  充電設備資訊：<br>  慢充：7kw:<br>日間(7時至20時)8元/度夜間(20時至隔日7時)6元/度<br>快充：30kw 12元/度<br>120/180kw:14元/度 | — | 24.803051 | 120.983042 | 2026-09-30T10:14:23.3 |
+| 15 | 生命園區停車場 | — | 新竹市北區成德路132號 | 148 | 30 | — | 汽車：20元/H | 汽車：20元/H | — | 24.79388 | 120.95746 | 2026-09-30T10:14:37.303 |
+| 16 | 火車站後站汽車停車場-4 | — | 新竹市東區南大路140巷 | 58 | 35 | — | 汽車：20元/H | 汽車：20元/H | — | 24.802148 | 120.975447 | 2026-09-30T10:14:35.523 |
+| 17 | 矽導竹科研發中心營業所停車場 | — | 新竹市東區力行二路2號停車場 | 887 | 271 | — | 汽車：30元/H | 汽車：30元/H | — | 24.774883 | 121.018687 | 2026-09-30T10:14:38.593 |
+| 18 | 湳雅街停車場 | — | 新竹市北區湳雅街86巷旁 | 63 | 32 | — | 汽車：20元/H | 汽車：20元/H | — | 24.81866 | 120.97177 | 2026-09-30T10:14:29.607 |
+| 19 | 中正市場停車場 | — | 新竹市北區中正路245號 | 262 | 149 | — | 汽車：20元/H，限高210cm | 汽車：20元/H，限高210cm | — | 24.81247 | 120.96393 | 2026-09-30T10:14:28.89 |
+| 20 | 新竹明志書院停車場 | — | 新竹市東區西大路317號1樓~7樓停車場 | 605 | 248 | — | 汽車：30元/H，機車：10元/H(當日上限30元) | 汽車：30元/H，機車：10元/H(當日上限30元)<br>  充電設備資訊：<br>  AC交流慢充(Type1(J1772)) | — | 24.80174 | 120.96567 | 2026-09-30T10:14:16.223 |
 
 <details><summary>本次 HTTP 實測</summary>
 
@@ -1268,7 +1310,7 @@ https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/
 
 | 縣市 | 解析筆數 | 有座標 | 有費率原文 | 有 numeric 剩餘格 | 剩餘格 > 總格 |
 |---|---:|---:|---:|---:|---:|
-| 臺北市 | 1774 | 1774 | 1774 | 1114 | 27 |
+| 臺北市 | 1775 | 1775 | 1775 | 1115 | 25 |
 | 新北市 | 0 | 0 | 0 | 0 | 0 |
 | 桃園市 | 246 | 246 | 246 | 196 | 0 |
 | 臺中市 | 1414 | 1414 | 0 | 0 | 0 |
