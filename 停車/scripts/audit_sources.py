@@ -36,7 +36,7 @@ UNIFIED_FIELDS = [
     ("realtime","是否有數值型即時剩餘格","只有 available_car 可直接取得才為 true"),
 ]
 
-def req_bytes(url, timeout=50):
+def req_bytes(url, timeout=15):
     req=urllib.request.Request(url,headers={"User-Agent":UA,"Accept":"application/json,text/csv,text/plain,*/*","Origin":"https://hub-google.github.io"})
     with urllib.request.urlopen(req,timeout=timeout) as r:
         return r.read(),{"http_status":getattr(r,"status",None),"content_type":r.headers.get("Content-Type",""),"cors":r.headers.get("Access-Control-Allow-Origin",""),"final_url":r.geturl()}
