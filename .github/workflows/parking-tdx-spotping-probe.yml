@@ -1,0 +1,170 @@
+name: Probe TDX parking and SpotPing
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/parking-tdx-spotping-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: parking-tdx-spotping-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Probe TDX with real browser visitor mode and inspect SpotPing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, re, subprocess, html, time
+          from pathlib import Path
+          from datetime import datetime, timezone
+          from urllib.parse import urljoin
+
+          cities = [
+            ("高雄市","Kaohsiung"),("基隆市","Keelung"),("嘉義市","Chiayi"),
+            ("新竹縣","HsinchuCounty"),("苗栗縣","MiaoliCounty"),("彰化縣","ChanghuaCounty"),
+            ("南投縣","NantouCounty"),("雲林縣","YunlinCounty"),("嘉義縣","ChiayiCounty"),
+            ("屏東縣","PingtungCounty"),("花蓮縣","HualienCounty"),("臺東縣","TaitungCounty"),
+            ("澎湖縣","PenghuCounty"),("金門縣","KinmenCounty"),("連江縣","LienchiangCounty"),
+          ]
+          chrome=None
+          for cmd in ("google-chrome","google-chrome-stable","chromium","chromium-browser"):
+              try:
+                  subprocess.run([cmd,"--version"],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+                  chrome=cmd
+                  break
+              except Exception:
+                  pass
+          if not chrome:
+              raise SystemExit("No Chrome/Chromium found")
+
+          def dump(url,timeout=45):
+              p=subprocess.run([chrome,"--headless=new","--disable-gpu","--no-sandbox","--disable-dev-shm-usage","--dump-dom",url],
+                               stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=timeout)
+              return p.returncode,p.stdout,p.stderr
+
+          def extract_json(dom):
+              m=re.search(r"<pre[^>]*>(.*?)</pre>",dom,re.I|re.S)
+              txt=html.unescape(re.sub(r"<[^>]+>","",m.group(1))) if m else dom.strip()
+              starts=[x for x in (txt.find("["),txt.find("{")) if x>=0]
+              if starts:
+                  txt=txt[min(starts):]
+              try:
+                  return json.loads(txt)
+              except Exception:
+                  return None
+
+          results=[]
+          for zh,code in cities:
+              url=f"https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/{code}?%24top=5&%24format=JSON"
+              attempts=[]; obj=None; dom=""
+              for i in range(1,4):
+                  try:
+                      rc,dom,err=dump(url)
+                      obj=extract_json(dom)
+                      ok=isinstance(obj,(list,dict))
+                      count=len(obj) if isinstance(obj,list) else (1 if isinstance(obj,dict) else 0)
+                      attempts.append({"attempt":i,"rc":rc,"json":ok,"count":count,"stderr":err[-250:]})
+                      if ok:
+                          break
+                  except Exception as e:
+                      attempts.append({"attempt":i,"error":f"{type(e).__name__}: {e}"})
+                  time.sleep(i)
+              count=len(obj) if isinstance(obj,list) else (1 if isinstance(obj,dict) else 0)
+              numeric=False; last_update=""; sample={}
+              rows=obj if isinstance(obj,list) else ([obj] if isinstance(obj,dict) else [])
+              if rows and isinstance(rows[0],dict):
+                  sample=rows[0]
+              for r in rows:
+                  if not isinstance(r,dict):
+                      continue
+                  candidates=[r]
+                  for k in ("ParkingAvailabilities","ParkingAvailability","Availabilities"):
+                      if isinstance(r.get(k),list):
+                          candidates += [x for x in r[k] if isinstance(x,dict)]
+                  for x in candidates:
+                      for k,v in x.items():
+                          lk=k.lower()
+                          if ("available" in lk or "spaces" in lk) and isinstance(v,(int,float)):
+                              numeric=True
+                          if lk in ("updatetime","srcupdatetime","update_time") and v:
+                              last_update=str(v)
+              results.append({"city":zh,"code":code,"url":url,"count":count,"numeric":numeric,
+                              "update":last_update,"sample_keys":list(sample.keys())[:20] if isinstance(sample,dict) else [],
+                              "attempts":attempts,"body_head":re.sub(r"\s+"," ",dom)[:500]})
+
+          spot={"url":"https://spotping.autoit.studio/","home_ok":False,"scripts":[],"api_hints":[]}
+          try:
+              rc,dom,err=dump(spot["url"],60)
+              spot["home_ok"]=bool(dom)
+              srcs=re.findall(r'<script[^>]+src=["\']([^"\']+)["\']',dom,re.I)
+              for src in srcs[:20]:
+                  u=urljoin(spot["url"],src)
+                  try:
+                      _,js,_=dump(u,45)
+                  except Exception:
+                      js=""
+                  spot["scripts"].append(u)
+                  for pat in [r'https?://[^"\'<>\\ ]+',r'/api/[^"\'<>\\ ]+',r'[^"\'<>\\ ]*(?:tdx|transportdata|parking|carpark)[^"\'<>\\ ]*']:
+                      for hit in re.findall(pat,js,re.I):
+                          hit=str(hit)
+                          if hit and hit not in spot["api_hints"]:
+                              spot["api_hints"].append(hit)
+                  if len(spot["api_hints"])>100:
+                      break
+              spot["api_hints"]=spot["api_hints"][:100]
+          except Exception as e:
+              spot["error"]=f"{type(e).__name__}: {e}"
+
+          out=Path("停車/TDX與Spotping實測.md")
+          lines=[
+              "# TDX / SpotPing 停車資料實測","",
+              f"> 執行時間：{datetime.now(timezone.utc).isoformat(timespec='seconds')}  ",
+              "> 方法：GitHub Actions Ubuntu runner，以 headless Chrome 模擬 TDX 訪客瀏覽器模式；每個縣市明確端點最多重試 3 次。  ",
+              "> 本輪只測原本地方公開動態 API 未確認的 15 個縣市。","",
+              "## TDX 路外 ParkingAvailability 實測","",
+              "| 縣市 | TDX code | 回傳筆數(top=5) | 有 numeric availability | 更新時間樣本 | 結論 | 完整 URL |",
+              "|---|---|---:|---|---|---|---|",
+          ]
+          for r in results:
+              verdict="✅ TDX 確認有即時數字" if r["count"]>0 and r["numeric"] else ("⚠️ 有資料，但樣本未確認 numeric availability" if r["count"]>0 else "❌ 本輪沒有拿到資料列")
+              lines.append(f'| {r["city"]} | {r["code"]} | {r["count"]} | {"是" if r["numeric"] else "否"} | {r["update"] or "—"} | {verdict} | {r["url"]} |')
+          lines += ["","### 原始嘗試紀錄",""]
+          for r in results:
+              lines += [f'#### {r["city"]} / {r["code"]}',"","~~~json",
+                        json.dumps({"attempts":r["attempts"],"sample_keys":r["sample_keys"],"body_head":r["body_head"]},ensure_ascii=False,indent=2),
+                        "~~~",""]
+          lines += ["","## SpotPing 前端來源反查","",f'- 首頁：{spot["url"]}',f'- 首頁可讀：{spot.get("home_ok",False)}',"- Script bundles："]
+          for u in spot.get("scripts",[]):
+              lines.append(f"  - {u}")
+          lines.append("- API / endpoint 關鍵字：")
+          for h in spot.get("api_hints",[]):
+              lines.append(f"  - {h}")
+          if spot.get("error"):
+              lines.append(f'- 錯誤：{spot["error"]}')
+          out.write_text("\n".join(lines),encoding="utf-8")
+          print(out.read_text(encoding="utf-8"))
+          PY
+
+      - name: Commit probe result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+users.noreply.github.com"
+          git add "停車/TDX與Spotping實測.md"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Probe TDX parking coverage and SpotPing sources"
+          git pull --rebase origin main
+          git push origin HEAD:main
