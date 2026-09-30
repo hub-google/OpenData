@@ -1,0 +1,84 @@
+name: Build and publish procurement anomaly radar
+
+on:
+  schedule:
+    # 09:10 Asia/Taipei every day
+    - cron: "10 1 * * *"
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "procurement-anomaly-radar-web/**"
+      - ".github/workflows/procurement-anomaly-pages.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "procurement-anomaly-pages"
+  cancel-in-progress: true
+
+jobs:
+  build-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Build official PCC procurement feed
+        run: python3 procurement-anomaly-radar-web/scripts/update_real_procurement.py
+
+      - name: Preserve generated data
+        run: |
+          rm -rf /tmp/procurement-anomaly-data
+          mkdir -p /tmp/procurement-anomaly-data
+          cp -R procurement-anomaly-radar-web/data/. /tmp/procurement-anomaly-data/
+
+      - name: Commit generated data to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p procurement-anomaly-radar-web/data
+          cp -R /tmp/procurement-anomaly-data/. procurement-anomaly-radar-web/data/
+          git add procurement-anomaly-radar-web/data
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh procurement anomaly radar [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Prepare site
+        run: |
+          rm -rf /tmp/procurement-anomaly-site
+          cp -R procurement-anomaly-radar-web /tmp/procurement-anomaly-site
+          rm -rf /tmp/procurement-anomaly-site/scripts
+
+      - name: Publish gh-pages subdirectory
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin gh-pages:gh-pages
+          git checkout gh-pages
+          for attempt in 1 2 3; do
+            git fetch origin gh-pages
+            git reset --hard origin/gh-pages
+            rm -rf procurement-anomaly-radar-web
+            cp -R /tmp/procurement-anomaly-site procurement-anomaly-radar-web
+            touch .nojekyll
+            git add -A procurement-anomaly-radar-web .nojekyll
+            if git diff --cached --quiet; then
+              echo "No procurement anomaly changes"
+              exit 0
+            fi
+            git commit -m "Publish procurement anomaly radar"
+            if git push --force-with-lease origin HEAD:gh-pages; then
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          exit 1
