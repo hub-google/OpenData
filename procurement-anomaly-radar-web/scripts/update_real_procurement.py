@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import re
 import time
+import difflib
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -387,6 +388,44 @@ def build():
     for a in awards:
         awards_by_pair[(a["agency"].strip(), a["vendor"].strip())].append(a)
 
+    tender_by_case = {}
+    tenders_by_agency = defaultdict(list)
+    for t in tenders:
+        tender_by_case[(t["agency"].strip(), t["case_no"].strip())] = t
+        tenders_by_agency[t["agency"].strip()].append(t)
+
+    # Find clusters of similar restricted tenders within 60 days. This is only a
+    # screening signal; lawful phased/lot procurement can produce the same pattern.
+    split_clusters = []
+    used = set()
+    for agency, arr in tenders_by_agency.items():
+        arr = sorted(arr, key=lambda x: date_ordinal(x["date"]) or 0)
+        for i, base in enumerate(arr):
+            if (agency, i) in used:
+                continue
+            od = date_ordinal(base["date"])
+            if not od:
+                continue
+            cluster = [base]
+            indices = [i]
+            for j in range(i+1, len(arr)):
+                od2 = date_ordinal(arr[j]["date"])
+                if not od2 or od2 - od > 60:
+                    if od2 and od2 - od > 60:
+                        break
+                    continue
+                if title_similarity(base["title"], arr[j]["title"]) >= 0.72:
+                    cluster.append(arr[j]); indices.append(j)
+            if len(cluster) >= 3:
+                split_clusters.append((agency, cluster))
+                for j in indices:
+                    used.add((agency, j))
+
+    split_case_keys = set()
+    for agency, cluster in split_clusters:
+        for t in cluster:
+            split_case_keys.add((agency, t["case_no"].strip()))
+
     cases = []
 
     # Actual restricted-award records, enriched with other official signals.
@@ -404,12 +443,20 @@ def build():
             active = any(active_debarment(x) for x in dlist)
             reasons.append("得標廠商可在工程會拒絕往來廠商公告資料找到紀錄" + ("，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。" if active else "；目前僅作歷史背景提示，不能據此判定本案違規。"))
 
+        matched_tender = tender_by_case.get((a["agency"].strip(), a["case_no"].strip()))
+        bid_ratio = None
+        if matched_tender and matched_tender["budget"] > 0 and a["amount"] > 0:
+            bid_ratio = a["amount"] / matched_tender["budget"]
+            if 0.99 <= bid_ratio <= 1.05:
+                signals.append("ratio")
+                reasons.append(f"同案招標資料可匹配預算 {matched_tender['budget']:,} 元，決標金額／預算 = {bid_ratio*100:.2f}%；列為標比偏高訊號，僅供查核排序。")
+
         same = sorted(awards_by_pair[pair], key=lambda x: ymd_value(x["date"]), reverse=True)
         if len(same) >= 3 and "concentration" not in signals:
             signals.append("concentration")
             reasons.append(f"僅就本年度限制性決標資料，同一機關與廠商已有 {len(same)} 筆紀錄；列為重複得標訊號。")
 
-        priority = 58 + (16 if "concentration" in signals else 0) + (14 if "debarred" in signals else 0) + min(8, max(0, len(same)-1)*2)
+        priority = 58 + (16 if "concentration" in signals else 0) + (14 if "debarred" in signals else 0) + (8 if "ratio" in signals else 0) + min(8, max(0, len(same)-1)*2)
         priority = min(priority, 96)
         history = []
         for h in same[:8]:
@@ -432,6 +479,7 @@ def build():
                 {"label":"同機關同廠商限制性決標紀錄","value":len(same)},
                 {"label":"官方集中度名單","value": bool(conc)},
                 {"label":"拒絕往來歷史紀錄","value": len(dlist)},
+                {"label":"決標／預算比","value": (round(bid_ratio*100,2) if bid_ratio is not None else None)},
             ],
             "history": history,
             "evidence": source_evidence("restricted_awards", a["case_no"], a["date"], "決標"),
@@ -473,6 +521,37 @@ def build():
             "evidence": source_evidence("concentration", agency=c["agency"], vendor=c["vendor"]),
         })
 
+    # Similar-tender clusters from real restricted-tender records.
+    for i,(agency, cluster) in enumerate(split_clusters):
+        total_budget = sum(t["budget"] for t in cluster)
+        history = [{
+            "date": t["date"], "title": t["title"], "case_no": t["case_no"],
+            "amount": t["budget"], "vendor": "", "agency": t["agency"],
+            "evidence": source_evidence("restricted_tenders", t["case_no"], t["date"], "招標"),
+        } for t in cluster]
+        cases.append({
+            "id": f"split:{i}",
+            "kind": "similar_tender_cluster",
+            "title": f"60日內相似限制性招標群組｜{cluster[0]['title']}",
+            "agency": agency, "case_no": "", "category": cluster[0]["category"],
+            "method": "限制性招標群組", "date": cluster[-1]["date"],
+            "amount": total_budget, "vendor": "",
+            "priority": min(90, 66 + len(cluster)*5),
+            "signals": ["restricted","split"],
+            "reasons": [
+                f"同一機關在 60 日內出現 {len(cluster)} 筆標案名稱高度相似的限制性招標公告。",
+                "此規則只做『可能分案／分批』篩選；是否屬不當分割必須再看需求獨立性、預算來源、履約地點與採購法規。"
+            ],
+            "metrics": [
+                {"label":"相似案件數","value":len(cluster)},
+                {"label":"合計預算","value":total_budget},
+                {"label":"期間（日）","value": max((date_ordinal(t["date"]) or 0) for t in cluster)-min((date_ordinal(t["date"]) or 0) for t in cluster)},
+                {"label":"名稱相似度門檻","value":"≥72%"},
+            ],
+            "history": history,
+            "evidence": source_evidence("restricted_tenders", agency=agency),
+        })
+
     # Debarment records not already represented in awards; these are background / compliance signals.
     represented_vendor_case = {(c.get("vendor","").strip(), c.get("case_no","").strip()) for c in cases}
     for i,d in enumerate(debarred[:500]):
@@ -510,7 +589,8 @@ def build():
             "title": t["title"] or f"限制性招標｜{t['case_no']}",
             "agency": t["agency"], "case_no": t["case_no"], "category": t["category"],
             "method": t["method"], "date": t["date"], "amount": t["budget"], "vendor": "",
-            "priority": 55, "signals": ["restricted"], "reasons": [
+            "priority": (68 if (t["agency"].strip(), t["case_no"].strip()) in split_case_keys else 55),
+            "signals": (["restricted","split"] if (t["agency"].strip(), t["case_no"].strip()) in split_case_keys else ["restricted"]), "reasons": [
                 "本案出現在工程會「前1年度公告金額以上採購限制性招標公告」官方資料集。",
                 "限制性招標本身是法定採購方式，不代表不當；此訊號用於觀察機關長期採購結構與後續決標對象。"
             ],
