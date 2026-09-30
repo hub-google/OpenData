@@ -41,8 +41,17 @@
 
 ## 已接前端來源
 
-- 臺北市政府停車 Open Data：靜態停車場 + 即時剩餘車位。
-- 新北市政府資料開放平臺：停車場 + 即時剩餘車位。
-- 桃園市政府資料開放平臺：路外停車即時資訊。
+目前 GitHub Pages 已直接接入下列 A 級免費來源，使用者查詢時才即時呼叫，不預先每 5 分鐘抓全台：
 
-其他縣市的免費官方來源與欄位實測結果請看「全台縣市停車API盤點.md」；在來源未達到可直接、安全映射前，不硬接進正式頁面。
+- 臺北市：靜態停車場 + 即時剩餘車位。
+- 新北市：停車場 + 即時剩餘車位。
+- 桃園市：路外停車即時資訊。
+- 臺南市：官方 parking.php 即時停車 API。
+- 新竹市：HisPark OpenData GetParkInfo，使用 FREEQUANTITY。
+- 高雄市：GetParkingLocation，使用 SurplusSpace。
+- 彰化縣：ParkingLotPost，使用 totalNum / remaining。
+- 宜蘭縣：靜態場資 + 動態剩餘格，以編號 exact join。
+- 臺東縣：parking-lots / parking-lots/{id} / parking-spaces；路外使用 vacancy。
+- 澎湖縣：逐停車場 parkingLotCode 查 available。
+
+B/C 級來源仍不硬接成「即時車位」；如果官方端點在瀏覽器端因 CORS/TLS/來源限制失敗，頁面會將該來源標成失敗並保留其他成功來源，不會拿假資料或舊快取補。
