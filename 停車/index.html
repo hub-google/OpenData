@@ -254,7 +254,8 @@ async function loadTaoyuan(){
 function normalizedRow(p,opt){
   const coord=opt.coord||coordFromRow(p); if(!coord)return null;
   const av=availableNumber(opt.avail), total=n(opt.total);
-  return {id:opt.id||('x-'+Math.random().toString(36).slice(2)),name:opt.name||'未命名停車場',area:opt.area||'',address:opt.address||'',lat:coord[0],lng:coord[1],total,avail:av,fee:opt.fee||'',source:opt.source,sourceMode:'官方 API 直連',hasRealtime:av!==null,updated:opt.updated||null,official:opt.official};
+  const fallbackId=[opt.source||'src',opt.name||'unknown',coord[0],coord[1]].join('|');
+  return {id:String(opt.id||fallbackId),name:opt.name||'未命名停車場',area:opt.area||'',address:opt.address||'',lat:coord[0],lng:coord[1],total,avail:av,fee:opt.fee||'',source:opt.source,sourceMode:'官方 API 直連',hasRealtime:av!==null,updated:opt.updated||null,official:opt.official};
 }
 async function loadTainan(){
   const cfg=API.tainan,raw=await getJSON(cfg.data),rows=extractArray(raw).map(p=>normalizedRow(p,{
@@ -315,7 +316,8 @@ async function loadTaitung(radius){
   details.forEach((res,i)=>{
     if(res.status!=='fulfilled')return;
     const d=res.value?.data||res.value||{},x=candidates[i];
-    const row=normalizedRow(d,{coord:[n(first(d,['lat']))??x.lat,n(first(d,['lng','lon']))??x.lng],id:'tt-'+first(d,['id','ID'])||('tt-'+i),name:first(d,['name','Name'])||'臺東停車場',
+    const detailId=first(d,['id','ID']) ?? first(x.p,['id','ID']) ?? i;
+    const row=normalizedRow(d,{coord:[n(first(d,['lat']))??x.lat,n(first(d,['lng','lon']))??x.lng],id:'tt-'+detailId,name:first(d,['name','Name'])||'臺東停車場',
       address:first(d,['address','Address']),total:first(d,['total','TOTALCAR']),avail:first(d,['vacancy','available']),fee:first(d,['charge','fee']),updated:first(d,['updated_at','UpdateTime']),source:'臺東縣政府',official:cfg.official});
     if(row)rows.push(row);
   });
@@ -378,9 +380,9 @@ async function refreshNearby(){
     allData=ok.flatMap(x=>x.rows).map(x=>({...x,dist:hav(userPos[0],userPos[1],x.lat,x.lng)})).filter(x=>x.dist<=radius).sort((a,b)=>a.dist-b.dist);
     render();
     const parts=ok.map(x=>API[x.key].label+'：'+x.mode);
-    const failed=bad.map(x=>API[x.key].label+'：連續 3 次失敗').join('；');
+    const failed=bad.map(x=>API[x.key].label+'：'+(x.result.reason?.message||'連續 3 次失敗')).join('；');
     document.getElementById('status').className=bad.length?'status error':'status';
-    document.getElementById('status').innerHTML='<strong>已即時查詢 '+ok.length+' 個政府來源</strong><br>'+esc(parts.join('；'))+(failed?'<br>'+esc(failed):'');
+    document.getElementById('status').innerHTML='<strong>已即時查詢 '+ok.length+' / '+keys.length+' 個政府來源</strong><br>'+esc(parts.join('；'))+(failed?'<br><b>失敗：</b>'+esc(failed):'');
   }catch(e){
     allData=[];render();
     document.getElementById('status').className='status error';
