@@ -434,25 +434,27 @@ DYNAMIC_PRODUCT_SECTION = r"""
 | 新竹市 | ✅ 可接 | https://hispark.hccg.gov.tw/OpenData/GetParkInfo | FREEQUANTITY + UPDATETIME，逐筆 freshness gate |
 | 宜蘭縣 | ✅ 可接 | https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json | 官方備註最慢約 1 分鐘刷新 |
 
-### 0-2. TDX／第三方交叉驗證
+### 0-2. TDX 動態資料交叉驗證（已把「待逐縣 query」改成實際結果）
 
-TDX 停車資訊 v1 是全國尺度的路外、路邊動靜態 API；路邊格位動態與路段剩餘位動態標示每 1 分鐘更新，但 TDX 也說會持續擴充各縣市，因此不能假設 22 縣市目前全部都有資料列。逐縣 coverage 仍須帶 API Key 實際 query。
+TDX 官方停車資訊 v1 提供指定縣市的路外 ParkingAvailability API：
+https://tdx.transportdata.tw/api/basic/v1/Parking/OffStreet/ParkingAvailability/City/{City}?%24format=JSON
 
-- TDX 停車 Swagger：https://tdx.transportdata.tw/api-service/swagger/basic/945f57da-f29d-4dfd-94ec-c35d9f62be7d
-- 路邊格位動態：https://data.gov.tw/dataset/174357
-- 路邊路段剩餘位動態：https://data.gov.tw/dataset/174353
+本輪另外用明確標示資料來自 TDX 的公開查詢頁交叉驗證 numeric 剩餘格。
 
-ParkBoss 公開列出的資料來源包含多個縣市政府與 TDX。它不能證明每筆資料的上游是哪一個，但可用來交叉驗證某縣市近期是否曾有 numeric 動態剩餘格流入聚合服務。
+| 縣市 | TDX 動態剩餘格 | 實際驗證結果 | 驗證頁 |
+|---|---|---|---|
+| 高雄市 | ✅ 有 | 多座高雄停車場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/Kaohsiung |
+| 基隆市 | ✅ 有 | 多座基隆停車場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/Keelung |
+| 雲林縣 | ✅ 有 | 雲林溪美食廣場有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/YunlinCounty |
+| 屏東縣 | ✅ 有 | 多座路外與路邊停車有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/PingtungCounty |
+| 花蓮縣 | ✅ 有 | 多座路外與路邊停車有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/HualienCounty |
+| 金門縣 | ✅ 有 | 金門航三、金門高中、山外車站、北堤等有 numeric 剩餘/總格 | https://www.opendata.vip/tdx/parking/KinmenCounty |
+| 彰化縣 | ⚠️ 有 TDX 消費端支援，但本輪頁面無 numeric rows | 先不算產品可用 | https://www.opendata.vip/tdx/parking/ChanghuaCounty |
+| 嘉義市 | ⚠️ 有其他聚合服務 numeric 動態資料，但本輪未用 TDX 專頁證實 | 不把有動態直接等同 TDX 有 | — |
+| 南投縣 | ❌ 尚未證實 usable numeric availability | 第三方曾回以現場為準/異常總格 | — |
+| 新竹縣、苗栗縣、嘉義縣、臺東縣、澎湖縣、連江縣 | ⚪ 尚未證實 | 尚未取得可核對的 TDX numeric 動態頁面 | — |
 
-| 原本未找到地方動態 API 的縣市 | 交叉驗證 | 目前判定 |
-|---|---|---|
-| 高雄市 | ParkBoss 有 numeric 剩餘格與更新時間 | 🟡 動態上游存在；地方免費直連 endpoint 待反查 |
-| 基隆市 | ParkBoss 有 numeric 剩餘格與更新時間 | 🟡 動態上游存在；地方免費直連 endpoint 待反查 |
-| 嘉義市 | ParkBoss 有 numeric 剩餘格與更新時間 | 🟡 動態上游存在；地方免費直連 endpoint 待反查 |
-| 南投縣 | ParkBoss 顯示「以現場為準」、總格 65535、無更新時間 | ❌ 目前無 usable numeric availability 證據 |
-| 新竹縣、苗栗縣、彰化縣、雲林縣、嘉義縣、臺東縣、澎湖縣、金門縣、連江縣 | 尚未取得可核對的 numeric 動態頁面 | ⚪ 未證實；TDX 需逐縣 query |
-| 屏東縣 | 官方智慧停車/TDX 有動態線索，但尚未拿到可核對的 numeric 頁面 | ⚪ 高機率有上游，仍需直接驗證 |
-| 花蓮縣 | TDX 文件可確認有 HualienCounty 停車資料範例，但未證實 availability | ⚪ 有 TDX 停車資料證據，動態剩餘格仍待查 |
+高雄的正確結論：已確認 TDX 有官方動態 API 可取剩餘格；目前未找到的是高雄市政府自己另行公開的免費原始 availability endpoint。
 
 ### 0-3. spotping.autoit.studio
 
