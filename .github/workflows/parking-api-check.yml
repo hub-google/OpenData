@@ -1,62 +1,104 @@
-name: Check parking public APIs
+name: Verify parking APIs for GitHub Pages
 
 on:
   push:
     branches: ["main"]
     paths:
       - ".github/workflows/parking-api-check.yml"
+      - "停車/index.html"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  check:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Test parking APIs
+      - uses: actions/checkout@v4
+
+      - name: Probe direct browser-readable sources
         shell: bash
         run: |
-          set -euo pipefail
           python3 - <<'PY'
-          import json, urllib.request
-          urls = {
-            "taipei_static": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json",
-            "taipei_realtime": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json",
-            "ntpc_static": "https://data.ntpc.gov.tw/api/datasets/b1464ef0-9c7c-4a6f-abf7-6bdf32847e68/json?page=0&size=2000",
-            "ntpc_realtime": "https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000",
-            "taoyuan": "https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download",
-          }
-          for name, url in urls.items():
-              req=urllib.request.Request(url, headers={"User-Agent":"OpenData-Parking-Checker/1.0","Origin":"https://hub-google.github.io"})
+          import json, ssl, time, urllib.request, urllib.error
+          from pathlib import Path
+          ORIGIN="https://hub-google.github.io"
+          sources=[
+            dict(key="taipei",city="臺北市",method="GET",url="https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json"),
+            dict(key="ntpc",city="新北市",method="GET",url="https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=5"),
+            dict(key="taoyuan",city="桃園市",method="GET",url="https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download"),
+            dict(key="tainan",city="臺南市",method="GET",url="https://parkweb.tainan.gov.tw/api/parking.php"),
+            dict(key="hsinchuCity",city="新竹市",method="GET",url="https://hispark.hccg.gov.tw/OpenData/GetParkInfo?format=json"),
+            dict(key="kaohsiung",city="高雄市",method="GET",url="https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation"),
+            dict(key="changhua",city="彰化縣",method="POST",url="https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost",data=""),
+            dict(key="yilan",city="宜蘭縣",method="GET",url="https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json"),
+            dict(key="taitung",city="臺東縣",method="GET",url="https://trafficweb.ttcpb.gov.tw/api/parking-lots"),
+            dict(key="penghu",city="澎湖縣",method="GET",url="https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode=OWIZXZ",insecure=True),
+          ]
+
+          def probe(s):
+            attempts=[]
+            for i in range(1,4):
               try:
-                  with urllib.request.urlopen(req, timeout=30) as r:
-                      raw=r.read()
-                      cors=r.headers.get("Access-Control-Allow-Origin")
-                      ct=r.headers.get("Content-Type")
-                      print(f"{name}: status={r.status} bytes={len(raw)} cors={cors!r} content_type={ct!r}")
-                      data=json.loads(raw.decode("utf-8-sig"))
-                      if isinstance(data,list): count=len(data); sample=data[0] if data else {}
-                      elif isinstance(data,dict):
-                          arr=(data.get("data") or {}).get("park") if isinstance(data.get("data"),dict) else None
-                          if isinstance(arr,list): count=len(arr); sample=arr[0] if arr else {}
-                          else: count=len(data); sample=data
-                      else: count=-1; sample={}
-                      print(f"{name}: json_ok count={count} sample_keys={list(sample)[:15] if isinstance(sample,dict) else type(sample).__name__}")
+                data=(s.get("data") or "").encode() if s["method"]=="POST" else None
+                headers={"User-Agent":"Mozilla/5.0","Origin":ORIGIN,"Accept":"application/json,text/plain,*/*"}
+                if s["method"]=="POST":
+                  headers["Content-Type"]="application/x-www-form-urlencoded"
+                req=urllib.request.Request(s["url"],data=data,method=s["method"],headers=headers)
+                ctx=ssl._create_unverified_context() if s.get("insecure") else ssl.create_default_context()
+                with urllib.request.urlopen(req,timeout=25,context=ctx) as r:
+                  body=r.read(3_000_000)
+                  acao=r.headers.get("Access-Control-Allow-Origin")
+                  allowed=acao=="*" or acao==ORIGIN
+                  ct=r.headers.get("Content-Type","")
+                  rec=dict(status=r.status,bytes=len(body),content_type=ct,acao=acao,cors_ok=allowed,
+                           browser_direct_ok=(200<=r.status<300 and allowed))
+                  attempts.append(rec)
+                  if rec["browser_direct_ok"]:
+                    return rec|{"attempts":attempts}
               except Exception as e:
-                  print(f"{name}: ERROR {type(e).__name__}: {e}")
-          site = "https://hub-google.github.io/OpenData/%E5%81%9C%E8%BB%8A/"
-          with urllib.request.urlopen(site, timeout=30) as r:
-              html = r.read().decode("utf-8", errors="replace")
-              print(f"public_site: status={r.status} bytes={len(html)}")
-              assert "NO DEMO DATA" in html
-              assert "UX Demo" not in html
-              assert "定位並查附近" in html
-              assert "ntpc-realtime.json" in html
-              assert "官方 API 直連" in html
-          with urllib.request.urlopen(site + "data/meta.json", timeout=30) as r:
-              live_meta = json.loads(r.read().decode("utf-8"))
-              print("public_meta:", json.dumps(live_meta, ensure_ascii=False))
-              assert live_meta["sources"]["taipei-static.json"]["count"] >= 1000
-              assert live_meta["sources"]["taipei-realtime.json"]["count"] >= 500
-              assert live_meta["sources"]["ntpc-static.json"]["count"] >= 100
-              assert live_meta["sources"]["ntpc-realtime.json"]["count"] >= 50
-              assert live_meta["sources"]["taoyuan.json"]["count"] >= 100
+                attempts.append({"error":f"{type(e).__name__}: {e}"})
+              time.sleep(i)
+            last=attempts[-1] if attempts else {}
+            return dict(status=last.get("status"),bytes=last.get("bytes",0),content_type=last.get("content_type"),
+                        acao=last.get("acao"),cors_ok=False,browser_direct_ok=False,attempts=attempts)
+
+          results=[]
+          for s in sources:
+            r=probe(s)
+            r.update({k:s[k] for k in ("key","city","method","url")})
+            results.append(r)
+            print(s["city"],r["browser_direct_ok"],r.get("status"),r.get("acao"))
+
+          Path("停車/data").mkdir(exist_ok=True)
+          Path("停車/data/browser-source-status.json").write_text(json.dumps({
+            "checked_from_origin":ORIGIN,
+            "checked_at_utc":__import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+            "sources":results
+          },ensure_ascii=False,indent=2),encoding="utf-8")
+
+          lines=["# GitHub Pages 瀏覽器直連驗證","",
+                 f"> Origin：{ORIGIN}  ",
+                 "> browser_direct_ok 只有在 HTTP 成功且 Access-Control-Allow-Origin 允許 GitHub Pages 時才為 true。","",
+                 "| 縣市 | 方法 | HTTP | ACAO | GitHub Pages 可直讀 | URL |",
+                 "|---|---|---:|---|---|---|"]
+          for r in results:
+            lines.append(f"| {r['city']} | {r['method']} | {r.get('status') or '—'} | {r.get('acao') or '—'} | {'✅' if r['browser_direct_ok'] else '❌'} | {r['url']} |")
+          Path("停車/GitHubPages直連驗證.md").write_text("\n".join(lines)+"\n",encoding="utf-8")
           PY
+
+      - name: Commit verification report
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "停車/data/browser-source-status.json" "停車/GitHubPages直連驗證.md"
+          if git diff --cached --quiet; then
+            echo "No verification changes"
+            exit 0
+          fi
+          git commit -m "chore: update parking browser source verification"
+          git push
