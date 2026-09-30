@@ -72,6 +72,42 @@ const API={
     data:'https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download',
     label:'桃園市',official:'https://opendata.tycg.gov.tw/datalist/f4cc0b12-86ac-40f9-8745-885bddc18f79',
     bbox:[24.65,25.20,120.95,121.55]
+  },
+  tainan:{
+    data:'https://parkweb.tainan.gov.tw/api/parking.php',
+    label:'臺南市',official:'https://parkweb.tainan.gov.tw/',
+    bbox:[22.85,23.42,120.02,120.68]
+  },
+  hsinchuCity:{
+    data:'https://hispark.hccg.gov.tw/OpenData/GetParkInfo?format=json',
+    label:'新竹市',official:'https://hispark.hccg.gov.tw/',
+    bbox:[24.70,24.90,120.85,121.05]
+  },
+  kaohsiung:{
+    data:'https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation',
+    label:'高雄市',official:'https://kpp.tbkc.gov.tw/ParkingLocation/ParkingLocation',
+    bbox:[22.45,23.50,120.15,121.10]
+  },
+  changhua:{
+    data:'https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost',
+    label:'彰化縣',official:'https://chpark.chcg.gov.tw/',
+    bbox:[23.70,24.22,120.22,120.78]
+  },
+  yilan:{
+    static:'https://opendataap2.e-land.gov.tw/resource/files/2020-11-23/a208784ae7040ebef97ef2f79f7ff468.json',
+    realtime:'https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json',
+    label:'宜蘭縣',official:'https://data.gov.tw/dataset/85833',
+    bbox:[24.25,25.05,121.25,122.05]
+  },
+  taitung:{
+    lots:'https://trafficweb.ttcpb.gov.tw/api/parking-lots',
+    spaces:'https://trafficweb.ttcpb.gov.tw/api/parking-spaces',
+    label:'臺東縣',official:'https://trafficweb.ttcpb.gov.tw/',
+    bbox:[22.20,23.55,120.70,121.70]
+  },
+  penghu:{
+    label:'澎湖縣',official:'https://parking.penghu.gov.tw/',
+    bbox:[23.15,23.85,119.28,119.75]
   }
 };
 
@@ -119,6 +155,21 @@ async function getJSON(url,maxAttempts=3){
   throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
 }
 async function getPagedJSON(base){const merged=[],seen=new Set();for(let page=0;page<5;page++){const data=await getJSON(base+'?page='+page+'&size=1000');const rows=extractArray(data);const sig=JSON.stringify(rows.slice(0,3));if(!rows.length||seen.has(sig))break;seen.add(sig);merged.push(...rows);if(rows.length<1000)break}return merged}
+async function postJSON(url,body='',maxAttempts=3){
+  let lastError=null;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(url,{method:'POST',body,cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.json();
+    }catch(e){
+      lastError=e;
+      if(attempt<maxAttempts)await sleep(attempt*500);
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
 
 function twd97ToWgs84(x,y){
   x=Number(x);y=Number(y);if(!Number.isFinite(x)||!Number.isFinite(y)||x===0||y===0)return null;
@@ -199,15 +250,111 @@ async function loadTaoyuan(){
   return{key:'taoyuan',rows,mode};
 }
 
+
+function normalizedRow(p,opt){
+  const coord=opt.coord||coordFromRow(p); if(!coord)return null;
+  const av=availableNumber(opt.avail), total=n(opt.total);
+  return {id:opt.id||('x-'+Math.random().toString(36).slice(2)),name:opt.name||'未命名停車場',area:opt.area||'',address:opt.address||'',lat:coord[0],lng:coord[1],total,avail:av,fee:opt.fee||'',source:opt.source,sourceMode:'官方 API 直連',hasRealtime:av!==null,updated:opt.updated||null,official:opt.official};
+}
+async function loadTainan(){
+  const cfg=API.tainan,raw=await getJSON(cfg.data),rows=extractArray(raw).map(p=>normalizedRow(p,{
+    id:'tn-'+idOf(p),name:first(p,['name','Name','PARKINGNAME','停車場名稱']),address:first(p,['address','Address','ADDRESS','地址']),
+    total:first(p,['total','total_car','totalCar','TOTALQUANTITY','總車位']),avail:first(p,['car','available','AVAILABLECAR','FREEQUANTITY','剩餘車位']),
+    fee:first(p,['charge','fee','payGuide','payex','收費方式']),updated:first(p,['update_time','UpdateTime','UPDATETIME']),source:'臺南市政府',official:cfg.official
+  })).filter(Boolean);
+  return{key:'tainan',rows,mode:'官方 API 直連'};
+}
+async function loadHsinchuCity(){
+  const cfg=API.hsinchuCity,raw=await getJSON(cfg.data),rows=extractArray(raw).map(p=>normalizedRow(p,{
+    id:'hc-'+idOf(p),name:first(p,['PARKINGNAME','name','Name']),address:first(p,['ADDRESS','address']),
+    total:first(p,['TOTALQUANTITY','total','TOTALCAR']),avail:first(p,['FREEQUANTITY','available','AVAILABLECAR']),
+    fee:[first(p,['WEEKDAYS']),first(p,['HOLIDAY'])].filter(Boolean).join('；')||first(p,['PAYINFO','fee']),
+    updated:first(p,['UPDATETIME','UpdateTime']),source:'新竹市政府',official:cfg.official
+  })).filter(Boolean);
+  return{key:'hsinchuCity',rows,mode:'官方 API 直連'};
+}
+async function loadKaohsiung(){
+  const cfg=API.kaohsiung,raw=await getJSON(cfg.data),rows=extractArray(raw).map(p=>{
+    const lat=n(first(p,['Latitude','latitude','lat'])),lng=n(first(p,['Longitude','longitude','lng','lon']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:coordFromRow(p),id:'kh-'+first(p,['ParkingID','id']),name:first(p,['ParkingName','name']),address:first(p,['Address','address']),
+      total:first(p,['TotalSpace','TotalCar','totalNum','total']),avail:first(p,['SurplusSpace','remaining','available']),fee:first(p,['PayGuide','FareDescription','fee']),
+      updated:first(p,['UpdateTime','UPDATETIME']),source:'高雄市政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'kaohsiung',rows,mode:'官方 API 直連'};
+}
+async function loadChanghua(){
+  const cfg=API.changhua,raw=await postJSON(cfg.data,''),rows=extractArray(raw).map(p=>{
+    const lat=n(p.positionLat),lng=n(p.positionLon);
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:null,id:'ch-'+first(p,['id','carParkId','parkingId']),name:p.carParkName,address:first(p,['address','location']),
+      total:p.totalNum,avail:p.remaining,fee:p.fareDescription||p.description,updated:first(p,['updateTime','UpdateTime']),source:'彰化縣政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'changhua',rows,mode:'官方 API 直連'};
+}
+async function loadYilan(){
+  const cfg=API.yilan,[s,r]=await Promise.all([getJSON(cfg.static),getJSON(cfg.realtime)]),stat=extractArray(s),live=extractArray(r);
+  const lm=new Map(live.map(x=>[String(first(x,['編號','id','ID'])||''),x]));
+  const rows=stat.map(p=>{
+    const key=String(first(p,['編號','id','ID'])||''),rt=lm.get(key);
+    const lat=n(first(p,['緯度','lat','Latitude'])),lng=n(first(p,['經度','lng','Longitude']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:coordFromRow(p),id:'yl-'+key,name:first(p,['名稱','停車場名稱','name']),address:first(p,['地址','address']),
+      total:first(rt||p,['小車位總數','total','TOTALCAR']),avail:first(rt||{},['小車位剩餘數','available','AVAILABLECAR']),fee:[first(p,['平日費率']),first(p,['假日費率'])].filter(Boolean).join('；'),
+      updated:first(rt||{},['更新時間','UpdateTime']),source:'宜蘭縣政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'yilan',rows,mode:'官方 API 直連'};
+}
+async function loadTaitung(radius){
+  const cfg=API.taitung,raw=await getJSON(cfg.lots),lots=extractArray(raw.data||raw);
+  const candidates=lots.map(p=>{
+    const lat=n(first(p,['PositionLat','lat'])),lng=n(first(p,['PositionLon','lng','lon']));
+    if(lat===null||lng===null)return null;
+    const dist=hav(userPos[0],userPos[1],lat,lng);
+    return{p,lat,lng,dist};
+  }).filter(Boolean).filter(x=>x.dist<=radius+3000).sort((a,b)=>a.dist-b.dist).slice(0,30);
+  const details=await Promise.allSettled(candidates.map(x=>getJSON(cfg.lots+'/'+encodeURIComponent(first(x.p,['id','ID'])))));
+  const rows=[];
+  details.forEach((res,i)=>{
+    if(res.status!=='fulfilled')return;
+    const d=res.value?.data||res.value||{},x=candidates[i];
+    const row=normalizedRow(d,{coord:[n(first(d,['lat']))??x.lat,n(first(d,['lng','lon']))??x.lng],id:'tt-'+first(d,['id','ID'])||('tt-'+i),name:first(d,['name','Name'])||'臺東停車場',
+      address:first(d,['address','Address']),total:first(d,['total','TOTALCAR']),avail:first(d,['vacancy','available']),fee:first(d,['charge','fee']),updated:first(d,['updated_at','UpdateTime']),source:'臺東縣政府',official:cfg.official});
+    if(row)rows.push(row);
+  });
+  return{key:'taitung',rows,mode:'官方 API 直連'};
+}
+async function loadPenghu(){
+  const cfg=API.penghu,lots=[
+    {code:'OWIZXZ',name:'澎湖縣府地下停車場',lat:23.569694,lng:119.566454,total:68},
+    {code:'QAHZCZ',name:'馬公國小地下停車場',lat:23.571100,lng:119.569200,total:516},
+    {code:'T2THK8',name:'中正國小地下停車場',lat:23.567961,lng:119.565528,total:105},
+    {code:'NCEJ97',name:'中興國小地下停車場',lat:23.574800,lng:119.574800,total:347},
+    {code:'Y7ROW9',name:'文光國中地下停車場',lat:23.573167,lng:119.570075,total:125}
+  ];
+  const results=await Promise.allSettled(lots.map(x=>getJSON('https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode='+x.code)));
+  const rows=[];
+  results.forEach((res,i)=>{
+    if(res.status!=='fulfilled')return;const x=lots[i],d=res.value;
+    const row=normalizedRow(d,{coord:[x.lat,x.lng],id:'ph-'+x.code,name:x.name,total:x.total,avail:first(d,['available','remaining']),fee:'每小時20元，當日上限80元',source:'澎湖縣政府',official:cfg.official});
+    if(row)rows.push(row);
+  });
+  return{key:'penghu',rows,mode:'官方 API 直連'};
+}
+
 function candidateSources(pos,radiusM){
   const pad=Math.max(5,radiusM/1000+3),out=[];
   for(const [key,cfg] of Object.entries(API))if(inBBox(pos,cfg.bbox,pad))out.push(key);
   return out;
 }
-async function loadSource(key){
+async function loadSource(key,radius){
   if(key==='taipei')return loadTaipei();
   if(key==='ntpc')return loadNtpc();
   if(key==='taoyuan')return loadTaoyuan();
+  if(key==='tainan')return loadTainan();
+  if(key==='hsinchuCity')return loadHsinchuCity();
+  if(key==='kaohsiung')return loadKaohsiung();
+  if(key==='changhua')return loadChanghua();
+  if(key==='yilan')return loadYilan();
+  if(key==='taitung')return loadTaitung(radius);
+  if(key==='penghu')return loadPenghu();
   throw new Error('unknown source '+key);
 }
 async function refreshNearby(){
@@ -221,10 +368,10 @@ async function refreshNearby(){
     const keys=candidateSources(userPos,radius);
     if(!keys.length){
       allData=[];lastSources=[];render();
-      document.getElementById('status').innerHTML='<strong>目前此位置尚未接入地方政府即時來源</strong><br>已接：臺北、新北、桃園。';
+      document.getElementById('status').innerHTML='<strong>目前此位置尚未接入地方政府即時來源</strong><br>已接 A 級來源：臺北、新北、桃園、臺南、新竹市、高雄、彰化、宜蘭、臺東、澎湖。';
       return;
     }
-    const settled=await Promise.allSettled(keys.map(loadSource));
+    const settled=await Promise.allSettled(keys.map(key=>loadSource(key,radius)));
     const ok=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);
     const bad=settled.map((x,i)=>({result:x,key:keys[i]})).filter(x=>x.result.status==='rejected');
     lastSources=ok;
