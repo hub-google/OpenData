@@ -347,12 +347,32 @@ def mapping_lines(cfg):
         out.append((dst,src))
     return out
 
+DYNAMIC_PRODUCT_SECTION = r"""
+## 0. 動態來源產品判定
+
+> 產品只接受：有 numeric 剩餘格，且為動態 API，或官方／資料時間可驗證為分鐘級更新。純靜態 JSON/CSV 只可當 metadata，不算可用即時來源。
+> 明確 endpoint 失敗時最多重試 3 次。TDX 僅供反查，不列正式免費來源。
+
+| 縣市 | 即時產品判定 | 動態端點 | 更新／限制 |
+|---|---|---|---|
+| 臺北市 | ✅ 可接 | https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json | 官方動態剩餘格 JSON；產品加 freshness/異常值保護 |
+| 新北市 | ✅ 可接 | https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000 | 每 3 分鐘 |
+| 新北市－路邊 | ✅ 可接 | https://data.ntpc.gov.tw/api/datasets/54A507C4-C038-41B5-BF60-BBECB9D052C6/json?page=0&size=2000 | 每 2 分鐘 |
+| 桃園市 | ✅ 可接 | https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download | 每 1 分鐘；surplusSpace |
+| 臺中市 | ⚠️ 部分可接 | https://newdatacenter.taichung.gov.tw/api/v1/no-auth/resource.download?rid=1744bc00-cd16-48f3-9632-309f364662bb | 路邊逐格每 10 分鐘；路外 RGB 不算 numeric 剩餘格 |
+| 臺南市 | ✅ 可接 | https://parkweb.tainan.gov.tw/api/parking.php | car + update_time，逐筆 freshness gate |
+| 新竹市 | ✅ 可接 | https://hispark.hccg.gov.tw/OpenData/GetParkInfo | FREEQUANTITY + UPDATETIME，逐筆 freshness gate |
+| 宜蘭縣 | ✅ 可接 | https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json | 官方備註最慢約 1 分鐘刷新 |
+| 其餘縣市 | ❌ 目前不接 | — | 尚未確認同時符合「公開 + numeric availability + 分鐘級動態」的地方端點 |
+""".strip()
+
 def render_report(audits):
     now=datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds");L=[]
     L += ["# 全台 22 縣市免費停車資料 API／Open Data 實測盤點","",f"> 產生時間：{now}  ","> 原則：完全排除 TDX；只評估免費官方地方政府 API、官方 Open Data 下載端點與 data.gov.tw 轉載的地方政府資料。  ","> 本報告只盤點與實測資料源，沒有修改現有停車網站。  ","> 價格欄位採 raw passthrough，不把自然語言費率硬解析成每小時價格；沒有 numeric 剩餘格就不推算。  ",
 "> 明確 API/JSON/CSV 端點若呼叫失敗，單次稽核最多連續嘗試 3 次；3 次皆失敗才記錄錯誤。  ",
 "> 判讀分層：A=已找到可直連且可驗證的官方資料端點；B/B*=有官方資料或官方即時服務，但即時 availability 公開端點仍不完整；C/C*=目前只確認管理系統/線索，尚無可驗證的公開即時空位端點。  ",
 "> 注意：TDX 有某縣市資料，代表存在上游資料交換，不等於該上游一定是對一般開發者公開的免費地方 API。",""]
+    L += ["", DYNAMIC_PRODUCT_SECTION, ""]
     L += ["## 1. 統一格式","","| 統一欄位 | 意義 | 轉換規則 |","|---|---|---|"]
     for k,d,r in UNIFIED_FIELDS:L.append(f"| {k} | {d} | {r} |")
     L += ["","### 嚴格資料規則","","1. available_car 只接受官方明確提供的數值剩餘格；紅黃綠燈、滿/未滿、感測器狀態都不換算成格數。","2. fee_* 保留官方原文；來源分平日/假日/月租就分欄保存，不做語意解析。","3. 跨資料表只允許官方共同 ID exact join；不做停車場名稱模糊比對。","4. 地址不拿去地理編碼補座標；TWD97→WGS84 只做固定數學轉換。","5. 來源缺核心欄位就留空，不自行猜。",""]
