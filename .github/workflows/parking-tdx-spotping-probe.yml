@@ -104,10 +104,21 @@ jobs:
                               "update":last_update,"sample_keys":list(sample.keys())[:20] if isinstance(sample,dict) else [],
                               "attempts":attempts,"body_head":re.sub(r"\s+"," ",dom)[:500]})
 
-          spot={"url":"https://spotping.autoit.studio/","home_ok":False,"scripts":[],"api_hints":[]}
+          spot={"url":"https://spotping.autoit.studio/","home_ok":False,"scripts":[],"api_hints":[],"inline_hints":[]}
           try:
               rc,dom,err=dump(spot["url"],60)
               spot["home_ok"]=bool(dom)
+              # Scan inline HTML/JS too. Previous version only scanned external bundles and missed inline fetch/XHR code.
+              for pat in [
+                  r'https?://[^"\\'<>\\\\ ]+',
+                  r'["\\']([^"\\']*(?:api|tdx|transportdata|parking|carpark|availability|available|json)[^"\\']*)["\\']',
+                  r'(?:fetch|axios\\.(?:get|post)|\\$\\.ajax|XMLHttpRequest)[^;]{0,500}'
+              ]:
+                  for hit in re.findall(pat,dom,re.I):
+                      hit=str(hit)
+                      if hit and hit not in spot["inline_hints"]:
+                          spot["inline_hints"].append(hit)
+              spot["inline_hints"]=spot["inline_hints"][:200]
               srcs=re.findall(r'<script[^>]+src=["\']([^"\']+)["\']',dom,re.I)
               for src in srcs[:20]:
                   u=urljoin(spot["url"],src)
