@@ -11,20 +11,67 @@
 
 ## 0. 動態來源產品判定
 
-> 產品只接受：有 numeric 剩餘格，且為動態 API，或官方／資料時間可驗證為分鐘級更新。純靜態 JSON/CSV 只可當 metadata，不算可用即時來源。
-> 明確 endpoint 失敗時最多重試 3 次。TDX 僅供反查，不列正式免費來源。
+> 產品只接受：有 numeric 剩餘格，且為動態 API，或官方／資料時間可驗證為分鐘級更新。純靜態 JSON/CSV 只可當 metadata，不算可用即時來源。  
+> 明確 endpoint 失敗時最多重試 3 次。  
+> **這一版把「地方政府免費直連 API」與「TDX／第三方聚合服務有動態資料」分開判定，避免把兩件事混在一起。**
+
+### 0-1. 已找到「地方免費動態端點」，可直接做 adapter
 
 | 縣市 | 即時產品判定 | 動態端點 | 更新／限制 |
 |---|---|---|---|
 | 臺北市 | ✅ 可接 | https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json | 官方動態剩餘格 JSON；產品加 freshness/異常值保護 |
-| 新北市 | ✅ 可接 | https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000 | 每 3 分鐘 |
-| 新北市－路邊 | ✅ 可接 | https://data.ntpc.gov.tw/api/datasets/54A507C4-C038-41B5-BF60-BBECB9D052C6/json?page=0&size=2000 | 每 2 分鐘 |
+| 新北市 | ✅ 可接 | https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=2000 | 路外每 3 分鐘 |
+| 新北市－路邊 | ✅ 可接 | https://data.ntpc.gov.tw/api/datasets/54A507C4-C038-41B5-BF60-BBECB9D052C6/json?page=0&size=2000 | 路邊逐格每 2 分鐘 |
 | 桃園市 | ✅ 可接 | https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download | 每 1 分鐘；surplusSpace |
 | 臺中市 | ⚠️ 部分可接 | https://newdatacenter.taichung.gov.tw/api/v1/no-auth/resource.download?rid=1744bc00-cd16-48f3-9632-309f364662bb | 路邊逐格每 10 分鐘；路外 RGB 不算 numeric 剩餘格 |
 | 臺南市 | ✅ 可接 | https://parkweb.tainan.gov.tw/api/parking.php | car + update_time，逐筆 freshness gate |
 | 新竹市 | ✅ 可接 | https://hispark.hccg.gov.tw/OpenData/GetParkInfo | FREEQUANTITY + UPDATETIME，逐筆 freshness gate |
 | 宜蘭縣 | ✅ 可接 | https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json | 官方備註最慢約 1 分鐘刷新 |
-| 其餘縣市 | ❌ 目前不接 | — | 尚未確認同時符合「公開 + numeric availability + 分鐘級動態」的地方端點 |
+
+### 0-2. TDX／第三方交叉驗證：原本標「不能用」的不代表沒有動態資料
+
+TDX 官方「停車資訊 v1」說明本身就是**全國尺度的路外、路邊停車動靜態 API**，而路邊「格位動態」與「路段剩餘位動態」資料集標示更新頻率為 **每 1 分鐘**。但 TDX 同時明寫會「持續擴充各縣市」，所以**不能只因 API 接受縣市參數，就假設 22 縣市目前全部都有資料列**；仍須帶 API Key 逐縣實際 query 才能確認。
+
+- TDX 停車 API Swagger：https://tdx.transportdata.tw/api-service/swagger/basic/945f57da-f29d-4dfd-94ec-c35d9f62be7d
+- TDX 路邊格位動態資料：https://data.gov.tw/dataset/174357
+- TDX 路邊路段剩餘位動態資料：https://data.gov.tw/dataset/174353
+- TDX 使用限制：需註冊/API Key；訪客模式有呼叫限制。
+
+另外用 ParkBoss 做交叉驗證。ParkBoss 公開列出的資料來源包含政府資料開放平台、臺北、新北、基隆、桃園、新竹市、臺中、南投、嘉義市、臺南、高雄、宜蘭與 TDX。它**不能證明每一筆究竟來自哪一個上游**，但可以驗證「某縣市最近確實曾有 numeric 動態剩餘格被公開聚合服務取得」。
+
+| 原本未找到地方動態 API 的縣市 | TDX／聚合服務驗證結果 | 目前應如何判定 |
+|---|---|---|
+| **高雄市** | ✅ ParkBoss 可看到數字剩餘格，例如「高雄車站南側地下法定停車場」194 / 581，頁面帶更新時間 | **🟡 有動態上游已證實**；地方免費直連 availability endpoint 尚未反查出來。若願意用 TDX，應優先測 TDX 路外 ParkingAvailability |
+| **基隆市** | ✅ ParkBoss 可看到數字剩餘格，例如「基隆和一停車場」255 / 302，頁面帶更新時間 | **🟡 有動態上游已證實**；地方免費直連 availability endpoint 尚未定位 |
+| **嘉義市** | ✅ ParkBoss 可看到數字剩餘格，例如「嘉義民權」3 / 10，頁面帶更新時間 | **🟡 有動態上游已證實**；地方免費直連 availability endpoint 尚未定位 |
+| **南投縣** | ❌ ParkBoss 雖有南投資料，但「南投縣政府綜合大樓停車場」顯示「以現場為準」、總格 65535、更新時間空白 | **❌ 目前仍無 usable numeric availability 證據** |
+| 新竹縣 | ⚪ 未證實 | 大新竹好停車有即時畫面，但尚未確認 TDX/地方公開 API 目前有可用 numeric rows |
+| 苗栗縣 | ⚪ 未證實 | 苗栗通有即時服務；TDX 需帶 Key 逐縣 query 才能確認目前 coverage |
+| 彰化縣 | ⚪ 未證實 | 目前地方只找到靜態資料；TDX 需逐縣 query |
+| 雲林縣 | ⚪ 未證實 | 地方 JSON 是靜態；TDX 需逐縣 query |
+| 嘉義縣 | ⚪ 未證實 | 地方 CSV 是靜態；TDX 需逐縣 query |
+| 屏東縣 | ⚪ 高機率有上游，但尚未完成直接驗證 | 官方智慧停車／既有 TDX 線索顯示有動態資料，但目前沒有像高雄/基隆/嘉義市一樣拿到可核對的 numeric 頁面 |
+| 花蓮縣 | ⚪ 有 TDX 基本/路邊資料證據，但動態 availability 未證實 | TDX 教學文件甚至以 HualienCounty 路邊停車為範例；是否有「即時剩餘」仍須實際 query |
+| 臺東縣 | ⚪ 未證實 | 官方智慧停車存在；TDX 需逐縣 query |
+| 澎湖縣 | ⚪ 未證實 | 官方停車平台存在；目前找到的 Swagger 偏繳費 |
+| 金門縣 | ⚪ 未證實 | 金好停有即時畫面；TDX/地方公開 endpoint 待實際 query |
+| 連江縣 | ⚪ 未證實 | 官方網站有現有車位數；TDX/地方公開 endpoint 待實際 query |
+
+> **重要：上面高雄、基隆、嘉義市的 ParkBoss 頁面只能證明「近期確實有 numeric 動態資料流進聚合服務」，不能直接保證今天此刻 feed 仍是分鐘級健康。正式接入前仍要對真正上游 endpoint 做連續 freshness test。**
+
+### 0-3. 你提供的 spotping.autoit.studio
+
+- 網址：https://spotping.autoit.studio/
+- 本次稽核環境直接抓取該站時回傳 DisabledError，搜尋引擎也沒有足夠索引可讓我可靠判斷它實際呼叫哪些 API。
+- 所以**目前不能拿這個網站當證據說某縣市一定有／沒有資料**；若之後能取得它瀏覽器 Network 裡的 XHR/fetch URL，就可以直接反查它到底是用 TDX、縣市 Open Data，還是自己的後端 proxy。
+
+### 目前結論
+
+原本「其餘縣市 ❌ 目前不接」寫得太死，已修正：
+
+- **高雄、基隆、嘉義市：有 numeric 動態上游的證據，改成 🟡，下一步是反查真正 endpoint。**
+- **南投：第三方也拿不到 numeric 剩餘格，目前仍維持 ❌。**
+- **其他縣市：改成 ⚪ 未證實，不再直接宣告「沒有」。TDX 有全國型 API，但要帶 Key 逐縣查資料列，才能確定 coverage。**
 
 ## 1. 統一格式
 
