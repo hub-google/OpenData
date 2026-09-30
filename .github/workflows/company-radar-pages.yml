@@ -45,6 +45,9 @@ jobs:
       - name: Build real company opportunity feed
         run: python3 company-radar-web/scripts/update_company_radar.py
 
+      - name: Build real procurement anomaly feed
+        run: python3 procurement-anomaly-radar-web/scripts/update_real_procurement.py
+
       - name: Save company baseline
         uses: actions/cache/save@v4
         with:
@@ -55,7 +58,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A company-radar-web/data
+          git add -A company-radar-web/data procurement-anomaly-radar-web/data
           if ! git diff --cached --quiet; then
             git commit -m "data: refresh OpenData feeds $(date -u +%F) [skip ci]"
             if ! git push origin HEAD:main; then
@@ -82,6 +85,7 @@ jobs:
           cp -R construction-radar-web/. /tmp/opendata-site/construction-radar-web/
           cp -R tender-intelligence-web/. /tmp/opendata-site/tender-intelligence-web/
           cp -R procurement-anomaly-radar-web/. /tmp/opendata-site/procurement-anomaly-radar-web/
+          rm -rf /tmp/opendata-site/procurement-anomaly-radar-web/scripts
           cp -R disaster-risk-web/. /tmp/opendata-site/disaster-risk-web/
           cp -R urban-renewal-radar-web/. /tmp/opendata-site/urban-renewal-radar-web/
           cp -R 停車/. /tmp/opendata-site/停車/
