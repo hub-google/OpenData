@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-30T09:54:19.782081+00:00",
+  "generated_at": "2026-10-01T06:11:48.155629+00:00",
   "disclaimer": "異常訊號與查核優先度只用於篩選值得人工核對的公開資料，不代表違法、圍標、圖利或弊案認定。",
   "sources": [
     {
@@ -24,7 +24,7 @@
       "key": "debarred",
       "name": "拒絕往來廠商公告",
       "ok": true,
-      "records": 1728,
+      "records": 1737,
       "url": "https://web.pcc.gov.tw/vms/rvlm/rvlmPublicSearch/queryRVFile/json",
       "dataset": "https://data.gov.tw/dataset/5988",
       "frequency": "每1日"
@@ -52,26 +52,13 @@
     "cases": 700,
     "restricted_awards": 21677,
     "restricted_tenders": 28658,
-    "debarred_records": 1728,
+    "debarred_records": 1737,
     "concentration_records": 28,
     "ratio_benchmark_records": 7,
     "combo_cases": 697
   },
   "benchmarks": {
     "engineering_lowest_bid_ratios": [
-      {
-        "month": "11502",
-        "count": 1885,
-        "floor_ratio": 0,
-        "budget_ratio": 0,
-        "raw": {
-          "月份": "11502",
-          "決標件數": "1885",
-          "底價合計": "20404683987",
-          "預算合計": "21588118786",
-          "決標金額合計": "18396767739"
-        }
-      },
       {
         "month": "11503",
         "count": 2892,
@@ -138,16 +125,29 @@
         }
       },
       {
+        "month": "11508",
+        "count": 2596,
+        "floor_ratio": 0,
+        "budget_ratio": 0,
+        "raw": {
+          "月份": "11508",
+          "決標件數": "2596",
+          "底價合計": "22468570267",
+          "預算合計": "23214477592",
+          "決標金額合計": "21028408684"
+        }
+      },
+      {
         "month": "合計",
-        "count": 15993,
+        "count": 16704,
         "floor_ratio": 0,
         "budget_ratio": 0,
         "raw": {
           "月份": "合計",
-          "決標件數": "15993",
-          "底價合計": "153333459955",
-          "預算合計": "159236132014",
-          "決標金額合計": "142918519276"
+          "決標件數": "16704",
+          "底價合計": "155397346235",
+          "預算合計": "160862490820",
+          "決標金額合計": "145550160221"
         }
       }
     ]
