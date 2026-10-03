@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>建案商機雷達｜OpenData Lab</title>
+<style>
+:root{--nav:#101828;--bg:#f4f6f8;--card:#fff;--text:#182230;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--green:#059669;--orange:#ea580c}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text)}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}.side{background:var(--nav);color:white;padding:26px 18px;position:sticky;top:0;height:100vh}
+.brand{font-weight:800;font-size:20px}.sub{font-size:12px;color:#98a2b3;line-height:1.6;margin-top:8px}.nav{margin-top:30px}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;padding:12px;border-radius:9px;text-align:left;margin:4px 0;cursor:pointer}.nav button.active,.nav button:hover{background:#1d2939;color:white}
+.main{padding:26px 30px 50px;max-width:1500px}.top{display:flex;justify-content:space-between;gap:16px}.eyebrow{color:var(--blue);font-weight:700;font-size:12px}.top h1{margin:5px 0 6px;font-size:28px}.muted{color:var(--muted);font-size:13px}.pill{background:#eef4ff;color:#1849a9;padding:8px 11px;border-radius:999px;font-size:12px;font-weight:700;height:fit-content}
+.notice{margin:18px 0;background:#fffaeb;border:1px solid #fedf89;padding:11px 14px;border-radius:10px;font-size:12px;color:#7a2e0e}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:12px}.stat{padding:16px}.stat span{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:24px;margin-top:6px}
+.panel{margin-top:14px;padding:16px}.filters{display:grid;grid-template-columns:1.5fr repeat(4,1fr) auto;gap:10px}.filters input,.filters select{border:1px solid #d0d5dd;border-radius:8px;padding:10px;background:#fff;width:100%}.btn{border:0;background:var(--blue);color:white;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}.btn.ghost{background:#fff;color:#344054;border:1px solid #d0d5dd}
+.tablehead,.row{display:grid;grid-template-columns:70px 1.5fr 1fr 1fr 1fr 1fr 44px;align-items:center;gap:10px}.tablehead{padding:12px 10px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--line)}.row{padding:13px 10px;border-bottom:1px solid #f0f2f5}.row:hover{background:#f9fafb}.score{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:18px;background:#eff8ff;color:#175cd3}.score.hot{background:#fff4ed;color:#c4320a}.name{border:0;background:none;padding:0;font-size:14px;font-weight:750;cursor:pointer;text-align:left}.small{font-size:11px;color:var(--muted);margin-top:4px}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{font-size:13px}.tag{padding:4px 8px;border-radius:999px;background:#f2f4f7;font-size:11px}.stage{padding:4px 8px;border-radius:999px;background:#ecfdf3;color:#027a48;font-size:11px}.star{font-size:22px;background:none;border:0;color:#f59e0b;cursor:pointer}
+.drawerback{position:fixed;inset:0;background:#10182870}.drawer{position:fixed;right:0;top:0;width:min(520px,92vw);height:100vh;background:#fff;padding:26px;overflow:auto;box-shadow:-12px 0 30px #0002}.hidden{display:none}.close{float:right;border:0;background:#f2f4f7;width:36px;height:36px;border-radius:9px;cursor:pointer}.reason{background:#f8fafc;border:1px solid var(--line);padding:10px;border-radius:9px;margin:8px 0;font-size:13px}.detail{display:grid;grid-template-columns:1fr 1fr;gap:10px}.detail>div{border:1px solid var(--line);padding:11px;border-radius:9px}.detail span{display:block;color:var(--muted);font-size:11px}.detail b{font-size:14px}
+@media(max-width:1000px){.shell{grid-template-columns:1fr}.side{display:none}.main{padding:18px}.grid{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.tablehead{display:none}.row{grid-template-columns:58px 1fr 1fr}.row .hide-sm{display:none}}@media(max-width:600px){.grid,.filters{grid-template-columns:1fr}.row{grid-template-columns:55px 1fr 40px}.row .metric,.row .tagwrap{display:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="side"><div class="brand">OpenData Lab</div><div class="sub">Top 5 商業化原型<br>03｜建案商機雷達</div><div class="nav"><button class="active">建案清單</button><button onclick="showSaved()">追蹤案件</button><button onclick="location.href='../'">企業商機雷達</button></div></aside>
+<main class="main">
+<div class="top"><div><div class="eyebrow">CONSTRUCTION SALES INTELLIGENCE</div><h1>建案商機雷達</h1><div class="muted">不是找建商名單，而是找「現在最可能要買你的產品」的建案。</div></div><div class="pill">商業價值 91 / 100</div></div>
+<div class="notice">MVP 示意版：以下建案為模擬資料，用來展示產品邏輯。正式版可串臺北市建照、使照、公司與稅籍資料，每月自動更新。</div>
+<div class="grid"><div class="stat"><span>候選建案</span><strong id="sTotal">0</strong></div><div class="stat"><span>高商機 ≥ 85</span><strong id="sHot">0</strong></div><div class="stat"><span>總戶數</span><strong id="sUnits">0</strong></div><div class="stat"><span>估計設備機會</span><strong id="sValue">—</strong></div></div>
+<section class="panel">
+<div class="filters">
+<input id="q" placeholder="搜尋建案、建商或行政區">
+<select id="product"><option value="充電樁">充電樁</option><option value="電梯">電梯</option><option value="消防">消防</option><option value="衛浴">衛浴</option><option value="空調">空調</option></select>
+<select id="stage"><option value="all">所有階段</option><option>剛發建照</option><option>施工中</option><option>接近竣工</option></select>
+<select id="district"><option value="all">所有行政區</option></select>
+<select id="sort"><option value="score">依商機分數</option><option value="units">依戶數</option><option value="parking">依車位</option><option value="value">依工程金額</option></select>
+<button class="btn ghost" onclick="exportCsv()">匯出 CSV</button>
+</div>
+<div class="tablehead"><div>分數</div><div>建案</div><div>階段</div><div>規模</div><div>車位</div><div>工程金額</div><div></div></div><div id="list"></div>
+</section></main></div>
+<div id="back" class="drawerback hidden" onclick="closeDrawer()"></div><aside id="drawer" class="drawer hidden"><button class="close" onclick="closeDrawer()">×</button><div id="drawerBody"></div></aside>
+<script>
+const projects=[
+{id:1,n:"內湖科技段 A 案",d:"內湖區",builder:"宏岳建設",stage:"施工中",units:186,floors:24,parking:214,value:2350,months:14,address:"內湖區瑞光路周邊",score:93},
+{id:2,n:"南港經貿雙塔住宅案",d:"南港區",builder:"鼎禾開發",stage:"剛發建照",units:268,floors:29,parking:310,value:4180,months:30,address:"南港區經貿二路周邊",score:92},
+{id:3,n:"士林北投科學園區住宅案",d:"北投區",builder:"大誠建設",stage:"施工中",units:152,floors:21,parking:188,value:1980,months:18,address:"北投區承德路周邊",score:89},
+{id:4,n:"信義松德都更案",d:"信義區",builder:"遠峰建設",stage:"接近竣工",units:96,floors:26,parking:132,value:1760,months:6,address:"信義區松德路周邊",score:88},
+{id:5,n:"文山景美河岸住宅",d:"文山區",builder:"森聯開發",stage:"施工中",units:220,floors:18,parking:240,value:2050,months:17,address:"文山區木柵路周邊",score:87},
+{id:6,n:"中山南京商住大樓",d:"中山區",builder:"華曜建設",stage:"剛發建照",units:74,floors:19,parking:96,value:1320,months:28,address:"中山區南京東路周邊",score:84},
+{id:7,n:"大安和平都更案",d:"大安區",builder:"築森建設",stage:"施工中",units:82,floors:20,parking:116,value:1680,months:12,address:"大安區和平東路周邊",score:85},
+{id:8,n:"松山民生社區更新案",d:"松山區",builder:"日辰建設",stage:"接近竣工",units:118,floors:16,parking:140,value:1490,months:5,address:"松山區民生東路周邊",score:83},
+{id:9,n:"萬華雙園大型住宅",d:"萬華區",builder:"合盛開發",stage:"剛發建照",units:312,floors:22,parking:350,value:2840,months:31,address:"萬華區西園路周邊",score:90},
+{id:10,n:"北投奇岩新城二期",d:"北投區",builder:"青岳建設",stage:"施工中",units:145,floors:15,parking:168,value:1210,months:16,address:"北投區三合街周邊",score:82}
+];
+let saved=new Set(JSON.parse(localStorage.getItem("construction-radar-saved")||"[]")),current=[];
+const el=id=>document.getElementById(id);
+[...new Set(projects.map(x=>x.d))].sort().forEach(v=>el("district").insertAdjacentHTML("beforeend","<option>"+v+"</option>"));
+function fit(p){
+ const prod=el("product").value;let s=p.score;
+ if(prod==="充電樁")s+=p.parking>=200?5:p.parking>=120?3:0;
+ if(prod==="電梯")s+=p.floors>=24?5:p.floors>=18?3:0;
+ if(prod==="消防")s+=p.floors>=20||p.units>=200?5:2;
+ if(prod==="衛浴")s+=p.units>=200?5:p.units>=120?3:0;
+ if(prod==="空調")s+=p.value>=2000?5:2;
+ if(p.stage==="施工中")s+=2;if(p.stage==="接近竣工"&&["充電樁","空調","衛浴"].includes(prod))s+=2;
+ return Math.min(99,s);
+}
+function oppValue(p){const prod=el("product").value;if(prod==="充電樁")return p.parking*6;if(prod==="電梯")return Math.max(2,Math.ceil(p.floors/8))*120;if(prod==="消防")return Math.round(p.value*.04);if(prod==="衛浴")return p.units*18;return Math.round(p.value*.06)}
+function render(){
+ const q=el("q").value.trim(),st=el("stage").value,d=el("district").value,sort=el("sort").value;
+ current=projects.filter(p=>(!q||(p.n+p.builder+p.d).includes(q))&&(st==="all"||p.stage===st)&&(d==="all"||p.d===d));
+ current.sort((a,b)=>sort==="units"?b.units-a.units:sort==="parking"?b.parking-a.parking:sort==="value"?b.value-a.value:fit(b)-fit(a));
+ el("list").innerHTML=current.map(p=>'<div class="row"><div class="score '+(fit(p)>=90?"hot":"")+'">'+fit(p)+'</div><div><button class="name" onclick="openDrawer('+p.id+')">'+p.n+'</button><div class="small">'+p.d+' ・ '+p.builder+'</div></div><div class="tagwrap"><span class="stage">'+p.stage+'</span></div><div class="metric"><span>戶數 / 樓層</span><b>'+p.units+' 戶 / '+p.floors+'F</b></div><div class="metric hide-sm"><span>停車位</span><b>'+p.parking+'</b></div><div class="metric hide-sm"><span>工程金額</span><b>'+p.value.toLocaleString()+' 百萬</b></div><button class="star" onclick="toggleSave('+p.id+')">'+(saved.has(p.id)?"★":"☆")+'</button></div>').join("");
+ el("sTotal").textContent=current.length;el("sHot").textContent=current.filter(p=>fit(p)>=85).length;el("sUnits").textContent=current.reduce((s,p)=>s+p.units,0).toLocaleString();el("sValue").textContent=(current.reduce((s,p)=>s+oppValue(p),0)/100).toFixed(1)+" 百萬";
+}
+function openDrawer(id){const p=projects.find(x=>x.id===id);el("drawerBody").innerHTML='<div class="eyebrow">'+p.d+' ・ '+p.stage+'</div><h2>'+p.n+'</h2><p class="muted">'+p.address+' ｜ 起造人：'+p.builder+'</p><div class="score" style="width:70px;height:70px;font-size:26px">'+fit(p)+'</div><h3>為什麼現在值得追</h3><div class="reason">✓ 產品：'+el("product").value+'，預估機會值約 '+oppValue(p).toLocaleString()+' 萬元</div><div class="reason">✓ '+p.units+' 戶、'+p.parking+' 車位、'+p.floors+' 層</div><div class="reason">✓ 距預估完工約 '+p.months+' 個月，適合依採購週期安排拜訪</div><div class="detail"><div><span>工程金額</span><b>'+p.value.toLocaleString()+' 百萬</b></div><div><span>建商</span><b>'+p.builder+'</b></div><div><span>戶數</span><b>'+p.units+'</b></div><div><span>停車位</span><b>'+p.parking+'</b></div></div>';el("back").classList.remove("hidden");el("drawer").classList.remove("hidden")}
+function closeDrawer(){el("back").classList.add("hidden");el("drawer").classList.add("hidden")}
+function toggleSave(id){saved.has(id)?saved.delete(id):saved.add(id);localStorage.setItem("construction-radar-saved",JSON.stringify([...saved]));render()}
+function showSaved(){current=projects.filter(p=>saved.has(p.id));el("list").innerHTML=current.map(p=>'<div class="row"><div class="score">'+fit(p)+'</div><div><button class="name" onclick="openDrawer('+p.id+')">'+p.n+'</button><div class="small">'+p.d+' ・ '+p.builder+'</div></div><div class="tagwrap"><span class="stage">'+p.stage+'</span></div><div class="metric"><span>戶數</span><b>'+p.units+'</b></div><div class="metric hide-sm"><span>車位</span><b>'+p.parking+'</b></div><div class="metric hide-sm"><span>工程金額</span><b>'+p.value+' 百萬</b></div><button class="star" onclick="toggleSave('+p.id+')">★</button></div>').join("")}
+function exportCsv(){const rows=[["建案","行政區","建商","階段","商機分數","戶數","樓層","停車位","工程金額百萬"],...current.map(p=>[p.n,p.d,p.builder,p.stage,fit(p),p.units,p.floors,p.parking,p.value])];const csv="\ufeff"+rows.map(r=>r.join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="建案商機雷達.csv";a.click()}
+["q","product","stage","district","sort"].forEach(id=>el(id).addEventListener(id==="q"?"input":"change",render));render();
+</script>
+</body></html>
