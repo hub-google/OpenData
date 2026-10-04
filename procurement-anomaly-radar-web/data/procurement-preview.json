@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-03T06:24:01.536079+00:00",
+  "generated_at": "2026-10-04T06:02:01.357163+00:00",
   "summary": {
     "cases": 700,
     "restricted_awards": 21677,
     "restricted_tenders": 28658,
     "debarred_records": 1740,
-    "concentration_records": 28,
+    "concentration_records": 32,
     "ratio_benchmark_records": 7,
     "combo_cases": 697
   },
@@ -41,7 +41,7 @@
       "key": "concentration",
       "name": "近1年工程採購案廠商於同一機關得標20件以上之廠商及機關名",
       "ok": true,
-      "records": 28,
+      "records": 32,
       "url": "https://web.pcc.gov.tw/wr-report/wr/homeClient/downloadOpenAPI?reportId=EngOrgAndBidder2",
       "dataset": "https://data.gov.tw/dataset/6410",
       "frequency": "每1月"

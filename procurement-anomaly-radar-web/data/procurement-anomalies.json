@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03T06:24:01.536079+00:00",
+  "generated_at": "2026-10-04T06:02:01.357163+00:00",
   "disclaimer": "異常訊號與查核優先度只用於篩選值得人工核對的公開資料，不代表違法、圍標、圖利或弊案認定。",
   "sources": [
     {
@@ -33,7 +33,7 @@
       "key": "concentration",
       "name": "近1年工程採購案廠商於同一機關得標20件以上之廠商及機關名",
       "ok": true,
-      "records": 28,
+      "records": 32,
       "url": "https://web.pcc.gov.tw/wr-report/wr/homeClient/downloadOpenAPI?reportId=EngOrgAndBidder2",
       "dataset": "https://data.gov.tw/dataset/6410",
       "frequency": "每1月"
@@ -53,7 +53,7 @@
     "restricted_awards": 21677,
     "restricted_tenders": 28658,
     "debarred_records": 1740,
-    "concentration_records": 28,
+    "concentration_records": 32,
     "ratio_benchmark_records": 7,
     "combo_cases": 697
   },
@@ -95723,23 +95723,23 @@
       "category": "工程類",
       "method": "",
       "date": "",
-      "amount": 46562800,
+      "amount": 54925000,
       "vendor": "協全營造有限公司",
       "priority": 87,
       "signals": [
         "concentration"
       ],
       "reasons": [
-        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 38 件。"
+        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 42 件。"
       ],
       "metrics": [
         {
           "label": "近1年同機關得標件數",
-          "value": 38
+          "value": 42
         },
         {
           "label": "廠商得標金額",
-          "value": 46562800
+          "value": 54925000
         },
         {
           "label": "可交叉限制性決標紀錄",
@@ -95778,23 +95778,23 @@
       "category": "工程類",
       "method": "",
       "date": "",
-      "amount": 45206100,
+      "amount": 42206700,
       "vendor": "禾晟營造有限公司",
       "priority": 87,
       "signals": [
         "concentration"
       ],
       "reasons": [
-        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 53 件。"
+        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 49 件。"
       ],
       "metrics": [
         {
           "label": "近1年同機關得標件數",
-          "value": 53
+          "value": 49
         },
         {
           "label": "廠商得標金額",
-          "value": 45206100
+          "value": 42206700
         },
         {
           "label": "可交叉限制性決標紀錄",
@@ -95833,23 +95833,23 @@
       "category": "工程類",
       "method": "",
       "date": "",
-      "amount": 26245900,
+      "amount": 30211900,
       "vendor": "桂洲土木包工業",
       "priority": 87,
       "signals": [
         "concentration"
       ],
       "reasons": [
-        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 40 件。"
+        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 43 件。"
       ],
       "metrics": [
         {
           "label": "近1年同機關得標件數",
-          "value": 40
+          "value": 43
         },
         {
           "label": "廠商得標金額",
-          "value": 26245900
+          "value": 30211900
         },
         {
           "label": "可交叉限制性決標紀錄",
