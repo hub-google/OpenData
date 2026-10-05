@@ -15,7 +15,10 @@ jobs:
           set -euxo pipefail
           mkdir -p /tmp/linepay-work analysis
           git clone --depth 1 https://github.com/MarkSunDev/skill-android-app-analyzer.git /tmp/analyzer
-          python3 /tmp/analyzer/apkcombo_download.py com.linepaytw.upay --output /tmp/linepay-work
+          python3 -m venv /tmp/apkvenv
+          /tmp/apkvenv/bin/pip install -q --upgrade pip
+          /tmp/apkvenv/bin/pip install -q requests beautifulsoup4
+          /tmp/apkvenv/bin/python /tmp/analyzer/apkcombo_download.py com.linepaytw.upay --output /tmp/linepay-work
           echo "=== downloaded files ==="
           find /tmp/linepay-work -type f -maxdepth 8 -printf '%p %s bytes\n' | sort
           ART=$(find /tmp/linepay-work -type f \( -name '*.apk' -o -name '*.xapk' \) | head -n 1)
