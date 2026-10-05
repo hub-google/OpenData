@@ -1,0 +1,78 @@
+name: linepay-apk-probe
+
+on:
+  push:
+    branches:
+      - tmp-linepay-apk-probe-20261005
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install downloader
+        run: |
+          python -m pip install --upgrade pip
+          pip install goopdl==1.0.0
+
+      - name: Download LINE Pay 5.7.1 from Google Play
+        run: |
+          mkdir -p out
+          goopdl download com.linepaytw.upay -v 105070100 --country TW --no-extras -o out
+          find out -maxdepth 2 -type f -printf '%p %s bytes\n' | sort
+          sha256sum out/* || true
+
+      - name: Install JADX
+        run: |
+          URL=$(curl -fsSL https://api.github.com/repos/skylot/jadx/releases/latest | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .browser_download_url' | head -n1)
+          echo "JADX=$URL"
+          curl -fL "$URL" -o jadx.zip
+          unzip -q jadx.zip -d jadx
+          chmod +x jadx/bin/jadx
+
+      - name: Static analysis
+        run: |
+          BASE=$(find out -type f -name '*.apk' | sort | head -n1)
+          echo "BASE=$BASE"
+          mkdir -p analysis/jadx
+          ./jadx/bin/jadx -d analysis/jadx "$BASE" >/tmp/jadx.log 2>&1 || true
+
+          {
+            echo '=== APK FILES ==='
+            find out -type f -maxdepth 2 -printf '%p %s bytes\n' | sort
+            echo
+            echo '=== JADX LOG TAIL ==='
+            tail -n 80 /tmp/jadx.log || true
+            echo
+            echo '=== MANIFEST: exported/view/browsable/schemes ==='
+            grep -RniE 'android:exported="true"|android.intent.action.VIEW|android.intent.category.BROWSABLE|android:scheme=|android:host=|android:path' analysis/jadx/resources/AndroidManifest.xml 2>/dev/null || true
+            echo
+            echo '=== EPI / TRANSFER / TWQR / DEEP LINK HITS ==='
+            grep -RniE 'epiTransferSendMoney|TWQR|twqr|TransferSendMoney|sendMoney|cross.?institution|EpiActivity|line3rdp|deep.?link|url.?scheme' analysis/jadx/sources analysis/jadx/resources 2>/dev/null | head -n 4000 || true
+            echo
+            echo '=== URI / INTENT CONTEXT AROUND epiTransferSendMoney ==='
+            FILES=$(grep -Ril 'epiTransferSendMoney' analysis/jadx/sources 2>/dev/null || true)
+            for f in $FILES; do
+              echo "--- $f ---"
+              grep -n -C 40 'epiTransferSendMoney' "$f" || true
+            done
+          } > analysis/report.txt
+
+          cp analysis/jadx/resources/AndroidManifest.xml analysis/AndroidManifest.xml 2>/dev/null || true
+          cat analysis/report.txt
+
+      - name: Upload probe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linepay-apk-probe
+          path: |
+            out/
+            analysis/report.txt
+            analysis/AndroidManifest.xml
+          if-no-files-found: error
+          retention-days: 1
