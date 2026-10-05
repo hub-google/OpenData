@@ -10,27 +10,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Inspect MyAndroid launcher extension
+      - name: Inspect MyAndroid Firefox extension
         run: |
           set -euxo pipefail
           mkdir -p analysis/ext
-          ID='npcbllnmpghkdjeaocappkiedkiljhgk'
-          URL="https://clients2.google.com/service/update2/crx?response=redirect&prodversion=140.0.0.0&acceptformat=crx2,crx3&x=id%3D$ID%26uc"
-          curl -fL --retry 2 -A 'Mozilla/5.0' "$URL" -o analysis/myandroid.crx
-          file analysis/myandroid.crx
-          unzip -q analysis/myandroid.crx -d analysis/ext || true
+          URL='https://addons.mozilla.org/firefox/downloads/file/4237400/android_emulator_myandroid-1.1.3.xpi'
+          curl -fL --retry 2 -A 'Mozilla/5.0' "$URL" -o analysis/myandroid.xpi
+          file analysis/myandroid.xpi
+          ls -lh analysis/myandroid.xpi
+          unzip -q analysis/myandroid.xpi -d analysis/ext
           echo '===== FILES ====='
-          find analysis/ext -maxdepth 3 -type f -printf '%p %s\n' | sort
+          find analysis/ext -maxdepth 4 -type f -printf '%p %s\n' | sort
           echo '===== MANIFEST ====='
           cat analysis/ext/manifest.json || true
           echo
           echo '===== URL / API HITS ====='
-          grep -RniE 'https?://|apkid|stream\.myandroid|apkonline|emulator|iframe|launch|run.*apk|connector' analysis/ext | head -n 5000 || true
+          grep -RniE 'https?://|apkid|stream\.myandroid|myandroid\.org|apkonline|emulator|iframe|launch|run.*apk|connector|websock|vnc' analysis/ext | head -n 10000 || true
 
       - name: Upload extension inspection
         uses: actions/upload-artifact@v4
         with:
-          name: myandroid-extension-inspection
-          path: |
-            analysis/ext/
+          name: myandroid-firefox-extension
+          path: analysis/ext/
           retention-days: 1
