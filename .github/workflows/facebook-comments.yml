@@ -24,6 +24,7 @@ jobs:
       - name: Run diagnostic
         env:
           TARGET_URL: https://www.facebook.com/chiangwanan/posts/pfbid0evMdVBKwyEsdgsoPZEfWj1PERJfQZNEGtATLVLYoyVShwonSRQnSmL1ntKY2L68Fl
+          TARGET_N: 1000
         run: python experiments/facebook-comments/diagnostic.py
       - uses: actions/upload-artifact@v4
         if: always()
