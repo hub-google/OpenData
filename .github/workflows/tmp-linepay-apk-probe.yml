@@ -8,37 +8,78 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
-      - name: Launch LINE Pay cloud Android page and inspect session
+      - uses: actions/checkout@v4
+
+      - name: Resolve latest Aurora Store APK from F-Droid
         run: |
           set -euxo pipefail
           mkdir -p analysis
-          URL='https://www.myandroid.org/run/start.php?apkid=com.linepaytw.upay&app=com-linepaytw-upay'
+          curl -fsSL 'https://f-droid.org/api/v1/packages/com.aurora.store' -o /tmp/aurora.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/aurora.json'))
+          print(json.dumps(d, indent=2)[:4000])
+          # API shapes have changed; collect likely apkName fields recursively
+          def walk(x):
+              if isinstance(x, dict):
+                  for k,v in x.items():
+                      if k == 'apkName' and isinstance(v,str):
+                          print('APKNAME='+v)
+                      walk(v)
+              elif isinstance(x,list):
+                  for v in x: walk(v)
+          walk(d)
+          PY
+          APKNAME=$(python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/aurora.json'))
+          vals=[]
+          def walk(x):
+              if isinstance(x,dict):
+                  if isinstance(x.get('apkName'),str): vals.append(x['apkName'])
+                  for v in x.values(): walk(v)
+              elif isinstance(x,list):
+                  for v in x: walk(v)
+          walk(d)
+          print(vals[0] if vals else '')
+          PY
+          )
+          test -n "$APKNAME"
+          curl -fL "https://f-droid.org/repo/$APKNAME" -o analysis/aurora.apk
+          ls -lh analysis/aurora.apk
+          sha256sum analysis/aurora.apk
 
-          echo '===== CURL HEADERS ====='
-          curl -sS -L -D analysis/headers.txt -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' "$URL" -o analysis/raw.html || true
-          cat analysis/headers.txt
-          echo '===== RAW KEY LINES ====='
-          grep -n -C 8 -Ei 'iframe|websocket|wss:|novnc|vnc|session|token|stream|apkid|linepay|start|connect|canvas|webrtc|socket' analysis/raw.html | head -n 5000 || true
+      - name: Boot Android and inspect Aurora onboarding
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect
+          disable-animations: true
+          script: |
+            set -eux
+            adb install analysis/aurora.apk
+            adb shell monkey -p com.aurora.store -c android.intent.category.LAUNCHER 1
+            sleep 10
+            adb shell uiautomator dump /sdcard/window.xml || true
+            adb pull /sdcard/window.xml analysis/aurora-onboarding.xml || true
+            adb exec-out screencap -p > analysis/aurora-onboarding.png
+            echo '===== CURRENT ACTIVITY ====='
+            adb shell dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity' || true
+            echo '===== UI XML ====='
+            cat analysis/aurora-onboarding.xml || true
+            echo '===== PACKAGE ====='
+            adb shell dumpsys package com.aurora.store | grep -E 'versionName|versionCode|Activity Resolver|scheme|BROWSABLE' -A4 -B2 | head -n 2000 || true
 
-          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)
-          echo "CHROME=$CHROME"
-          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-            --window-size=1440,1200 --virtual-time-budget=45000 --dump-dom "$URL" > analysis/dom.html 2>analysis/chrome.err || true
-          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-            --window-size=1440,1200 --virtual-time-budget=45000 --screenshot=analysis/page.png "$URL" 2>>analysis/chrome.err || true
-
-          echo '===== EXECUTED DOM KEY LINES ====='
-          grep -n -C 12 -Ei 'iframe|websocket|wss:|novnc|vnc|session|token|stream|apkid|linepay|connect|canvas|webrtc|socket' analysis/dom.html | head -n 10000 || true
-          echo '===== CHROME ERR ====='
-          tail -n 300 analysis/chrome.err || true
-          echo '===== FILES ====='
-          ls -lh analysis/
-
-      - name: Upload cloud Android inspection
+      - name: Upload emulator inspection
         uses: actions/upload-artifact@v4
         with:
-          name: linepay-cloud-android-session
-          path: analysis/
+          name: aurora-onboarding
+          path: |
+            analysis/aurora-onboarding.xml
+            analysis/aurora-onboarding.png
           retention-days: 1
