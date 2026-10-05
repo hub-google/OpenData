@@ -10,25 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Query ApkOnline internal APK search
+      - name: Inspect MyAndroid launcher extension
         run: |
           set -euxo pipefail
-          mkdir -p analysis
-          URL='https://www.apkonline.net/phpextensions/apksearch/connectorapksearch.php?q=com.linepaytw.upay'
-          curl -fL --retry 2 --connect-timeout 20 -A 'Mozilla/5.0' "$URL" -o analysis/apkonline-search.html
-          echo '===== RESPONSE SIZE ====='
-          wc -c analysis/apkonline-search.html
-          echo '===== RESPONSE ====='
-          cat analysis/apkonline-search.html
+          mkdir -p analysis/ext
+          ID='npcbllnmpghkdjeaocappkiedkiljhgk'
+          URL="https://clients2.google.com/service/update2/crx?response=redirect&prodversion=140.0.0.0&acceptformat=crx2,crx3&x=id%3D$ID%26uc"
+          curl -fL --retry 2 -A 'Mozilla/5.0' "$URL" -o analysis/myandroid.crx
+          file analysis/myandroid.crx
+          unzip -q analysis/myandroid.crx -d analysis/ext || true
+          echo '===== FILES ====='
+          find analysis/ext -maxdepth 3 -type f -printf '%p %s\n' | sort
+          echo '===== MANIFEST ====='
+          cat analysis/ext/manifest.json || true
           echo
-          echo '===== LINKS ====='
-          grep -oE 'https?://[^"<> ]+' analysis/apkonline-search.html | sort -u || true
-          echo '===== HREFS ====='
-          grep -oE 'href="[^"]+"' analysis/apkonline-search.html | sort -u || true
+          echo '===== URL / API HITS ====='
+          grep -RniE 'https?://|apkid|stream\.myandroid|apkonline|emulator|iframe|launch|run.*apk|connector' analysis/ext | head -n 5000 || true
 
-      - name: Upload discovery
+      - name: Upload extension inspection
         uses: actions/upload-artifact@v4
         with:
-          name: apkonline-search
-          path: analysis/apkonline-search.html
+          name: myandroid-extension-inspection
+          path: |
+            analysis/ext/
           retention-days: 1
