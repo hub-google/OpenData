@@ -17,7 +17,6 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install playwright
-      - run: python -m playwright install --with-deps chromium
       - name: Run diagnostic
         env:
           TARGET_URL: https://www.facebook.com/chiangwanan/posts/pfbid0evMdVBKwyEsdgsoPZEfWj1PERJfQZNEGtATLVLYoyVShwonSRQnSmL1ntKY2L68Fl
