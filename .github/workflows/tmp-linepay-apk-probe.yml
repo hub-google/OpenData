@@ -8,26 +8,37 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Inspect LINE Pay MyAndroid app page
+      - name: Launch LINE Pay cloud Android page and inspect session
         run: |
           set -euxo pipefail
           mkdir -p analysis
-          URL='https://www.myandroid.org/apps/com-linepaytw-upay'
-          curl -fL --retry 2 -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' "$URL" -o analysis/page.html
-          echo '===== SIZE ====='
-          wc -c analysis/page.html
-          echo '===== LINEPAY/PACKAGE/RUN CONTEXT ====='
-          grep -n -C 8 -Ei 'com\.linepaytw\.upay|run this app|run online|start\.php|start_extension|android-emulator|apkid|filepath|onclick|button|form|href=' analysis/page.html | head -n 5000 || true
-          echo '===== SCRIPT SOURCES ====='
-          grep -oE '<script[^>]+src=[^ >]+' analysis/page.html | head -n 500 || true
-          echo '===== INLINE JS HINTS ====='
-          grep -n -C 5 -Ei 'window\.open|location\.|fetch\(|XMLHttpRequest|ajax|apkid|filepath|run/' analysis/page.html | head -n 3000 || true
+          URL='https://www.myandroid.org/run/start.php?apkid=com.linepaytw.upay&app=com-linepaytw-upay'
 
-      - name: Upload page
+          echo '===== CURL HEADERS ====='
+          curl -sS -L -D analysis/headers.txt -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' "$URL" -o analysis/raw.html || true
+          cat analysis/headers.txt
+          echo '===== RAW KEY LINES ====='
+          grep -n -C 8 -Ei 'iframe|websocket|wss:|novnc|vnc|session|token|stream|apkid|linepay|start|connect|canvas|webrtc|socket' analysis/raw.html | head -n 5000 || true
+
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)
+          echo "CHROME=$CHROME"
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+            --window-size=1440,1200 --virtual-time-budget=45000 --dump-dom "$URL" > analysis/dom.html 2>analysis/chrome.err || true
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+            --window-size=1440,1200 --virtual-time-budget=45000 --screenshot=analysis/page.png "$URL" 2>>analysis/chrome.err || true
+
+          echo '===== EXECUTED DOM KEY LINES ====='
+          grep -n -C 12 -Ei 'iframe|websocket|wss:|novnc|vnc|session|token|stream|apkid|linepay|connect|canvas|webrtc|socket' analysis/dom.html | head -n 10000 || true
+          echo '===== CHROME ERR ====='
+          tail -n 300 analysis/chrome.err || true
+          echo '===== FILES ====='
+          ls -lh analysis/
+
+      - name: Upload cloud Android inspection
         uses: actions/upload-artifact@v4
         with:
-          name: myandroid-linepay-page
-          path: analysis/page.html
+          name: linepay-cloud-android-session
+          path: analysis/
           retention-days: 1
