@@ -9,6 +9,10 @@ on:
 
 jobs:
   scrape:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -24,6 +28,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: fb-comment-diagnostic
+          name: fb-comment-diagnostic-${{ matrix.shard }}
           path: fb_diag
           retention-days: 7
