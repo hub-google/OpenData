@@ -8,71 +8,66 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Resolve latest Aurora Store APK from F-Droid
+      - name: Probe Aurora auth exactly like official app
         run: |
           set -euxo pipefail
           mkdir -p analysis
-          curl -fsSL 'https://f-droid.org/api/v1/packages/com.aurora.store' -o /tmp/aurora.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/aurora.json'))
-          print(json.dumps(d, indent=2)[:4000])
-          # API shapes have changed; collect likely apkName fields recursively
-          def walk(x):
-              if isinstance(x, dict):
-                  for k,v in x.items():
-                      if k == 'apkName' and isinstance(v,str):
-                          print('APKNAME='+v)
-                      walk(v)
-              elif isinstance(x,list):
-                  for v in x: walk(v)
-          walk(d)
-          PY
-          VC=$(python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/aurora.json'))
-          print(d['suggestedVersionCode'])
-          PY
-          )
-          APKNAME="com.aurora.store_${VC}.apk"
-          echo "APKNAME=$APKNAME"
-          curl -fL "https://f-droid.org/repo/$APKNAME" -o analysis/aurora.apk
-          ls -lh analysis/aurora.apk
-          sha256sum analysis/aurora.apk
+          cat > analysis/device.json <<'JSON'
+          {
+            "UserReadableName":"Google Pixel 7a",
+            "Build.HARDWARE":"lynx",
+            "Build.RADIO":"unknown",
+            "Build.FINGERPRINT":"google/lynx/lynx:14/UQ1A.240205.002/11224170:user/release-keys",
+            "Build.BRAND":"google",
+            "Build.DEVICE":"lynx",
+            "Build.VERSION.SDK_INT":"34",
+            "Build.VERSION.RELEASE":"14",
+            "Build.MODEL":"Pixel 7a",
+            "Build.MANUFACTURER":"Google",
+            "Build.PRODUCT":"lynx",
+            "Build.ID":"UQ1A.240205.002",
+            "Build.BOOTLOADER":"lynx-1.0",
+            "TouchScreen":"3",
+            "Keyboard":"1",
+            "Navigation":"1",
+            "ScreenLayout":"2",
+            "HasHardKeyboard":"false",
+            "HasFiveWayNavigation":"false",
+            "Screen.Density":"420",
+            "Screen.Width":"1080",
+            "Screen.Height":"2400",
+            "Platforms":"arm64-v8a,armeabi-v7a",
+            "Features":"",
+            "Locales":"en_US,zh_TW",
+            "SharedLibraries":"",
+            "GL.Version":"196610",
+            "GL.Extensions":"",
+            "Client":"android-google",
+            "GSF.version":"245000000",
+            "Vending.version":"84022600",
+            "Vending.versionString":"45.2.26-23",
+            "Roaming":"mobile-notroaming",
+            "TimeZone":"Asia/Taipei",
+            "CellOperator":"466",
+            "SimOperator":"92"
+          }
+          JSON
+          for ua in             'com.aurora.store-4.8.4-76'             'com.aurora.store-4.8.3-75'             'com.aurora.store-4.7.4-65'
+          do
+            echo "===== UA $ua ====="
+            curl -sS -D - -o "analysis/body-$(echo "$ua"|tr .- _).txt" \
+              -A "$ua" -H 'Content-Type: application/json' \
+              --data-binary @analysis/device.json \
+              'https://auroraoss.com/api/auth' || true
+            echo '--- body ---'
+            cat "analysis/body-$(echo "$ua"|tr .- _).txt" || true
+            echo
+          done
 
-      - name: Boot Android and inspect Aurora onboarding
-        uses: reactivecircus/android-emulator-runner@v2
+      - uses: actions/upload-artifact@v4
         with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: pixel_6
-          emulator-options: -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect
-          disable-animations: true
-          script: |
-            set -eux
-            adb install analysis/aurora.apk
-            adb shell monkey -p com.aurora.store -c android.intent.category.LAUNCHER 1
-            sleep 10
-            adb shell uiautomator dump /sdcard/window.xml || true
-            adb pull /sdcard/window.xml analysis/aurora-onboarding.xml || true
-            adb exec-out screencap -p > analysis/aurora-onboarding.png
-            echo '===== CURRENT ACTIVITY ====='
-            adb shell dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity' || true
-            echo '===== UI XML ====='
-            cat analysis/aurora-onboarding.xml || true
-            echo '===== PACKAGE ====='
-            adb shell dumpsys package com.aurora.store | grep -E 'versionName|versionCode|Activity Resolver|scheme|BROWSABLE' -A4 -B2 | head -n 2000 || true
-
-      - name: Upload emulator inspection
-        uses: actions/upload-artifact@v4
-        with:
-          name: aurora-onboarding
-          path: |
-            analysis/aurora-onboarding.xml
-            analysis/aurora-onboarding.png
+          name: aurora-auth-probe
+          path: analysis/
           retention-days: 1
