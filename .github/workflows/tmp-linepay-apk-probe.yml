@@ -32,21 +32,14 @@ jobs:
                   for v in x: walk(v)
           walk(d)
           PY
-          APKNAME=$(python3 - <<'PY'
+          VC=$(python3 - <<'PY'
           import json
           d=json.load(open('/tmp/aurora.json'))
-          vals=[]
-          def walk(x):
-              if isinstance(x,dict):
-                  if isinstance(x.get('apkName'),str): vals.append(x['apkName'])
-                  for v in x.values(): walk(v)
-              elif isinstance(x,list):
-                  for v in x: walk(v)
-          walk(d)
-          print(vals[0] if vals else '')
+          print(d['suggestedVersionCode'])
           PY
           )
-          test -n "$APKNAME"
+          APKNAME="com.aurora.store_${VC}.apk"
+          echo "APKNAME=$APKNAME"
           curl -fL "https://f-droid.org/repo/$APKNAME" -o analysis/aurora.apk
           ls -lh analysis/aurora.apk
           sha256sum analysis/aurora.apk
