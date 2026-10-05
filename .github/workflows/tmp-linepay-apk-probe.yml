@@ -8,108 +8,27 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
-      - name: Download LINE Pay 5.7.1 from Google Play community pool
+      - name: Query ApkOnline internal APK search
         run: |
           set -euxo pipefail
-          mkdir -p analysis/apks
-          python3 -m venv /tmp/gplayvenv
-          /tmp/gplayvenv/bin/pip install -q --upgrade pip
-          /tmp/gplayvenv/bin/pip install -q "git+https://github.com/rehmatworks/gplaydl.git@v2.1.7"
-          /tmp/gplayvenv/bin/gplaydl download com.linepaytw.upay \
-            -d https://dispenser.gplaydl.com/api/auth \
-            -v 105070100 \
-            --no-extras \
-            -o analysis/apks
-          echo "=== downloaded files ==="
-          find analysis/apks -type f -printf '%p %s bytes\n' | sort
-          sha256sum analysis/apks/*
-          ART=$(find analysis/apks -type f -name 'com.linepaytw.upay-105070100.apk' | head -n 1)
-          test -n "$ART"
-          cp "$ART" analysis/package.bin
-          echo "$ART" > analysis/source-path.txt
-          file analysis/package.bin
+          mkdir -p analysis
+          URL='https://www.apkonline.net/phpextensions/apksearch/connectorapksearch.php?q=com.linepaytw.upay'
+          curl -fL --retry 2 --connect-timeout 20 -A 'Mozilla/5.0' "$URL" -o analysis/apkonline-search.html
+          echo '===== RESPONSE SIZE ====='
+          wc -c analysis/apkonline-search.html
+          echo '===== RESPONSE ====='
+          cat analysis/apkonline-search.html
+          echo
+          echo '===== LINKS ====='
+          grep -oE 'https?://[^"<> ]+' analysis/apkonline-search.html | sort -u || true
+          echo '===== HREFS ====='
+          grep -oE 'href="[^"]+"' analysis/apkonline-search.html | sort -u || true
 
-      - name: Extract base APK if needed
-        run: |
-          set -euxo pipefail
-          mkdir -p analysis/extracted
-          if file analysis/package.bin | grep -qi "Zip archive"; then
-            unzip -q analysis/package.bin -d analysis/extracted || true
-          fi
-
-          BASE=""
-          for f in analysis/extracted/*.apk analysis/package.bin; do
-            test -f "$f" || continue
-            if unzip -l "$f" 2>/dev/null | grep -q "AndroidManifest.xml"; then
-              BASE="$f"
-              if [[ "$f" == *"base.apk" ]]; then break; fi
-            fi
-          done
-          test -n "$BASE"
-          cp "$BASE" analysis/base.apk
-          echo "BASE=$BASE"
-          ls -lh analysis/base.apk
-          sha256sum analysis/base.apk
-
-      - name: Install JADX and Android tools
-        run: |
-          set -euxo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq aapt
-          URL=$(curl -fsSL https://api.github.com/repos/skylot/jadx/releases/latest | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .browser_download_url' | head -n1)
-          test -n "$URL"
-          curl -fL "$URL" -o /tmp/jadx.zip
-          unzip -q /tmp/jadx.zip -d /tmp/jadx
-          chmod +x /tmp/jadx/bin/jadx
-
-      - name: Decompile and map external routes
-        run: |
-          set -euxo pipefail
-          aapt dump badging analysis/base.apk > analysis/badging.txt
-          aapt dump xmltree analysis/base.apk AndroidManifest.xml > analysis/manifest-aapt.txt
-          mkdir -p analysis/jadx
-          /tmp/jadx/bin/jadx --show-bad-code -d analysis/jadx analysis/base.apk >/tmp/jadx.log 2>&1 || true
-          tail -n 150 /tmp/jadx.log > analysis/jadx-log-tail.txt
-
-          {
-            echo "===== BADGING ====="
-            cat analysis/badging.txt
-            echo
-            echo "===== EXPORTED / BROWSABLE / URI MANIFEST CONTEXT ====="
-            grep -n -C 12 -E 'activity|activity-alias|android:exported|android.intent.action.VIEW|android.intent.category.BROWSABLE|android:scheme|android:host|android:path' analysis/manifest-aapt.txt || true
-            echo
-            echo "===== TARGET SYMBOL HITS ====="
-            grep -RniE 'epiTransferSendMoney|TWQRP|TWQR|twqr|TransferSendMoney|sendMoney|transferSend|EpiActivity|line3rdp|deep.?link|bank.?code|account.?number' analysis/jadx/sources analysis/jadx/resources 2>/dev/null | head -n 10000 || true
-            echo
-            echo "===== URI-LIKE STRINGS ====="
-            grep -RhoE '[A-Za-z][A-Za-z0-9+.-]{2,40}://[^" <>[:space:]]*' analysis/jadx/sources analysis/jadx/resources 2>/dev/null | sort -u | grep -Ei 'line|pay|epi|transfer|twqr|money' | head -n 2000 || true
-            echo
-            echo "===== epiTransferSendMoney CONTEXT ====="
-            grep -Ril 'epiTransferSendMoney' analysis/jadx/sources 2>/dev/null | while read -r f; do
-              echo "--- $f ---"
-              grep -n -C 120 'epiTransferSendMoney' "$f" || true
-            done
-            echo
-            echo "===== EpiActivity CONTEXT ====="
-            grep -Ril 'EpiActivity' analysis/jadx/sources 2>/dev/null | head -n 100 | while read -r f; do
-              echo "--- $f ---"
-              grep -n -C 60 'EpiActivity' "$f" | head -n 1200 || true
-            done
-          } > analysis/report.txt
-
-          cat analysis/report.txt
-
-      - name: Upload text analysis only
+      - name: Upload discovery
         uses: actions/upload-artifact@v4
         with:
-          name: linepay-static-analysis
-          path: |
-            analysis/report.txt
-            analysis/badging.txt
-            analysis/manifest-aapt.txt
-            analysis/jadx-log-tail.txt
-            analysis/source-path.txt
-          if-no-files-found: error
+          name: apkonline-search
+          path: analysis/apkonline-search.html
           retention-days: 1
