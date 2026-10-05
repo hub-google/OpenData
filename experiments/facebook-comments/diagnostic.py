@@ -110,19 +110,22 @@ async def main():
     # Test replay of the *naturally valid next-page cursor*, not null.
     probes={}
     chosen="KEEP";chosen_name="most_relevant"
+    probe_cursor_by_name={"most_relevant":start_cursor,"all_comments":None,"newest":None}
     for name,tok in [("most_relevant","KEEP"),("all_comments",ALL_TOKEN),("newest",NEWEST_TOKEN)]:
-      st,o,txt=await inpage_fetch(start_cursor,tok)
+      st,o,txt=await inpage_fetch(probe_cursor_by_name[name],tok)
       c=comments_obj(o) if o else None
       probes[name]={"status":st,"ok":bool(c),"edges":len(c.get("edges",[])) if c else 0,
                     "page_info":c.get("page_info") if c else None,"head":txt[:160]}
       (OUT/f"probe_{name}.txt").write_text(txt,encoding="utf-8")
-      if name=="all_comments" and c: chosen=ALL_TOKEN;chosen_name=name
-      elif name=="newest" and c and chosen_name=="most_relevant": chosen=NEWEST_TOKEN;chosen_name=name
+      if name=="newest" and c:
+        chosen=NEWEST_TOKEN;chosen_name=name
+      elif name=="all_comments" and c and chosen_name=="most_relevant":
+        chosen=ALL_TOKEN;chosen_name=name
 
     if not any(x["ok"] for x in probes.values()):
       raise RuntimeError("In-page GraphQL fetch still rejected: "+json.dumps(probes,ensure_ascii=False))
 
-    rows={};pages=[];cursor=start_cursor
+    rows={};pages=[];cursor=(None if chosen_name in ["newest","all_comments"] else start_cursor)
     # Include response for first valid fetch, then continue cursor chain.
     for page_no in range(1,10000):
       st,o,txt=await inpage_fetch(cursor,chosen)
