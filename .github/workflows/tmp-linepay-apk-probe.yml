@@ -8,62 +8,112 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install downloader
+      - name: Download LINE Pay package from public APK mirrors
         run: |
-          python -m pip install --upgrade pip
-          pip install goopdl==1.0.0
+          set -euxo pipefail
+          mkdir -p out analysis
+          UA='Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36'
+          success=0
 
-      - name: Download LINE Pay 5.7.1 from Google Play
-        run: |
-          mkdir -p out
-          goopdl download com.linepaytw.upay -v 105070100 --country TW --no-extras -o out
-          find out -maxdepth 2 -type f -printf '%p %s bytes\n' | sort
-          sha256sum out/* || true
+          # APKPure direct CDN supports package-id based latest downloads.
+          for kind in XAPK APK; do
+            url="https://d.apkpure.com/b/$kind/com.linepaytw.upay?version=latest"
+            echo "TRY $url"
+            if curl --retry 2 --connect-timeout 20 -fL -A "$UA" "$url" -o "out/linepay.$(echo "$kind" | tr A-Z a-z)"; then
+              file "out/linepay.$(echo "$kind" | tr A-Z a-z)" || true
+              stat -c '%n %s bytes' "out/linepay.$(echo "$kind" | tr A-Z a-z)" || true
+              size=$(stat -c %s "out/linepay.$(echo "$kind" | tr A-Z a-z)")
+              if [ "$size" -gt 1000000 ]; then success=1; break; fi
+            fi
+          done
 
-      - name: Install JADX
+          if [ "$success" -ne 1 ]; then
+            # Capture package pages for diagnostics / alternate direct links.
+            for url in               'https://apkpure.com/line-pay/com.linepaytw.upay'               'https://apkcombo.com/line-pay/com.linepaytw.upay/'               'https://m.memuplay.com/tw/download-com.linepaytw.upay.html'
+            do
+              echo "PAGE $url"
+              curl --retry 1 --connect-timeout 15 -L -A "$UA" -sS "$url" | head -c 300000 > "analysis/page-$(echo "$url" | sha256sum | cut -c1-10).html" || true
+            done
+            grep -RhoE 'https?[^"''' <>]+(apk|xapk)[^"''' <>]*' analysis | head -n 100 || true
+            exit 2
+          fi
+
+          echo '=== downloaded ==='
+          find out -type f -printf '%p %s bytes\n'
+          sha256sum out/*
+
+          # XAPK is a zip. Extract and locate base package.
+          if file out/linepay.xapk 2>/dev/null | grep -qi 'zip'; then
+            mkdir -p out/x
+            unzip -q out/linepay.xapk -d out/x
+          fi
+          find out -type f -name '*.apk' -printf '%p %s bytes\n' | sort
+
+      - name: Install analysis tools
         run: |
+          set -eux
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq aapt
           URL=$(curl -fsSL https://api.github.com/repos/skylot/jadx/releases/latest | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .browser_download_url' | head -n1)
-          echo "JADX=$URL"
           curl -fL "$URL" -o jadx.zip
           unzip -q jadx.zip -d jadx
           chmod +x jadx/bin/jadx
 
-      - name: Static analysis
+      - name: Identify base APK and decompile
         run: |
-          BASE=$(find out -type f -name '*.apk' | sort | head -n1)
+          set -euxo pipefail
+          CANDIDATES=$(find out -type f \( -name '*.apk' -o -name 'linepay.apk' \) || true)
+          BASE=''
+          for f in $CANDIDATES; do
+            pkg=$(aapt dump badging "$f" 2>/dev/null | sed -n "s/package: name='\([^']*\)'.*/\1/p" | head -1 || true)
+            vc=$(aapt dump badging "$f" 2>/dev/null | sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" | head -1 || true)
+            vn=$(aapt dump badging "$f" 2>/dev/null | sed -n "s/.*versionName='\([^']*\)'.*/\1/p" | head -1 || true)
+            echo "$f package=$pkg versionCode=$vc versionName=$vn"
+            if [ "$pkg" = 'com.linepaytw.upay' ] && [ -z "$BASE" ]; then BASE="$f"; fi
+          done
+          if [ -z "$BASE" ]; then
+            # An APKPure APK response itself may be the base APK but have no .apk extension after our naming.
+            for f in out/linepay.apk out/linepay.xapk; do
+              [ -f "$f" ] || continue
+              pkg=$(aapt dump badging "$f" 2>/dev/null | sed -n "s/package: name='\([^']*\)'.*/\1/p" | head -1 || true)
+              if [ "$pkg" = 'com.linepaytw.upay' ]; then BASE="$f"; break; fi
+            done
+          fi
           echo "BASE=$BASE"
+          [ -n "$BASE" ]
+
+          aapt dump badging "$BASE" > analysis/badging.txt || true
+          aapt dump xmltree "$BASE" AndroidManifest.xml > analysis/manifest-aapt.txt || true
+
           mkdir -p analysis/jadx
-          ./jadx/bin/jadx -d analysis/jadx "$BASE" >/tmp/jadx.log 2>&1 || true
+          ./jadx/bin/jadx --show-bad-code -d analysis/jadx "$BASE" >/tmp/jadx.log 2>&1 || true
+          tail -n 100 /tmp/jadx.log > analysis/jadx-log-tail.txt
 
           {
-            echo '=== APK FILES ==='
-            find out -type f -maxdepth 2 -printf '%p %s bytes\n' | sort
+            echo '=== BADGING ==='
+            cat analysis/badging.txt
             echo
-            echo '=== JADX LOG TAIL ==='
-            tail -n 80 /tmp/jadx.log || true
+            echo '=== EXPORTED / VIEW / BROWSABLE / URI SCHEMES (manifest) ==='
+            grep -n -C 8 -E 'E: activity|E: activity-alias|android:exported|android.intent.action.VIEW|android.intent.category.BROWSABLE|android:scheme|android:host|android:path' analysis/manifest-aapt.txt || true
             echo
-            echo '=== MANIFEST: exported/view/browsable/schemes ==='
-            grep -RniE 'android:exported="true"|android.intent.action.VIEW|android.intent.category.BROWSABLE|android:scheme=|android:host=|android:path' analysis/jadx/resources/AndroidManifest.xml 2>/dev/null || true
+            echo '=== TARGET STRING HITS ==='
+            grep -RniE 'epiTransferSendMoney|TWQR|twqr|TransferSendMoney|sendMoney|transferSend|EpiActivity|line3rdp|deep.?link|scheme|bank.?code|account.?number' analysis/jadx/sources analysis/jadx/resources 2>/dev/null | head -n 8000 || true
             echo
-            echo '=== EPI / TRANSFER / TWQR / DEEP LINK HITS ==='
-            grep -RniE 'epiTransferSendMoney|TWQR|twqr|TransferSendMoney|sendMoney|cross.?institution|EpiActivity|line3rdp|deep.?link|url.?scheme' analysis/jadx/sources analysis/jadx/resources 2>/dev/null | head -n 4000 || true
-            echo
-            echo '=== URI / INTENT CONTEXT AROUND epiTransferSendMoney ==='
-            FILES=$(grep -Ril 'epiTransferSendMoney' analysis/jadx/sources 2>/dev/null || true)
-            for f in $FILES; do
+            echo '=== CONTEXT: epiTransferSendMoney ==='
+            grep -Ril 'epiTransferSendMoney' analysis/jadx/sources 2>/dev/null | while read f; do
               echo "--- $f ---"
-              grep -n -C 40 'epiTransferSendMoney' "$f" || true
+              grep -n -C 80 'epiTransferSendMoney' "$f" || true
+            done
+            echo
+            echo '=== CONTEXT: EpiActivity ==='
+            grep -Ril 'EpiActivity' analysis/jadx/sources 2>/dev/null | head -n 50 | while read f; do
+              echo "--- $f ---"
+              grep -n -C 30 'EpiActivity' "$f" | head -n 500 || true
             done
           } > analysis/report.txt
 
-          cp analysis/jadx/resources/AndroidManifest.xml analysis/AndroidManifest.xml 2>/dev/null || true
           cat analysis/report.txt
 
       - name: Upload probe artifact
@@ -73,6 +123,8 @@ jobs:
           path: |
             out/
             analysis/report.txt
-            analysis/AndroidManifest.xml
+            analysis/badging.txt
+            analysis/manifest-aapt.txt
+            analysis/jadx-log-tail.txt
           if-no-files-found: error
           retention-days: 1
