@@ -10,23 +10,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Download LINE Pay with current APKCombo flow
+      - name: Download LINE Pay 5.7.1 from Google Play community pool
         run: |
           set -euxo pipefail
-          mkdir -p /tmp/linepay-work analysis
-          git clone --depth 1 https://github.com/MarkSunDev/skill-android-app-analyzer.git /tmp/analyzer
-          python3 -m venv /tmp/apkvenv
-          /tmp/apkvenv/bin/pip install -q --upgrade pip
-          /tmp/apkvenv/bin/pip install -q requests beautifulsoup4
-          /tmp/apkvenv/bin/python /tmp/analyzer/apkcombo_download.py com.linepaytw.upay --output /tmp/linepay-work
+          mkdir -p analysis/apks
+          python3 -m venv /tmp/gplayvenv
+          /tmp/gplayvenv/bin/pip install -q --upgrade pip
+          /tmp/gplayvenv/bin/pip install -q "git+https://github.com/rehmatworks/gplaydl.git@v2.1.7"
+          /tmp/gplayvenv/bin/gplaydl download com.linepaytw.upay \
+            -d https://dispenser.gplaydl.com/api/auth \
+            -v 105070100 \
+            --no-extras \
+            -o analysis/apks
           echo "=== downloaded files ==="
-          find /tmp/linepay-work -type f -maxdepth 8 -printf '%p %s bytes\n' | sort
-          ART=$(find /tmp/linepay-work -type f \( -name '*.apk' -o -name '*.xapk' \) | head -n 1)
+          find analysis/apks -type f -printf '%p %s bytes\n' | sort
+          sha256sum analysis/apks/*
+          ART=$(find analysis/apks -type f -name 'com.linepaytw.upay-105070100.apk' | head -n 1)
           test -n "$ART"
           cp "$ART" analysis/package.bin
           echo "$ART" > analysis/source-path.txt
           file analysis/package.bin
-          sha256sum analysis/package.bin
 
       - name: Extract base APK if needed
         run: |
