@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-10-12T07:17:16.392480+00:00",
+  "generated_at": "2026-10-13T07:03:49.988392+00:00",
   "summary": {
     "cases": 700,
     "restricted_awards": 21677,
     "restricted_tenders": 28658,
-    "debarred_records": 1736,
+    "debarred_records": 1739,
     "concentration_records": 32,
     "ratio_benchmark_records": 7,
     "combo_cases": 697
@@ -32,7 +32,7 @@
       "key": "debarred",
       "name": "拒絕往來廠商公告",
       "ok": true,
-      "records": 1736,
+      "records": 1739,
       "url": "https://web.pcc.gov.tw/vms/rvlm/rvlmPublicSearch/queryRVFile/json",
       "dataset": "https://data.gov.tw/dataset/5988",
       "frequency": "每1日"
@@ -57,6 +57,664 @@
     }
   ],
   "cases": [
+    {
+      "id": "award:11405SB057:高雄市政府工務局公園處",
+      "kind": "actual_award",
+      "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+      "agency": "高雄市政府工務局公園處",
+      "case_no": "11405SB057",
+      "category": "污水及垃圾處理、公共衛生及其他環保服務",
+      "method": "最有利標",
+      "date": "2025-10-29",
+      "amount": 4980000,
+      "vendor": "寶鎰興業有限公司",
+      "priority": 96,
+      "signals": [
+        "concentration",
+        "debarred",
+        "ratio",
+        "restricted"
+      ],
+      "reasons": [
+        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
+        "得標廠商可在工程會拒絕往來廠商公告資料找到紀錄，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。",
+        "同案招標資料可匹配預算 5,000,000 元，決標金額／預算 = 99.60%；列為標比偏高訊號，僅供查核排序。",
+        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
+      ],
+      "metrics": [
+        {
+          "label": "決標金額",
+          "value": 4980000
+        },
+        {
+          "label": "同機關同廠商限制性決標紀錄",
+          "value": 4
+        },
+        {
+          "label": "官方集中度名單",
+          "value": false
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 1
+        },
+        {
+          "label": "決標／預算比",
+          "value": 99.6
+        }
+      ],
+      "history": [
+        {
+          "date": "2025-10-29",
+          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB057",
+          "amount": 4980000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB057",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB050",
+          "amount": 6896000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB050",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB049",
+          "amount": 6908600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB049",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB048",
+          "amount": 9812600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB048",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "政府電子採購網查詢｜案號 11405SB057",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
+    {
+      "id": "award:11405SB048:高雄市政府工務局公園處",
+      "kind": "actual_award",
+      "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+      "agency": "高雄市政府工務局公園處",
+      "case_no": "11405SB048",
+      "category": "污水及垃圾處理、公共衛生及其他環保服務",
+      "method": "最有利標",
+      "date": "2025-08-01",
+      "amount": 9812600,
+      "vendor": "寶鎰興業有限公司",
+      "priority": 94,
+      "signals": [
+        "concentration",
+        "debarred",
+        "restricted"
+      ],
+      "reasons": [
+        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
+        "得標廠商可在工程會拒絕往來廠商公告資料找到紀錄，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。",
+        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
+      ],
+      "metrics": [
+        {
+          "label": "決標金額",
+          "value": 9812600
+        },
+        {
+          "label": "同機關同廠商限制性決標紀錄",
+          "value": 4
+        },
+        {
+          "label": "官方集中度名單",
+          "value": false
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 1
+        },
+        {
+          "label": "決標／預算比",
+          "value": 98.94
+        }
+      ],
+      "history": [
+        {
+          "date": "2025-10-29",
+          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB057",
+          "amount": 4980000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB057",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB050",
+          "amount": 6896000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB050",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB049",
+          "amount": 6908600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB049",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB048",
+          "amount": 9812600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB048",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "政府電子採購網查詢｜案號 11405SB048",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
+    {
+      "id": "award:11405SB049:高雄市政府工務局公園處",
+      "kind": "actual_award",
+      "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+      "agency": "高雄市政府工務局公園處",
+      "case_no": "11405SB049",
+      "category": "污水及垃圾處理、公共衛生及其他環保服務",
+      "method": "最有利標",
+      "date": "2025-08-01",
+      "amount": 6908600,
+      "vendor": "寶鎰興業有限公司",
+      "priority": 94,
+      "signals": [
+        "concentration",
+        "debarred",
+        "restricted"
+      ],
+      "reasons": [
+        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
+        "得標廠商可在工程會拒絕往來廠商公告資料找到紀錄，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。",
+        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
+      ],
+      "metrics": [
+        {
+          "label": "決標金額",
+          "value": 6908600
+        },
+        {
+          "label": "同機關同廠商限制性決標紀錄",
+          "value": 4
+        },
+        {
+          "label": "官方集中度名單",
+          "value": false
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 1
+        },
+        {
+          "label": "決標／預算比",
+          "value": 98.69
+        }
+      ],
+      "history": [
+        {
+          "date": "2025-10-29",
+          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB057",
+          "amount": 4980000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB057",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB050",
+          "amount": 6896000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB050",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB049",
+          "amount": 6908600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB049",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB048",
+          "amount": 9812600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB048",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "政府電子採購網查詢｜案號 11405SB049",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
+    {
+      "id": "award:11405SB050:高雄市政府工務局公園處",
+      "kind": "actual_award",
+      "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+      "agency": "高雄市政府工務局公園處",
+      "case_no": "11405SB050",
+      "category": "污水及垃圾處理、公共衛生及其他環保服務",
+      "method": "最有利標",
+      "date": "2025-08-01",
+      "amount": 6896000,
+      "vendor": "寶鎰興業有限公司",
+      "priority": 94,
+      "signals": [
+        "concentration",
+        "debarred",
+        "restricted"
+      ],
+      "reasons": [
+        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
+        "得標廠商可在工程會拒絕往來廠商公告資料找到紀錄，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。",
+        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
+      ],
+      "metrics": [
+        {
+          "label": "決標金額",
+          "value": 6896000
+        },
+        {
+          "label": "同機關同廠商限制性決標紀錄",
+          "value": 4
+        },
+        {
+          "label": "官方集中度名單",
+          "value": false
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 1
+        },
+        {
+          "label": "決標／預算比",
+          "value": 98.51
+        }
+      ],
+      "history": [
+        {
+          "date": "2025-10-29",
+          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB057",
+          "amount": 4980000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB057",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB050",
+          "amount": 6896000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB050",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB049",
+          "amount": 6908600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB049",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB048",
+          "amount": 9812600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB048",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "政府電子採購網查詢｜案號 11405SB050",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
     {
       "id": "award:ADI-114111506:數位發展部數位產業署",
       "kind": "actual_award",
@@ -2005,1012 +2663,6 @@
         {
           "label": "政府電子採購網查詢｜案號 1141023",
           "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=1141023&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:114307430224:臺東縣政府",
-      "kind": "actual_award",
-      "title": "溫泉國小--114學年度臺東市一區聯合委外辦理學生午餐供應勞務採購案",
-      "agency": "臺東縣政府",
-      "case_no": "114307430224",
-      "category": "提供食物服務",
-      "method": "最有利標",
-      "date": "2025-05-20",
-      "amount": 44289833,
-      "vendor": "松揚餐飲股份有限公司",
-      "priority": 90,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 44,289,833 元，決標金額／預算 = 100.00%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 7 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 44289833
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 7
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 100.0
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-07-02",
-          "title": "興隆國小--臺東二區聯合114學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114310130272",
-          "amount": 41009550,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114310130272",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114310130272&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-06-23",
-          "title": "寶桑國中--114學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114200330304",
-          "amount": 5559400,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114200330304",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114200330304&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-06-17",
-          "title": "瑞源國小--臺東縣鹿野鄉瑞源國民小學代辦關山(鹿野鄉、延平鄉、海端鄉、關山鎮及池上",
-          "case_no": "114307530256",
-          "amount": 39254502,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114307530256",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114307530256&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-06-11",
-          "title": "豐田國小--114學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114309030290",
-          "amount": 3876240,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114309030290",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114309030290&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-06-02",
-          "title": "東海國中--112學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114200230266",
-          "amount": 7709280,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114200230266",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114200230266&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-05-23",
-          "title": "新生國中--114學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114200130243",
-          "amount": 15758580,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114200130243",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114200130243&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-05-20",
-          "title": "溫泉國小--114學年度臺東市一區聯合委外辦理學生午餐供應勞務採購案",
-          "case_no": "114307430224",
-          "amount": 44289833,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114307430224",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114307430224&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 114307430224",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114307430224&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:nwda1140164:勞動部勞動力發展署北基宜花金馬分署",
-      "kind": "actual_award",
-      "title": "115年度特定對象就業促進實施計畫-彙管作業服務",
-      "agency": "勞動部勞動力發展署北基宜花金馬分署",
-      "case_no": "nwda1140164",
-      "category": "政府行政服務",
-      "method": "最有利標",
-      "date": "2025-12-10",
-      "amount": 41104279,
-      "vendor": "社團法人中華民國全國中小企業總會",
-      "priority": 90,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 41,104,279 元，決標金額／預算 = 100.00%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 8 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 41104279
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 8
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 100.0
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-12-22",
-          "title": "115年度產業人才投資方案暨訓練推廣-彙管作業服務",
-          "case_no": "nwda1140153",
-          "amount": 41038006,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140153",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140153&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-19",
-          "title": "115年度推動事業單位辦理工作崗位訓練暨大專校院辦理就業服務計畫-彙管作業服務",
-          "case_no": "nwda1140162",
-          "amount": 18050000,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140162",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140162&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-19",
-          "title": "115年度協助事業單位辦理員工進修訓練相關計畫-彙管作業服務",
-          "case_no": "nwda1140061",
-          "amount": 92724140,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140061",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140061&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-18",
-          "title": "115年度創業諮詢輔導服務計畫-彙管作業服務",
-          "case_no": "nwda1140158",
-          "amount": 15047000,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140158",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140158&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-17",
-          "title": "115年度提升青年職能培力業務-彙管作業服務",
-          "case_no": "nwda1140234",
-          "amount": 18615000,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140234",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140234&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-16",
-          "title": "115年度銀髮人才發展與就業服務計畫-彙管作業服務",
-          "case_no": "nwda1140146",
-          "amount": 15564915,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140146",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140146&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-10",
-          "title": "115年度特定對象就業促進實施計畫-彙管作業服務",
-          "case_no": "nwda1140164",
-          "amount": 41104279,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140164",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140164&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-11-06",
-          "title": "115年度推動外展及鄉鎮台等就業服務相關工作計畫-彙管作業服務",
-          "case_no": "nwda1140133",
-          "amount": 54177787,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140133",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140133&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 nwda1140164",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140164&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:nwda1140153:勞動部勞動力發展署北基宜花金馬分署",
-      "kind": "actual_award",
-      "title": "115年度產業人才投資方案暨訓練推廣-彙管作業服務",
-      "agency": "勞動部勞動力發展署北基宜花金馬分署",
-      "case_no": "nwda1140153",
-      "category": "政府行政服務",
-      "method": "最有利標",
-      "date": "2025-12-22",
-      "amount": 41038006,
-      "vendor": "社團法人中華民國全國中小企業總會",
-      "priority": 90,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 41,038,006 元，決標金額／預算 = 100.00%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 8 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 41038006
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 8
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 100.0
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-12-22",
-          "title": "115年度產業人才投資方案暨訓練推廣-彙管作業服務",
-          "case_no": "nwda1140153",
-          "amount": 41038006,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140153",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140153&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-19",
-          "title": "115年度推動事業單位辦理工作崗位訓練暨大專校院辦理就業服務計畫-彙管作業服務",
-          "case_no": "nwda1140162",
-          "amount": 18050000,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140162",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140162&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-19",
-          "title": "115年度協助事業單位辦理員工進修訓練相關計畫-彙管作業服務",
-          "case_no": "nwda1140061",
-          "amount": 92724140,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140061",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140061&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-18",
-          "title": "115年度創業諮詢輔導服務計畫-彙管作業服務",
-          "case_no": "nwda1140158",
-          "amount": 15047000,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140158",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140158&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-17",
-          "title": "115年度提升青年職能培力業務-彙管作業服務",
-          "case_no": "nwda1140234",
-          "amount": 18615000,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140234",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140234&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-16",
-          "title": "115年度銀髮人才發展與就業服務計畫-彙管作業服務",
-          "case_no": "nwda1140146",
-          "amount": 15564915,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140146",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140146&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-10",
-          "title": "115年度特定對象就業促進實施計畫-彙管作業服務",
-          "case_no": "nwda1140164",
-          "amount": 41104279,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140164",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140164&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-11-06",
-          "title": "115年度推動外展及鄉鎮台等就業服務相關工作計畫-彙管作業服務",
-          "case_no": "nwda1140133",
-          "amount": 54177787,
-          "vendor": "社團法人中華民國全國中小企業總會",
-          "agency": "勞動部勞動力發展署北基宜花金馬分署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 nwda1140133",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140133&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 nwda1140153",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=nwda1140153&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:114310130272:臺東縣政府",
-      "kind": "actual_award",
-      "title": "興隆國小--臺東二區聯合114學年度委外辦理學校午餐供應勞務採購",
-      "agency": "臺東縣政府",
-      "case_no": "114310130272",
-      "category": "提供食物服務",
-      "method": "最有利標",
-      "date": "2025-07-02",
-      "amount": 41009550,
-      "vendor": "松揚餐飲股份有限公司",
-      "priority": 90,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 41,009,550 元，決標金額／預算 = 100.00%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 7 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 41009550
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 7
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 100.0
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-07-02",
-          "title": "興隆國小--臺東二區聯合114學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114310130272",
-          "amount": 41009550,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114310130272",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114310130272&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-06-23",
-          "title": "寶桑國中--114學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114200330304",
-          "amount": 5559400,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114200330304",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114200330304&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-06-17",
-          "title": "瑞源國小--臺東縣鹿野鄉瑞源國民小學代辦關山(鹿野鄉、延平鄉、海端鄉、關山鎮及池上",
-          "case_no": "114307530256",
-          "amount": 39254502,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114307530256",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114307530256&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-06-11",
-          "title": "豐田國小--114學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114309030290",
-          "amount": 3876240,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114309030290",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114309030290&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-06-02",
-          "title": "東海國中--112學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114200230266",
-          "amount": 7709280,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114200230266",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114200230266&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-05-23",
-          "title": "新生國中--114學年度委外辦理學校午餐供應勞務採購",
-          "case_no": "114200130243",
-          "amount": 15758580,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114200130243",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114200130243&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-05-20",
-          "title": "溫泉國小--114學年度臺東市一區聯合委外辦理學生午餐供應勞務採購案",
-          "case_no": "114307430224",
-          "amount": 44289833,
-          "vendor": "松揚餐飲股份有限公司",
-          "agency": "臺東縣政府",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 114307430224",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114307430224&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 114310130272",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114310130272&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
           "kind": "pcc_search"
         },
         {

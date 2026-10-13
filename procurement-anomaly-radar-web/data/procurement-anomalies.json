@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-12T07:17:16.392480+00:00",
+  "generated_at": "2026-10-13T07:03:49.988392+00:00",
   "disclaimer": "異常訊號與查核優先度只用於篩選值得人工核對的公開資料，不代表違法、圍標、圖利或弊案認定。",
   "sources": [
     {
@@ -24,7 +24,7 @@
       "key": "debarred",
       "name": "拒絕往來廠商公告",
       "ok": true,
-      "records": 1736,
+      "records": 1739,
       "url": "https://web.pcc.gov.tw/vms/rvlm/rvlmPublicSearch/queryRVFile/json",
       "dataset": "https://data.gov.tw/dataset/5988",
       "frequency": "每1日"
@@ -52,7 +52,7 @@
     "cases": 700,
     "restricted_awards": 21677,
     "restricted_tenders": 28658,
-    "debarred_records": 1736,
+    "debarred_records": 1739,
     "concentration_records": 32,
     "ratio_benchmark_records": 7,
     "combo_cases": 697
@@ -153,6 +153,664 @@
     ]
   },
   "cases": [
+    {
+      "id": "award:11405SB057:高雄市政府工務局公園處",
+      "kind": "actual_award",
+      "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+      "agency": "高雄市政府工務局公園處",
+      "case_no": "11405SB057",
+      "category": "污水及垃圾處理、公共衛生及其他環保服務",
+      "method": "最有利標",
+      "date": "2025-10-29",
+      "amount": 4980000,
+      "vendor": "寶鎰興業有限公司",
+      "priority": 96,
+      "signals": [
+        "concentration",
+        "debarred",
+        "ratio",
+        "restricted"
+      ],
+      "reasons": [
+        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
+        "得標廠商可在工程會拒絕往來廠商公告資料找到紀錄，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。",
+        "同案招標資料可匹配預算 5,000,000 元，決標金額／預算 = 99.60%；列為標比偏高訊號，僅供查核排序。",
+        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
+      ],
+      "metrics": [
+        {
+          "label": "決標金額",
+          "value": 4980000
+        },
+        {
+          "label": "同機關同廠商限制性決標紀錄",
+          "value": 4
+        },
+        {
+          "label": "官方集中度名單",
+          "value": false
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 1
+        },
+        {
+          "label": "決標／預算比",
+          "value": 99.6
+        }
+      ],
+      "history": [
+        {
+          "date": "2025-10-29",
+          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB057",
+          "amount": 4980000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB057",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB050",
+          "amount": 6896000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB050",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB049",
+          "amount": 6908600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB049",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB048",
+          "amount": 9812600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB048",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "政府電子採購網查詢｜案號 11405SB057",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
+    {
+      "id": "award:11405SB048:高雄市政府工務局公園處",
+      "kind": "actual_award",
+      "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+      "agency": "高雄市政府工務局公園處",
+      "case_no": "11405SB048",
+      "category": "污水及垃圾處理、公共衛生及其他環保服務",
+      "method": "最有利標",
+      "date": "2025-08-01",
+      "amount": 9812600,
+      "vendor": "寶鎰興業有限公司",
+      "priority": 94,
+      "signals": [
+        "concentration",
+        "debarred",
+        "restricted"
+      ],
+      "reasons": [
+        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
+        "得標廠商可在工程會拒絕往來廠商公告資料找到紀錄，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。",
+        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
+      ],
+      "metrics": [
+        {
+          "label": "決標金額",
+          "value": 9812600
+        },
+        {
+          "label": "同機關同廠商限制性決標紀錄",
+          "value": 4
+        },
+        {
+          "label": "官方集中度名單",
+          "value": false
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 1
+        },
+        {
+          "label": "決標／預算比",
+          "value": 98.94
+        }
+      ],
+      "history": [
+        {
+          "date": "2025-10-29",
+          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB057",
+          "amount": 4980000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB057",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB050",
+          "amount": 6896000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB050",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB049",
+          "amount": 6908600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB049",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB048",
+          "amount": 9812600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB048",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "政府電子採購網查詢｜案號 11405SB048",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
+    {
+      "id": "award:11405SB049:高雄市政府工務局公園處",
+      "kind": "actual_award",
+      "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+      "agency": "高雄市政府工務局公園處",
+      "case_no": "11405SB049",
+      "category": "污水及垃圾處理、公共衛生及其他環保服務",
+      "method": "最有利標",
+      "date": "2025-08-01",
+      "amount": 6908600,
+      "vendor": "寶鎰興業有限公司",
+      "priority": 94,
+      "signals": [
+        "concentration",
+        "debarred",
+        "restricted"
+      ],
+      "reasons": [
+        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
+        "得標廠商可在工程會拒絕往來廠商公告資料找到紀錄，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。",
+        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
+      ],
+      "metrics": [
+        {
+          "label": "決標金額",
+          "value": 6908600
+        },
+        {
+          "label": "同機關同廠商限制性決標紀錄",
+          "value": 4
+        },
+        {
+          "label": "官方集中度名單",
+          "value": false
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 1
+        },
+        {
+          "label": "決標／預算比",
+          "value": 98.69
+        }
+      ],
+      "history": [
+        {
+          "date": "2025-10-29",
+          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB057",
+          "amount": 4980000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB057",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB050",
+          "amount": 6896000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB050",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB049",
+          "amount": 6908600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB049",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB048",
+          "amount": 9812600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB048",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "政府電子採購網查詢｜案號 11405SB049",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
+    {
+      "id": "award:11405SB050:高雄市政府工務局公園處",
+      "kind": "actual_award",
+      "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+      "agency": "高雄市政府工務局公園處",
+      "case_no": "11405SB050",
+      "category": "污水及垃圾處理、公共衛生及其他環保服務",
+      "method": "最有利標",
+      "date": "2025-08-01",
+      "amount": 6896000,
+      "vendor": "寶鎰興業有限公司",
+      "priority": 94,
+      "signals": [
+        "concentration",
+        "debarred",
+        "restricted"
+      ],
+      "reasons": [
+        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
+        "得標廠商可在工程會拒絕往來廠商公告資料找到紀錄，且資料顯示有尚未屆滿紀錄；需核對本案決標日與生效期間。",
+        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
+      ],
+      "metrics": [
+        {
+          "label": "決標金額",
+          "value": 6896000
+        },
+        {
+          "label": "同機關同廠商限制性決標紀錄",
+          "value": 4
+        },
+        {
+          "label": "官方集中度名單",
+          "value": false
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 1
+        },
+        {
+          "label": "決標／預算比",
+          "value": 98.51
+        }
+      ],
+      "history": [
+        {
+          "date": "2025-10-29",
+          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB057",
+          "amount": 4980000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB057",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB050",
+          "amount": 6896000,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB050",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB049",
+          "amount": 6908600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB049",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-01",
+          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
+          "case_no": "11405SB048",
+          "amount": 9812600,
+          "vendor": "寶鎰興業有限公司",
+          "agency": "高雄市政府工務局公園處",
+          "evidence": [
+            {
+              "label": "政府電子採購網查詢｜案號 11405SB048",
+              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+              "kind": "pcc_search"
+            },
+            {
+              "label": "官方原始 Open Data",
+              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+              "kind": "raw"
+            },
+            {
+              "label": "政府資料開放平臺說明",
+              "url": "https://data.gov.tw/dataset/165150",
+              "kind": "dataset"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "政府電子採購網查詢｜案號 11405SB050",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
     {
       "id": "award:ADI-114111506:數位發展部數位產業署",
       "kind": "actual_award",
@@ -84891,170 +85549,6 @@
       ]
     },
     {
-      "id": "award:11405SB057:高雄市政府工務局公園處",
-      "kind": "actual_award",
-      "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
-      "agency": "高雄市政府工務局公園處",
-      "case_no": "11405SB057",
-      "category": "污水及垃圾處理、公共衛生及其他環保服務",
-      "method": "最有利標",
-      "date": "2025-10-29",
-      "amount": 4980000,
-      "vendor": "寶鎰興業有限公司",
-      "priority": 88,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 5,000,000 元，決標金額／預算 = 99.60%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 4 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 4980000
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 4
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 99.6
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-10-29",
-          "title": "114-115年度金澄雙湖、獅湖、檨仔林埤濕地等公園綠地環境、植栽維護管理及緊急搶修工作(開口契約)",
-          "case_no": "11405SB057",
-          "amount": 4980000,
-          "vendor": "寶鎰興業有限公司",
-          "agency": "高雄市政府工務局公園處",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 11405SB057",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-08-01",
-          "title": "114年度左營區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
-          "case_no": "11405SB050",
-          "amount": 6896000,
-          "vendor": "寶鎰興業有限公司",
-          "agency": "高雄市政府工務局公園處",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 11405SB050",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB050&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-08-01",
-          "title": "114年度鼓山及鹽埕區(第二標)等公園綠地清潔與植栽維護管理及緊急搶修工作(開口契約)",
-          "case_no": "11405SB049",
-          "amount": 6908600,
-          "vendor": "寶鎰興業有限公司",
-          "agency": "高雄市政府工務局公園處",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 11405SB049",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB049&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-08-01",
-          "title": "114年度高雄市重要景點公園等清潔與植栽維護管理及緊急搶修工作(開口契約)",
-          "case_no": "11405SB048",
-          "amount": 9812600,
-          "vendor": "寶鎰興業有限公司",
-          "agency": "高雄市政府工務局公園處",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 11405SB048",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB048&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 11405SB057",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=11405SB057&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
       "id": "award:11403281839:臺中市政府都市發展局",
       "kind": "actual_award",
       "title": "臺中市建築物施工管理e化與建築師開從業系統擴充暨維護計畫",
@@ -126445,423 +126939,6 @@
         {
           "label": "政府電子採購網查詢｜案號 3189",
           "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=3189&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:Q114-008:內政部消防署",
-      "kind": "actual_award",
-      "title": "充實精進防救災訓練量能及設施（備）中程計畫-訓練課程推動管理團隊勞務委託採購案",
-      "agency": "內政部消防署",
-      "case_no": "Q114-008",
-      "category": "政府行政服務",
-      "method": "最有利標",
-      "date": "2025-03-28",
-      "amount": 5250000,
-      "vendor": "國立雲林科技大學",
-      "priority": 86,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 5,250,000 元，決標金額／預算 = 100.00%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 3 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 5250000
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 3
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 100.0
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-07-04",
-          "title": "消防人員毒化災應變人員化學災害搶救能力精進訓練計畫-114年度執行計畫委辦採購案",
-          "case_no": "H114-034",
-          "amount": 6998400,
-          "vendor": "國立雲林科技大學",
-          "agency": "內政部消防署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 H114-034",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=H114-034&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-03-28",
-          "title": "充實精進防救災訓練量能及設施（備）中程計畫-訓練課程推動管理團隊勞務委託採購案",
-          "case_no": "Q114-008",
-          "amount": 5250000,
-          "vendor": "國立雲林科技大學",
-          "agency": "內政部消防署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 Q114-008",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=Q114-008&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-03-21",
-          "title": "「提升高科技廠房救災量能暨建構區域聯防機制五年中程計畫」114年專案管理委外服務案",
-          "case_no": "H114-022-1",
-          "amount": 5148000,
-          "vendor": "國立雲林科技大學",
-          "agency": "內政部消防署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 H114-022-1",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=H114-022-1&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 Q114-008",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=Q114-008&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:493-114-01-891:內政部國家公園署墾丁國家公園管理處",
-      "kind": "actual_award",
-      "title": "「115年度社頂研究站梅花鹿照養及園區保育巡護勞務承攬工作」委辦勞務案",
-      "agency": "內政部國家公園署墾丁國家公園管理處",
-      "case_no": "493-114-01-891",
-      "category": "政府行政服務",
-      "method": "最有利標",
-      "date": "2025-12-10",
-      "amount": 5175000,
-      "vendor": "恩緯實業有限公司",
-      "priority": 86,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 5,186,059 元，決標金額／預算 = 99.79%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 3 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 5175000
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 3
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 99.79
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-12-10",
-          "title": "「115年度社頂研究站梅花鹿照養及園區保育巡護勞務承攬工作」委辦勞務案",
-          "case_no": "493-114-01-891",
-          "amount": 5175000,
-          "vendor": "恩緯實業有限公司",
-          "agency": "內政部國家公園署墾丁國家公園管理處",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 493-114-01-891",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=493-114-01-891&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-10",
-          "title": "115年度貓鼻頭管理站巡護、清潔及收費勞務承攬工作",
-          "case_no": "540-114-01-205",
-          "amount": 7340000,
-          "vendor": "恩緯實業有限公司",
-          "agency": "內政部國家公園署墾丁國家公園管理處",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 540-114-01-205",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=540-114-01-205&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-10",
-          "title": "115年度後壁湖管理站巡護清潔勞務承攬工作委辦勞務案",
-          "case_no": "552-114-01-173",
-          "amount": 3180000,
-          "vendor": "恩緯實業有限公司",
-          "agency": "內政部國家公園署墾丁國家公園管理處",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 552-114-01-173",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=552-114-01-173&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 493-114-01-891",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=493-114-01-891&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:H114-022-1:內政部消防署",
-      "kind": "actual_award",
-      "title": "「提升高科技廠房救災量能暨建構區域聯防機制五年中程計畫」114年專案管理委外服務案",
-      "agency": "內政部消防署",
-      "case_no": "H114-022-1",
-      "category": "政府行政服務",
-      "method": "最有利標",
-      "date": "2025-03-21",
-      "amount": 5148000,
-      "vendor": "國立雲林科技大學",
-      "priority": 86,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 5,150,000 元，決標金額／預算 = 99.96%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 3 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 5148000
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 3
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 99.96
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-07-04",
-          "title": "消防人員毒化災應變人員化學災害搶救能力精進訓練計畫-114年度執行計畫委辦採購案",
-          "case_no": "H114-034",
-          "amount": 6998400,
-          "vendor": "國立雲林科技大學",
-          "agency": "內政部消防署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 H114-034",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=H114-034&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-03-28",
-          "title": "充實精進防救災訓練量能及設施（備）中程計畫-訓練課程推動管理團隊勞務委託採購案",
-          "case_no": "Q114-008",
-          "amount": 5250000,
-          "vendor": "國立雲林科技大學",
-          "agency": "內政部消防署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 Q114-008",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=Q114-008&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-03-21",
-          "title": "「提升高科技廠房救災量能暨建構區域聯防機制五年中程計畫」114年專案管理委外服務案",
-          "case_no": "H114-022-1",
-          "amount": 5148000,
-          "vendor": "國立雲林科技大學",
-          "agency": "內政部消防署",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 H114-022-1",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=H114-022-1&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 H114-022-1",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=H114-022-1&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
           "kind": "pcc_search"
         },
         {
