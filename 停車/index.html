@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>停車｜政府 Open Data 即時車位</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;background:#f5f7fb;color:#14213d}
+header{padding:14px 18px;background:#14213d;color:#fff;display:flex;gap:12px;justify-content:space-between;align-items:center}header b{font-size:21px}.tag{font-size:12px;background:#14b8a6;padding:5px 9px;border-radius:99px}
+main{display:grid;grid-template-columns:410px 1fr;height:calc(100vh - 58px)}aside{padding:14px;overflow:auto;background:#fff;border-right:1px solid #e5e7eb}
+.controls{display:grid;grid-template-columns:1fr 110px;gap:8px}.controls input,.controls select{min-width:0;padding:11px;border:1px solid #d8dee9;border-radius:10px;background:#fff}
+.action{display:flex;gap:8px;margin-top:8px}.btn{border:0;border-radius:10px;padding:11px 13px;background:#1769e0;color:#fff;font-weight:800;cursor:pointer}.btn.secondary{background:#fff;color:#14213d;border:1px solid #d8dee9}.action .btn{flex:1}
+.filters{display:flex;gap:7px;margin:11px 0;flex-wrap:wrap}.filter{padding:7px 9px;border:1px solid #dce2ea;border-radius:99px;background:#fff;cursor:pointer;font-size:12px}.filter.active{background:#14213d;color:#fff}
+.status{font-size:12px;padding:10px 11px;background:#eef6ff;border-radius:10px;margin-bottom:10px;line-height:1.55}.status.error{background:#fff1f2;color:#9f1239}.status strong{font-weight:800}.source-note{color:#64748b}
+.summary{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:8px 0;font-size:12px;color:#64748b}
+.card{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin:9px 0;cursor:pointer}.card:hover{border-color:#1769e0}.row{display:flex;justify-content:space-between;gap:8px}.name{font-weight:800;line-height:1.35}.available{font-weight:800;color:#087f5b;white-space:nowrap}.unknown{color:#64748b}.full{color:#b42318}.muted{color:#6b7280;font-size:12px;margin-top:5px;line-height:1.45}.chips{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}.chip{font-size:11px;padding:4px 7px;border-radius:6px;background:#eef2ff}.live{background:#dcfce7;color:#166534}.cached{background:#fef3c7;color:#92400e}.free{background:#ecfdf5;color:#047857}
+#map{height:100%}.loading{padding:18px;text-align:center;color:#64748b}.empty{padding:18px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center}
+.legend{position:absolute;z-index:900;right:12px;bottom:12px;background:#fff;padding:9px 11px;border-radius:10px;box-shadow:0 4px 18px #0002;font-size:11px;line-height:1.5}
+@media(max-width:780px){main{display:block;height:auto}aside{height:50vh}#map{height:50vh}.controls{grid-template-columns:1fr 100px}}
+</style>
+</head>
+<body>
+<header><b>🚗 停車｜政府即時車位</b><span class="tag">NO DEMO DATA</span></header>
+<main>
+<aside>
+  <div class="controls">
+    <input id="q" placeholder="搜尋停車場或地址">
+    <select id="radius">
+      <option value="1000">1 km</option>
+      <option value="2000" selected>2 km</option>
+      <option value="5000">5 km</option>
+      <option value="10000">10 km</option>
+    </select>
+  </div>
+  <div class="action">
+    <button class="btn" id="locate">📍 定位並查附近</button>
+    <button class="btn secondary" id="refresh">↻ 更新車位</button>
+  </div>
+  <div class="filters">
+    <button class="filter active" data-f="all">全部</button>
+    <button class="filter" data-f="available">目前有位</button>
+    <button class="filter" data-f="realtime">有即時數字</button>
+    <button class="filter" data-f="free">免費</button>
+  </div>
+  <div id="status" class="status"><strong>按「定位並查附近」</strong><br>定位後會當下直接呼叫附近地方政府 API；單一請求失敗會自動重試 3 次，不讀舊快取。</div>
+  <div class="summary"><span id="summary">尚未定位</span></div>
+  <div id="list"><div class="empty">定位後會依距離顯示附近停車場；縣市交界會自動合併多個政府來源。</div></div>
+</aside>
+<section style="position:relative">
+  <div id="map"></div>
+  <div class="legend">綠：有即時空位<br>紅：即時顯示 0<br>灰：沒有即時數字</div>
+</section>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const API={
+  taipei:{
+    static:'https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.json',
+    realtime:'https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json',
+    label:'臺北市',official:'https://data.taipei/dataset/detail?id=d5c0656b-5250-4179-a491-c94daa56ef2c',
+    bbox:[24.90,25.25,121.38,121.72]
+  },
+  ntpc:{
+    static:'https://data.ntpc.gov.tw/api/datasets/b1464ef0-9c7c-4a6f-abf7-6bdf32847e68/json',
+    realtime:'https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json',
+    paged:true,
+    label:'新北市',official:'https://data.ntpc.gov.tw/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78',
+    bbox:[24.55,25.35,121.15,122.10]
+  },
+  taoyuan:{
+    data:'https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download',
+    label:'桃園市',official:'https://opendata.tycg.gov.tw/datalist/f4cc0b12-86ac-40f9-8745-885bddc18f79',
+    bbox:[24.65,25.20,120.95,121.55]
+  },
+  tainan:{
+    data:'https://parkweb.tainan.gov.tw/api/parking.php',
+    label:'臺南市',official:'https://parkweb.tainan.gov.tw/',
+    bbox:[22.85,23.42,120.02,120.68]
+  },
+  hsinchuCity:{
+    data:'https://hispark.hccg.gov.tw/OpenData/GetParkInfo?format=json',
+    label:'新竹市',official:'https://hispark.hccg.gov.tw/',
+    bbox:[24.70,24.90,120.85,121.05]
+  },
+  kaohsiung:{
+    data:'https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation',
+    label:'高雄市',official:'https://kpp.tbkc.gov.tw/ParkingLocation/ParkingLocation',
+    bbox:[22.45,23.50,120.15,121.10]
+  },
+  changhua:{
+    data:'https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost',
+    label:'彰化縣',official:'https://chpark.chcg.gov.tw/',
+    bbox:[23.70,24.22,120.22,120.78]
+  },
+  yilan:{
+    static:'https://opendataap2.e-land.gov.tw/resource/files/2020-11-23/a208784ae7040ebef97ef2f79f7ff468.json',
+    realtime:'https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json',
+    label:'宜蘭縣',official:'https://data.gov.tw/dataset/85833',
+    bbox:[24.25,25.05,121.25,122.05]
+  },
+  taitung:{
+    lots:'https://trafficweb.ttcpb.gov.tw/api/parking-lots',
+    spaces:'https://trafficweb.ttcpb.gov.tw/api/parking-spaces',
+    label:'臺東縣',official:'https://trafficweb.ttcpb.gov.tw/',
+    bbox:[22.20,23.55,120.70,121.70]
+  },
+  penghu:{
+    label:'澎湖縣',official:'https://parking.penghu.gov.tw/',
+    bbox:[23.15,23.85,119.28,119.75]
+  },
+  yunlin:{
+    data:'https://parking.yunlin.gov.tw/ParkingLocation/ParkingLotPost',
+    label:'雲林縣',official:'https://parking.yunlin.gov.tw/',
+    bbox:[23.42,23.90,120.08,120.75]
+  },
+  nantou:{
+    data:'https://parking.nantou.gov.tw/ParkingLocation/ParkingLotPost',
+    label:'南投縣',official:'https://parking.nantou.gov.tw/',
+    bbox:[23.40,24.28,120.58,121.38]
+  },
+  hualien:{
+    data:'https://traffic.hl.gov.tw/Home/_ParkingDetailPartialView',
+    label:'花蓮縣',official:'https://traffic.hl.gov.tw/Home/CheckParkingDetail',
+    bbox:[22.95,24.40,121.05,121.90]
+  },
+  taichung:{
+    data:'https://motoretag.taichung.gov.tw/DataAPI/api/ParkingAPIV2/Opendata',
+    label:'臺中市',official:'https://motoretag.taichung.gov.tw/',
+    bbox:[23.95,24.45,120.45,121.05]
+  },
+  chiayiCity:{
+    data:'https://data.chiayi.gov.tw/opendata/api/getResource?oid=d206db33-3ae7-489e-b709-5555222fb767&rid=4e0c8e01-9844-4da6-991b-a3382b51b71b',
+    label:'嘉義市',official:'https://data.gov.tw/dataset/52317',
+    bbox:[23.42,23.55,120.35,120.55]
+  },
+  pingtungHengchun:{
+    data:'https://www-ws.pthg.gov.tw/Upload/2015pthg/0/relfile/0/0/0a83a598-d9a2-4a00-814c-9c255ea02ae9.csv',
+    label:'屏東縣',official:'https://data.gov.tw/dataset/138733',
+    bbox:[21.85,22.20,120.65,120.95]
+  }
+};
+
+const map=L.map('map',{preferCanvas:true}).setView([25.0478,121.517],12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(map);
+const layer=L.layerGroup().addTo(map);
+const userLayer=L.layerGroup().addTo(map);
+
+let allData=[],filter='all',query='',userPos=null,lastSources=[],loading=false;
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function n(v){if(v===null||v===undefined||v==='')return null;const x=Number(String(v).replace(/,/g,''));return Number.isFinite(x)?x:null}
+function first(o,keys){for(const k of keys){if(o&&o[k]!==undefined&&o[k]!==null&&o[k]!=='')return o[k]}return null}
+function idOf(o){return String(first(o,['id','ID','Id','parkId','ParkId','PARKID','parkingId','ParkingID','park_id'])??'')}
+function availableNumber(v){const x=n(v);return x!==null&&x>=0?Math.trunc(x):null}
+function extractArray(obj){
+  if(Array.isArray(obj))return obj;
+  if(!obj||typeof obj!=='object')return[];
+  if(Array.isArray(obj.data))return obj.data;
+  if(obj.data&&typeof obj.data==='object'){
+    for(const k of ['park','records','items'])if(Array.isArray(obj.data[k]))return obj.data[k];
+  }
+  if(obj.result&&typeof obj.result==='object'){
+    for(const k of ['records','items'])if(Array.isArray(obj.result[k]))return obj.result[k];
+  }
+  for(const k of ['records','items'])if(Array.isArray(obj[k]))return obj[k];
+  return[];
+}
+function withBust(url){return url+(url.includes('?')?'&':'?')+'_ts='+Date.now()}
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+async function getJSON(url,maxAttempts=3){
+  let lastError=null;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(withBust(url),{cache:'no-store',signal:controller.signal});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.json();
+    }catch(e){
+      lastError=e;
+      if(attempt<maxAttempts)await sleep(attempt*500);
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
+async function getPagedJSON(base){const merged=[],seen=new Set();for(let page=0;page<5;page++){const data=await getJSON(base+'?page='+page+'&size=1000');const rows=extractArray(data);const sig=JSON.stringify(rows.slice(0,3));if(!rows.length||seen.has(sig))break;seen.add(sig);merged.push(...rows);if(rows.length<1000)break}return merged}
+async function postJSON(url,body='',maxAttempts=3){
+  let lastError=null;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(url,{method:'POST',body,cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.json();
+    }catch(e){
+      lastError=e;
+      if(attempt<maxAttempts)await sleep(attempt*500);
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
+async function postText(url,body='',maxAttempts=3){
+  let lastError=null;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(url,{method:'POST',body,cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.text();
+    }catch(e){
+      lastError=e;
+      if(attempt<maxAttempts)await sleep(attempt*500);
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
+async function getText(url,maxAttempts=3){
+  let lastError=null;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(withBust(url),{cache:'no-store',signal:controller.signal});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.text();
+    }catch(e){
+      lastError=e;
+      if(attempt<maxAttempts)await sleep(attempt*500);
+    }finally{clearTimeout(timer)}
+  }
+  throw new Error('API 連續 '+maxAttempts+' 次失敗：'+(lastError?.message||'unknown error'));
+}
+function parseCSV(text){
+  const rows=[];let row=[],cell='',q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],next=text[i+1];
+    if(q){
+      if(ch==='"'&&next==='"'){cell+='"';i++}
+      else if(ch==='"')q=false;
+      else cell+=ch;
+    }else{
+      if(ch==='"')q=true;
+      else if(ch===','){row.push(cell);cell=''}
+      else if(ch==='\n'){row.push(cell.replace(/\r$/,''));rows.push(row);row=[];cell=''}
+      else cell+=ch;
+    }
+  }
+  if(cell.length||row.length){row.push(cell.replace(/\r$/,''));rows.push(row)}
+  if(!rows.length)return[];
+  const head=rows[0].map(x=>x.trim());
+  return rows.slice(1).filter(r=>r.some(x=>String(x||'').trim())).map(r=>{
+    const o={};head.forEach((h,i)=>o[h]=r[i]??'');return o;
+  });
+}
+function coordPair(v){
+  const nums=String(v||'').match(/-?\d+(?:\.\d+)?/g)?.map(Number)||[];
+  if(nums.length<2)return null;
+  for(let i=0;i<nums.length-1;i++){
+    const a=nums[i],b=nums[i+1];
+    if(a>20&&a<27&&b>118&&b<123)return[a,b];
+    if(b>20&&b<27&&a>118&&a<123)return[b,a];
+  }
+  return null;
+}
+
+function twd97ToWgs84(x,y){
+  x=Number(x);y=Number(y);if(!Number.isFinite(x)||!Number.isFinite(y)||x===0||y===0)return null;
+  const a=6378137.0,b=6356752.314245,lng0=121*Math.PI/180,k0=0.9999,dx=250000;
+  x-=dx;
+  const e=Math.sqrt(1-(b*b)/(a*a)),M=y/k0;
+  const mu=M/(a*(1-e*e/4-3*Math.pow(e,4)/64-5*Math.pow(e,6)/256));
+  const e1=(1-Math.sqrt(1-e*e))/(1+Math.sqrt(1-e*e));
+  const J1=3*e1/2-27*Math.pow(e1,3)/32,J2=21*e1*e1/16-55*Math.pow(e1,4)/32,J3=151*Math.pow(e1,3)/96,J4=1097*Math.pow(e1,4)/512;
+  const fp=mu+J1*Math.sin(2*mu)+J2*Math.sin(4*mu)+J3*Math.sin(6*mu)+J4*Math.sin(8*mu);
+  const e2=e*e/(1-e*e),C1=e2*Math.pow(Math.cos(fp),2),T1=Math.pow(Math.tan(fp),2);
+  const R1=a*(1-e*e)/Math.pow(1-e*e*Math.pow(Math.sin(fp),2),1.5),N1=a/Math.sqrt(1-e*e*Math.pow(Math.sin(fp),2)),D=x/(N1*k0);
+  const lat=fp-(N1*Math.tan(fp)/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*e2)*Math.pow(D,4)/24+(61+90*T1+298*C1+45*T1*T1-252*e2-3*C1*C1)*Math.pow(D,6)/720);
+  const lng=lng0+(D-(1+2*T1+C1)*Math.pow(D,3)/6+(5-2*C1+28*T1-3*C1*C1+8*e2+24*T1*T1)*Math.pow(D,5)/120)/Math.cos(fp);
+  const out=[lat*180/Math.PI,lng*180/Math.PI];
+  return out[0]>20&&out[0]<27&&out[1]>118&&out[1]<123?out:null;
+}
+function coordFromRow(p){
+  const info=p?.EntranceCoord?.EntrancecoordInfo?.[0];
+  const pairs=[
+    [first(p,['lat','Lat','LAT','latitude','Latitude']),first(p,['lng','Lng','LNG','lon','Lon','longitude','Longitude'])],
+    [first(p,['wgsX','WGSX','WgsX']),first(p,['wgsY','WGSY','WgsY'])],
+    [first(p,['Y','y']),first(p,['X','x'])],
+    [info?.Xcod,info?.Ycod]
+  ];
+  for(const [a0,b0] of pairs){
+    const a=n(a0),b=n(b0);if(a===null||b===null)continue;
+    if(a>20&&a<27&&b>118&&b<123)return[a,b];
+    if(b>20&&b<27&&a>118&&a<123)return[b,a];
+  }
+  return twd97ToWgs84(first(p,['tw97x','TW97X','Tw97X']),first(p,['tw97y','TW97Y','Tw97Y']));
+}
+function hav(lat1,lng1,lat2,lng2){
+  const R=6371000,toRad=x=>x*Math.PI/180,dLat=toRad(lat2-lat1),dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function sourceTime(p){
+  return first(p,['update_time','UpdateTime','UPDATETIME','updateTime','updated_at','UpdatedAt','dataTime','DataTime','time','TIME']);
+}
+function inBBox(pos,bbox,padKm){
+  const latPad=padKm/111,lngPad=padKm/(111*Math.max(.2,Math.cos(pos[0]*Math.PI/180)));
+  return pos[0]>=bbox[0]-latPad&&pos[0]<=bbox[1]+latPad&&pos[1]>=bbox[2]-lngPad&&pos[1]<=bbox[3]+lngPad;
+}
+async function directPair(cfg){
+  const [s,r]=cfg.paged?await Promise.all([getPagedJSON(cfg.static),getPagedJSON(cfg.realtime)]):await Promise.all([getJSON(cfg.static),getJSON(cfg.realtime)]);
+  return{s,r,mode:'官方 API 直連'};
+}
+async function loadTaipei(){
+  const cfg=API.taipei,res=await directPair(cfg),stat=extractArray(res.s),live=extractArray(res.r);
+  const lm=new Map(live.map(x=>[idOf(x),x]).filter(x=>x[0]));
+  const rows=[];
+  for(const p of stat){
+    const c=coordFromRow(p);if(!c)continue;const rt=lm.get(idOf(p));
+    const av=availableNumber(first(rt,['availablecar','availableCar','AvailableCar','AVAILABLECAR','available','Available']));
+    rows.push({id:'tp-'+idOf(p),name:first(p,['name','Name','NAME'])||'未命名停車場',area:first(p,['area','Area','AREA'])||'',address:first(p,['address','Address','ADDRESS'])||'',lat:c[0],lng:c[1],total:n(first(p,['totalcar','totalCar','TotalCar','TOTALCAR'])),avail:av,fee:first(p,['payex','PayEx','PAYEX','fee','Fee'])||'',source:'臺北市政府',sourceMode:res.mode,hasRealtime:av!==null,updated:sourceTime(rt),official:cfg.official});
+  }
+  return{key:'taipei',rows,mode:res.mode};
+}
+async function loadNtpc(){
+  const cfg=API.ntpc,res=await directPair(cfg),stat=extractArray(res.s),live=extractArray(res.r);
+  const lm=new Map(live.map(x=>[idOf(x),x]).filter(x=>x[0]));
+  const rows=[];
+  for(const p of stat){
+    const c=coordFromRow(p);if(!c)continue;const rt=lm.get(idOf(p));
+    const av=availableNumber(first(rt,['AVAILABLECAR','AvailableCar','availableCar','availablecar','AVAILABLE','available','surplusSpace']));
+    rows.push({id:'ntpc-'+idOf(p),name:first(p,['NAME','Name','name','parkName','PARKINGNAME'])||'未命名停車場',area:first(p,['AREA','Area','area','areaName'])||'',address:first(p,['ADDRESS','Address','address'])||'',lat:c[0],lng:c[1],total:n(first(p,['TOTALCAR','TotalCar','totalCar','totalSpace','TOTALSPACE'])),avail:av,fee:first(p,['PAYEX','PayEx','payex','payGuide','FEE','fee'])||'',source:'新北市政府',sourceMode:res.mode,hasRealtime:av!==null,updated:sourceTime(rt),official:cfg.official});
+  }
+  return{key:'ntpc',rows,mode:res.mode};
+}
+async function loadTaoyuan(){
+  const cfg=API.taoyuan,raw=await getJSON(cfg.data),mode='官方 API 直連';
+  const rows=extractArray(raw).map(p=>{
+    const c=coordFromRow(p),av=availableNumber(first(p,['surplusSpace','AVAILABLECAR','availableCar','available']));
+    if(!c)return null;
+    return{id:'ty-'+idOf(p),name:first(p,['parkName','name','NAME'])||'未命名停車場',area:first(p,['areaName','area','AREA'])||'',address:first(p,['address','ADDRESS'])||'',lat:c[0],lng:c[1],total:n(first(p,['totalSpace','TOTALSPACE','totalCar'])),avail:av,fee:first(p,['payGuide','PAYGUIDE','fee','payex'])||'',source:'桃園市政府',sourceMode:mode,hasRealtime:av!==null,updated:sourceTime(p),official:cfg.official};
+  }).filter(Boolean);
+  return{key:'taoyuan',rows,mode};
+}
+
+
+function normalizedRow(p,opt){
+  const coord=opt.coord||coordFromRow(p); if(!coord)return null;
+  const av=availableNumber(opt.avail), total=n(opt.total);
+  const fallbackId=[opt.source||'src',opt.name||'unknown',coord[0],coord[1]].join('|');
+  return {id:String(opt.id||fallbackId),name:opt.name||'未命名停車場',area:opt.area||'',address:opt.address||'',lat:coord[0],lng:coord[1],total,avail:av,fee:opt.fee||'',source:opt.source,sourceMode:'官方 API 直連',hasRealtime:av!==null,updated:opt.updated||null,official:opt.official};
+}
+async function loadTainan(){
+  const cfg=API.tainan,raw=await getJSON(cfg.data),rows=extractArray(raw).map(p=>normalizedRow(p,{
+    id:'tn-'+idOf(p),name:first(p,['name','Name','PARKINGNAME','停車場名稱']),address:first(p,['address','Address','ADDRESS','地址']),
+    total:first(p,['total','total_car','totalCar','TOTALQUANTITY','總車位']),avail:first(p,['car','available','AVAILABLECAR','FREEQUANTITY','剩餘車位']),
+    fee:first(p,['charge','fee','payGuide','payex','收費方式']),updated:first(p,['update_time','UpdateTime','UPDATETIME']),source:'臺南市政府',official:cfg.official
+  })).filter(Boolean);
+  return{key:'tainan',rows,mode:'官方 API 直連'};
+}
+async function loadHsinchuCity(){
+  const cfg=API.hsinchuCity,raw=await getJSON(cfg.data),rows=extractArray(raw).map(p=>normalizedRow(p,{
+    id:'hc-'+idOf(p),name:first(p,['PARKINGNAME','name','Name']),address:first(p,['ADDRESS','address']),
+    total:first(p,['TOTALQUANTITY','total','TOTALCAR']),avail:first(p,['FREEQUANTITY','available','AVAILABLECAR']),
+    fee:[first(p,['WEEKDAYS']),first(p,['HOLIDAY'])].filter(Boolean).join('；')||first(p,['PAYINFO','fee']),
+    updated:first(p,['UPDATETIME','UpdateTime']),source:'新竹市政府',official:cfg.official
+  })).filter(Boolean);
+  return{key:'hsinchuCity',rows,mode:'官方 API 直連'};
+}
+async function loadKaohsiung(){
+  const cfg=API.kaohsiung,raw=await getJSON(cfg.data),rows=extractArray(raw).map(p=>{
+    const lat=n(first(p,['Latitude','latitude','lat'])),lng=n(first(p,['Longitude','longitude','lng','lon']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:coordFromRow(p),id:'kh-'+first(p,['ParkingID','id']),name:first(p,['ParkingName','name']),address:first(p,['Address','address']),
+      total:first(p,['TotalSpace','TotalCar','totalNum','total']),avail:first(p,['SurplusSpace','remaining','available']),fee:first(p,['PayGuide','FareDescription','fee']),
+      updated:first(p,['UpdateTime','UPDATETIME']),source:'高雄市政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'kaohsiung',rows,mode:'官方 API 直連'};
+}
+async function loadChanghua(){
+  const cfg=API.changhua,raw=await postJSON(cfg.data,''),rows=extractArray(raw).map(p=>{
+    const lat=n(p.positionLat),lng=n(p.positionLon);
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:null,id:'ch-'+first(p,['id','carParkId','parkingId']),name:p.carParkName,address:first(p,['address','location']),
+      total:p.totalNum,avail:p.remaining,fee:p.fareDescription||p.description,updated:first(p,['updateTime','UpdateTime']),source:'彰化縣政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'changhua',rows,mode:'官方 API 直連'};
+}
+async function loadYilan(){
+  const cfg=API.yilan,[s,r]=await Promise.all([getJSON(cfg.static),getJSON(cfg.realtime)]),stat=extractArray(s),live=extractArray(r);
+  const lm=new Map(live.map(x=>[String(first(x,['編號','id','ID'])||''),x]));
+  const rows=stat.map(p=>{
+    const key=String(first(p,['編號','id','ID'])||''),rt=lm.get(key);
+    const lat=n(first(p,['緯度','lat','Latitude'])),lng=n(first(p,['經度','lng','Longitude']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:coordFromRow(p),id:'yl-'+key,name:first(p,['名稱','停車場名稱','name']),address:first(p,['地址','address']),
+      total:first(rt||p,['小車位總數','total','TOTALCAR']),avail:first(rt||{},['小車位剩餘數','available','AVAILABLECAR']),fee:[first(p,['平日費率']),first(p,['假日費率'])].filter(Boolean).join('；'),
+      updated:first(rt||{},['更新時間','UpdateTime']),source:'宜蘭縣政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'yilan',rows,mode:'官方 API 直連'};
+}
+async function loadTaitung(radius){
+  const cfg=API.taitung,raw=await getJSON(cfg.lots),lots=extractArray(raw.data||raw);
+  const candidates=lots.map(p=>{
+    const lat=n(first(p,['PositionLat','lat'])),lng=n(first(p,['PositionLon','lng','lon']));
+    if(lat===null||lng===null)return null;
+    const dist=hav(userPos[0],userPos[1],lat,lng);
+    return{p,lat,lng,dist};
+  }).filter(Boolean).filter(x=>x.dist<=radius+3000).sort((a,b)=>a.dist-b.dist).slice(0,30);
+  const details=await Promise.allSettled(candidates.map(x=>getJSON(cfg.lots+'/'+encodeURIComponent(first(x.p,['id','ID'])))));
+  const rows=[];
+  details.forEach((res,i)=>{
+    if(res.status!=='fulfilled')return;
+    const d=res.value?.data||res.value||{},x=candidates[i];
+    const detailId=first(d,['id','ID']) ?? first(x.p,['id','ID']) ?? i;
+    const row=normalizedRow(d,{coord:[n(first(d,['lat']))??x.lat,n(first(d,['lng','lon']))??x.lng],id:'tt-'+detailId,name:first(d,['name','Name'])||'臺東停車場',
+      address:first(d,['address','Address']),total:first(d,['total','TOTALCAR']),avail:first(d,['vacancy','available']),fee:first(d,['charge','fee']),updated:first(d,['updated_at','UpdateTime']),source:'臺東縣政府',official:cfg.official});
+    if(row)rows.push(row);
+  });
+  return{key:'taitung',rows,mode:'官方 API 直連'};
+}
+async function loadPenghu(){
+  const cfg=API.penghu,lots=[
+    {code:'OWIZXZ',name:'澎湖縣府地下停車場',lat:23.569694,lng:119.566454,total:68},
+    {code:'QAHZCZ',name:'馬公國小地下停車場',lat:23.571100,lng:119.569200,total:516},
+    {code:'T2THK8',name:'中正國小地下停車場',lat:23.567961,lng:119.565528,total:105},
+    {code:'NCEJ97',name:'中興國小地下停車場',lat:23.574800,lng:119.574800,total:347},
+    {code:'Y7ROW9',name:'文光國中地下停車場',lat:23.573167,lng:119.570075,total:125}
+  ];
+  const results=await Promise.allSettled(lots.map(x=>getJSON('https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode='+x.code)));
+  const rows=[];
+  results.forEach((res,i)=>{
+    if(res.status!=='fulfilled')return;const x=lots[i],d=res.value;
+    const row=normalizedRow(d,{coord:[x.lat,x.lng],id:'ph-'+x.code,name:x.name,total:x.total,avail:first(d,['available','remaining']),fee:'每小時20元，當日上限80元',source:'澎湖縣政府',official:cfg.official});
+    if(row)rows.push(row);
+  });
+  return{key:'penghu',rows,mode:'官方 API 直連'};
+}
+async function loadSimpleParkingLotPost(key,source){
+  const cfg=API[key],raw=await postJSON(cfg.data,''),rows=extractArray(raw).map((p,i)=>{
+    const lat=n(first(p,['positionLat','lat','Latitude'])),lng=n(first(p,['positionLon','lng','Longitude']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:null,id:key+'-'+(first(p,['id','carParkId','parkingId'])??i),name:first(p,['carParkName','ParkingName','name']),address:first(p,['address','location']),
+      total:first(p,['totalNum','total','TotalSpace']),avail:first(p,['remaining','SurplusSpace','available']),fee:first(p,['fareDescription','description','fee']),updated:first(p,['updateTime','UpdateTime']),source,official:cfg.official});
+  }).filter(Boolean);
+  return{key,rows,mode:rows.some(x=>x.hasRealtime)?'官方 API 直連':'官方 API（無 numeric 即時格）'};
+}
+async function loadHualien(){
+  const cfg=API.hualien;
+  const body='page=1&pageNumber=100&action=DynamicParking&currentGroup=1&dataModel%5BKeyWord%5D=';
+  const raw=await postText(cfg.data,body),rows=[];
+  const blocks=raw.split('parking_space_list_item').slice(1);
+  blocks.forEach((block,i)=>{
+    const name=(block.match(/class="parking_space_item_title"[^>]*>[\s\S]*?<a [^>]*>([^<]+)<\/a>/)||[])[1];
+    const coords=block.match(/q=([0-9.-]+),([0-9.-]+)/);
+    if(!name||!coords)return;
+    const total=(block.match(/總停車位：<\/div>\s*<div class="text_content">(\d+)<\/div>/)||[])[1];
+    const fee=(block.match(/收費方式：<\/div>\s*<div class="text_content">([^<]+)<\/div>/)||[])[1];
+    const remaining=(block.match(/(?:剩餘車位|剩餘|可停)：<\/div>\s*<div class="text_content">(\d+)<\/div>/)||[])[1];
+    const row=normalizedRow({}, {coord:[Number(coords[1]),Number(coords[2])],id:'hl-'+i+'-'+name,name,total,avail:remaining,fee:fee||'',source:'花蓮縣政府',official:cfg.official});
+    if(row)rows.push(row);
+  });
+  return{key:'hualien',rows,mode:rows.some(x=>x.hasRealtime)?'官方動態頁面直連':'官方動態頁面（無 numeric 即時格）'};
+}
+async function loadTaichung(){
+  const cfg=API.taichung,raw=await getJSON(cfg.data),rows=extractArray(raw).map((p,i)=>{
+    const lat=n(first(p,['Lat','lat','Latitude'])),lng=n(first(p,['Lng','lng','Longitude']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:null,id:'tc-'+(first(p,['ID','id'])??i),name:first(p,['Position','Name','name'])||'臺中停車場',
+      total:first(p,['TotalCar','totalCar','total']),avail:null,fee:'',source:'臺中市政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'taichung',rows,mode:'官方 API（路外僅狀態，無 numeric 即時格）'};
+}
+async function loadChiayiCity(){
+  const cfg=API.chiayiCity,raw=await getText(cfg.data),rows=parseCSV(raw).map((p,i)=>{
+    const coord=coordPair(first(p,['座標位置','座標','經緯度','location']));
+    return normalizedRow(p,{coord,id:'cy-'+(first(p,['項次','序號','id'])??i),name:first(p,['停車場名稱','名稱','name']),address:first(p,['地址','位置']),
+      total:first(p,['小型車','小客車','總車位']),avail:null,fee:first(p,['收費方式','收費標準']),source:'嘉義市政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'chiayiCity',rows,mode:'官方 Open Data（無 numeric 即時格）'};
+}
+async function loadPingtungHengchun(){
+  const cfg=API.pingtungHengchun,raw=await getText(cfg.data),rows=parseCSV(raw).map((p,i)=>{
+    const lat=n(first(p,['entranceLatitude','exitLatitude','Latitude','lat'])),lng=n(first(p,['entranceLongitude','exitLongitude','Longitude','lng']));
+    return normalizedRow(p,{coord:(lat!==null&&lng!==null)?[lat,lng]:null,id:'pth-'+(first(p,['parkingLotId','id'])??i),name:first(p,['parkingLotName','停車場名稱','name']),
+      total:first(p,['totalCar','停車格數量']),avail:null,fee:first(p,['fee','收費方式']),source:'屏東縣政府',official:cfg.official});
+  }).filter(Boolean);
+  return{key:'pingtungHengchun',rows,mode:'官方 Open Data（無 numeric 即時格）'};
+}
+
+function candidateSources(pos,radiusM){
+  const pad=Math.max(5,radiusM/1000+3),out=[];
+  for(const [key,cfg] of Object.entries(API))if(inBBox(pos,cfg.bbox,pad))out.push(key);
+  return out;
+}
+async function loadSource(key,radius){
+  if(key==='taipei')return loadTaipei();
+  if(key==='ntpc')return loadNtpc();
+  if(key==='taoyuan')return loadTaoyuan();
+  if(key==='tainan')return loadTainan();
+  if(key==='hsinchuCity')return loadHsinchuCity();
+  if(key==='kaohsiung')return loadKaohsiung();
+  if(key==='changhua')return loadChanghua();
+  if(key==='yilan')return loadYilan();
+  if(key==='taitung')return loadTaitung(radius);
+  if(key==='penghu')return loadPenghu();
+  if(key==='yunlin')return loadSimpleParkingLotPost('yunlin','雲林縣政府');
+  if(key==='nantou')return loadSimpleParkingLotPost('nantou','南投縣政府');
+  if(key==='hualien')return loadHualien();
+  if(key==='taichung')return loadTaichung();
+  if(key==='chiayiCity')return loadChiayiCity();
+  if(key==='pingtungHengchun')return loadPingtungHengchun();
+  throw new Error('unknown source '+key);
+}
+async function refreshNearby(){
+  if(!userPos||loading)return;
+  loading=true;
+  document.getElementById('status').className='status';
+  document.getElementById('status').innerHTML='正在向附近政府即時 API 取得最新車位…';
+  document.getElementById('list').innerHTML='<div class="loading">載入中…</div>';
+  try{
+    const radius=Number(document.getElementById('radius').value);
+    const keys=candidateSources(userPos,radius);
+    if(!keys.length){
+      allData=[];lastSources=[];render();
+      document.getElementById('status').innerHTML='<strong>目前此位置尚未接入地方政府即時來源</strong><br>已接來源：臺北、新北、桃園、臺中、臺南、新竹市、高雄、彰化、宜蘭、臺東、澎湖、雲林、南投、花蓮、嘉義市、屏東恆春。';
+      return;
+    }
+    const settled=await Promise.allSettled(keys.map(key=>loadSource(key,radius)));
+    const ok=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);
+    const bad=settled.map((x,i)=>({result:x,key:keys[i]})).filter(x=>x.result.status==='rejected');
+    lastSources=ok;
+    allData=ok.flatMap(x=>x.rows).map(x=>({...x,dist:hav(userPos[0],userPos[1],x.lat,x.lng)})).filter(x=>x.dist<=radius).sort((a,b)=>a.dist-b.dist);
+    render();
+    const parts=ok.map(x=>API[x.key].label+'：'+x.mode);
+    const failed=bad.map(x=>API[x.key].label+'：'+(x.result.reason?.message||'連續 3 次失敗')).join('；');
+    document.getElementById('status').className=bad.length?'status error':'status';
+    document.getElementById('status').innerHTML='<strong>已即時查詢 '+ok.length+' / '+keys.length+' 個政府來源</strong><br>'+esc(parts.join('；'))+(failed?'<br><b>失敗：</b>'+esc(failed):'');
+  }catch(e){
+    allData=[];render();
+    document.getElementById('status').className='status error';
+    document.getElementById('status').innerHTML='<strong>附近資料載入失敗</strong><br>'+esc(e.message)+'。沒有使用假資料。';
+  }finally{loading=false}
+}
+
+function filteredRows(){
+  let rows=allData.filter(x=>{
+    const q=query.toLowerCase();
+    const hit=!q||[x.name,x.area,x.address,x.source].some(v=>String(v||'').toLowerCase().includes(q));
+    if(!hit)return false;
+    if(filter==='available')return x.avail!==null&&x.avail>0;
+    if(filter==='realtime')return x.hasRealtime;
+    if(filter==='free')return String(x.fee||'').includes('免費');
+    return true;
+  });
+  return rows.sort((a,b)=>a.dist-b.dist);
+}
+function availLabel(x){
+  if(x.avail===null)return'<span class="available unknown">無即時數字</span>';
+  if(x.avail===0)return'<span class="available full">0 格</span>';
+  return'<span class="available">剩 '+x.avail+' 格</span>';
+}
+function cardHTML(x){
+  const dist=x.dist<1000?Math.round(x.dist)+'m':(x.dist/1000).toFixed(1)+'km';
+  const upd=x.updated?' ・ 官方更新 '+esc(x.updated):'';
+  return '<div class="card" data-id="'+esc(x.id)+'"><div class="row"><span class="name">'+esc(x.name)+'</span>'+availLabel(x)+'</div>'+
+    '<div class="muted">'+esc([x.area,x.address].filter(Boolean).join(' ・ '))+' ・ '+dist+'</div>'+
+    '<div class="muted">'+esc(x.fee||'費率未提供')+upd+'</div>'+
+    '<div class="chips">'+
+      (x.total!==null?'<span class="chip">總 '+esc(x.total)+' 格</span>':'')+
+      '<span class="chip '+(x.sourceMode.includes('直連')?'live':'cached')+'">'+esc(x.source)+'｜'+esc(x.sourceMode)+'</span>'+
+    '</div></div>';
+}
+function popupHTML(x){
+  const nav='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(x.lat+','+x.lng);
+  return '<b>'+esc(x.name)+'</b><br>'+esc(x.address||x.area)+'<br>'+(x.avail===null?'剩餘：無即時數字':'剩餘：'+x.avail+' 格')+'<br>'+esc(x.source)+'｜'+esc(x.sourceMode)+'<br><a target="_blank" rel="noopener" href="'+nav+'">Google Maps 導航</a>';
+}
+function render(){
+  const rows=filteredRows();
+  document.getElementById('summary').textContent=userPos?'附近 '+rows.length+' 筆，已依距離排序':'尚未定位';
+  document.getElementById('list').innerHTML=rows.length?rows.slice(0,300).map(cardHTML).join(''):'<div class="empty">'+(userPos?'搜尋半徑內沒有符合條件的停車場。':'請先定位。')+'</div>';
+  layer.clearLayers();
+  rows.forEach(x=>{
+    let color='#64748b';if(x.avail===0)color='#dc2626';else if(x.avail>0)color='#16a34a';
+    L.circleMarker([x.lat,x.lng],{radius:5,weight:1,color,fillColor:color,fillOpacity:.78}).bindPopup(popupHTML(x)).addTo(layer).parkingId=x.id;
+  });
+  document.querySelectorAll('.card').forEach(el=>el.onclick=()=>{
+    const x=rows.find(v=>v.id===el.dataset.id);if(!x)return;map.setView([x.lat,x.lng],17);layer.eachLayer(m=>{if(m.parkingId===x.id)m.openPopup()});
+  });
+}
+function setUserPosition(lat,lng){
+  userPos=[lat,lng];userLayer.clearLayers();
+  L.circleMarker(userPos,{radius:7,weight:2,color:'#2563eb',fillColor:'#60a5fa',fillOpacity:.9}).addTo(userLayer).bindPopup('你的位置');
+  map.setView(userPos,14);
+}
+
+document.getElementById('q').addEventListener('input',e=>{query=e.target.value.trim();render()});
+document.getElementById('radius').addEventListener('change',()=>{if(userPos)refreshNearby()});
+document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;render()});
+document.getElementById('locate').onclick=()=>{
+  if(!navigator.geolocation){alert('瀏覽器不支援定位');return}
+  document.getElementById('status').innerHTML='正在取得定位…';
+  navigator.geolocation.getCurrentPosition(p=>{setUserPosition(p.coords.latitude,p.coords.longitude);refreshNearby()},()=>alert('無法取得定位，請確認瀏覽器定位權限。'),{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+};
+document.getElementById('refresh').onclick=()=>{if(!userPos){document.getElementById('locate').click();return}refreshNearby()};
+</script>
+</body>
+</html>

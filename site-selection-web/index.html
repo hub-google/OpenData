@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>台灣選址與商圈情報｜OpenData Lab</title>
+<style>
+:root{--nav:#101828;--bg:#f4f6f8;--card:#fff;--text:#182230;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--green:#059669;--amber:#d97706}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text)}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}.side{background:var(--nav);color:white;padding:26px 18px;position:sticky;top:0;height:100vh}
+.brand{font-weight:800;font-size:20px;margin-bottom:8px}.sub{font-size:12px;color:#98a2b3;line-height:1.6}.nav{margin-top:30px}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;padding:12px;border-radius:9px;text-align:left;margin:4px 0;cursor:pointer}.nav button.active,.nav button:hover{background:#1d2939;color:white}
+.main{padding:26px 30px 50px;max-width:1500px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.eyebrow{color:var(--blue);font-weight:700;font-size:12px}.top h1{margin:5px 0 6px;font-size:28px}.muted{color:var(--muted);font-size:13px}.pill{background:#eef4ff;color:#1849a9;padding:8px 11px;border-radius:999px;font-size:12px;font-weight:700}
+.notice{margin:18px 0;background:#fffaeb;border:1px solid #fedf89;padding:11px 14px;border-radius:10px;font-size:12px;color:#7a2e0e}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat,.panel{background:var(--card);border:1px solid var(--line);border-radius:12px}.stat{padding:16px}.stat span{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:24px;margin-top:6px}
+.panel{margin-top:14px;padding:16px}.filters{display:grid;grid-template-columns:1.5fr repeat(4,1fr) auto;gap:10px}.filters input,.filters select{width:100%;border:1px solid #d0d5dd;border-radius:8px;padding:10px;background:white;color:var(--text)}
+.btn{border:0;background:var(--blue);color:white;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}.btn.ghost{background:white;color:#344054;border:1px solid #d0d5dd}
+.tablehead,.row{display:grid;grid-template-columns:70px 1.4fr 1fr 1fr 1fr 1fr 46px;align-items:center;gap:10px}.tablehead{padding:12px 10px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--line)}
+.row{padding:13px 10px;border-bottom:1px solid #f0f2f5}.row:last-child{border:0}.row:hover{background:#f9fafb}.score{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;background:#ecfdf3;color:#027a48;font-size:18px;font-weight:800}.score.hot{background:#eff8ff;color:#175cd3}
+.name{font-weight:750;border:0;background:none;padding:0;cursor:pointer;color:#101828;text-align:left;font-size:14px}.small{font-size:11px;color:var(--muted);margin-top:4px}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{font-size:13px}.tag{display:inline-block;background:#f2f4f7;border-radius:999px;padding:4px 8px;font-size:11px}.star{font-size:22px;background:none;border:0;cursor:pointer;color:#f59e0b}
+.drawerback{position:fixed;inset:0;background:#10182870}.drawer{position:fixed;top:0;right:0;width:min(500px,92vw);height:100vh;background:white;padding:26px;overflow:auto;box-shadow:-12px 0 30px #0002}.hidden{display:none}.close{float:right;border:0;background:#f2f4f7;width:36px;height:36px;border-radius:9px;cursor:pointer}.reason{background:#f8fafc;border:1px solid #e4e7ec;padding:10px;border-radius:9px;margin:8px 0;font-size:13px}.detail{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.detail>div{border:1px solid var(--line);padding:11px;border-radius:9px}.detail span{display:block;color:var(--muted);font-size:11px}.detail b{font-size:14px}
+@media(max-width:1000px){.shell{grid-template-columns:1fr}.side{display:none}.main{padding:18px}.grid{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.tablehead{display:none}.row{grid-template-columns:58px 1fr 1fr}.row .hide-sm{display:none}}@media(max-width:600px){.grid,.filters{grid-template-columns:1fr}.top{display:block}.row{grid-template-columns:55px 1fr 40px}.row .metric,.row .tagwrap{display:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="side"><div class="brand">OpenData Lab</div><div class="sub">Top 5 商業化原型<br>02｜選址與商圈情報</div><div class="nav"><button class="active">展店評分</button><button onclick="showSaved()">已收藏地點</button><button onclick="location.href='../'">企業商機雷達</button></div></aside>
+<main class="main">
+<div class="top"><div><div class="eyebrow">TAIWAN SITE INTELLIGENCE</div><h1>台北市展店評分</h1><div class="muted">把人口、所得、競爭、房價與交通變成可以直接行動的選址清單。</div></div><div class="pill">商業價值 94 / 100</div></div>
+<div class="notice">MVP 示意版：目前使用模擬商圈資料展示產品體驗，尚未串接即時政府 Open Data；正式版應接村里人口、所得、實價登錄與稅籍營業資料。</div>
+<div class="grid">
+<div class="stat"><span>候選商圈</span><strong id="sTotal">0</strong></div><div class="stat"><span>高分商圈 ≥ 85</span><strong id="sHot">0</strong></div><div class="stat"><span>平均所得中位數</span><strong id="sIncome">—</strong></div><div class="stat"><span>平均同業密度</span><strong id="sComp">—</strong></div>
+</div>
+<section class="panel">
+<div class="filters">
+<input id="q" placeholder="搜尋行政區、村里或商圈">
+<select id="biz"><option value="all">所有店型</option><option>咖啡餐飲</option><option>藥局</option><option>健身房</option><option>親子教育</option><option>高齡服務</option></select>
+<select id="target"><option value="all">所有客群</option><option>年輕上班族</option><option>親子家庭</option><option>高所得家庭</option><option>高齡人口</option></select>
+<select id="district"><option value="all">所有行政區</option></select>
+<select id="sort"><option value="score">依展店分數</option><option value="income">依所得</option><option value="traffic">依交通</option><option value="competition">競爭較低優先</option></select>
+<button class="btn ghost" onclick="exportCsv()">匯出 CSV</button>
+</div>
+<div class="tablehead"><div>分數</div><div>商圈</div><div>核心客群</div><div>所得</div><div>競爭</div><div>交通</div><div></div></div>
+<div id="list"></div>
+</section>
+</main></div>
+<div id="back" class="drawerback hidden" onclick="closeDrawer()"></div><aside id="drawer" class="drawer hidden"><button class="close" onclick="closeDrawer()">×</button><div id="drawerBody"></div></aside>
+<script>
+const places=[
+{id:1,d:"士林區",n:"天母里生活圈",target:"高所得家庭",income:92,comp:62,traffic:78,pop:83,price:81,tags:["咖啡餐飲","親子教育","藥局"],score:91,note:"所得高、家庭客群集中，適合高客單與會員制服務。"},
+{id:2,d:"內湖區",n:"西湖科技園區",target:"年輕上班族",income:89,comp:70,traffic:91,pop:77,price:86,tags:["咖啡餐飲","健身房"],score:90,note:"平日白領流量強，午餐、咖啡、健身與企業服務需求高。"},
+{id:3,d:"大安區",n:"敦化南路商圈",target:"高所得家庭",income:94,comp:86,traffic:96,pop:80,price:95,tags:["咖啡餐飲","健身房","藥局"],score:88,note:"消費能力高但競爭與租金也高，品牌力要求較高。"},
+{id:4,d:"文山區",n:"萬芳生活圈",target:"親子家庭",income:73,comp:42,traffic:72,pop:86,price:58,tags:["親子教育","藥局","高齡服務"],score:87,note:"家庭人口穩定、競爭較低，適合社區型長期經營。"},
+{id:5,d:"北投區",n:"石牌醫療生活圈",target:"高齡人口",income:79,comp:59,traffic:83,pop:84,price:67,tags:["藥局","高齡服務","咖啡餐飲"],score:86,note:"醫療資源集中，高齡與陪病家庭需求明顯。"},
+{id:6,d:"中山區",n:"南京復興商圈",target:"年輕上班族",income:87,comp:82,traffic:97,pop:75,price:90,tags:["咖啡餐飲","健身房"],score:85,note:"捷運與辦公流量極佳，但競爭與成本偏高。"},
+{id:7,d:"信義區",n:"永春生活圈",target:"親子家庭",income:84,comp:66,traffic:90,pop:82,price:83,tags:["親子教育","藥局","咖啡餐飲"],score:84,note:"住宅與交通兼具，適合中高價社區型服務。"},
+{id:8,d:"松山區",n:"民生社區",target:"親子家庭",income:90,comp:71,traffic:69,pop:88,price:88,tags:["親子教育","咖啡餐飲","高齡服務"],score:84,note:"家庭品質與黏著度高，但軌道交通稍弱。"},
+{id:9,d:"南港區",n:"南港經貿園區",target:"年輕上班族",income:86,comp:48,traffic:94,pop:69,price:82,tags:["咖啡餐飲","健身房"],score:83,note:"成長型辦公聚落，競爭尚未完全飽和。"},
+{id:10,d:"萬華區",n:"萬大生活圈",target:"高齡人口",income:58,comp:37,traffic:75,pop:91,price:48,tags:["高齡服務","藥局"],score:80,note:"人口密度高、成本相對低，適合剛需與高頻服務。"},
+{id:11,d:"中正區",n:"古亭生活圈",target:"年輕上班族",income:81,comp:74,traffic:93,pop:79,price:79,tags:["咖啡餐飲","健身房","親子教育"],score:81,note:"交通與學區優勢明顯，客群組成多元。"},
+{id:12,d:"北投區",n:"奇岩新社區",target:"親子家庭",income:76,comp:29,traffic:65,pop:72,price:61,tags:["親子教育","藥局"],score:82,note:"新社區成長中、同業少，適合卡位型展店。"}
+];
+let saved=new Set(JSON.parse(localStorage.getItem("site-selection-saved")||"[]")),current=[];
+const el=id=>document.getElementById(id);
+[...new Set(places.map(x=>x.d))].forEach(v=>el("district").insertAdjacentHTML("beforeend","<option>"+v+"</option>"));
+function calc(p){
+ let s=p.score,b=el("biz").value,t=el("target").value;
+ if(b!=="all"&&p.tags.includes(b))s+=4;if(t!=="all"&&p.target===t)s+=4;
+ return Math.min(99,s);
+}
+function render(){
+ const q=el("q").value.trim(),b=el("biz").value,t=el("target").value,d=el("district").value,sort=el("sort").value;
+ current=places.filter(p=>(!q||(p.d+p.n+p.target).includes(q))&&(b==="all"||p.tags.includes(b))&&(t==="all"||p.target===t)&&(d==="all"||p.d===d));
+ current.sort((a,b)=>sort==="income"?b.income-a.income:sort==="traffic"?b.traffic-a.traffic:sort==="competition"?a.comp-b.comp:calc(b)-calc(a));
+ el("list").innerHTML=current.map(p=>'<div class="row"><div class="score '+(calc(p)>=88?"hot":"")+'">'+calc(p)+'</div><div><button class="name" onclick="openDrawer('+p.id+')">'+p.n+'</button><div class="small">'+p.d+' ・ '+p.tags.join(" / ")+'</div></div><div class="tagwrap"><span class="tag">'+p.target+'</span></div><div class="metric"><span>所得指數</span><b>'+p.income+'</b></div><div class="metric hide-sm"><span>同業密度</span><b>'+p.comp+'</b></div><div class="metric hide-sm"><span>交通指數</span><b>'+p.traffic+'</b></div><button class="star" onclick="toggleSave('+p.id+')">'+(saved.has(p.id)?"★":"☆")+'</button></div>').join("");
+ el("sTotal").textContent=current.length;el("sHot").textContent=current.filter(p=>calc(p)>=85).length;
+ el("sIncome").textContent=Math.round(current.reduce((s,p)=>s+p.income,0)/(current.length||1));
+ el("sComp").textContent=Math.round(current.reduce((s,p)=>s+p.comp,0)/(current.length||1));
+}
+function openDrawer(id){const p=places.find(x=>x.id===id);el("drawerBody").innerHTML='<div class="eyebrow">'+p.d+'</div><h2>'+p.n+'</h2><p class="muted">'+p.note+'</p><div class="score" style="width:70px;height:70px;font-size:26px">'+calc(p)+'</div><h3>為什麼值得看</h3><div class="reason">✓ 目標客群：'+p.target+'</div><div class="reason">✓ 所得指數 '+p.income+'，交通指數 '+p.traffic+'</div><div class="reason">✓ 同業密度 '+p.comp+'，租售成本指數 '+p.price+'</div><div class="detail"><div><span>人口潛力</span><b>'+p.pop+'</b></div><div><span>適合店型</span><b>'+p.tags.join("、")+'</b></div></div>';el("back").classList.remove("hidden");el("drawer").classList.remove("hidden")}
+function closeDrawer(){el("back").classList.add("hidden");el("drawer").classList.add("hidden")}
+function toggleSave(id){saved.has(id)?saved.delete(id):saved.add(id);localStorage.setItem("site-selection-saved",JSON.stringify([...saved]));render()}
+function showSaved(){el("q").value="";render();current=places.filter(p=>saved.has(p.id));el("list").innerHTML=current.map(p=>'<div class="row"><div class="score">'+calc(p)+'</div><div><button class="name" onclick="openDrawer('+p.id+')">'+p.n+'</button><div class="small">'+p.d+'</div></div><div class="tagwrap"><span class="tag">'+p.target+'</span></div><div class="metric"><span>所得</span><b>'+p.income+'</b></div><div class="metric hide-sm"><span>競爭</span><b>'+p.comp+'</b></div><div class="metric hide-sm"><span>交通</span><b>'+p.traffic+'</b></div><button class="star" onclick="toggleSave('+p.id+')">★</button></div>').join("")}
+function exportCsv(){const rows=[["商圈","行政區","展店分數","核心客群","所得指數","競爭密度","交通指數"],...current.map(p=>[p.n,p.d,calc(p),p.target,p.income,p.comp,p.traffic])];const csv="\ufeff"+rows.map(r=>r.join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="台北展店評分.csv";a.click()}
+["q","biz","target","district","sort"].forEach(id=>el(id).addEventListener(id==="q"?"input":"change",render));render();
+</script>
+</body></html>
