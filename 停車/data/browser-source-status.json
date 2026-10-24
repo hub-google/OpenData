@@ -1,0 +1,293 @@
+{
+  "checked_from_origin": "https://hub-google.github.io",
+  "checked_at_utc": "2026-09-30T06:41:12.930100+00:00",
+  "sources": [
+    {
+      "status": 200,
+      "bytes": 489429,
+      "content_type": "application/octet-stream",
+      "acao": "*",
+      "cors_ok": true,
+      "browser_direct_ok": true,
+      "attempts": [
+        {
+          "status": 200,
+          "bytes": 489429,
+          "content_type": "application/octet-stream",
+          "acao": "*",
+          "cors_ok": true,
+          "browser_direct_ok": true
+        }
+      ],
+      "key": "taipei",
+      "city": "臺北市",
+      "method": "GET",
+      "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.json"
+    },
+    {
+      "status": 200,
+      "bytes": 246,
+      "content_type": "text/html; charset=utf-8",
+      "acao": null,
+      "cors_ok": false,
+      "browser_direct_ok": false,
+      "attempts": [
+        {
+          "status": 200,
+          "bytes": 246,
+          "content_type": "text/html; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        },
+        {
+          "status": 200,
+          "bytes": 246,
+          "content_type": "text/html; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        },
+        {
+          "status": 200,
+          "bytes": 246,
+          "content_type": "text/html; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        }
+      ],
+      "key": "ntpc",
+      "city": "新北市",
+      "method": "GET",
+      "url": "https://data.ntpc.gov.tw/api/datasets/e09b35a5-a738-48cc-b0f5-570b67ad9c78/json?page=0&size=5"
+    },
+    {
+      "status": 200,
+      "bytes": 179203,
+      "content_type": "application/json;charset=UTF-8",
+      "acao": "https://opendata.tycg.gov.tw",
+      "cors_ok": false,
+      "browser_direct_ok": false,
+      "attempts": [
+        {
+          "status": 200,
+          "bytes": 179203,
+          "content_type": "application/json;charset=UTF-8",
+          "acao": "https://opendata.tycg.gov.tw",
+          "cors_ok": false,
+          "browser_direct_ok": false
+        },
+        {
+          "status": 200,
+          "bytes": 179203,
+          "content_type": "application/json;charset=UTF-8",
+          "acao": "https://opendata.tycg.gov.tw",
+          "cors_ok": false,
+          "browser_direct_ok": false
+        },
+        {
+          "status": 200,
+          "bytes": 179203,
+          "content_type": "application/json;charset=UTF-8",
+          "acao": "https://opendata.tycg.gov.tw",
+          "cors_ok": false,
+          "browser_direct_ok": false
+        }
+      ],
+      "key": "taoyuan",
+      "city": "桃園市",
+      "method": "GET",
+      "url": "https://opendata.tycg.gov.tw/api/dataset/f4cc0b12-86ac-40f9-8745-885bddc18f79/resource/0381e141-f7ee-450e-99da-2240208d1773/download"
+    },
+    {
+      "status": 200,
+      "bytes": 137157,
+      "content_type": "application/json; charset=utf-8",
+      "acao": null,
+      "cors_ok": false,
+      "browser_direct_ok": false,
+      "attempts": [
+        {
+          "status": 200,
+          "bytes": 137157,
+          "content_type": "application/json; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        },
+        {
+          "status": 200,
+          "bytes": 137157,
+          "content_type": "application/json; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        },
+        {
+          "status": 200,
+          "bytes": 137157,
+          "content_type": "application/json; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        }
+      ],
+      "key": "tainan",
+      "city": "臺南市",
+      "method": "GET",
+      "url": "https://parkweb.tainan.gov.tw/api/parking.php"
+    },
+    {
+      "status": 200,
+      "bytes": 36356,
+      "content_type": "application/json; charset=utf-8",
+      "acao": null,
+      "cors_ok": false,
+      "browser_direct_ok": false,
+      "attempts": [
+        {
+          "status": 200,
+          "bytes": 36357,
+          "content_type": "application/json; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        },
+        {
+          "status": 200,
+          "bytes": 36356,
+          "content_type": "application/json; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        },
+        {
+          "status": 200,
+          "bytes": 36356,
+          "content_type": "application/json; charset=utf-8",
+          "acao": null,
+          "cors_ok": false,
+          "browser_direct_ok": false
+        }
+      ],
+      "key": "hsinchuCity",
+      "city": "新竹市",
+      "method": "GET",
+      "url": "https://hispark.hccg.gov.tw/OpenData/GetParkInfo?format=json"
+    },
+    {
+      "status": null,
+      "bytes": 0,
+      "content_type": null,
+      "acao": null,
+      "cors_ok": false,
+      "browser_direct_ok": false,
+      "attempts": [
+        {
+          "error": "URLError: <urlopen error [Errno 101] Network is unreachable>"
+        },
+        {
+          "error": "URLError: <urlopen error [Errno 101] Network is unreachable>"
+        },
+        {
+          "error": "URLError: <urlopen error [Errno 101] Network is unreachable>"
+        }
+      ],
+      "key": "kaohsiung",
+      "city": "高雄市",
+      "method": "GET",
+      "url": "https://kpp.tbkc.gov.tw/ParkingLocation/GetParkingLocation"
+    },
+    {
+      "status": null,
+      "bytes": 0,
+      "content_type": null,
+      "acao": null,
+      "cors_ok": false,
+      "browser_direct_ok": false,
+      "attempts": [
+        {
+          "error": "URLError: <urlopen error timed out>"
+        },
+        {
+          "error": "URLError: <urlopen error timed out>"
+        },
+        {
+          "error": "URLError: <urlopen error timed out>"
+        }
+      ],
+      "key": "changhua",
+      "city": "彰化縣",
+      "method": "POST",
+      "url": "https://chpark.chcg.gov.tw/ParkingLocation/ParkingLotPost"
+    },
+    {
+      "status": null,
+      "bytes": 0,
+      "content_type": null,
+      "acao": null,
+      "cors_ok": false,
+      "browser_direct_ok": false,
+      "attempts": [
+        {
+          "error": "URLError: <urlopen error timed out>"
+        },
+        {
+          "error": "URLError: <urlopen error timed out>"
+        },
+        {
+          "error": "URLError: <urlopen error timed out>"
+        }
+      ],
+      "key": "yilan",
+      "city": "宜蘭縣",
+      "method": "GET",
+      "url": "https://opendataap2.e-land.gov.tw/resource/files/2023-02-12/62f4d78b604ba16b8cc1e856dd28d2c3.json"
+    },
+    {
+      "status": 200,
+      "bytes": 1906,
+      "content_type": "application/json",
+      "acao": "*",
+      "cors_ok": true,
+      "browser_direct_ok": true,
+      "attempts": [
+        {
+          "status": 200,
+          "bytes": 1906,
+          "content_type": "application/json",
+          "acao": "*",
+          "cors_ok": true,
+          "browser_direct_ok": true
+        }
+      ],
+      "key": "taitung",
+      "city": "臺東縣",
+      "method": "GET",
+      "url": "https://trafficweb.ttcpb.gov.tw/api/parking-lots"
+    },
+    {
+      "status": 200,
+      "bytes": 31,
+      "content_type": "application/json; charset=utf-8",
+      "acao": "*",
+      "cors_ok": true,
+      "browser_direct_ok": true,
+      "attempts": [
+        {
+          "status": 200,
+          "bytes": 31,
+          "content_type": "application/json; charset=utf-8",
+          "acao": "*",
+          "cors_ok": true,
+          "browser_direct_ok": true
+        }
+      ],
+      "key": "penghu",
+      "city": "澎湖縣",
+      "method": "GET",
+      "url": "https://zytparking.com:35170/api/external-setting/parking-lot-available-space?parkingLotCode=OWIZXZ"
+    }
+  ]
+}
