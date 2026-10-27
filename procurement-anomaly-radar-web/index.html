@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>政府採購異常雷達｜OpenData Lab</title>
+<style>
+:root{--nav:#101828;--bg:#f6f8fb;--card:#fff;--text:#182230;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--red:#b42318;--orange:#b54708;--green:#027a48;--purple:#5925dc}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text)}
+a{color:inherit}.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh}.side{background:var(--nav);color:#fff;padding:26px 18px;position:sticky;top:0;height:100vh}
+.brand{font-size:20px;font-weight:850}.sub{font-size:12px;color:#98a2b3;line-height:1.7;margin-top:8px}.nav{margin-top:28px}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;padding:12px;border-radius:9px;text-align:left;margin:3px 0;cursor:pointer}.nav button.active,.nav button:hover{background:#1d2939;color:#fff}
+.rule{margin-top:28px;border-top:1px solid #344054;padding-top:18px;color:#98a2b3;font-size:11px;line-height:1.7}.main{padding:26px 30px 50px;max-width:1600px;width:100%}
+.top{display:flex;justify-content:space-between;gap:18px}.eyebrow{font-size:12px;font-weight:800;color:var(--blue);letter-spacing:.05em}h1{margin:5px 0 7px;font-size:30px}.muted{font-size:13px;line-height:1.6;color:var(--muted)}
+.live{background:#ecfdf3;color:#027a48;border:1px solid #abefc6;border-radius:999px;padding:8px 12px;height:fit-content;font-size:12px;font-weight:800;white-space:nowrap}
+.notice{margin:18px 0;background:#fffaeb;border:1px solid #fedf89;padding:12px 14px;border-radius:10px;font-size:12px;color:#7a2e0e;line-height:1.65}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:13px}.stat{padding:16px}.stat span{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:25px;margin-top:6px}.stat small{font-size:11px;color:var(--muted)}
+.panel{margin-top:14px;padding:16px}.panel h2{font-size:16px;margin:0 0 4px}.panel-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.detectors{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.detector{border:1px solid var(--line);background:#fff;border-radius:11px;padding:12px;text-align:left;cursor:pointer}.detector.active,.detector:hover{border-color:#84adff;background:#f5f8ff}.detector.disabled{opacity:.45;cursor:default;background:#f9fafb}.detector b{display:block;font-size:13px;margin:4px 0}.detector span{font-size:11px;color:var(--muted);line-height:1.5}.detector .state{display:inline-block;font-size:10px;padding:3px 6px;border-radius:999px;background:#ecfdf3;color:#027a48;margin-top:7px}.detector.disabled .state{background:#f2f4f7;color:#667085}
+.sources{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.source{border:1px solid var(--line);border-radius:9px;padding:10px;display:flex;gap:10px;align-items:flex-start}.dot{width:9px;height:9px;border-radius:50%;margin-top:5px;background:#98a2b3}.dot.ok{background:#12b76a}.dot.bad{background:#f04438}.source b{font-size:12px}.source div div{font-size:11px;color:var(--muted);margin-top:3px}.source a{font-size:11px;color:#175cd3;text-decoration:none;margin-right:9px}
+.filters{display:grid;grid-template-columns:1.6fr repeat(3,1fr) auto;gap:9px;margin-top:12px}.filters input,.filters select{border:1px solid #d0d5dd;border-radius:8px;padding:10px;background:#fff;width:100%}.btn{border:1px solid #d0d5dd;background:#fff;color:#344054;border-radius:8px;padding:10px 14px;font-weight:750;cursor:pointer}
+.tablehead,.row{display:grid;grid-template-columns:76px 1.7fr 1.05fr .9fr 1fr 1.25fr 44px;align-items:center;gap:10px}.tablehead{padding:12px 10px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--line);margin-top:8px}.row{padding:13px 10px;border-bottom:1px solid #f0f2f5}.row:hover{background:#fafbfc}
+.priority{width:55px;height:48px;border-radius:12px;display:grid;place-items:center;font-weight:850;font-size:18px;background:#f2f4f7}.priority.high{background:#fff1f0;color:#b42318}.priority.mid{background:#fffaeb;color:#b54708}.priority.low{background:#ecfdf3;color:#027a48}
+.case{border:0;background:none;padding:0;font-size:14px;font-weight:780;text-align:left;cursor:pointer}.small{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{font-size:13px}.tags{display:flex;gap:5px;flex-wrap:wrap}.tag{display:inline-block;padding:4px 7px;border-radius:999px;background:#f2f4f7;font-size:10px}.tag.restricted{background:#f4f3ff;color:#5925dc}.tag.concentration{background:#fff1f0;color:#b42318}.tag.debarred{background:#fff1f0;color:#b42318}.tag.ratio{background:#eff8ff;color:#175cd3}.tag.split{background:#fffaeb;color:#b54708}
+.more{border:0;background:transparent;font-size:22px;color:#667085;cursor:pointer}.drawerback{position:fixed;inset:0;background:#10182870;z-index:9}.drawer{position:fixed;right:0;top:0;width:min(690px,94vw);height:100vh;background:#fff;padding:26px;overflow:auto;box-shadow:-12px 0 30px #0002;z-index:10}.hidden{display:none}.close{float:right;border:0;background:#f2f4f7;width:36px;height:36px;border-radius:9px;cursor:pointer}
+.scorebox{display:flex;gap:14px;align-items:center;margin:18px 0}.score{width:80px;height:80px;border-radius:16px;display:grid;place-items:center;background:#fff1f0;color:#b42318;font-weight:900;font-size:29px}.reason{background:#f8fafc;border:1px solid var(--line);padding:11px;border-radius:9px;margin:8px 0;font-size:13px;line-height:1.55}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}.metrics>div{border:1px solid var(--line);padding:11px;border-radius:9px}.metrics span{display:block;font-size:11px;color:var(--muted)}.metrics b{font-size:14px;word-break:break-word}
+.section{margin-top:20px}.section h3{font-size:14px;margin:0 0 8px}.history{border-left:2px solid #e4e7ec;margin:12px 0 12px 6px;padding-left:17px}.event{margin:0 0 15px;position:relative;font-size:12px;line-height:1.55}.event:before{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:#98a2b3;left:-22px;top:5px}
+.links{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}.proof{display:inline-flex;align-items:center;text-decoration:none;border:1px solid #b2ccff;background:#eff8ff;color:#175cd3;border-radius:7px;padding:6px 8px;font-size:11px;font-weight:750}.proof:hover{background:#d1e9ff}.disclaimer{background:#f9fafb;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:11px;color:var(--muted);line-height:1.6}
+.error{padding:28px;text-align:center;color:#b42318}.loading{padding:40px;text-align:center;color:#667085}
+@media(max-width:1050px){.shell{grid-template-columns:1fr}.side{display:none}.main{padding:18px}.grid{grid-template-columns:1fr 1fr}.detectors,.sources{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.tablehead{display:none}.row{grid-template-columns:60px 1fr 40px}.row .hide-sm{display:none}}
+@media(max-width:640px){.grid,.detectors,.sources,.filters,.metrics{grid-template-columns:1fr}.top{display:block}.live{display:inline-block;margin-top:10px}}
+</style></head>
+<body>
+<div class="shell">
+<aside class="side">
+ <div class="brand">OpenData Lab</div><div class="sub">政府採購監督專案<br>實際資料版</div>
+ <div class="nav">
+  <button class="active" onclick="setMode('all',this)">全部警示</button>
+  <button onclick="setMode('combo',this)">組合訊號</button>
+  <button onclick="setMode('award',this)">實際決標</button>
+  <button onclick="setMode('tender',this)">限制性招標</button>
+ </div>
+ <div class="rule"><b style="color:#fff">硬規則</b><br>沒有官方來源網址，就不進證據鏈。<br>異常訊號 ≠ 弊案認定。</div>
+</aside>
+<main class="main">
+ <div class="top"><div><div class="eyebrow">PUBLIC PROCUREMENT ANOMALY RADAR</div><h1>政府採購異常雷達</h1><div class="muted">直接讀取行政院公共工程委員會 Open Data，自動交叉限制性招決標、得標集中、拒絕往來與標比訊號。</div></div><div class="live">● 官方資料版</div></div>
+ <div class="notice"><b>判讀方式：</b>這個工具只把「值得人工查」的公開紀錄排前面。限制性招標、重複得標、高標比或拒絕往來歷史，都可能有合法背景；點開案件可直接回到工程會資料或帶案號進政府電子採購網查證。</div>
+ <div class="grid">
+  <div class="stat"><span>載入案件</span><strong id="sTotal">—</strong><small>來自官方資料</small></div>
+  <div class="stat"><span>組合訊號</span><strong id="sCombo">—</strong><small>同時觸發 ≥ 2 種</small></div>
+  <div class="stat"><span>限制性決標</span><strong id="sAwards">—</strong><small>官方年度資料</small></div>
+  <div class="stat"><span>集中度紀錄</span><strong id="sConc">—</strong><small>工程類同機關高頻得標</small></div>
+ </div>
+
+ <section class="panel">
+  <div class="panel-head"><div><h2>目前已用真實資料跑的異常樣態</h2><div class="muted">灰色項目不會硬做假判讀；等取得足夠欄位後再啟用。</div></div></div>
+  <div class="detectors">
+   <button class="detector" data-signal="concentration" onclick="setSignal('concentration')"><b>廠商集中</b><span>工程會官方「同一機關得標20件以上」名單＋限制性決標重複紀錄。</span><i class="state">已實作</i></button>
+   <button class="detector" data-signal="split" onclick="setSignal('split')"><b>疑似分案／分批</b><span>同機關 60 日內高度相似的限制性招標群組。</span><i class="state">已實作</i></button>
+   <button class="detector" data-signal="restricted" onclick="setSignal('restricted')"><b>限制性招標／決標</b><span>直接使用工程會限制性招標與決標 Open Data。</span><i class="state">已實作</i></button>
+   <button class="detector" data-signal="ratio" onclick="setSignal('ratio')"><b>標比偏高</b><span>同案招標預算與決標金額可匹配時，計算決標／預算比。</span><i class="state">已實作</i></button>
+   <button class="detector disabled"><b>價格異常</b><span>需要可比較的規格、數量、保固與服務內容，現階段不亂比。</span><i class="state">待完整明細</i></button>
+   <button class="detector disabled"><b>投標廠商關聯</b><span>需要未得標廠商名單＋公司登記關係資料，現階段不假造。</span><i class="state">待投標明細</i></button>
+   <button class="detector" data-signal="debarred" onclick="setSignal('debarred')"><b>拒絕往來紀錄</b><span>直接交叉工程會每日更新的拒絕往來廠商公告。</span><i class="state">已實作</i></button>
+   <button class="detector" onclick="setMode('combo')"><b>組合訊號</b><span>同一案件／機關廠商組合同時觸發多種官方資料訊號。</span><i class="state">已實作</i></button>
+  </div>
+ </section>
+
+ <section class="panel">
+  <div class="panel-head"><div><h2>官方資料來源狀態</h2><div class="muted" id="generated">載入中…</div></div><button class="btn" onclick="location.reload()">重新載入</button></div>
+  <div class="sources" id="sources"><div class="loading">讀取資料來源狀態…</div></div>
+ </section>
+
+ <section class="panel">
+  <div class="panel-head"><div><h2 id="listTitle">實際資料警示</h2><div class="muted">每一筆都能點開看來源與原始查證網址。</div></div><button class="btn" onclick="clearFilters()">清除篩選</button></div>
+  <div class="filters">
+   <input id="q" placeholder="搜尋機關、標案案號、標案名稱、廠商">
+   <select id="level"><option value="all">所有優先度</option><option value="high">80 以上</option><option value="mid">60–79</option><option value="low">59 以下</option></select>
+   <select id="kind"><option value="all">所有資料類型</option><option value="actual_award">限制性決標</option><option value="restricted_tender">限制性招標</option><option value="concentration_pattern">工程集中度</option><option value="similar_tender_cluster">相似招標群組</option><option value="debarment_record">拒絕往來公告</option></select>
+   <select id="sort"><option value="score">依查核優先度</option><option value="amount">依金額</option><option value="signals">依訊號數</option></select>
+   <button class="btn" onclick="exportCsv()">匯出 CSV</button>
+  </div>
+  <div class="tablehead"><div>優先度</div><div>案件</div><div>機關</div><div>金額</div><div>廠商</div><div>觸發訊號</div><div></div></div>
+  <div id="list"><div class="loading">正在載入官方資料…</div></div>
+ </section>
+</main></div>
+<div id="back" class="drawerback hidden" onclick="closeDrawer()"></div>
+<aside id="drawer" class="drawer hidden"><button class="close" onclick="closeDrawer()">×</button><div id="drawerBody"></div></aside>
+<script>
+let DB=null, mode="all", signal="all", current=[];
+const el=id=>document.getElementById(id);
+const signalLabel={restricted:"限制性招／決標",concentration:"廠商集中",debarred:"拒絕往來紀錄",ratio:"標比偏高",split:"相似分案／分批"};
+function money(n){if(n===null||n===undefined||n==="")return "—";if(typeof n==="string"&&!/^\d+(\.\d+)?$/.test(n))return n;const x=Number(n)||0;if(!x)return "—";return x>=100000000?(x/100000000).toFixed(2)+" 億":x>=10000?(x/10000).toFixed(1)+" 萬":x.toLocaleString()+" 元"}
+function pri(s){return s>=80?"high":s>=60?"mid":"low"}
+function tags(c){return (c.signals||[]).map(s=>'<span class="tag '+s+'">'+(signalLabel[s]||s)+'</span>').join("")}
+function sourceLinks(arr){return (arr||[]).map(x=>'<a class="proof" target="_blank" rel="noopener noreferrer" href="'+x.url+'">↗ '+x.label+'</a>').join("")}
+function metricValue(m){if(m.value===null||m.value===undefined||m.value==="")return "—";if(/金額|預算/.test(m.label)&&typeof m.value==="number")return money(m.value);if(m.label==="決標／預算比"&&typeof m.value==="number")return m.value+"%";if(typeof m.value==="boolean")return m.value?"是":"否";return String(m.value)}
+async function load(){
+ try{
+  const r=await fetch("data/procurement-anomalies.json?ts="+Date.now(),{cache:"no-store"});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  DB=await r.json();
+  el("generated").textContent="資料產製時間："+new Date(DB.generated_at).toLocaleString("zh-TW")+"｜實際抓取工程會官方來源";
+  el("sTotal").textContent=DB.summary.cases.toLocaleString();
+  el("sCombo").textContent=DB.summary.combo_cases.toLocaleString();
+  el("sAwards").textContent=DB.summary.restricted_awards.toLocaleString();
+  el("sConc").textContent=DB.summary.concentration_records.toLocaleString();
+  el("sources").innerHTML=DB.sources.map(s=>'<div class="source"><span class="dot '+(s.ok?"ok":"bad")+'"></span><div><b>'+s.name+'</b><div>'+(s.ok?("成功讀取 "+s.records.toLocaleString()+" 筆｜更新頻率 "+s.frequency):("抓取失敗："+(s.error||"未知錯誤")))+'</div><a target="_blank" rel="noopener noreferrer" href="'+s.dataset+'">資料集說明</a><a target="_blank" rel="noopener noreferrer" href="'+s.url+'">官方原始資料</a></div></div>').join("");
+  render();
+ }catch(e){
+  el("list").innerHTML='<div class="error">目前尚未產生官方資料檔：'+e.message+'<br>GitHub Action 完成後會自動出現。</div>';
+  el("sources").innerHTML='<div class="error">官方資料更新尚未完成。</div>';
+ }
+}
+function render(){
+ if(!DB)return;
+ const q=el("q").value.trim().toLowerCase(), lv=el("level").value, kind=el("kind").value, sort=el("sort").value;
+ current=DB.cases.filter(c=>{
+  if(mode==="combo" && (c.signals||[]).length<2)return false;
+  if(mode==="award" && c.kind!=="actual_award")return false;
+  if(mode==="tender" && !["restricted_tender","similar_tender_cluster"].includes(c.kind))return false;
+  if(signal!=="all" && !(c.signals||[]).includes(signal))return false;
+  const hay=[c.title,c.agency,c.case_no,c.vendor,c.category].join(" ").toLowerCase();
+  if(q&&!hay.includes(q))return false;
+  if(lv==="high"&&c.priority<80)return false;if(lv==="mid"&&(c.priority<60||c.priority>=80))return false;if(lv==="low"&&c.priority>=60)return false;
+  if(kind!=="all"&&c.kind!==kind)return false;
+  return true;
+ });
+ current.sort((a,b)=>sort==="amount"?(b.amount||0)-(a.amount||0):sort==="signals"?(b.signals||[]).length-(a.signals||[]).length:b.priority-a.priority);
+ el("list").innerHTML=current.map(c=>'<div class="row"><div class="priority '+pri(c.priority)+'">'+c.priority+'</div><div><button class="case" onclick="openCase(\''+String(c.id).replaceAll("'","\\'")+'\')">'+(c.title||"未命名標案")+'</button><div class="small">'+(c.case_no?("案號 "+c.case_no+" ・ "):"")+(c.date||"")+(c.method?(" ・ "+c.method):"")+'</div></div><div class="hide-sm"><span class="tag">'+(c.agency||"—")+'</span></div><div class="metric"><span>金額</span><b>'+money(c.amount)+'</b></div><div class="metric hide-sm"><span>廠商</span><b>'+(c.vendor||"—")+'</b></div><div class="tags hide-sm">'+tags(c)+'</div><button class="more" onclick="openCase(\''+String(c.id).replaceAll("'","\\'")+'\')">›</button></div>').join("") || '<div class="loading">沒有符合篩選條件的紀錄</div>';
+}
+function openCase(id){
+ const c=DB.cases.find(x=>x.id===id);if(!c)return;
+ const hist=(c.history||[]).map(h=>'<div class="event"><b>'+[h.date,h.title,h.vendor].filter(Boolean).join("｜")+'</b><div>'+(h.case_no?("案號 "+h.case_no+" ・ "):"")+money(h.amount)+'</div><div class="links">'+sourceLinks(h.evidence)+'</div></div>').join("");
+ el("drawerBody").innerHTML='<div class="eyebrow">'+(c.category||"政府採購")+' ・ '+(c.agency||"")+'</div><h2 style="font-size:24px;margin:6px 0">'+c.title+'</h2><div class="muted">'+(c.case_no?("標案案號："+c.case_no+"　"):"")+(c.vendor?("廠商："+c.vendor):"")+'</div><div class="scorebox"><div class="score">'+c.priority+'</div><div><b>查核優先度</b><div class="muted">只用來排人工查核順序，不代表違法機率。</div><div class="tags" style="margin-top:8px">'+tags(c)+'</div></div></div><div class="section"><h3>為什麼被抓出來</h3>'+(c.reasons||[]).map(x=>'<div class="reason">✓ '+x+'</div>').join("")+'</div><div class="section"><h3>關鍵數據</h3><div class="metrics">'+(c.metrics||[]).map(m=>'<div><span>'+m.label+'</span><b>'+metricValue(m)+'</b></div>').join("")+'</div></div><div class="section"><h3>這筆資料的官方證據</h3><div class="links">'+sourceLinks(c.evidence)+'</div></div>'+(hist?'<div class="section"><h3>歷史脈絡｜逐筆可查證</h3><div class="history">'+hist+'</div></div>':'')+'<div class="section"><div class="disclaimer">'+DB.disclaimer+'</div></div>';
+ el("back").classList.remove("hidden");el("drawer").classList.remove("hidden");
+}
+function closeDrawer(){el("back").classList.add("hidden");el("drawer").classList.add("hidden")}
+function setSignal(s){signal=s;document.querySelectorAll(".detector[data-signal]").forEach(x=>x.classList.toggle("active",x.dataset.signal===s));render()}
+function setMode(m,b){mode=m;signal="all";document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));if(b)b.classList.add("active");document.querySelectorAll(".detector").forEach(x=>x.classList.remove("active"));render()}
+function clearFilters(){mode="all";signal="all";el("q").value="";el("level").value="all";el("kind").value="all";el("sort").value="score";document.querySelectorAll(".detector").forEach(x=>x.classList.remove("active"));render()}
+function exportCsv(){const rows=[["查核優先度","標案案號","標案名稱","機關","日期","金額","廠商","訊號","官方查證網址"],...current.map(c=>[c.priority,c.case_no,c.title,c.agency,c.date,c.amount,c.vendor,(c.signals||[]).map(s=>signalLabel[s]||s).join("、"),(c.evidence||[]).map(x=>x.url).join(" | ")])];const csv="\ufeff"+rows.map(r=>r.map(x=>'"'+String(x??"").replaceAll('"','""')+'"').join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="政府採購異常雷達_官方資料.csv";a.click()}
+["q","level","kind","sort"].forEach(id=>el(id).addEventListener(id==="q"?"input":"change",render));load();
+</script></body></html>

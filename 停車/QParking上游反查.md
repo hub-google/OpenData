@@ -1,0 +1,382 @@
+# QParking 上游反查
+
+- homepage curl rc=0
+
+## 抓取的 JS / page-data
+
+- https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js — rc=0 bytes=115436 stderr=
+- https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js — rc=0 bytes=140997 stderr=
+- https://www.qparking.com.tw/page-data/app-data.json — rc=0 bytes=50 stderr=
+- https://www.qparking.com.tw/page-data/parking/page-data.json — rc=0 bytes=149 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-news-[id]-jsx-eadfbca67eaffea54d15.js — rc=3 bytes=0 stderr=curl: (3) bad range in URL position 65:
+https://www.qparking.com.tw/parking/component---src-pages-news-[id]-jsx-eadfbca67eaffea54d15.js
+                                                                ^
+
+- https://www.qparking.com.tw/parking/component---src-pages-news-announcement-[id]-jsx-5db30623570a790c216b.js — rc=3 bytes=0 stderr=curl: (3) bad range in URL position 78:
+https://www.qparking.com.tw/parking/component---src-pages-news-announcement-[id]-jsx-5db30623570a790c216b.js
+                                                                             ^
+
+- https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-[id]-jsx-a68275ba18c466f0b66b.js — rc=3 bytes=0 stderr=curl: (3) bad range in URL position 77:
+https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-[id]-jsx-a68275ba18c466f0b66b.js
+                                                                            ^
+
+- https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js — rc=0 bytes=1429049 stderr=
+- https://www.qparking.com.tw/webpack-runtime-60a6a238fd1b4a4633bc.js — rc=0 bytes=5478 stderr=
+
+## API / endpoint / backend hints
+
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← PAGE
+- `https://tidc-offical-website.s3.ap-southeast-1.amazonaws.com/qparking/img/loading.gif` ← PAGE
+- `https://qpk.qparking.com.tw/storesite/` ← PAGE
+- `https://www.facebook.com/QParking` ← PAGE
+- `https://www.youtube.com/@qparking` ← PAGE
+- `https://apps.apple.com/tw/app/qparking-%E9%A5%97%E6%A8%82%E5%81%9C%E8%BB%8A/id1435036029` ← PAGE
+- `https://play.google.com/store/apps/details?id=com.cloudq.qparking` ← PAGE
+- `QParking特約合作停車場：台中市｜市政公園地下停車場・台中公園地下停車場。屏東市｜屏菸1936停車場・勝利星村停車場・空翔路外停車場・總圖停車場・縣府立體停車場・中華路外停車場。` ← PAGE
+- `QParking｜饗停就停．優惠隨行` ← PAGE
+- `}/*!sc*/
+.fUEPPR{width:min(1680px,90%);margin:auto;padding:20px 0px 15px 0px;display:grid;grid-template-columns:1fr 5fr;}/*!sc*/
+@media (max-width:1024px){.fUEPPR{display:flex;justify-content:space-between;align-items:center;}}/*!sc*/
+@media (max-width:720px){.fUEPPR{display:flex;justify-content:center;align-items:center;}}/*!sc*/
+@media (max-width:540px){.fUEPPR{padding:15px 0px 5px 0px;}}/*!sc*/
+@media (max-height:600px){.fUEPPR{padding:20px 0px 5px 0px;display:flex;justify-content:space-between;align-items:center;}}/*!sc*/
+data-styled.g9[id=` ← PAGE
+- `Navbar__StoreLogin-sc-189544e-6` ← PAGE
+- `Layout__LayoutParking-sc-1vinsag-2` ← PAGE
+- `}/*!sc*/
+.shgEd{display:flex;justify-content:space-between;align-items:center;gap:8px;}/*!sc*/
+.shgEd a:hover{opacity:0.7;}/*!sc*/
+data-styled.g55[id=` ← PAGE
+- `}/*!sc*/
+.fVfIbJ{display:flex;justify-content:space-between;align-items:center;gap:10px;}/*!sc*/
+@media (max-width:1024px){.fVfIbJ{display:grid;gap:5px;}}/*!sc*/
+@media (max-width:720px){.fVfIbJ{display:none;}}/*!sc*/
+data-styled.g56[id=` ← PAGE
+- `parking__Column-sc-1vu55jq-0` ← PAGE
+- `parking__LeftArea-sc-1vu55jq-1` ← PAGE
+- `parking__Fixed-sc-1vu55jq-2` ← PAGE
+- `parking__CenterArea-sc-1vu55jq-3` ← PAGE
+- `parking__SearchArea-sc-1vu55jq-4` ← PAGE
+- `parking__SearchTitle-sc-1vu55jq-5` ← PAGE
+- `parking__Border-sc-1vu55jq-6` ← PAGE
+- `parking__Select-sc-1vu55jq-7` ← PAGE
+- `parking__Input-sc-1vu55jq-8` ← PAGE
+- `parking__ButtonArea-sc-1vu55jq-9` ← PAGE
+- `parking__SearchResult-sc-1vu55jq-11` ← PAGE
+- `parking__NoLot-sc-1vu55jq-12` ← PAGE
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← PAGE
+- `/store/mode/` ← PAGE
+- `/parking/` ← PAGE
+- `Navbar__StoreLogin-sc-189544e-6 bBaxLT` ← PAGE
+- `Layout__LayoutParking-sc-1vinsag-2 iSdtwl` ← PAGE
+- `parking__Column-sc-1vu55jq-0 epokYI` ← PAGE
+- `parking__LeftArea-sc-1vu55jq-1 kPLjxE` ← PAGE
+- `parking__Fixed-sc-1vu55jq-2 ekfrtc` ← PAGE
+- `parking__SearchArea-sc-1vu55jq-4 ivpfPR` ← PAGE
+- `parking__SearchTitle-sc-1vu55jq-5 bNwmrm` ← PAGE
+- `parking__Border-sc-1vu55jq-6 bKmwPe` ← PAGE
+- `parking__Select-sc-1vu55jq-7 fseSJk` ← PAGE
+- `parkingLot` ← PAGE
+- `parking__Input-sc-1vu55jq-8 igXej` ← PAGE
+- `parking__ButtonArea-sc-1vu55jq-9 fWitwb` ← PAGE
+- `parking__SearchResult-sc-1vu55jq-11 dMnvuf` ← PAGE
+- `parking__NoLot-sc-1vu55jq-12 bRDrIT` ← PAGE
+- `parking__CenterArea-sc-1vu55jq-3 gOcZOl` ← PAGE
+- `Download QParking on the Apple Store` ← PAGE
+- `Download QParking on Google Play` ← PAGE
+- `userSpaceOnUse` ← PAGE
+- `mailto:service@qparking.com.tw?subject=QParking官網《服務諮詢》` ← PAGE
+- `QParking email` ← PAGE
+- `>Copyright © 2018 QParking. All rights reserved.</div></span></div></div><div class=` ← PAGE
+- `>Copyright © 2018 QParking. All rights reserved.</div></span></div><div class=` ← PAGE
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← PAGE
+- `component---src-pages-parking-index-jsx\` ← PAGE
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← PAGE
+- `component---src-pages-store-case-jsx\` ← PAGE
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← PAGE
+- `component---src-pages-store-index-jsx\` ← PAGE
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← PAGE
+- `component---src-pages-store-mode-jsx\` ← PAGE
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← PAGE
+- `),m.disableMutationObserver=!0),document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `,m.easing),document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `,m.duration),document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `)};switch(i.offset&&!isNaN(i.offset)&&(r=parseInt(i.offset)),i.anchor&&document.querySelectorAll(i.anchor)&&(e=document.querySelectorAll(i.anchor)[0]),n=(0,o.default)(e).top,i.anchorPlacement){case` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `,{value:!0});var n=function(e){return e=e||document.querySelectorAll(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `;t.__esModule=!0,t.injectPartytownSnippet=function(e){if(!e.length)return;const t=document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `),n=document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `component---src-pages-parking-index-jsx` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `component---src-pages-store-case-jsx` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `component---src-pages-store-index-jsx` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `component---src-pages-store-mode-jsx` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `QParking｜饗停就停．優惠隨行` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `query` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- ` slot not found`)}const c=((e,t)=>Object.keys(t).length?`${e}-${(0,m.U)(t)}`:e)(s,o);let u=i[c];return u?r&&(u.hasChildren=!0):i[c]=u={props:o,sliceName:s,hasChildren:!!r},h.createElement(v,{sliceId:c},r)},b=e=>{let{sliceName:t,allowEmpty:n,children:r,...o}=e;const a=(0,h.useContext)(g.Jr),i=(0,h.useContext)(g.dd),s=a[t],c=i.get(s);if(!c){if(n)return null;throw new Error(`Slice ` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- ` slot not found`)}return h.createElement(c.component,Object.assign({sliceContext:c.sliceContext,data:c.data},o),r)};function w(e){{const t={...e,sliceName:e.alias};delete t.alias,delete t.__renderedByLocation;const n=(0,h.useContext)(g.j$),r=E(e);if(Object.keys(r).length)throw new S(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `It appears like Gatsby is misconfigured. Gatsby related `graphql` calls are supposed to only be evaluated at compile time, and then compiled away. Unfortunately, something went wrong and the query was left in the compiled code.\n\nUnless your site has a complex or custom babel/Gatsby configuration this is likely a bug in Gatsby.` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `),new Promise((n=>{const r=new XMLHttpRequest;r.open(t,e,!0),r.onreadystatechange=()=>{4==r.readyState&&n(r)},r.send(null)}))}const m=/bot|crawler|spider|crawling/i,g=function(e,t,n){var r;void 0===t&&(t=null);const o={componentChunkName:e.componentChunkName,path:e.path,webpackCompilationHash:e.webpackCompilationHash,matchPath:e.matchPath,staticQueryHashes:e.staticQueryHashes,getServerDataError:e.getServerDataError,slicesMap:null!==(r=e.slicesMap)&&void 0!==r?r:{}};return{component:t,head:n,json:e.result,page:o}};function v(e){return new Promise((t=>{try{const n=e.readRoot();t(n)}catch(n){if(!Object.hasOwnProperty.call(n,` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `))throw n;setTimeout((()=>{v(e).then(t)}),200)}}))}let y=function(){function e(e,t){this.inFlightNetworkRequests=new Map,this.pageDb=new Map,this.inFlightDb=new Map,this.staticQueryDb={},this.pageDataDb=new Map,this.partialHydrationDb=new Map,this.slicesDataDb=new Map,this.sliceInflightDb=new Map,this.slicesDb=new Map,this.isPrefetchQueueRunning=!1,this.prefetchQueued=[],this.prefetchTriggered=new Set,this.prefetchCompleted=new Set,this.loadComponent=e,(0,l.QX)(t)}var t=e.prototype;return t.memoizedGet=function(e){let t=this.inFlightNetworkRequests.get(e);return t||(t=h(e,` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `),this.inFlightNetworkRequests.set(e,t)),t.then((t=>(this.inFlightNetworkRequests.delete(e),t))).catch((t=>{throw this.inFlightNetworkRequests.delete(e),t}))},t.setApiRunner=function(e){this.apiRunner=e,this.prefetchDisabled=e(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `==typeof(null==i?void 0:i.payload)){u=g(s,null,o),u.partialHydration=i.payload;const e=new ReadableStream({start(e){const t=new TextEncoder;e.enqueue(t.encode(i.payload))},pull(e){e.close()},cancel(){}});return v((0,a.createFromReadableStream)(e)).then((e=>(u.partialHydration=e,u)))}u=g(s,c,o)}return u})),w=Promise.all(h.map((e=>{if(this.staticQueryDb[e]){const t=this.staticQueryDb[e];return{staticQueryHash:e,jsonPayload:t}}return this.memoizedGet(`/page-data/sq/d/${e}.json`).then((t=>{const n=JSON.parse(t.responseText);return{staticQueryHash:e,jsonPayload:n}})).catch((()=>{throw new Error(`We couldn` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- ``)}))}))).then((e=>{const t={};return e.forEach((e=>{let{staticQueryHash:n,jsonPayload:r}=e;t[n]=r,this.staticQueryDb[n]=r})),t}));return Promise.all([b,w]).then((e=>{let n,[r,o]=e;return r&&(n={...r,staticQueryResults:o},f.payload=n,u.A.emit(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `,(()=>{const t=this.prefetchQueued.findIndex((t=>{let[n]=t;return n===e}));-1!==t&&this.prefetchQueued.splice(t,1)})),this.isPrefetchQueueRunning||(this.isPrefetchQueueRunning=!0,setTimeout((()=>{this._processNextPrefetchBatch()}),3e3)),{then:(e,n)=>t.promise.then(e,n),abort:n.abort.bind(n)}},t._processNextPrefetchBatch=function(){(window.requestIdleCallback||(e=>setTimeout(e,0)))((()=>{const e=this.prefetchQueued.splice(0,4),t=Promise.all(e.map((e=>{let[t,n]=e;return this.prefetchTriggered.has(t)||(this.apiRunner(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `,{pathname:t}),this.prefetchTriggered.add(t)),this.prefetchDisabled?n.resolve(!1):this.doPrefetch((0,l.Hh)(t)).then((()=>{this.prefetchCompleted.has(t)||(this.apiRunner(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `).then((t=>200===t.status?{status:p.Error}:e)):e))},t}(y);const E=e=>{w=e},_={enqueue:e=>w.prefetch(e),getResourceURLsForPathname:e=>w.getResourceURLsForPathname(e),loadPage:e=>w.loadPage(e),loadPageSync:function(e,t){return void 0===t&&(t={}),w.loadPageSync(e,t)},prefetch:e=>w.prefetch(e),isPageNotFound:e=>w.isPageNotFound(e),hovering:e=>w.hovering(e),loadAppData:()=>w.loadAppData()};var P=_;function k(){return w?w.staticQueryDb:{}}function x(){return w?w.slicesDb:{}}},6017:function(e,t,n){` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `),w={html:[],body:[]},S=()=>{var e;const{validHeadNodes:t,htmlAndBodyAttributes:n}=m(b);w.html=Object.keys(n.html),w.body=Object.keys(n.body),function(e){if(!e)return;const{html:t,body:n}=e,r=document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `);r&&Object.entries(t).forEach((e=>{let[t,n]=e;r.setAttribute(t,n)}));const o=document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `);o&&Object.entries(n).forEach((e=>{let[t,n]=e;o.setAttribute(t,n)}))}(n);const r=document.querySelectorAll(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `);var o;if(0===r.length)return void(o=document.head).append.apply(o,(0,c.A)(t));const a=[];!function(e){let{oldNodes:t,newNodes:n,onStale:r,onNew:o}=e;for(const a of t){const e=n.findIndex((e=>h(e,a)));-1===e?r(a):n.splice(e,1)}for(const a of n)o(a)}({oldNodes:r,newNodes:t,onStale:e=>e.parentNode.removeChild(e),onNew:e=>a.push(e)}),(e=document.head).append.apply(e,a)};function E(e){let{pageComponent:t,staticQueryResults:n,pageComponentProps:o}=e;(0,r.useEffect)((()=>{if(null!=t&&t.Head){!function(e){if(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `,{element:s},s,(e=>{let{result:t}=e;return{element:t}})).pop();a(r.createElement(d,{callback:S},r.createElement(u.StaticQueryContext.Provider,{value:n},r.createElement(l.LocationProvider,null,c))),b)}var e;return()=>{!function(){const e=document.querySelectorAll(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `);for(const t of e)t.parentNode.removeChild(t)}(),function(e){if(!e)return;const{html:t,body:n}=e;if(t){const e=document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `);t.forEach((t=>{e&&e.removeAttribute(t)}))}if(n){const e=document.querySelector(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `);n.forEach((t=>{e&&e.removeAttribute(t)}))}}(w)}}))}function _(e){const t={...e,params:{...(0,s.UA)(e.location.pathname),...e.pageResources.json.pageContext.__params}};let n;var o;n=e.pageResources.partialHydration?e.pageResources.partialHydration:(0,r.createElement)((o=e.pageResources.component)&&o.default||o,{...t,key:e.path||e.pageResources.page.path});E({pageComponent:e.pageResources.head,staticQueryResults:e.pageResources.staticQueryResults,pageComponentProps:t});return(0,i.N)(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `,whiteSpace:` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `===navigator.serviceWorker.controller.state&&navigator.serviceWorker.controller.postMessage({gatsbyApi:` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `,{prevRouterProps:e,pathname:r,routerProps:{location:n},getSavedScrollPosition:e=>[0,this._stateStorage.read(e,e.key)]});if(i.length>0)return i[i.length-1];if(e){const{location:{pathname:t}}=e;if(t===r)return a?decodeURI(a.slice(1)):[0,0]}return!0}let S=function(e){function t(t){var n;return(n=e.call(this,t)||this).announcementRef=a.createRef(),n}(0,r.A)(t,e);var n=t.prototype;return n.componentDidUpdate=function(e,t){requestAnimationFrame((()=>{let e=`new page at ${this.props.location.pathname}`;document.title&&(e=document.title);const t=document.querySelectorAll(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `StaticQuery` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `Loading (StaticQuery)` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `;\n\nuseStaticQuery(graphql\`${e}\`);\n`);if(null!==(t=n[e])&&void 0!==t&&t.data)return n[e].data;throw new Error(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `).split(fe),o=[],a=0,i=r.length;a<i;a++){var s=r[a].trim();if(s){var c=s.match(pt);if(c){var u=0|parseInt(c[1],10),l=c[2];0!==u&&(ut(l,u),dt(e,l,c[3]),e.getTag().insertRules(u,o)),o.length=0}else o.push(s)}}},ht=function(e){for(var t=document.querySelectorAll(lt),n=0,r=t.length;n<r;n++){var o=t[n];o&&o.getAttribute(ue)!==le&&(ft(e,o),o.parentNode&&o.parentNode.removeChild(o))}};function mt(){return n.nc}var gt=function(e){var t=document.head,n=e||t,r=document.createElement(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `),o=function(e){var t=Array.from(e.querySelectorAll(` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `):c);i.namespace&&(u=kt(u,i.namespace));var p,d,f,h=[];return Z(u,(p=l.concat((f=function(e){return h.push(e)},function(e){e.root||(e=e.return)&&f(e)})),d=C(p),function(e,t,n,r){for(var o=` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `))[0]&&(s=e.querySelectorAll(\` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `fetchPathname:function(){return P},scriptCache:function(){return _.scriptCache},scriptCallbackCache:function(){return _.scriptCallbackCache},useScrollRestoration:function(){return i.RV},useStaticQuery:function(){return c.GR},withAssetPrefix:function(){return s.Zf},withPrefix:function(){return s.Fe}})` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `fetchTriggered.has(t)||(this.apiRunner("onPrefetchPathname",{pathname:t}),this.prefetchTriggered.add(t)),this.prefetchDisabled?n.resolve(!1):this.doPrefetch((0,l.Hh)(t)).then((()=>{this.prefetchCompleted.has(t)||(this.apiRunner("onPostPrefetchPathname",{pathname:t}),this.prefetchCompleted.add(t)),n.resolve(!0)}))})))` ← https://www.qparking.com.tw/app-48fa61a1c75becfa0f32.js
+- `http://www.w3.org/XML/1998/namespace` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `==typeof window||void 0===window.document||void 0===window.document.createElement),f=Object.prototype.hasOwnProperty,d=/^[:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\-.0-9\u00B7\u0300-\u036F\u203F-\u2040]*$/,p={},m={};function h(e,n,t,r,l,a,o){this.acceptsBooleans=2===n||3===n||4===n,this.attributeName=r,this.attributeNamespace=l,this.mustUseProperty=t,this.propertyName=e,this.type=n,this.sanitizeURL=a,this.removeEmptyString=o}var v={};` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `:t:(n=l.attributeName,r=l.attributeNamespace,null===t?e.removeAttribute(n):(t=3===(l=l.type)||4===l&&!0===t?` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `xml:space` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `!==e.namespaceURI||` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `,Spacebar:` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `Backspace` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `!=typeof l)throw Error(a(191,l));l.call(r)}}}var Ha={},Wa=El(Ha),Qa=El(Ha),qa=El(Ha);function Ka(e){if(e===Ha)throw Error(a(174));return e}function Ya(e,n){switch(Cl(qa,n),Cl(Qa,e),Cl(Wa,Ha),e=n.nodeType){case 9:case 11:n=(n=n.documentElement)?n.namespaceURI:ie(null,` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `);break;default:n=ie(n=(e=8===e?n.parentNode:n).namespaceURI||null,e=e.tagName)}_l(Wa),Cl(Wa,n)}function Xa(){_l(Wa),_l(Qa),_l(qa)}function Ga(e){Ka(qa.current);var n=Ka(Wa.current),t=ie(n,e.type);n!==t&&(Cl(Qa,e),Cl(Wa,t))}function Za(e){Qa.current===e&&(_l(Wa),_l(Qa))}var Ja=El(0);function eo(e){for(var n=e;null!==n;){if(13===n.tag){var t=n.memoizedState;if(null!==t&&(null===(t=t.dehydrated)||` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `===t.type&&null!=n){for(t=e;t.parentNode;)t=t.parentNode;for(t=t.querySelectorAll(` ← https://www.qparking.com.tw/framework-516481b4360a9f60a9d8.js
+- `component---src-pages-parking-index-jsx` ← https://www.qparking.com.tw/page-data/parking/page-data.json
+- `/parking/` ← https://www.qparking.com.tw/page-data/parking/page-data.json
+- `staticQueryHashes` ← https://www.qparking.com.tw/page-data/parking/page-data.json
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-404-jsx-b9494501679f78489e41.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-business-index-jsx-871aa6093a2539b58276.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-faq-index-jsx-876295ea5342e1d80617.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-index-jsx-513d240390f39cb54ca3.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-announcement-index-jsx-5d5c555822b3cf9c4c85.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-cooperation-index-jsx-02b47d63e61110fb0bc9.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-news-index-jsx-9ab30c8248857194af3b.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-index-jsx-d902ffec0cb36e316f98.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-privacy-jsx-0ed557a0b207748cf03b.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-index-jsx-974815c1d960327a1a93.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-irregularities-jsx-0cd9b23d427e0b291685.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-prohibited-jsx-079a1e56fdfe64bbcfa0.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-policy-protocol-restricted-jsx-d787cd03b77a89a0c27e.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js
+- `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Noto+Sans+HK:wght@300;400;500;700;900&display=swap` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `,(function(e){const t=e.target;if(void 0===t.dataset.mainImage)return;if(void 0===t.dataset.gatsbyImageSsr)return;let a=null,n=t;for(;null===a&&n;)void 0!==n.parentNode.dataset.gatsbyImageWrapper&&(a=n.parentNode),n=n.parentNode;const o=a.querySelector(` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `userSpaceOnUse` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `position:absolute;top:0;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0, 0, 0, 0);white-space:nowrap;border:0` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `component---src-pages-parking-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `/component---src-pages-parking-index-jsx-0bacd16388e361d52931.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `component---src-pages-store-case-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `/component---src-pages-store-case-jsx-a19a4cf7f8eabd09405f.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `component---src-pages-store-index-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `/component---src-pages-store-index-jsx-5622bc610898ba8a1f81.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `component---src-pages-store-mode-jsx\` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `/component---src-pages-store-mode-jsx-b973414084c7bad15198.js\` ← https://www.qparking.com.tw/parking/component---src-pages-store-mode-jsx-b973414084c7bad15198.js
+- `component---src-pages-store-index-jsx` ← https://www.qparking.com.tw/webpack-runtime-60a6a238fd1b4a4633bc.js
+- `component---src-pages-store-case-jsx` ← https://www.qparking.com.tw/webpack-runtime-60a6a238fd1b4a4633bc.js
+- `component---src-pages-store-mode-jsx` ← https://www.qparking.com.tw/webpack-runtime-60a6a238fd1b4a4633bc.js
+- `component---src-pages-parking-index-jsx` ← https://www.qparking.com.tw/webpack-runtime-60a6a238fd1b4a4633bc.js
+- `qparking-official-website:` ← https://www.qparking.com.tw/webpack-runtime-60a6a238fd1b4a4633bc.js
