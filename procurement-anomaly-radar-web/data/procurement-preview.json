@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-10-26T06:02:07.576403+00:00",
+  "generated_at": "2026-10-27T05:15:23.820374+00:00",
   "summary": {
     "cases": 700,
     "restricted_awards": 21677,
     "restricted_tenders": 28658,
-    "debarred_records": 1722,
+    "debarred_records": 1708,
     "concentration_records": 32,
     "ratio_benchmark_records": 7,
     "combo_cases": 697
@@ -32,7 +32,7 @@
       "key": "debarred",
       "name": "拒絕往來廠商公告",
       "ok": true,
-      "records": 1722,
+      "records": 1708,
       "url": "https://web.pcc.gov.tw/vms/rvlm/rvlmPublicSearch/queryRVFile/json",
       "dataset": "https://data.gov.tw/dataset/5988",
       "frequency": "每1日"
