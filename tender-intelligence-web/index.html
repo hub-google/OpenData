@@ -27,7 +27,7 @@
       <button type="button" class="nav-item" data-view="team"><span>♙</span> 團隊協作</button>
       <button type="button" class="nav-item" data-view="alerts"><span>♧</span> 監控與提醒</button>
       <button type="button" class="nav-item" data-view="documents"><span>▧</span> 標書條款整理</button>
-      <p class="side-label">其他</p>
+      <p class="side-label">其他</p>\n      <button type="button" class="nav-item" data-view="billing"><span>▣</span> 方案與帳務</button>
       <button type="button" class="nav-item" data-view="about"><span>ⓘ</span> 資料說明</button>
     </nav>
     <div class="sidebar-footer">
@@ -185,6 +185,37 @@
         </div>
       </section>
 
+
+      <section id="view-billing" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">MEMBERSHIP & BILLING</div><h1>方案與帳務</h1><p>查看方案、付款紀錄及訂閱狀態。基本標案搜尋持續免費；正式收款啟用前不會向任何人扣款。</p></div>
+        <div id="billingAvailability" class="notice warning" role="status">正在確認金流是否已開通…</div>
+        <div class="panel">
+          <div class="section-heading"><h2>我的訂閱</h2><button type="button" id="billingRefresh" class="ghost-btn">重新整理付款狀態</button></div>
+          <div id="billingCurrent" class="minor">登入後可查看訂閱資訊。</div>
+          <div class="toolbar"><button type="button" id="billingCancel" class="ghost-btn" disabled>取消未來自動續費</button></div>
+        </div>
+        <div class="section-heading"><h2>選擇方案</h2><span class="minor">測試定價，單位為新台幣</span></div>
+        <div class="billing-grid" id="billingPlans">
+          <article class="panel billing-plan"><h3>個人版</h3><strong data-plan-price="personal">NT$590</strong><p>每月／人；投標商機追蹤與個人工作流</p><button type="button" class="primary-btn" data-billing-plan="personal" disabled>尚未開放付款</button></article>
+          <article class="panel billing-plan"><h3>專業版</h3><strong data-plan-price="professional">NT$1,590</strong><p>每月／人；深入分析及進階功能的規劃方案</p><button type="button" class="primary-btn" data-billing-plan="professional" disabled>尚未開放付款</button></article>
+          <article class="panel billing-plan"><h3>團隊版</h3><strong data-plan-price="team">NT$3,990</strong><p>每月／團隊；跨成員協作的規劃方案</p><button type="button" class="primary-btn" data-billing-plan="team" disabled>尚未開放付款</button></article>
+        </div>
+        <div class="panel billing-options">
+          <h2>付款方式</h2>
+          <div class="billing-methods">
+            <label><input type="radio" name="billingMethod" value="recurring" checked> 信用卡每月自動續費（綠界定期定額）</label>
+            <label><input type="radio" name="billingMethod" value="one_time"> 單次購買一個月（信用卡／ATM／超商等，依金流商核准項目）</label>
+          </div>
+          <label class="billing-consent"><input id="billingConsent" type="checkbox"> 我了解選擇自動續費時，每月將依所選方案扣款，可在此頁取消未來續扣；已支付費用與退款依銷售條款及法規辦理。</label>
+          <p class="hint">實際付款在綠界安全頁面進行；本站不收集或儲存信用卡卡號。付款狀態以綠界送至後端的已驗證通知為準，不以瀏覽器跳轉判定成功。</p>
+          <p class="hint">正式收款前仍須完成商家身分、客服聯絡方式、銷售條款、退款政策、電子發票／收據與資料來源商用授權確認。目前所有既有功能維持免費開放。</p>
+        </div>
+        <div class="panel">
+          <h2>最近訂單</h2>
+          <div id="billingOrders" class="watch-list"><div class="minor">登入後顯示最近 20 筆訂單。</div></div>
+          <p class="hint">如金流已扣款但狀態未更新，先按「重新整理付款狀態」。請勿重複付款；正式客服管道將於開通前公布。</p>
+        </div>
+      </section>
       <section id="view-about" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">DATA & TRUST</div><h1>資料來源與使用說明</h1><p>清楚說明哪些資料是真實來源、哪些只是本機計算，以及還沒完成的後端功能。</p></div>
         <div class="panel prose">
