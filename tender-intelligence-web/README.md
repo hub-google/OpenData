@@ -1,6 +1,6 @@
 # 台灣標案情報中心（實作版）
 
-> 對應 PRD：\`PRD-台灣標案情報平台-v0.1-2026-11-03.md\`
+> 對應 PRD：`PRD-台灣標案情報平台-v0.1-2026-11-03.md`
 >
 > 入口：https://hub-google.github.io/OpenData/tender-intelligence-web/
 >
@@ -10,13 +10,13 @@
 
 | 功能 | 狀態 | 真正資料／限制 |
 |---|---|---|
-| 最新公告 | ✅ | 公開 API \`/getinfo\` → \`/listbydate\`，沒有使用假資料 |
-| 關鍵字搜尋 | ✅ | \`/searchbytitle\` |
-| 公司名稱／統編搜尋 | ✅ | \`/searchbycompanyname\`、\`/searchbycompanyid\` |
-| 機關名稱搜尋 | ✅ | \`/listbyunit?unit_name=...\` |
+| 最新公告 | ✅ | 公開 API `/getinfo` → `/listbydate`，沒有使用假資料 |
+| 關鍵字搜尋 | ✅ | `/searchbytitle` |
+| 公司名稱／統編搜尋 | ✅ | `/searchbycompanyname`、`/searchbycompanyid` |
+| 機關名稱搜尋 | ✅ | `/listbyunit?unit_name=...` |
 | 公告類型、類別、預算篩選 | ✅ | 只篩本次 API 取回的案件，**不假裝全國結果都已過濾** |
-| 標案詳細資料與公告歷程 | ✅ | \`/tender?unit_id=...&job_number=...\`；官方公告 URL 只使用來源實際存在且主機為 web.pcc.gov.tw 的連結 |
-| 機關年度採購統計與常見得標商 | ✅ | \`/unitstat?unit_id=...\` |
+| 標案詳細資料與公告歷程 | ✅ | `/tender?unit_id=...&job_number=...`；官方公告 URL 只使用來源實際存在且主機為 web.pcc.gov.tw 的連結 |
+| 機關年度採購統計與常見得標商 | ✅ | `/unitstat?unit_id=...` |
 | 廠商案件／公告廠商名稱 | ✅ | 公開 API 查詢；不把得標商當作完整投標廠商 |
 | 決標／預算比 | ✅（限樣本） | 本次查詢／已查看詳情內、可同時取得公開決標金額與預算的案件，依機關與案號去重；不足樣本則提示 |
 | 公司個人化關鍵字匹配 | ✅（規則版） | 本機設定，命中理由／排除理由可見，不是得標概率，也不會推測履約地 |
@@ -33,13 +33,13 @@
 
 ## 前端架構
 
-- \`index.html\`：各功能頁面／抽屜及語意結構。
-- \`styles.css\`：行動裝置、桌面版響應式設計。
-- \`core.mjs\`：純函數資料轉換、日期、公告類別、去重、統計、條件匹配與安全 URL。
-- \`app.js\`：即時 API、互動、下載、localStorage 與文件文字解析。
-- \`tests/core.test.mjs\`：無外部套件的 Node.js 單元測試。
+- `index.html`：各功能頁面／抽屜及語意結構。
+- `styles.css`：行動裝置、桌面版響應式設計。
+- `core.mjs`：純函數資料轉換、日期、公告類別、去重、統計、條件匹配與安全 URL。
+- `app.js`：即時 API、互動、下載、localStorage 與文件文字解析。
+- `tests/core.test.mjs`：無外部套件的 Node.js 單元測試。
 
-所有動態來源文字以 \`textContent\` 載入，避免直接把第三方標題插入未清理的 HTML。
+所有動態來源文字以 `textContent` 載入，避免直接把第三方標題插入未清理的 HTML。
 未附任何 API 金鑰、LINE Token、付款憑證，也沒有把檔案上傳到我們的後端。
 
 ## 資料來源及商用限制
@@ -59,19 +59,19 @@ API 匿名可能出現 429 或來源延遲。若發生，畫面顯示真實錯�
 
 ## 部署方式
 
-- \`.github/workflows/tender-intelligence-check.yml\`：每次改動 JavaScript 與相關檔案，執行 Node.js 語法與單元測試。
-- \`.github/workflows/tender-intelligence-pages.yml\`：有標案目錄變更時，通過測試後只更新 \`gh-pages/tender-intelligence-web/\` 子目錄；不因為標案網站更新而重跑其他資料爬蟲。
-- 既有全站排程 \`company-radar-pages.yml\` 在執行每日其他資料更新時，仍會複製本目錄最新版本。
+- `.github/workflows/tender-intelligence-check.yml`：每次改動 JavaScript 與相關檔案，執行 Node.js 語法與單元測試。
+- `.github/workflows/tender-intelligence-pages.yml`：有標案目錄變更時，通過測試後只更新 `gh-pages/tender-intelligence-web/` 子目錄；不因為標案網站更新而重跑其他資料爬蟲。
+- 既有全站排程 `company-radar-pages.yml` 在執行每日其他資料更新時，仍會複製本目錄最新版本。
 
-本機直接啟用需有能提供 ES modules 的靜態伺服器（例如 \`python -m http.server\`），不要直接使用 \`file://\`。
+本機直接啟用需有能提供 ES modules 的靜態伺服器（例如 `python -m http.server`），不要直接使用 `file://`。
 
 ## 測試
 
-\`\`\`bash
+```bash
 node --check tender-intelligence-web/app.js
 node --check tender-intelligence-web/core.mjs
 node --test tender-intelligence-web/tests/*.test.mjs
-\`\`\`
+```
 
 測試涵蓋：ROC 日期、API 欄位、公告去重、缺漏金額、案件狀態、決標價比、關鍵字／預算適配、CSV 公式注入與官方來源 URL 安全限制。
 
