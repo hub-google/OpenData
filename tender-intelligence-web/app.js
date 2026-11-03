@@ -8,7 +8,7 @@ import {getClient,fetchArchive,fetchSourceStatus,cloudSaved,cloudWatches,cloudNo
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
 const listModes={latest:'最新公告',archive:'自有資料庫已收錄案件',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
-const viewNames={search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',about:'資料說明'};
+const viewNames={search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',billing:'方案與帳務',about:'資料說明'};
 const states=['評估中','準備投標','已投標','待決標','已得標','未得標','不投'];
 const readableError = err => {
   const s=asText(err?.message||err);
@@ -55,7 +55,7 @@ function showView(name){
   document.querySelector('.sidebar').classList.remove('mobile-open');
   window.scrollTo({top:0,behavior:'instant'});
   if(name==='radar')renderRadar();
-  if(name==='tracking')renderTracking();
+  if(name==='tracking')renderTracking();\n  if(name==='billing')void renderBilling();
   if(name==='team')void refreshWorkspaces();
   if(name==='alerts')renderWatches();
   if(name==='analytics')renderAnalytics();
@@ -674,6 +674,7 @@ function hook(){
   $('documentFile').addEventListener('change',()=>{$('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';});
 }
 hook();
+initBillingUI();
 initCloudUI();
 renderTracking();
 renderWatches();
@@ -681,6 +682,7 @@ renderRadar();
 renderAnalytics();
 search('latest','',1);
 void initCloud();
+if(new URLSearchParams(window.location.search).get('view')==='billing')showView('billing');
 setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)checkWatches();},20*60*1000);
 
 
@@ -737,6 +739,7 @@ function clearUserState(){
   $('cloudDocuments').replaceChildren(E('div','empty','請登入查看私有文件。'));
 }
 function renderAccount(){
+  if(state.view==='billing')void renderBilling();
   $('accountButton').textContent=cloud.user?'帳戶：'+(cloud.user.email||'已登入'):'登入／跨裝置同步';
   $('accountLogout').hidden=!cloud.user;
   $('accountSync').hidden=!cloud.user;
@@ -1229,4 +1232,120 @@ async function analyzeDocumentAI(){
     target.replaceChildren(E('h2','','AI 標單分析'),E('div','notice danger',
       '本次沒有取得可用的 AI 分析：'+readableError(err)+'。不會以關鍵字檢索結果冒充 AI 報告。'));
   }finally{button.disabled=false;}
+}
+
+
+// ECPay subscriptions: server is the sole authority for prices, order totals and payment success.
+let billingRenderSequence=0;
+async function billingApi(mode,action=null){
+ const url=DATABASE_URL+'/functions/v1/ti-billing'+(mode?'?mode='+encodeURIComponent(mode):'');
+ const headers={'Content-Type':'application/json',apikey:PUBLISHABLE_KEY};
+ if(action||mode==='status'){
+  const sb=cloud.client||await getClient();
+  const {data:{session},error}=await sb.auth.getSession();
+  if(error||!session?.access_token)throw Error('請先登入，才能處理付款或查看帳務。');
+  headers.Authorization='Bearer '+session.access_token;
+ }
+ const res=await fetch(url,{method:action?'POST':'GET',headers,
+  ...(action?{body:JSON.stringify(action)}:{})});
+ const obj=await res.json().catch(()=>({error:'金流後端回傳格式錯誤'}));
+ if(!res.ok)throw Error(obj.error||'帳務服務 HTTP '+res.status);
+ return obj;
+}
+function billingDate(iso){
+ if(!iso)return '—';
+ const dt=new Date(iso);
+ return Number.isNaN(dt.getTime())?'—':dt.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+async function renderBilling(){
+ const seq=++billingRenderSequence;
+ const alertBox=$('billingAvailability');
+ const current=$('billingCurrent'),orders=$('billingOrders'),cancel=$('billingCancel');
+ document.querySelectorAll('[data-billing-plan]').forEach(button=>{button.disabled=true;button.textContent='查詢收款設定中…';});
+ alertBox.className='notice warning';alertBox.textContent='正在檢查金流開通狀態…';
+ cancel.disabled=true;
+ try{
+  const plans=await billingApi('plans');
+  if(seq!==billingRenderSequence)return;
+  for(const plan of plans.plans||[]){
+   const x=document.querySelector('[data-plan-price="'+plan.code+'"]');
+   if(x)x.textContent='NT$'+Number(plan.amount_twd).toLocaleString('zh-TW');
+  }
+  // The production checkout remains deliberately disabled until real merchant credentials are installed.
+  const canPay=plans.ready===true && plans.environment==='production';
+  alertBox.textContent=!plans.ready
+   ?'金流尚未開通：已建置綠界後端，但必須完成商家審核、部署正式 MerchantID／HashKey／HashIV，並核可收費服務後才能付款。'
+   :plans.environment!=='production'
+     ?'金流目前為測試模式，禁止真實收款。'
+     :'綠界收款服務已開通。付款將前往綠界網站，完成後請回本站查看交易結果。';
+  alertBox.className='notice '+(canPay?'':'warning');
+  document.querySelectorAll('[data-billing-plan]').forEach(button=>{
+   button.disabled=!canPay;button.textContent=canPay?'選擇並前往付款':'尚未開放付款';
+  });
+  if(!cloud.user){
+   current.textContent='目前尚未登入。需先 Email 驗證登入，才能購買並保存訂閱。';
+   orders.replaceChildren(E('div','minor','請先登入後查看帳務。'));
+   return;
+  }
+  const data=await billingApi('status');
+  if(seq!==billingRenderSequence)return;
+  const sub=data.subscription;
+  current.textContent=!sub?'目前沒有已付款方案。':
+   '方案：'+({personal:'個人版',professional:'專業版',team:'團隊版'}[sub.plan_code]||sub.plan_code)+
+   '｜'+(new Date(sub.current_period_end)>new Date()?'有效':'已到期')+
+   '至 '+billingDate(sub.current_period_end)+
+   '｜'+(sub.auto_renew?'每月自動續費':'不自動續費')+
+   (sub.status==='cancelled'?'（已取消後續扣款）':'');
+  cancel.disabled=!(sub?.auto_renew&&new Date(sub.current_period_end)>new Date()&&canPay);
+  orders.replaceChildren();
+  const rows=data.orders||[];
+  if(!rows.length){orders.append(E('div','minor','目前沒有付款紀錄。'));return;}
+  for(const order of rows){
+   const item=E('div','watch-item');
+   const method=order.payment_kind==='recurring'?'信用卡定期定額':'單次付款';
+   const status={pending:'待付款',paid:'已付款',failed:'付款失敗',cancelled:'已取消'}[order.status]||order.status;
+   child(item,E('strong','',({personal:'個人版',professional:'專業版',team:'團隊版'}[order.plan_code]||order.plan_code)+
+     ' · NT$'+Number(order.amount_twd).toLocaleString('zh-TW')),
+     E('p','minor',status+'｜'+method+'｜建立 '+billingDate(order.created_at)+(order.paid_at?'｜入帳 '+billingDate(order.paid_at):'')));
+   orders.append(item);
+  }
+ }catch(err){
+  if(seq!==billingRenderSequence)return;
+  alertBox.className='notice warning';
+  alertBox.textContent='目前無法確認金流是否已開通；為避免錯誤扣款，付款按鈕暫停使用。'+readableError(err);
+  current.textContent='暫時無法讀取帳務資料。';
+  orders.replaceChildren(E('div','minor','請稍後重新整理。'));
+ }
+}
+function initBillingUI(){
+ $('billingRefresh').addEventListener('click',()=>void renderBilling());
+ document.querySelectorAll('[data-billing-plan]').forEach(button=>button.addEventListener('click',async()=>{
+  if(!cloud.user){$('accountPanel').hidden=false;$('accountPanel').scrollIntoView({behavior:'smooth'});toast('請先登入再購買方案。');return;}
+  const kind=document.querySelector('input[name="billingMethod"]:checked')?.value||'recurring';
+  if(kind==='recurring'&&!$('billingConsent').checked){
+   toast('請先確認每月自動續費條款。');$('billingConsent').focus();return;
+  }
+  button.disabled=true;button.textContent='正在建立安全付款訂單…';
+  try{
+   const data=await billingApi('',{action:'checkout',plan:button.dataset.billingPlan,kind});
+   if(!data.checkout_url?.startsWith('https://payment.ecpay.com.tw/')||
+      !data.fields?.CheckMacValue)throw Error('正式金流資訊不完整，已停止轉址。');
+   const form=document.createElement('form');
+   form.method='POST';form.action=data.checkout_url;form.hidden=true;
+   for(const [key,value] of Object.entries(data.fields)){
+    const field=document.createElement('input');field.type='hidden';field.name=key;field.value=String(value);form.append(field);
+   }
+   document.body.append(form);form.submit();
+  }catch(err){
+   toast('無法前往付款：'+readableError(err));
+   void renderBilling();
+  }
+ }));
+ $('billingCancel').addEventListener('click',async()=>{
+  if(!confirm('確定取消未來每月自動扣款？已支付的當期仍可使用至到期日。'))return;
+  const button=$('billingCancel');button.disabled=true;button.textContent='正在向金流商取消…';
+  try{await billingApi('',{action:'cancel'});toast('綠界已確認取消後續自動扣款。');}
+  catch(err){toast('取消未成功：'+readableError(err));}
+  finally{button.textContent='取消未來自動續費';void renderBilling();}
+ });
 }
