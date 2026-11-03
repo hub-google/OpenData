@@ -79,8 +79,8 @@ function makeCard(r){
  const right=node('div','case-right');
  const title=document.createElement('a');
  title.className='case-title';title.textContent=r.title;
- title.href='./?mode=title&q='+encodeURIComponent(r.title||'');
- title.title='在主搜尋檢視同名公告與完整詳情';left.append(title);
+ title.href='./?case_unit='+encodeURIComponent(r.unit_id)+'&case_no='+encodeURIComponent(r.job_number);
+ title.title='開啟這個機關代碼與案號所對應的確切案件';left.append(title);
  const meta=node('div','case-meta');
  for(const content of [r.latest_notice_type||'公告類型未提供',r.agency||'機關未公開',r.group_name||'未分類','案號 '+r.job_number])
   meta.append(node('span','',content));
