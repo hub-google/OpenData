@@ -45,7 +45,7 @@ async function isStaff(user:{id:string}|null){
 function safeInput(v:unknown,max:number){return String(v||"").trim().slice(0,max)}
 function safeLink(v:unknown){
  const s=safeInput(v,700);
- try{const u=new URL(s);return u.protocol==="https:"&&u.hostname==="hub-google.github.io"?u.href.slice(0,700):""}catch{return ""}
+ try{const u=new globalThis.URL(s);return u.protocol==="https:"&&u.hostname==="hub-google.github.io"?u.href.slice(0,700):""}catch{return ""}
 }
 async function owned(thread_id:string,user:{id:string}|null,hash:string){
  if(!uuid.test(thread_id))throw Error("客服紀錄編號無效");
@@ -178,7 +178,7 @@ Deno.serve(async req=>{
    return result(req,{ok:true,status});
   }
   return result(req,{error:"不支援此操作"},400);
- }catch(err){
+ }catch(err:any){
   const text=String(err?.message||err).slice(0,170);
   const expected=/客服|登入|上限|輸入|資料|紀錄|編號|找不到|已結束/.test(text);
   if(!expected)console.error("support_api",text);
