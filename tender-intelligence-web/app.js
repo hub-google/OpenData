@@ -1571,12 +1571,16 @@ async function renderWorkspace(){
    });
    controls.append(responsible);
    const review=E('select','');
-   for(const s of ['未送審','待審核','通過','退回']){
+   const currentReview=task.review_status||'未送審';
+   const allowedReviewOptions=currentReview==='待審核'?['待審核','通過','退回','未送審']:
+    currentReview==='通過'?['通過','未送審']:
+    currentReview==='退回'?['退回','待審核','未送審']:['未送審','待審核'];
+   for(const s of allowedReviewOptions){
     const opt=E('option','',s);opt.value=s;review.append(opt);
    }
-   review.value=task.review_status||'未送審';
+   review.value=currentReview;
    review.disabled=!canReview||!task.done;
-   review.title='只有管理員／擁有者可以審核已完成任務';
+   review.title='已完成任務：Owner/Admin 可核准或退回，其他編輯者只能送審';
    review.addEventListener('change',async()=>{
     const {error}=await cloud.client.from('ti_workspace_tasks')
      .update({review_status:review.value,updated_at:new Date().toISOString()})
@@ -1584,7 +1588,19 @@ async function renderWorkspace(){
     if(error)toast('審核失敗：'+readableError(error));
     void renderWorkspace();
    });
-   controls.append(review);wrap.append(controls);
+   controls.append(review);
+   if(canEdit&&task.done&&['未送審','退回'].includes(currentReview)){
+    const submitReview=btn('送交審核','ghost-btn',async()=>{
+     submitReview.disabled=true;
+     const {error}=await cloud.client.from('ti_workspace_tasks')
+      .update({review_status:'待審核',updated_at:new Date().toISOString()})
+      .eq('id',task.id).eq('workspace_id',id);
+     if(error){toast('送審失敗：'+readableError(error));submitReview.disabled=false;}
+     else{toast('已送交團隊管理員審核。');void renderWorkspace();}
+    });
+    controls.append(submitReview);
+   }
+   wrap.append(controls);
    const discussions=E('div','detail-timeline');
    const related=(comments.data||[]).filter(m=>m.task_id===task.id).reverse().slice(-15);
    for(const comment of related){
