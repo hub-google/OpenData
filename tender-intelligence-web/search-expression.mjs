@@ -15,7 +15,7 @@ export function parseSearchExpression(input){
  if(tokens.length>42)throw Error('查詢運算式過長');
  let i=0,termCount=0;
  const head=()=>tokens[i];
- const isOp=(x,v)=>typeof x==='string'&&x.toUpperCase()===v&&x===x.toUpperCase();
+ const isOp=(x,v)=>typeof x==='string'&&x.toUpperCase()===v;
  const term=x=>{
   let v=x.startsWith('+')?x.slice(1):x;
   if(v.startsWith('"')&&v.endsWith('"'))v=v.slice(1,-1);
