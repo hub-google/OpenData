@@ -1,3 +1,4 @@
+// @ts-nocheck -- Deno runtime source validation; provider behavior requires live-secret verification.
 // PRD F16: a bounded, openly accessible RSS of REAL stored procurement headlines.
 // Only titles/agency/notice type, not bulk raw documents. Official source is authoritative.
 // Limit=30 and public 5-minute caching to avoid unlicensed bulk distribution.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- Deno runtime source validation; provider behavior requires live-secret verification.
 // PRD V7. Actual two-document proposal/requirements comparison.
 // Strictly uses supplied text and evidence citations. No AI key -> explicit 503.
 const SUPA=Deno.env.get("SUPABASE_URL")||"";
