@@ -80,6 +80,10 @@ jobs:
           for view in ('decisions','contracts','directory','guide'):
               assert f'id="view-{view}"' in html,view
           assert 'id="view-advanced"' in html
+          for marker in ('verifiedMetrics','verifiedLatest','verifiedOpen','verifiedSoon','verifiedUnknown',
+                         'advDeadlineStart','advDeadlineEnd','radarFullSearch','radarFullResults',
+                         'knowledgeSearchForm','knowledgeResults','trackingXlsx'):
+              assert f'id="{marker}"' in html,marker
           for f in ("app.js","styles.css","core.mjs","backend.js","delivery.js","advanced.js","operations.js","proposal.js","account-privacy.js","debarred.js","support.js","support.css"):
               assert (root/f).is_file(),f
           print("OK: required assets exist")
