@@ -885,6 +885,35 @@ setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)c
 function initCloudUI(){
   $('accountButton').addEventListener('click',()=>{$('accountPanel').hidden=false;$('accountPanel').scrollIntoView({behavior:'smooth'});});
   $('closeAccount').addEventListener('click',()=>$('accountPanel').hidden=true);
+  async function demoLogin(){
+    const quick=$('accountDemoQuick'),panel=$('accountDemoLogin');
+    quick.disabled=true;panel.disabled=true;
+    const previous=quick.textContent;quick.textContent='登入中…';panel.textContent='正在建立測試帳號…';
+    try{
+      const sb=cloud.client||await getClient();
+      const {data:{session}}=await sb.auth.getSession();
+      if(session?.user&&!session.user.is_anonymous){
+        throw Error('目前已登入正式會員，請先登出再使用測試帳號。');
+      }
+      if(!session?.user?.is_anonymous){
+        const {data,error}=await sb.auth.signInAnonymously();
+        if(error)throw error;
+        if(!data?.user?.is_anonymous)throw Error('測試登入未成功，請稍後重試。');
+      }
+      const {data:{user},error:verifyError}=await sb.auth.getUser();
+      if(verifyError||!user?.is_anonymous)throw Error('測試帳號驗證失敗，請稍後重試。');
+      cloud.client=sb;cloud.user=user;renderAccount();
+      $('accountInfo').textContent='測試帳號已登入。右下角客服中心可測試 AI、表單、客服管理與站內回覆；測試資料彼此隔離。';
+      $('accountPanel').hidden=true;
+      toast('測試帳號登入成功！請點右下角「客服中心」進行測試。');
+      window.dispatchEvent(new CustomEvent('ti-demo-account-ready'));
+    }catch(err){
+      $('accountPanel').hidden=false;
+      $('accountInfo').textContent='測試登入失敗：'+readableError(err);
+    }finally{quick.disabled=false;panel.disabled=false;quick.textContent=previous;panel.textContent='一鍵登入測試帳號';}
+  }
+  $('accountDemoQuick').addEventListener('click',()=>void demoLogin());
+  $('accountDemoLogin').addEventListener('click',()=>void demoLogin());
   $('accountLoginForm').addEventListener('submit',async e=>{
     e.preventDefault();
     const email=$('accountEmail').value.trim();
@@ -967,13 +996,17 @@ function clearUserState(){
 }
 function renderAccount(){
   if(state.view==='billing')void renderBilling();
-  $('accountButton').textContent=cloud.user?'帳戶：'+(cloud.user.email||'已登入'):'登入／跨裝置同步';
+  const demo=cloud.user?.is_anonymous===true;
+  $('accountButton').textContent=demo?'測試帳號已登入':cloud.user?'帳戶：'+(cloud.user.email||'已登入'):'登入／跨裝置同步';
+  $('accountDemoQuick').hidden=!!cloud.user;
+  $('accountDemoLogin').hidden=!!cloud.user;
   $('accountLogout').hidden=!cloud.user;
   $('accountSync').hidden=!cloud.user;
   $('accountLoginForm').hidden=!!cloud.user;
   $('accountGoogle').hidden=!!cloud.user;
-  $('accountChangeEmail').hidden=!cloud.user;
-  if(cloud.user)$('accountInfo').textContent='已驗證帳戶：'+cloud.user.email+'。追蹤、商機條件、監控與待辦由 Supabase 的 RLS 保護。';
+  $('accountChangeEmail').hidden=!cloud.user||demo;
+  if(demo)$('accountInfo').textContent='目前使用獨立測試帳號；客服管理介面只顯示你的示範工單，不會存取正式客戶資料。';
+  else if(cloud.user)$('accountInfo').textContent='已驗證帳戶：'+cloud.user.email+'。追蹤、商機條件、監控與待辦由 Supabase 的 RLS 保護。';
 }
 async function initCloud(){
   try{
