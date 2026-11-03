@@ -375,6 +375,11 @@
             <button id="unlinkLine" type="button" class="ghost-btn">解除 LINE 綁定</button>
           </div>
           <div id="deliveryStatus" class="minor">登入後才能儲存跨裝置通知設定。</div>
+          <div class="panel" style="margin-top:14px">
+            <div class="section-heading"><h3>通知送達紀錄</h3><button id="deliveryHistoryRefresh" type="button" class="ghost-btn">刷新</button></div>
+            <p class="hint">僅顯示本人通知的實際發送結果；待處理、重試、永久失敗和已送達不會混為一談。第三方金鑰未設定時不會虛構寄送成功。</p>
+            <div id="deliveryHistory" class="watch-list">請登入查看通知紀錄。</div>
+          </div>
         </div>
         <div class="panel"><form id="watchForm" class="inline-form"><input id="watchTerm" placeholder="要監控的標案關鍵字（例如：資安）" maxlength="70" required><button class="primary-btn" type="submit">新增監控</button></form><div class="toolbar"><button id="checkWatch" class="ghost-btn" type="button">立即檢查新公告</button><button id="enableDesktop" class="ghost-btn" type="button">允許此裝置通知</button><span id="watchCheckedAt" class="minor">尚未檢查</span></div></div>
         <div id="watchOutput" class="watch-list"></div>

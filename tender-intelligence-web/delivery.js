@@ -9,6 +9,30 @@ async function readiness(){
  if(!r.ok)throw Error('無法取得服務設定狀態 '+r.status);
  return r.json();
 }
+async function receipts(){
+ const output=$('deliveryHistory');
+ if(!output)return;
+ output.replaceChildren();
+ if(!db||!user){output.textContent='登入後才能查看通知送達紀錄。';return;}
+ try{
+  const {data,error}=await db.from('ti_delivery_attempts')
+   .select('notification_id,channel,status,attempts,last_attempt_at,delivered_at,error_summary')
+   .eq('user_id',user.id).order('last_attempt_at',{ascending:false}).limit(40);
+  if(error)throw error;
+  if(!data?.length){output.textContent='目前沒有曾送出的通知；未啟用外部通知時這是正常情況。';return;}
+  for(const item of data){
+   const div=document.createElement('div');div.className='timeline-item';
+   const state={sent:'已由發送商接受',failed:'等待重試',processing:'發送中',pending:'待處理',dead:'重試三次後停止'}[item.status]||item.status;
+   const title=document.createElement('strong');
+   title.textContent=(item.channel==='email'?'Email':'LINE')+'｜'+state+'｜通知 '+item.notification_id;
+   const detail=document.createElement('div');detail.className='minor';
+   detail.textContent='已嘗試 '+(item.attempts||0)+' 次｜'+(item.delivered_at||item.last_attempt_at?
+     new Date(item.delivered_at||item.last_attempt_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}):'尚未送出')+
+     (item.error_summary?'｜最近錯誤：'+item.error_summary:'');
+   div.append(title,detail);output.append(div);
+  }
+ }catch(e){output.textContent='讀取通知紀錄失敗：'+errors(e);}
+}
 async function load(){
  if(!db||!user){msg('請先登入才能設定通知。');return;}
  try{
@@ -31,6 +55,7 @@ async function load(){
    'LINE 專案金鑰未完整配置（不會推播）';
   msg('Email：'+emailStatus+'｜LINE：'+lineStatus+'，'+lineService+
     '｜AI 文件模型：'+(configured.ai_ready?'已有金鑰，需測試推論':'沒有設定模型金鑰'));
+  await receipts();
  }catch(e){msg('讀取通知設定失敗：'+errors(e));}
 }
 async function startLogin(){
@@ -84,6 +109,7 @@ async function unlink(){
 }
 async function init(){
  $('saveDelivery').addEventListener('click',()=>void save());
+ $('deliveryHistoryRefresh').addEventListener('click',()=>void receipts());
  $('connectLine').addEventListener('click',()=>void startLogin());
  $('unlinkLine').addEventListener('click',()=>void unlink());
  const query=new URL(window.location.href),line=query.searchParams.get('line');
