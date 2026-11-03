@@ -145,6 +145,22 @@
    </div>
   </form>
  </div>
+ <div class="panel">
+  <h2>儲存完整進階搜尋條件（跨裝置）</h2>
+  <p class="hint">需登入。可保存目前所有篩選條件，於另一裝置載入；命中數預覽只計算已成功入庫的近 30 天，不代表全國完整資料。</p>
+  <div class="inline-form">
+    <input id="advSavedName" maxlength="120" placeholder="為目前篩選條件命名，例如：台北資安採購">
+    <button id="advSaveRule" type="button" class="ghost-btn">儲存目前條件</button>
+  </div>
+  <div class="inline-form">
+    <select id="advSavedList" aria-label="已儲存的搜尋條件"><option value="">請登入後讀取已儲存條件</option></select>
+    <button id="advLoadRule" type="button" class="ghost-btn">載入條件</button>
+    <button id="advPreviewRule" type="button" class="ghost-btn">預覽近 30 天命中數</button>
+    <button id="advDeleteRule" type="button" class="ghost-btn">刪除這組條件</button>
+  </div>
+  <p id="advSavedStatus" class="minor" role="status">登入後可保存與管理完整搜尋條件。</p>
+</div>
+
  <div id="advStatus" class="notice" role="status" aria-live="polite">資料僅包含已成功回填的日期；履約地、金額未公開時維持未知。</div>
  <div id="advResults" class="result-list"></div>
  <div class="pagination"><button id="advPrev" type="button" class="ghost-btn">上一頁</button><span id="advPageInfo">尚未搜尋</span><button id="advNext" type="button" class="ghost-btn">下一頁</button></div>
