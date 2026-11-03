@@ -46,6 +46,7 @@ jobs:
           node --check tender-intelligence-web/proposal.js
           node --check tender-intelligence-web/account-privacy.js
           node --check tender-intelligence-web/debarred.js
+          node --check tender-intelligence-web/support.js
       - name: 安裝 Deno 執行環境
         uses: denoland/setup-deno@v2
         with:
@@ -71,13 +72,15 @@ jobs:
           assert '<script type="module" src="./proposal.js"></script>' in html
           assert '<script type="module" src="./account-privacy.js"></script>' in html
           assert '<script type="module" src="./debarred.js"></script>' in html
+          assert '<script type="module" src="./support.js"></script>' in html
+          assert '<link rel="stylesheet" href="./support.css">' in html
           assert 'id="view-debarred"' in html
           assert 'id="accountDeleteForm"' in html
           assert 'id="view-proposal"' in html
           for view in ('decisions','contracts','directory','guide'):
               assert f'id="view-{view}"' in html,view
           assert 'id="view-advanced"' in html
-          for f in ("app.js","styles.css","core.mjs","backend.js","delivery.js","advanced.js","operations.js","proposal.js","account-privacy.js","debarred.js"):
+          for f in ("app.js","styles.css","core.mjs","backend.js","delivery.js","advanced.js","operations.js","proposal.js","account-privacy.js","debarred.js","support.js","support.css"):
               assert (root/f).is_file(),f
           print("OK: required assets exist")
           PY
