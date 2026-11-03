@@ -92,7 +92,7 @@
           <p class="hint">篩選作用於本次 API 回傳的公告；搜尋 API 每頁至多 100 筆。部分公告的預算、截標時間需進入詳情才能確認。</p>
         </div>
         <div id="dataError" class="notice danger" role="alert" hidden></div>
-        <div class="section-heading"><div><h2 id="resultsHeading">最新公告</h2><p id="resultInfo">正在讀取真實公告…</p></div><div class="heading-actions"><button id="exportCsv" type="button" class="ghost-btn">↓ CSV</button><button id="exportRss" type="button" class="ghost-btn">↓ RSS 檔案</button><button id="reloadBtn" type="button" class="ghost-btn">重新整理</button></div></div>
+        <div class="section-heading"><div><h2 id="resultsHeading">最新公告</h2><p id="resultInfo">正在讀取真實公告…</p></div><div class="heading-actions"><button id="exportCsv" type="button" class="ghost-btn">↓ CSV</button><button id="exportRss" type="button" class="ghost-btn">↓ RSS 檔案</button><a href="https://unapiwajmgqqtdkixaab.supabase.co/functions/v1/ti-rss" target="_blank" rel="noopener noreferrer" class="ghost-btn" type="application/rss+xml">訂閱自動更新 RSS</a><button id="reloadBtn" type="button" class="ghost-btn">重新整理</button></div></div>
         <div id="resultList" class="result-list" aria-live="polite"><div class="empty">正在連線公開標案來源…</div></div>
         <div class="pagination"><button id="prevPage" type="button" class="ghost-btn">上一頁</button><span id="pageInfo">第 1 頁</span><button id="nextPage" type="button" class="ghost-btn">下一頁</button></div>
       </section>
@@ -123,7 +123,7 @@
      <button type="submit" class="primary-btn" id="advSubmit">搜尋歷史資料庫</button>
      <button type="button" class="ghost-btn" id="advClear">清除條件</button>
      <button type="button" class="ghost-btn" id="advShare">複製可重現的搜尋連結</button>
-     <button type="button" class="ghost-btn" id="advCsv">匯出本頁 CSV</button>
+     <button type="button" class="ghost-btn" id="advCsv">匯出本頁 CSV</button><a href="https://unapiwajmgqqtdkixaab.supabase.co/functions/v1/ti-rss" target="_blank" rel="noopener noreferrer" class="ghost-btn">訂閱自動更新 RSS</a>
    </div>
   </form>
  </div>
