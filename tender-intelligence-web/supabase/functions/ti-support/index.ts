@@ -37,7 +37,7 @@ async function visitor(body:any){
  const bytes=new TextEncoder().encode(token);
  return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes))).map(x=>x.toString(16).padStart(2,"0")).join("");
 }
-async function isStaff(user:{id:string;email?:string;confirmed?:boolean}|null){
+async function isStaff(user:{id:string;email?:string;confirmed?:boolean;is_demo?:boolean}|null){
  if(!user||user.is_demo)return false;
  const existing=await query("ti_support_staff?select=user_id&user_id=eq."+user.id+"&limit=1");
  if(existing.length)return true;
@@ -58,7 +58,7 @@ function safeLink(v:unknown){
  const s=safeInput(v,700);
  try{const u=new globalThis.URL(s);return u.protocol==="https:"&&u.hostname==="hub-google.github.io"?u.href.slice(0,700):""}catch{return ""}
 }
-async function owned(thread_id:string,user:{id:string}|null,hash:string){
+async function owned(thread_id:string,user:{id:string;is_demo?:boolean}|null,hash:string){
  if(!uuid.test(thread_id))throw Error("客服紀錄編號無效");
  const rows=await query("ti_support_threads?select=*&id=eq."+thread_id+"&limit=1");
  const t=rows[0];
