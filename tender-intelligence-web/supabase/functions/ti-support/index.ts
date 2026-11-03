@@ -29,6 +29,7 @@ async function getUser(req:Request){
  const res=await fetch(URL+"/auth/v1/user",{headers:{apikey:PUBLIC,Authorization:"Bearer "+token},signal:AbortSignal.timeout(9000)});
  if(!res.ok)throw Error("登入已失效，請重新登入");
  const body=await res.json();
+ if(body?.is_anonymous===true)return null;
  return body?.id&&uuid.test(body.id)?{id:body.id,email:String(body.email||""),confirmed:Boolean(body.email_confirmed_at)}:null;
 }
 async function visitor(body:any){
@@ -113,7 +114,11 @@ Deno.serve(async req=>{
  try{
   const hash=await visitor(b);
   const user=await getUser(req);
-  if(action==="bootstrap")return result(req,{gemini_ready:Boolean(GEMINI),staff:await isStaff(user),signed_in:Boolean(user)});
+  if(action==="bootstrap"){
+   // Once the visitor completes verified sign-in, attach only their previously anonymous browser threads.
+   if(user?.confirmed)await query("ti_support_threads?visitor_hash=eq."+hash+"&user_id=is.null","PATCH",{user_id:user.id});
+   return result(req,{gemini_ready:Boolean(GEMINI),staff:await isStaff(user),signed_in:Boolean(user)});
+  }
   if(action==="list"){
    const prefix="ti_support_threads?select=id,kind,category,subject,status,updated_at,created_at,customer_read_at&";
    const guestQuery=prefix+"visitor_hash=eq."+hash+"&user_id=is.null&order=updated_at.desc&limit=60";
