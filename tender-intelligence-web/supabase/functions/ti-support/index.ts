@@ -202,6 +202,17 @@ Deno.serve(async req=>{
    await touchThread(t.id,{});
    return result(req,{thread_id:t.id,message:{id:msg.id,body:text},reply:{id:reply.id,body:ai.text},model:ai.model});
   }
+  if(action==="demo_reset"){
+   if(!user?.is_demo)return result(req,{error:"此功能只開放測試帳號"},403);
+   await query("ti_support_threads?user_id=eq."+user.id+"&is_demo=eq.true","DELETE");
+   await ensureDemoTickets(user,hash);
+   return result(req,{ok:true});
+  }
+  if(action==="demo_clear"){
+   if(!user?.is_demo)return result(req,{error:"此功能只開放測試帳號"},403);
+   await query("ti_support_threads?user_id=eq."+user.id+"&is_demo=eq.true","DELETE");
+   return result(req,{ok:true});
+  }
   if(action==="customer_reply"){
    const t=await owned(safeInput(b.thread_id,40),user,hash);
    if(t.kind!=="form")return result(req,{error:"只有真人問題回報工單可以補充留言"},400);
