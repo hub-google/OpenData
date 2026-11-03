@@ -25,11 +25,15 @@
       <button type="button" class="nav-item" data-view="analytics"><span>▥</span> 決標行情</button>
       <p class="side-label">我的工作</p>
       <button type="button" class="nav-item" data-view="tracking"><span>▣</span> 投標工作台 <b id="trackingCount" class="mini-count">0</b></button>
+      <button type="button" class="nav-item" data-view="decisions"><span>✓</span> 投標決策評估</button>
+      <button type="button" class="nav-item" data-view="contracts"><span>▦</span> 合約與保證金</button>
       <button type="button" class="nav-item" data-view="team"><span>♙</span> 團隊協作</button>
       <button type="button" class="nav-item" data-view="alerts"><span>♧</span> 監控與提醒</button>
       <button type="button" class="nav-item" data-view="documents"><span>▧</span> 標書條款整理</button>
       <p class="side-label">其他</p>
       <button type="button" class="nav-item" data-view="billing" hidden><span>▣</span> 方案與帳務</button>
+      <button type="button" class="nav-item" data-view="directory"><span>♧</span> 供應商名錄</button>
+      <button type="button" class="nav-item" data-view="guide"><span>ⓘ</span> 採購新手指南</button>
       <button type="button" class="nav-item" data-view="about"><span>ⓘ</span> 資料說明</button>
     </nav>
     <div class="sidebar-footer">
@@ -180,6 +184,69 @@
         </div>
       </section>
 
+      
+      <section id="view-decisions" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">BID / NO-BID</div><h1>投標適配與決策評估</h1>
+        <p>依 PRD 的 25／25／15／15／10／10 六項權重填入可驗證依據；未知條件不給零分或滿分，顯示證據覆蓋率，絕非得標機率。</p></div>
+        <div class="notice warning">下列結論由使用者自行核對，不能只憑公司名稱推斷資格或實績。系統不做未公開底價、得標率或內定判定。</div>
+        <div class="panel">
+          <form id="decisionForm" class="setting-form">
+            <label class="wide">已收藏的真實標案<select id="decisionCase" required><option value="">先登入並收藏真實標案</option></select></label>
+            <div id="decisionCriteria" class="wide"></div>
+            <label>決策<select id="decisionChoice"><option>評估中</option><option>建議追蹤</option><option>準備投標</option><option>不投</option></select></label>
+            <label class="wide">決策依據／人工覆核說明<textarea id="decisionNotes" rows="3" maxlength="5000" placeholder="附上文件頁碼、證照名稱、估算成本或風險證據；未知可保留空白。"></textarea></label>
+            <div class="form-actions"><button type="submit" class="primary-btn" id="decisionSave">儲存決策（私人雲端）</button><button type="button" class="ghost-btn" id="decisionEvaluate">重新計算覆蓋率</button></div>
+          </form>
+        </div>
+        <div id="decisionOutput" class="panel analysis-panel"><p class="minor">請先選擇已收藏的案件並填寫證據。</p></div>
+      </section>
+
+      <section id="view-contracts" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">CONTRACT & DEPOSIT MANAGEMENT</div><h1>合約、押標金與履約保證金</h1>
+        <p>管理自己填入的保證金返還、驗收、請款、履約里程碑和合約到期日；到期前 7／3／1 天產生私人站內提醒，未建立付款或官方代繳。</p></div>
+        <div class="panel">
+          <form id="contractForm" class="setting-form">
+            <label>關聯收藏案件（可不選）<select id="contractCase"><option value="">不關聯案件</option></select></label>
+            <label>項目名稱<input id="contractSubject" required maxlength="250" placeholder="例：履約保證金返還"></label>
+            <label>類別<select id="contractType"><option>押標金</option><option>履約保證金</option><option>保固保證金</option><option>履約里程碑</option><option>驗收</option><option>請款</option><option>合約到期</option></select></label>
+            <label>金額（由你自行填寫，非官方金額）<input id="contractAmount" type="number" min="0" step="1" placeholder="未知可留白"></label>
+            <label>你設定的到期日<input id="contractDue" type="date" required></label>
+            <label class="wide">備註與來源證明<textarea id="contractNotes" rows="2" maxlength="5000" placeholder="合約條款頁碼、保證金收據或驗收聯絡紀錄。"></textarea></label>
+            <div class="form-actions"><button class="primary-btn" type="submit">新增管理項目</button><button type="button" id="contractExport" class="ghost-btn">匯出私人台帳 CSV</button></div>
+          </form>
+        </div>
+        <div id="contractStatus" class="notice">登入後可查看自己的履約台帳與提醒。</div>
+        <div id="contractAlerts" class="watch-list"></div>
+        <div id="contractItems" class="watch-list"></div>
+      </section>
+
+      <section id="view-directory" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">VENDOR DIRECTORY</div><h1>供應商自行刊登名錄</h1>
+        <p>廠商自行提供服務與聯絡方式；公開刊登不代表政府認證、資格審核或任何投標／得標紀錄。公開資料須自行同意。</p></div>
+        <div class="panel">
+          <h2>管理自己的公司檔案</h2>
+          <form id="vendorSelfForm" class="setting-form">
+            <label>公司／商號名稱<input id="vendorSelfName" maxlength="160" required placeholder="自行申報的正式名稱"></label>
+            <label>統一編號（選填、未驗證）<input id="vendorSelfTax" maxlength="8" inputmode="numeric" placeholder="8 位數"></label>
+            <label class="wide">提供產品與服務<textarea id="vendorSelfServices" rows="2" maxlength="1800" placeholder="例如：設備維修、資安顧問、設計服務"></textarea></label>
+            <label>可服務地區<input id="vendorSelfAreas" maxlength="350"></label>
+            <label>官方網站 HTTPS（選填）<input id="vendorSelfWeb" type="url" placeholder="https://"></label>
+            <label>公開聯絡信箱（選填，刊登後公開）<input id="vendorSelfEmail" type="email" maxlength="180"></label>
+            <label class="wide"><input id="vendorSelfPublish" type="checkbox"> 我確認有權公開上述公司資訊及聯絡方式，並同意向訪客展示「廠商自行提供，未經本平台驗證」。</label>
+            <div class="form-actions"><button type="submit" class="primary-btn">儲存公司檔案</button><button id="vendorSelfDelete" type="button" class="ghost-btn">刪除自己的公司檔案</button></div>
+          </form>
+          <p id="vendorSelfStatus" class="minor">請登入後操作自己的刊登資料。</p>
+        </div>
+        <div class="panel"><form id="directorySearchForm" class="inline-form"><input id="directoryKeyword" placeholder="搜尋公開刊登公司名稱" maxlength="60"><button type="submit" class="primary-btn">查詢名錄</button></form></div>
+        <div id="directoryList" class="result-list"></div>
+      </section>
+
+      <section id="view-guide" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">PROCUREMENT BASICS</div><h1>政府採購新手指南</h1>
+        <p>以白話說明政府採購流程與常用名詞，附官方入口供查核；實際投標規則應以原公告及最新法規為準。</p></div>
+        <div id="guideContent" class="panel prose"></div>
+      </section>
+
       <section id="view-team" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">TEAM COLLABORATION</div><h1>團隊投標協作</h1><p>建立公司工作區、產生一次性邀請連結、共用投標案件及待辦。必須登入，使用資料庫權限隔離。</p></div>
         <div class="panel">
@@ -296,5 +363,6 @@
 <script type="module" src="./app.js"></script>
 <script type="module" src="./delivery.js"></script>
 <script type="module" src="./advanced.js"></script>
+<script type="module" src="./operations.js"></script>
 </body>
 </html>
