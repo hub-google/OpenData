@@ -1095,6 +1095,45 @@ async function renderWorkspace(){
   box.replaceChildren();
   child(box,E('h2','','團隊案件 '+(cases.data?.length||0)+' 件 · 成員 '+(members.data?.length||0)+' 人'),
     E('p','minor','你的權限：'+(me?.role||'未知')+'。跨裝置案件會存到 ti_workspace_cases；角色由 RLS 驗證。'));
+  if(me?.role==='owner'){
+   const ownerTools=E('div','panel');ownerTools.style.marginTop='18px';
+   ownerTools.append(E('h3','','工作區擁有者管理'));
+   const ownerRow=E('div','inline-form'),choose=E('select','');
+   for(const member of members.data.filter(x=>x.user_id!==cloud.user.id)){
+    const o=E('option','',member.user_id.slice(0,8)+'…（'+member.role+'）');
+    o.value=member.user_id;choose.append(o);
+   }
+   const transfer=btn('轉移擁有者','ghost-btn',async()=>{
+    if(!choose.value)return toast('沒有其他成員可以接管工作區。');
+    if(!confirm('確定把整個工作區的擁有者權限轉移給此團隊成員？完成後你會降為管理員。'))return;
+    const {error}=await cloud.client.rpc('ti_transfer_workspace_owner',{
+      p_workspace:id,p_new_owner:choose.value
+    });
+    if(error)return toast('轉移失敗：'+readableError(error));
+    toast('所有權已轉移。');void refreshWorkspaces();
+   });
+   transfer.disabled=!choose.value;
+   child(ownerRow,choose,transfer);
+   const deleteButton=btn('永久刪除整個工作區','ghost-btn',async()=>{
+    const selected=$('workspaceSelect').selectedOptions?.[0]?.textContent||'';
+    const typed=prompt('此操作會永久刪除所有成員共享的案件、任務及邀請。請輸入完整工作區名稱「'+selected+'」確認：');
+    if(typed!==selected)return toast('工作區名稱未吻合，未刪除。');
+    const {error}=await cloud.client.from('ti_workspaces').delete().eq('id',id).eq('owner_id',cloud.user.id);
+    if(error)return toast('刪除失敗：'+readableError(error));
+    selectedWorkspace='';toast('工作區及其共享內容已刪除。');void refreshWorkspaces();
+   });
+   child(ownerTools,ownerRow,E('p','minor','轉移所有權需對方已是成員；刪除整個工作區會影響所有成員。'),deleteButton);
+   box.append(ownerTools);
+  }else if(me){
+   const leave=btn('退出此工作區','ghost-btn',async()=>{
+    if(!confirm('確定退出此工作區？你將不再看到其共享標案與任務。'))return;
+    const {error}=await cloud.client.from('ti_workspace_members').delete()
+      .eq('workspace_id',id).eq('user_id',cloud.user.id);
+    if(error)return toast('退出失敗：'+readableError(error));
+    selectedWorkspace='';toast('已退出工作區。');void refreshWorkspaces();
+   });
+   box.append(leave);
+  }
   if(canEdit){
    const add=E('div','inline-form');add.style.marginTop='15px';
    const select=E('select','');const placeholder=E('option','','選擇要分享的個人追蹤案');placeholder.value='';select.append(placeholder);
@@ -1115,7 +1154,7 @@ async function renderWorkspace(){
   for(const item of cases.data||[]){
    const wrap=E('section','watch-item'),head=E('header','');
    const parts=item.case_id.split('::');
-   const r=normalize({unit_id:parts[0],job_number:parts.slice(1).join('::'),unit_name:item.agency,date:20261103,brief:{title:item.title,type:'',category:''}});
+   const r=normalize({unit_id:parts[0],job_number:parts.slice(1).join('::'),unit_name:item.agency,date:null,brief:{title:item.title,type:'',category:''}});
    child(head,btn(item.title,'case-title',()=>r&&openDetail(r)));
    if(canEdit)child(head,btn('移除','ghost-btn',async()=>{
     const {error}=await cloud.client.from('ti_workspace_cases').delete()
