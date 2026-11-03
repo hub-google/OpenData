@@ -35,7 +35,9 @@
 - 11/02：2,280 筆公告成功回填。
 - 10/30：3,383 筆公告成功回填。
 - 10/29：3,320 筆公告成功回填。
-- 累計 **11,333 筆成功匯入的公告，9,708 件按機關與案號去重的案件**（2026-11-03 實際 SQL 稽核快照，非即時承諾）。
+- 10/28：2,745 筆公告成功回填。
+- 10/27：599 筆公告成功回填。
+- 累計 **14,677 筆成功匯入的公告，12,481 件按機關與案號去重的案件**（2026-11-03 實際 SQL 稽核快照，非即時承諾）。
 - 10/31 與 11/01：來源 API `/listbydate` 回傳 **HTTP 500**，被明確記錄為缺口；**沒有假裝這兩日零公告，也沒有補編任何公告**，會排程重試。
 - 最新完整覆蓋日期及成功／失敗請以資料庫 `ti_ingest_runs`、`ti_backfill_days`、`ti_backfill_gaps` 和網站「資料說明」為準。
 
@@ -55,12 +57,29 @@
 | Email 訂閱／LINE 推播 | ⚠️ 收件同意、退訂開關、佇列、15 分鐘背景任務、失敗紀錄、LINE OAuth 綁定程式已部署；**專屬金鑰尚未設定，不會寄出** |
 | 投標待辦／個人追蹤管理／CSV／ICS | ✅ 已開發，未登入時使用本機資料，登入後轉 Supabase；帳戶協作仍需驗收 |
 | 團隊工作區、邀請、權限、共用案件／任務 | ⚠️ 角色 RLS、一次性邀請與介面已部署；尚未用多個真實帳戶做完整驗收 |
-| 私有文件保存與下載 | ⚠️ 私有 Supabase Storage、帳戶路徑 RLS 已部署；尚未作實際登入上傳驗收 |
-| 瀏覽器本機標單條款整理 | ✅ 可解析文字型 TXT、MD、DOCX、PDF，PDF 保留來源頁碼；掃描 PDF 不可辨識 |
+| 私有文件保存與下載 | ⚠️ 私有 Supabase Storage、帳戶路徑 RLS 已部署；TXT/MD/PDF/DOCX/XLSX 可本機分析；尚未作實際登入上傳驗收 |
+| 瀏覽器本機標單條款整理 | ✅ 可解析文字型 TXT、MD、DOCX、PDF、XLSX；新增舊版／新版原文差異，文字型 PDF 保留頁碼；掃描 PDF 不可辨識 |
 | 真 AI 標單引用分析 | ⚠️ `ti-document-ai` 已部署，對原文引用做核對；沒有配置 `OPENAI_API_KEY`，未能完成正式模型呼叫 |
 | 價格歷史、重購預告、完整同場競品分析 | ⏳ 需更長期間與特定欄位真資料，**不能在只有少量真實金額時製造結論** |
 | 特殊採購、共同供應契約、標售、分包、審查員資料 | ⏳ 尚未全部接入合法且涵蓋範圍清楚的獨立來源 |
 | 企業唯讀 API／MCP、完整工作流 AI、付款與電子發票 | ⏳ 尚未全部完成；付款因本次**不區分付費**明確不開放 |
+
+### 2026-11-03 本輪 PRD 補齊事項
+
+| 功能 | 真正運作及限制 |
+|---|---|
+| **跨日期進階搜尋 F02–F05** | `ti_archive_search` Supabase RPC + `advanced.js` 真正查詢已入庫公告，AND/OR/排除詞、機關、公告狀態、履約地、招標方式、預算、日期、排序、伺服器分頁、查詢網址與 CSV；以真實公開網站及 SQL 驗證。 |
+| **雲端履約保證金台帳 U14** | `ti_contract_obligations` 個人 RLS、押標金／履約保證金／驗收／請款／合約到期，使用者自行填日期，T−7/T−3/T−1 自動產生站內提示。未有真實用戶資料可驗證寄達。 |
+| **供應商自行刊登 U13** | `ti_vendor_profiles`：自行申報、同意公開、修改／刪除、公開名錄及來源註記，未經政府或平台審核。未有任何真實刊登，不拿研究或公告樣本冒充。 |
+| **Go／No-Go V6** | `ti_bid_decisions`：六項證據評估 25/25/15/15/10/10、已核對證據覆蓋率、未知不假設滿分／零分；不是得標率。 |
+| **標書原文差異與健檢 V5/V7** | `proposal.js` 比對真正的兩版 PDF/DOCX/XLSX/TXT/MD 原文（本機）；`ti-proposal-check` 真 AI 兩份文件條款健檢必須有原文及頁碼，但正式 AI 金鑰尚未設定。 |
+| **登入與刪帳 U01/U11** | Email magic link、Google OAuth、Email 變更、工作區轉讓、確認本人刪除會員/私有文件後端已部署；仍需真實授權帳戶端到端驗收。 |
+| **Email 退訂 U11** | `ti-unsubscribe` POST 一鍵停止信件、Resend List-Unsubscribe/RFC8058 標頭、瀏覽器 GET 安全確認頁已部署；寄信供應商金鑰仍未配置，未驗證真正送達或退訂信件。 |
+| **持續更新 RSS F16** | [官方來源索引 RSS](https://unapiwajmgqqtdkixaab.supabase.co/functions/v1/ti-rss) 限 30 筆，已從上線服務讀回真實公告標題，不是全國資料流。 |
+| **官方拒絕往來公告 F18** | 工程會資料開放集 [5988](https://data.gov.tw/dataset/5988) 每日排程及查詢頁面已部署；第一次直接抓取 **HTTP 請求逾時、0 筆成功入庫**，另記錄於 `ti_external_source_runs`。不得將部分資料源部署稱為已同步成功，不能推定廠商現在仍停權。 |
+| **新手指南 F15** | 網頁列出法規核對及實務流程，連回工程會/全國法規資料庫，非法律意見。 |
+
+目前仍缺的 PRD 要求：F17 共同供應契約／財物標售／分包等完整獨立來源，F18 評選委員與最新官方拒往全量資料，F19 有法律授權的企業公開 API/MCP，V2 完整合約重購樣本、V3 完整同場投標者、V4 足夠的可比價格、V7 持久安全的跨文件知識庫。外部資料／金鑰沒有時不能造假實現。
 
 完整逐項驗收參見：[PRD 開發驗收清單](./PRD-實作驗收-2026-11-03.md)。
 
@@ -88,6 +107,10 @@ LINE 開發者後台需要設定 callback `https://unapiwajmgqqtdkixaab.supabase
 - `supabase/functions/ti-notify/index.ts`：使用者同意後的 Email/LINE 傳送（缺少供應商密鑰時不得回報已送達）。
 - `supabase/functions/ti-line-connect/index.ts`：LINE 官方 OAuth2 身份驗證與使用者自願綁定。
 - `supabase/functions/ti-document-ai/index.ts`：需要實際 AI 金鑰與正式登入的文件檢核。
+- `supabase/functions/ti-proposal-check/index.ts`：須登入、具備 AI 金鑰的雙文件真實條款引用比對。
+- `supabase/functions/ti-delete-account/index.ts`、`ti-unsubscribe/index.ts`：自助刪帳、Email 退訂，只有身分驗證與明確確認後才做不可逆動作。
+- `supabase/functions/ti-rss/index.ts`、`ti-debarred-ingest/index.ts`：限量公開公告 RSS、官方拒絕往來資料日同步（目前來源逾時）。
+- `advanced.js`,`operations.js`,`proposal.js`,`account-privacy.js`,`debarred.js`：跨日搜尋、CRM／名錄、文件差異、帳號隱私與官方來源狀態頁。
 - `supabase/functions/ti-service-status/index.ts`：僅顯示外部服務啟用狀態，不露出私密值。
 - `supabase/migrations/`：資料表、角色權限、排程、通知佇列、文件桶、歷史缺口與官方截標 T−N 提醒。
 - `tests/core.test.mjs`：已建立的資料解析和安全性測試。
