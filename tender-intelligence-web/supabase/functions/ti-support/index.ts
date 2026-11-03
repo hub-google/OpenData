@@ -149,6 +149,19 @@ Deno.serve(async req=>{
    await touchThread(t.id,{});
    return result(req,{thread_id:t.id,message:{id:msg.id,body:text},reply:{id:reply.id,body:ai.text},model:ai.model});
   }
+  if(action==="customer_reply"){
+   const t=await owned(safeInput(b.thread_id,40),user,hash);
+   if(t.kind!=="form")return result(req,{error:"只有真人問題回報工單可以補充留言"},400);
+   const text=safeInput(b.message,6000);
+   if(text.length<2)return result(req,{error:"請輸入至少兩個字"},400);
+   const recent=await query("ti_support_messages?select=id,role,created_at&thread_id=eq."+t.id+"&order=id.desc&limit=51");
+   if(recent.length>=50)return result(req,{error:"此工單已達留言上限，請另建新的問題回報"},400);
+   const last=recent.find((m:any)=>m.role==="customer");
+   if(last&&Date.now()-new Date(last.created_at).getTime()<5000)return result(req,{error:"請間隔至少 5 秒再送出訊息"},400);
+   const message=await addMessage(t.id,"customer",text);
+   await touchThread(t.id,{status:"open",customer_read_at:new Date().toISOString()});
+   return result(req,{ok:true,message,status:"open"});
+  }
   if(action==="admin_list"||action==="admin_read"||action==="admin_reply"||action==="admin_status"){
    if(!await isStaff(user))return result(req,{error:"僅客服管理員可操作"},403);
    if(action==="admin_list"){
