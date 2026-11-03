@@ -8,7 +8,7 @@ import {getClient,fetchArchive,fetchSourceStatus,cloudSaved,cloudWatches,cloudNo
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
 const listModes={latest:'最新公告',archive:'自有資料庫已收錄案件',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
-const viewNames={search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',analytics:'決標行情',tracking:'投標工作台',alerts:'監控與提醒',documents:'標書條款整理',about:'資料說明'};
+const viewNames={search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',about:'資料說明'};
 const states=['評估中','準備投標','已投標','待決標','已得標','未得標','不投'];
 const readableError = err => {
   const s=asText(err?.message||err);
@@ -56,6 +56,7 @@ function showView(name){
   window.scrollTo({top:0,behavior:'instant'});
   if(name==='radar')renderRadar();
   if(name==='tracking')renderTracking();
+  if(name==='team')void refreshWorkspaces();
   if(name==='alerts')renderWatches();
   if(name==='analytics')renderAnalytics();
   if(name==='vendors' && state.vendorRows.length)renderVendorRows();
@@ -723,6 +724,7 @@ function initCloudUI(){
     }catch(err){toast('建立待辦失敗：'+readableError(err));}
   });
   $('documentCloudSave').addEventListener('click',()=>void saveCloudDocument());
+  initTeamUI();
 }
 function clearUserState(){
   for(const k of Object.keys(store.saved))delete store.saved[k];
@@ -816,7 +818,9 @@ async function cloudHydrate(){
       };
     }
     persist();renderSearch();renderTracking();renderWatches();renderRadar();renderAccount();
-    await Promise.all([renderCloudTasks(),renderCloudInbox(),renderCloudDocuments()]);
+    await Promise.all([renderCloudTasks(),renderCloudInbox(),renderCloudDocuments(),refreshWorkspaces()]);
+    const pending=sessionStorage.getItem('ti_pending_invite');
+    if(pending)await acceptWorkspaceInvitation(pending);
     $('accountInfo').textContent='同步完成：'+Object.keys(store.saved).length+' 筆追蹤、'+store.watches.length+' 條監控，所有資料在 Supabase 帳戶中可跨裝置存取。';
   }catch(err){
     $('accountInfo').textContent='帳戶已登入，但資料同步失敗：'+readableError(err);
@@ -994,4 +998,168 @@ async function renderCloudDocuments(){
     box.append(wrap);
   }
  }catch(err){box.replaceChildren(E('div','empty','私有文件讀取失敗：'+readableError(err)));}
+}
+
+
+// PRD: secure multi-member workspace / invitation / shared cases and tasks.
+let selectedWorkspace='';
+async function refreshWorkspaces(){
+ const panel=$('workspaceOutput'),choose=$('workspaceSelect');
+ if(!cloud.user){panel.replaceChildren(E('div','empty','請先登入，才能讀取團隊工作區。'));return;}
+ try{
+  const {data,error}=await cloud.client.from('ti_workspaces').select('id,name,owner_id,created_at').order('created_at',{ascending:false});
+  if(error)throw error;
+  const old=selectedWorkspace||choose.value;choose.replaceChildren();
+  if(!data?.length){
+   const o=E('option','','尚無工作區');o.value='';choose.append(o);
+   selectedWorkspace='';panel.replaceChildren(E('div','empty','尚未建立或加入團隊。'));
+   return;
+  }
+  for(const w of data){const o=E('option','',w.name);o.value=w.id;choose.append(o);}
+  selectedWorkspace=data.some(w=>w.id===old)?old:data[0].id;
+  choose.value=selectedWorkspace;
+  await renderWorkspace();
+ }catch(err){panel.replaceChildren(E('div','empty','團隊資料無法讀取：'+readableError(err)));}
+}
+async function renderWorkspace(){
+ const id=selectedWorkspace,box=$('workspaceOutput');
+ if(!cloud.user||!id){box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
+ box.replaceChildren(E('div','empty','正在讀取團隊案件及任務…'));
+ try{
+  const [members,cases,tasks]=await Promise.all([
+   cloud.client.from('ti_workspace_members').select('user_id,role,joined_at').eq('workspace_id',id),
+   cloud.client.from('ti_workspace_cases').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
+   cloud.client.from('ti_workspace_tasks').select('*').eq('workspace_id',id).order('updated_at',{ascending:false})
+  ]);
+  if(members.error)throw members.error;if(cases.error)throw cases.error;if(tasks.error)throw tasks.error;
+  const me=members.data.find(m=>m.user_id===cloud.user.id);
+  const canEdit=!!me&&me.role!=='viewer';
+  box.replaceChildren();
+  child(box,E('h2','','團隊案件 '+(cases.data?.length||0)+' 件 · 成員 '+(members.data?.length||0)+' 人'),
+    E('p','minor','你的權限：'+(me?.role||'未知')+'。跨裝置案件會存到 ti_workspace_cases；角色由 RLS 驗證。'));
+  if(canEdit){
+   const add=E('div','inline-form');add.style.marginTop='15px';
+   const select=E('select','');const placeholder=E('option','','選擇要分享的個人追蹤案');placeholder.value='';select.append(placeholder);
+   for(const item of Object.values(store.saved)){const o=E('option','',item.title);o.value=item.id;select.append(o);}
+   const submit=btn('分享至團隊','primary-btn',async()=>{
+    const item=store.saved[select.value];if(!item)return toast('請先在標案搜尋收藏案件。');
+    const {error}=await cloud.client.from('ti_workspace_cases').upsert({
+     workspace_id:id,case_id:item.id,title:item.title,agency:item.agency||null,stage:item.stage||'評估中',
+     updated_at:new Date().toISOString()
+    },{onConflict:'workspace_id,case_id'});
+    if(error)return toast('分享失敗：'+readableError(error));
+    toast('案件已加入團隊工作區。');void renderWorkspace();
+   });
+   child(add,select,submit);box.append(add);
+  }
+  child(box,E('h3','','共用投標案件'));
+  if(!cases.data?.length)box.append(E('p','minor','目前沒有共用案件。'));
+  for(const item of cases.data||[]){
+   const wrap=E('section','watch-item'),head=E('header','');
+   const parts=item.case_id.split('::');
+   const r=normalize({unit_id:parts[0],job_number:parts.slice(1).join('::'),unit_name:item.agency,date:20261103,brief:{title:item.title,type:'',category:''}});
+   child(head,btn(item.title,'case-title',()=>r&&openDetail(r)));
+   if(canEdit)child(head,btn('移除','ghost-btn',async()=>{
+    const {error}=await cloud.client.from('ti_workspace_cases').delete()
+     .eq('workspace_id',id).eq('case_id',item.case_id);
+    if(error)toast('移除失敗：'+readableError(error));else void renderWorkspace();
+   }));
+   wrap.append(head);
+   const line=E('div','inline-form');
+   const stage=E('select','');for(const s of states){const o=E('option','',s);o.value=s;stage.append(o);}
+   stage.value=item.stage;
+   stage.disabled=!canEdit;
+   stage.addEventListener('change',async()=>{
+    const {error}=await cloud.client.from('ti_workspace_cases').update({stage:stage.value,updated_at:new Date().toISOString()})
+     .eq('workspace_id',id).eq('case_id',item.case_id);
+    if(error)toast('狀態更新失敗：'+readableError(error));
+   });
+   const notes=E('input','');notes.placeholder='團隊備註';notes.value=item.notes||'';notes.disabled=!canEdit;
+   notes.addEventListener('change',async()=>{
+    const {error}=await cloud.client.from('ti_workspace_cases').update({notes:notes.value,updated_at:new Date().toISOString()})
+     .eq('workspace_id',id).eq('case_id',item.case_id);
+    if(error)toast('備註更新失敗：'+readableError(error));
+   });
+   child(line,stage,notes);wrap.append(line);box.append(wrap);
+  }
+  child(box,E('h3','','共用待辦'));
+  if(canEdit){
+   const form=E('form','inline-form');form.style.marginBottom='16px';
+   const name=E('input','');name.required=true;name.maxLength=300;name.placeholder='例如：準備報價附件';
+   const due=E('input','');due.type='date';
+   const submit=E('button','primary-btn','建立團隊待辦');submit.type='submit';
+   form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const {error}=await cloud.client.from('ti_workspace_tasks').insert({
+     workspace_id:id,title:name.value.trim(),due_at:due.value?due.value+'T23:59:00+08:00':null,created_by:cloud.user.id
+    });
+    if(error)toast('新增待辦失敗：'+readableError(error));
+    else void renderWorkspace();
+   });
+   child(form,name,due,submit);box.append(form);
+  }
+  if(!tasks.data?.length)box.append(E('p','minor','尚未建立團隊待辦。'));
+  for(const task of tasks.data||[]){
+   const wrap=E('div','watch-item'),head=E('header',''),check=E('input','');
+   check.type='checkbox';check.checked=task.done;check.disabled=!canEdit;
+   check.addEventListener('change',async()=>{
+    const {error}=await cloud.client.from('ti_workspace_tasks').update({done:check.checked,updated_at:new Date().toISOString()}).eq('id',task.id);
+    if(error)toast('更新任務失敗：'+readableError(error));else void renderWorkspace();
+   });
+   child(head,check,E('h3','',task.title),E('span','minor',task.due_at?new Date(task.due_at).toLocaleDateString('zh-TW'):'無期限'));
+   wrap.append(head);box.append(wrap);
+  }
+  child(box,E('h3','','團隊成員'));
+  const tb=E('table','analysis-list');
+  for(const member of members.data||[]){
+   const tr=E('tr','');child(tr,E('td','',member.user_id===cloud.user.id?'你本人':member.user_id.slice(0,8)+'…'),
+     E('td','',member.role),E('td','',new Date(member.joined_at).toLocaleDateString('zh-TW')));tb.append(tr);
+  }
+  box.append(tb);
+ }catch(err){box.replaceChildren(E('div','empty','團隊讀取失敗：'+readableError(err)));}
+}
+async function acceptWorkspaceInvitation(token){
+ if(!cloud.user)return toast('請先登入，再使用邀請連結。');
+ try{
+  const {data,error}=await cloud.client.rpc('ti_accept_workspace_invite',{token:token.trim()});
+  if(error)throw error;
+  selectedWorkspace=data;
+  $('workspaceJoinCode').value='';
+  sessionStorage.removeItem('ti_pending_invite');
+  const url=new URL(window.location.href);url.searchParams.delete('invite');
+  window.history.replaceState(null,'',url.pathname+url.search);
+  await refreshWorkspaces();showView('team');toast('已成功加入團隊工作區。');
+ }catch(err){toast('加入團隊失敗：'+readableError(err));}
+}
+function initTeamUI(){
+ $('workspaceCreateForm').addEventListener('submit',async e=>{
+  e.preventDefault();if(!cloud.user)return toast('請先登入。');
+  const name=$('workspaceName').value.trim();if(!name)return;
+  const {data,error}=await cloud.client.from('ti_workspaces')
+    .insert({name,owner_id:cloud.user.id}).select('id').single();
+  if(error)return toast('建立工作區失敗：'+readableError(error));
+  selectedWorkspace=data.id;$('workspaceName').value='';await refreshWorkspaces();
+  toast('已建立團隊工作區。');
+ });
+ $('workspaceSelect').addEventListener('change',()=>{
+  selectedWorkspace=$('workspaceSelect').value;void renderWorkspace();
+ });
+ $('workspaceRefresh').addEventListener('click',()=>void refreshWorkspaces());
+ $('workspaceInvite').addEventListener('click',async()=>{
+  if(!cloud.user||!selectedWorkspace)return toast('請先登入並選擇工作區。');
+  try{
+   const {data,error}=await cloud.client.rpc('ti_create_workspace_invite',{w:selectedWorkspace});
+   if(error)throw error;
+   const url=window.location.origin+window.location.pathname+'?invite='+encodeURIComponent(data);
+   $('workspaceInviteLink').replaceChildren(E('span','','一次性邀請連結（七天內有效）：'+url+' '),
+     btn('複製連結','ghost-btn',async()=>{await navigator.clipboard.writeText(url);toast('邀請連結已複製。')}));
+  }catch(err){toast('產生邀請失敗（須為工作區擁有者）：'+readableError(err));}
+ });
+ $('workspaceJoinForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const token=$('workspaceJoinCode').value.trim();
+  if(token)await acceptWorkspaceInvitation(token);
+ });
+ const invite=new URL(window.location.href).searchParams.get('invite');
+ if(invite)sessionStorage.setItem('ti_pending_invite',invite);
 }
