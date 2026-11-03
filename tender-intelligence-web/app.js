@@ -863,6 +863,7 @@ function initCloudUI(){
     }catch(err){toast('建立待辦失敗：'+readableError(err));}
   });
   $('documentCloudSave').addEventListener('click',()=>void saveCloudDocument());
+  $('knowledgeSearchForm').addEventListener('submit',e=>void searchPrivateKnowledge(e));
   initTeamUI();
 }
 function clearUserState(){
@@ -872,6 +873,8 @@ function clearUserState(){
   $('cloudInbox').replaceChildren(E('div','empty','請登入查看通知。'));
   $('taskList').replaceChildren(E('div','empty','請登入查看雲端待辦。'));
   $('cloudDocuments').replaceChildren(E('div','empty','請登入查看私有文件。'));
+  $('knowledgeResults').replaceChildren();
+  $('knowledgeStatus').textContent='請登入後使用私有文件知識庫。';
 }
 function renderAccount(){
   if(state.view==='billing')void renderBilling();
@@ -1147,6 +1150,72 @@ async function renderCloudDocuments(){
  }catch(err){box.replaceChildren(E('div','empty','私有文件讀取失敗：'+readableError(err)));}
 }
 
+
+// V7: private, RLS-protected cross-document retrieval. No AI and no external text index.
+async function searchPrivateKnowledge(e){
+ e.preventDefault();
+ const btn=$('knowledgeSearchButton'),status=$('knowledgeStatus'),box=$('knowledgeResults');
+ if(!cloud.user||!cloud.client){
+  status.textContent='請登入後使用私有文件知識庫。';return;
+ }
+ const needle=$('knowledgeQuery').value.trim();
+ if(needle.length<2){status.textContent='請輸入至少兩個字。';return;}
+ const normalized=needle.normalize('NFKC').toLocaleLowerCase('zh-TW').replaceAll('臺','台');
+ const userId=cloud.user.id;
+ btn.disabled=true;
+ box.replaceChildren();
+ status.textContent='正在從你自己的私有雲端下載文件並於瀏覽器搜尋；不傳送內容給 AI…';
+ try{
+  const {data:docs,error}=await cloud.client.from('ti_documents')
+   .select('id,filename,storage_path,bytes,mime_type')
+   .eq('user_id',userId).order('created_at',{ascending:false}).limit(8);
+  if(error)throw error;
+  if(!docs?.length){status.textContent='尚無已保存的私有文件。';return;}
+  let scanned=0,skipped=0;const failures=[],matches=[];
+  for(const doc of docs){
+   if(cloud.user?.id!==userId)throw Error('登入帳戶已變更；停止本次搜尋。');
+   if(Number(doc.bytes||0)>15*1024*1024 || !/\.(pdf|docx|txt|md)$/i.test(doc.filename)){
+    skipped++;continue;
+   }
+   try{
+    const {data:blob,error:loadError}=await cloud.client.storage.from('ti-private-documents').download(doc.storage_path);
+    if(loadError)throw loadError;
+    if(blob.size>15*1024*1024)throw Error('檔案太大');
+    const file=new File([blob],doc.filename,{type:doc.mime_type||blob.type});
+    const pages=await parseDocument(file);
+    scanned++;
+    for(const page of pages){
+     const text=String(page.text||'');
+     // Preserve original snippets and page labels; do not generate a synthetic answer.
+     const paragraphs=text.replace(/\r/g,'\n').split(/[\n。；;]+/).map(t=>t.trim().replace(/\s+/g,' ')).filter(t=>t.length>=2);
+     for(const paragraph of paragraphs){
+      const hay=paragraph.normalize('NFKC').toLocaleLowerCase('zh-TW').replaceAll('臺','台');
+      let offset=hay.indexOf(normalized);
+      if(offset===-1)continue;
+      const begin=Math.max(0,offset-85),end=Math.min(paragraph.length,offset+normalized.length+150);
+      matches.push({filename:doc.filename,source:page.source,
+       excerpt:(begin?'…':'')+paragraph.slice(begin,end)+(end<paragraph.length?'…':'')});
+      if(matches.length>=60)break;
+     }
+     if(matches.length>=60)break;
+    }
+    if(matches.length>=60)break;
+   }catch(err){failures.push(doc.filename+'：'+readableError(err));}
+  }
+  if(cloud.user?.id!==userId)throw Error('登入帳戶已變更；搜尋結果已取消。');
+  status.textContent='已檢查 '+scanned+' 份私有文件，原文命中 '+matches.length+' 段'+
+   (matches.length>=60?'（最多顯示 60 段）':'')+
+   (skipped?'；略過 '+skipped+' 份不支援格式／超過限制文件':'')+
+   (failures.length?'；'+failures.length+' 份讀取失敗':'')+'。未把未知條款推測成結論。';
+  if(!matches.length)box.append(E('div','empty','目前讀取成功的文件沒有此關鍵字；掃描型 PDF 或未解析頁面需人工核對。'));
+  for(const hit of matches){
+   const item=E('div','timeline-item');
+   child(item,E('strong','',hit.filename+'｜'+hit.source),E('div','',hit.excerpt));box.append(item);
+  }
+  if(failures.length)box.append(E('p','notice warning','部分文件無法搜尋：'+failures.slice(0,3).join('；')));
+ }catch(err){status.textContent='知識庫搜尋失敗：'+readableError(err);}
+ finally{btn.disabled=false;}
+}
 
 // PRD: secure multi-member workspace / invitation / shared cases and tasks.
 let selectedWorkspace='';
