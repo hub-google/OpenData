@@ -33,10 +33,10 @@ test('normalizes real OpenFun response shape',()=>{
 });
 test('deduplicates same case version while retaining latest announcement',()=>{
   const old={...base,date:20261031,filename:'TIQ-1-123'};
-  const latest={...base,filename:'TIQ-1-456',brief:{...base.brief,type:'更正公告'}};
+  const latest={...base,filename:'TIQ-1-71150000',brief:{...base.brief,type:'更正公告'}};
   const rows=dedupe([old,base,latest]);
   assert.equal(rows.length,1);
-  assert.equal(rows[0].filename,'TIQ-1-456');
+  assert.equal(rows[0].filename,'TIQ-1-71150000');
 });
 test('filters known budget but not unknown as zero',()=>{
   const rows=[normalize(base),normalize({...base,job_number:'other',budget_amount:4000000})];
