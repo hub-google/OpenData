@@ -34,15 +34,17 @@ export async function fetchArchive({page=1,search=""}={}){
 }
 export async function fetchSourceStatus(){
  const client=await getClient();
- const [source,run,coverage]=await Promise.all([
+ const [source,run,coverage,backfill,days,notices]=await Promise.all([
   client.from("ti_sources").select("id,provider,method,frequency_minutes,last_success_at,last_error,commercial_license_status").eq("id","openfun-pcc").maybeSingle(),
   client.from("ti_ingest_runs").select("id,source_date,status,fetched_count,new_notice_count,detail_count,finished_at,error_summary").order("id",{ascending:false}).limit(1).maybeSingle(),
-  client.from("ti_cases").select("id",{head:true,count:"exact"})
+  client.from("ti_cases").select("id",{head:true,count:"exact"}),
+  client.from("ti_backfill_state").select("next_date,oldest_date,enabled,last_error,last_success_at,max_archive_bytes").eq("id","openfun-pcc").maybeSingle(),
+  client.from("ti_backfill_days").select("source_date",{head:true,count:"exact"}),
+  client.from("ti_notices").select("id",{head:true,count:"exact"})
  ]);
- if(source.error)throw source.error;
- if(run.error)throw run.error;
- if(coverage.error)throw coverage.error;
- return {source:source.data,run:run.data,cases:coverage.count||0};
+ for(const result of [source,run,coverage,backfill,days,notices])if(result.error)throw result.error;
+ return {source:source.data,run:run.data,cases:coverage.count||0,
+   notices:notices.count||0,backfill:backfill.data,backfillDays:days.count||0};
 }
 export async function readAccount(client){
   const {data:{user},error}=await client.auth.getUser();
