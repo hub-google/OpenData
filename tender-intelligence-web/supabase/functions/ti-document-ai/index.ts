@@ -42,7 +42,7 @@ Deno.serve(async req=>{
  const name=String(b?.document_name||"document").slice(0,250);
  const key=Deno.env.get("OPENAI_API_KEY");
  if(!key)return output({error:"此專案尚未在 Supabase Edge Function Secrets 設定 OPENAI_API_KEY；未呼叫任何 AI，也沒有產生模擬結果"},503,origin);
- const {data:previous}=await db("ti_ai_jobs?select=id&user_id=eq."+user.id+"&created_at=gte."+encodeURIComponent(new Date(Date.now()-86400000).toISOString())+"&limit=21");
+ const previous=await db("ti_ai_jobs?select=id&user_id=eq."+user.id+"&created_at=gte."+encodeURIComponent(new Date(Date.now()-86400000).toISOString())+"&limit=21");
  if((previous||[]).length>=20)return output({error:"今天已達每帳戶 20 次的 AI 防濫用額度"},429,origin);
  const created=await db("ti_ai_jobs","POST",[{user_id:user.id,document_name:name,case_id:b.case_id||null,state:"pending"}],"return=representation");
  const jobId=created?.[0]?.id;
