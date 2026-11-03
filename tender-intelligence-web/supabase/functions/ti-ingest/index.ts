@@ -100,7 +100,10 @@ async function ingest(mode){
   found=notices.size;if(found===0)throw Error("source had no valid notices");
   await batches("ti_cases",[...cases.values()]);
   added=await batches("ti_notices",[...notices.values()],true);
-  for(const c of [...cases.values()].filter(x=>/招標|決標|更正/.test(x.latest_notice_type||"")).slice(0,12)){
+  // Rotate through as-yet-unenriched cases rather than requesting the same first 12 forever.
+  const cached=await db("ti_case_details?select=case_id&limit=10000");
+  const known=new Set((cached||[]).map(x=>x.case_id));
+  for(const c of [...cases.values()].filter(x=>!known.has(x.id)&&/招標|決標|更正/.test(x.latest_notice_type||"")).slice(0,15)){
    try{if(await enrich(c))details++}catch(e){console.warn("detail unavailable",c.id,text(e).slice(0,130))}
   }
   const finished=new Date().toISOString();
