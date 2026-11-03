@@ -27,6 +27,7 @@ function loadStore() {
   }catch{return {saved:{},profile:{},watches:[]};}
 }
 const store=loadStore();
+const cloud={client:null,user:null,taskRows:[]};
 const state={rows:[],searchRows:[],sourcePage:1,clientPage:1,totalPages:1,mode:'latest',query:'',date:null,
   running:0,view:'search',selected:null,details:new Map(),vendorRows:[],docRows:[],watchRunning:false,lastSearch:'最新公告'};
 let toastTimer=null;
@@ -404,7 +405,7 @@ function renderAnalytics(){
 function renderTracking(){
   const out=$('trackingOutput');out.replaceChildren();
   const items=Object.values(store.saved);
-  $('trackingCount').textContent=items.length;$('metricSaved').textContent=items.length;
+  $('trackingCount').textContent=items.length;$('metricSaved').textContent=items.length;renderTaskSelector();
   if(!items.length){out.append(E('div','empty','目前沒有追蹤案件。到「標案搜尋」點星號，即可加入工作台。'));return;}
   for(const item of items.sort((a,b)=>asText(b.added_at).localeCompare(asText(a.added_at)))){
     const card=E('section','track-card');
@@ -678,3 +679,319 @@ renderAnalytics();
 search('latest','',1);
 void initCloud();
 setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)checkWatches();},20*60*1000);
+
+
+// === PRD: authenticated personal workspace on the actual Supabase database ===
+// No paid gates; RLS enforces that only the account owner accesses personal records.
+function initCloudUI(){
+  $('accountButton').addEventListener('click',()=>{$('accountPanel').hidden=false;$('accountPanel').scrollIntoView({behavior:'smooth'});});
+  $('closeAccount').addEventListener('click',()=>$('accountPanel').hidden=true);
+  $('accountLoginForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const email=$('accountEmail').value.trim();
+    if(!email)return;
+    const button=e.target.querySelector('button');
+    button.disabled=true;
+    try{
+      const sb=cloud.client||await getClient();
+      const target=window.location.origin+window.location.pathname;
+      const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:target,shouldCreateUser:true}});
+      if(error)throw error;
+      $('accountInfo').textContent='已向 '+email+' 寄送登入連結（實際送達取決於 Supabase Email 設定）。請從信箱打開連結。';
+    }catch(err){$('accountInfo').textContent='寄送失敗：'+readableError(err);}
+    finally{button.disabled=false;}
+  });
+  $('accountLogout').addEventListener('click',async()=>{
+    try{const {error}=await cloud.client.auth.signOut();if(error)throw error;
+      cloud.user=null;clearUserState();renderAccount();toast('已登出，本機不保留上一個帳戶的私有資料。');
+    }catch(err){toast('登出失敗：'+readableError(err));}
+  });
+  $('accountSync').addEventListener('click',()=>void cloudHydrate());
+  $('refreshInbox').addEventListener('click',()=>void renderCloudInbox());
+  $('taskForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    if(!cloud.user)return toast('請先登入才能建立跨裝置待辦。');
+    const caseId=$('taskCase').value,title=$('taskTitle').value.trim(),due=$('taskDue').value;
+    if(!caseId||!title)return;
+    try{
+      const {error}=await cloud.client.from('ti_tasks').insert({
+        user_id:cloud.user.id,case_id:caseId,title,due_at:due?due+'T23:59:00+08:00':null
+      });
+      if(error)throw error;
+      $('taskTitle').value='';$('taskDue').value='';
+      await renderCloudTasks();toast('待辦已保存至雲端。');
+    }catch(err){toast('建立待辦失敗：'+readableError(err));}
+  });
+  $('documentCloudSave').addEventListener('click',()=>void saveCloudDocument());
+}
+function clearUserState(){
+  for(const k of Object.keys(store.saved))delete store.saved[k];
+  store.watches=[];store.profile={};
+  cloud.taskRows=[];persist();renderSearch();renderTracking();renderWatches();renderRadar();
+  $('cloudInbox').replaceChildren(E('div','empty','請登入查看通知。'));
+  $('taskList').replaceChildren(E('div','empty','請登入查看雲端待辦。'));
+  $('cloudDocuments').replaceChildren(E('div','empty','請登入查看私有文件。'));
+}
+function renderAccount(){
+  $('accountButton').textContent=cloud.user?'帳戶：'+(cloud.user.email||'已登入'):'登入／跨裝置同步';
+  $('accountLogout').hidden=!cloud.user;
+  $('accountSync').hidden=!cloud.user;
+  $('accountLoginForm').hidden=!!cloud.user;
+  if(cloud.user)$('accountInfo').textContent='已驗證帳戶：'+cloud.user.email+'。追蹤、商機條件、監控與待辦由 Supabase 的 RLS 保護。';
+}
+async function initCloud(){
+  try{
+    cloud.client=await getClient();
+    const {data,error}=await cloud.client.auth.getSession();
+    if(error)throw error;
+    cloud.user=data.session?.user||null;
+    cloud.client.auth.onAuthStateChange((_event,session)=>{
+      const next=session?.user||null;
+      if(next?.id===cloud.user?.id)return;
+      cloud.user=next;
+      renderAccount();
+      if(next)setTimeout(()=>void cloudHydrate(),0);
+      else{clearUserState();}
+    });
+    renderAccount();
+    if(cloud.user)await cloudHydrate();
+    const st=await fetchSourceStatus();
+    showSourceStatus(st);
+  }catch(err){
+    $('sourceStatus').textContent='自有資料庫狀態暫時讀取失敗：'+readableError(err)+'。公開標案搜尋仍可直接使用 OpenFun API。';
+    $('accountInfo').textContent='目前無法連線登入服務：'+readableError(err);
+  }
+}
+function showSourceStatus(st){
+  const source=st.source||{},run=st.run||{};
+  const done=source.last_success_at?new Date(source.last_success_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}):'尚未完成';
+  $('sourceStatus').textContent=
+    '資料取得方式：GET API（不是自行爬取 HTML）｜來源：'+(source.provider||'OpenFun PCC')+
+    '｜自有資料庫：Supabase unapiwajmgqqtdkixaab｜已收錄案件：'+(st.cases||0).toLocaleString('zh-TW')+
+    '｜預定同步：每 '+(source.frequency_minutes||'?')+' 分鐘｜上次成功：'+done+
+    '｜最新工作：'+(run.status||'無紀錄')+'，取得 '+(run.fetched_count||0)+' 筆公告'+
+    (source.last_error?'｜最近錯誤：'+source.last_error:'')+
+    '｜資料商用再利用授權：'+(source.commercial_license_status||'待查');
+}
+async function cloudHydrate(){
+  if(!cloud.user||!cloud.client)return;
+  const user=cloud.user,client=cloud.client;
+  $('accountInfo').textContent='正在從 Supabase 讀取自己的追蹤／監控資料…';
+  try{
+    const [saved,rules,profile]=await Promise.all([
+      cloudSaved(client,user),
+      cloudWatches(client,user),
+      client.from('ti_profiles').select('*').eq('user_id',user.id).maybeSingle()
+    ]);
+    if(profile.error)throw profile.error;
+    if(user.id!==cloud.user?.id)return;
+    const ids=new Set(saved.map(x=>x.case_id));
+    const localPending=Object.values(store.saved).filter(x=>!ids.has(x.id));
+    // First login migration: only missing local favorites are uploaded.
+    for(const item of localPending.slice(0,100)){
+      await cloudSaveSingle(item,true,true);
+    }
+    const fresh=localPending.reduce((acc,x)=>(acc[x.id]=x,acc),{});
+    for(const s of saved){
+      fresh[s.case_id]={
+        id:s.case_id,unit_id:s.unit_id||s.case_id.split('::')[0],
+        job_number:s.job_number||s.case_id.split('::').slice(1).join('::'),
+        title:s.title||s.case_id,agency:s.agency||'',budget:s.budget_amount,
+        stage:s.stage,notes:s.notes||'',due:s.internal_deadline||'',added_at:s.added_at
+      };
+    }
+    for(const k of Object.keys(store.saved))delete store.saved[k];
+    Object.assign(store.saved,fresh);
+    const localRules=store.watches.filter(w=>!w.serverId && !rules.some(r=>r.keywords===w.term));
+    for(const w of localRules.slice(0,20))await cloudCreateWatch(w.term,true);
+    const remoteRules=await cloudWatches(client,user);
+    store.watches=remoteRules.map(r=>({
+      id:r.id,serverId:r.id,term:r.keywords,excludes:r.excludes,seen:[],newHits:[],initialized:true,
+      checkedAt:r.last_checked_at||''
+    }));
+    if(profile.data){
+      store.profile={
+        keywords:profile.data.keywords||'',excludes:profile.data.excludes||'',
+        min:profile.data.min_budget??'',max:profile.data.max_budget??'',area:profile.data.preferred_area||''
+      };
+    }
+    persist();renderSearch();renderTracking();renderWatches();renderRadar();renderAccount();
+    await Promise.all([renderCloudTasks(),renderCloudInbox(),renderCloudDocuments()]);
+    $('accountInfo').textContent='同步完成：'+Object.keys(store.saved).length+' 筆追蹤、'+store.watches.length+' 條監控，所有資料在 Supabase 帳戶中可跨裝置存取。';
+  }catch(err){
+    $('accountInfo').textContent='帳戶已登入，但資料同步失敗：'+readableError(err);
+    toast('雲端同步失敗：'+readableError(err));
+  }
+}
+async function cloudSaveSingle(item,exists,silent=false){
+  if(!cloud.user||!cloud.client)return;
+  try{
+    const user=cloud.user.id;
+    if(exists){
+      const payload={
+        user_id:user,case_id:item.id,title:item.title||item.brief?.title||'來源未提供案名',
+        agency:item.agency||item.unit_name||'',unit_id:item.unit_id,job_number:item.job_number,
+        budget_amount:item.budget??item.budget_amount??null,
+        stage:states.includes(item.stage)?item.stage:'評估中',
+        notes:item.notes||'',internal_deadline:item.due||null,updated_at:new Date().toISOString()
+      };
+      const {error}=await cloud.client.from('ti_saved_cases').upsert(payload,{onConflict:'user_id,case_id'});
+      if(error)throw error;
+    }else{
+      const {error}=await cloud.client.from('ti_saved_cases').delete().eq('user_id',user).eq('case_id',item.id);
+      if(error)throw error;
+    }
+    if(!silent)toast('已同步到 Supabase。');
+  }catch(err){toast('本機已保存，但雲端同步失敗：'+readableError(err));}
+}
+async function cloudSaveProfile(){
+ if(!cloud.user)return;
+ try{
+  const p=store.profile;
+  const {error}=await cloud.client.from('ti_profiles').upsert({
+    user_id:cloud.user.id,keywords:p.keywords||'',excludes:p.excludes||'',
+    min_budget:p.min===''?null:safeNumber(p.min),
+    max_budget:p.max===''?null:safeNumber(p.max),
+    preferred_area:p.area||null,updated_at:new Date().toISOString()
+  },{onConflict:'user_id'});
+  if(error)throw error;
+ }catch(err){toast('個人商機條件雲端同步失敗：'+readableError(err));}
+}
+async function cloudCreateWatch(term,silent=false){
+ if(!cloud.user)return;
+ try{
+  const {data,error}=await cloud.client.from('ti_watch_rules')
+   .insert({user_id:cloud.user.id,keywords:term}).select('id').single();
+  if(error)throw error;
+  const w=store.watches.find(x=>x.term===term&&!x.serverId);
+  if(w)w.serverId=data.id;
+  persist();renderWatches();
+  if(!silent)toast('監控已存到資料庫。新公告將由排程自動比對。');
+ }catch(err){toast('監控雲端建立失敗：'+readableError(err));}
+}
+async function cloudDeleteWatch(serverId){
+ if(!cloud.user)return;
+ try{
+  const {error}=await cloud.client.from('ti_watch_rules').delete().eq('user_id',cloud.user.id).eq('id',serverId);
+  if(error)throw error;
+ }catch(err){toast('監控雲端刪除失敗：'+readableError(err));}
+}
+async function renderCloudInbox(){
+ const box=$('cloudInbox');
+ if(!cloud.user){box.replaceChildren(E('div','empty','登入後可查看雲端自動比對的新公告。'));return;}
+ box.replaceChildren(E('div','empty','正在讀取通知…'));
+ try{
+  const data=await cloudNotifications(cloud.client,cloud.user);
+  box.replaceChildren();
+  if(!data.length){box.append(E('div','empty','尚無新公告通知；監控建立後，下一次成功匯入的新公告才會進行比對。'));return;}
+  for(const note of data){
+    const wrap=E('div','watch-item'),top=E('header','');
+    const textTitle=note.ti_cases?.title||note.case_id;
+    const row=normalize({
+      unit_id:note.ti_cases?.unit_id||note.case_id.split('::')[0],
+      job_number:note.ti_cases?.job_number||note.case_id.split('::').slice(1).join('::'),
+      unit_name:note.ti_cases?.agency||'',
+      date:Number(note.notice_id.split('::')[2])||20260101,
+      brief:{title:textTitle,type:note.reason,category:''}
+    });
+    child(top,btn(textTitle,'case-title',async()=>{
+      if(row)await openDetail(row);
+      const {error}=await cloud.client.from('ti_notifications').update({seen_at:new Date().toISOString()}).eq('id',note.id);
+      if(!error)void renderCloudInbox();
+    }),E('span','case-tag',note.seen_at?'已讀':'未讀'));
+    child(wrap,top,E('p','',note.reason+'｜監控關鍵字：'+(note.ti_watch_rules?.keywords||'')+'｜'+new Date(note.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})));
+    box.append(wrap);
+  }
+ }catch(err){box.replaceChildren(E('div','empty','雲端通知載入失敗：'+readableError(err)));}
+}
+function renderTaskSelector(){
+ const select=$('taskCase');if(!select)return;
+ const selected=select.value;
+ select.replaceChildren(E('option','','選擇已追蹤標案'));
+ select.firstChild.value='';
+ for(const item of Object.values(store.saved)){
+  const o=E('option','',item.title?.slice(0,65)||item.id);o.value=item.id;select.append(o);
+ }
+ select.value=selected||'';
+}
+async function renderCloudTasks(){
+ const box=$('taskList');
+ if(!cloud.user){box.replaceChildren(E('div','empty','登入後即可建立雲端投標待辦。'));return;}
+ try{
+  const {data,error}=await cloud.client.from('ti_tasks').select('*').eq('user_id',cloud.user.id).order('created_at',{ascending:false}).limit(200);
+  if(error)throw error;
+  box.replaceChildren();
+  if(!data?.length){box.append(E('div','empty','尚無待辦任務。'));return;}
+  for(const task of data){
+    const wrap=E('div','watch-item'),head=E('header','');
+    const toggle=E('input','');toggle.type='checkbox';toggle.checked=task.done;
+    toggle.setAttribute('aria-label','完成任務：'+task.title);
+    toggle.addEventListener('change',async()=>{
+      const {error}=await cloud.client.from('ti_tasks').update({done:toggle.checked,updated_at:new Date().toISOString()}).eq('id',task.id);
+      if(error){toggle.checked=!toggle.checked;toast('更新任務失敗：'+readableError(error));}
+      else void renderCloudTasks();
+    });
+    child(head,toggle,E('h3','',task.title),btn('刪除','ghost-btn',async()=>{
+      const {error}=await cloud.client.from('ti_tasks').delete().eq('id',task.id);
+      if(error)toast('刪除失敗：'+readableError(error));else void renderCloudTasks();
+    }));
+    child(wrap,head,E('p','',(store.saved[task.case_id]?.title||task.case_id)+'｜期限：'+(task.due_at?new Date(task.due_at).toLocaleDateString('zh-TW',{timeZone:'Asia/Taipei'}):'未設定')));
+    box.append(wrap);
+  }
+ }catch(err){box.replaceChildren(E('div','empty','讀取待辦失敗：'+readableError(err)));}
+}
+async function saveCloudDocument(){
+ if(!cloud.user)return toast('請先登入才能儲存私有雲端文件。');
+ const file=$('documentFile').files?.[0];
+ if(!file)return toast('請先選擇文件。');
+ if(file.size>15*1024*1024)return toast('超過 15 MB 限制。');
+ const allowed=['.pdf','.docx','.txt','.md'];
+ if(!allowed.some(x=>file.name.toLowerCase().endsWith(x)))return toast('只能上傳 PDF、DOCX、TXT、MD。');
+ const button=$('documentCloudSave');button.disabled=true;
+ let path='';
+ try{
+  const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-90);
+  path=cloud.user.id+'/'+crypto.randomUUID()+'-'+safeName;
+  const {error:uploadError}=await cloud.client.storage.from('ti-private-documents').upload(path,file,{
+    upsert:false,contentType:file.type||'application/octet-stream'
+  });
+  if(uploadError)throw uploadError;
+  const {error:dbError}=await cloud.client.from('ti_documents').insert({
+    user_id:cloud.user.id,filename:file.name,storage_path:path,mime_type:file.type||null,bytes:file.size
+  });
+  if(dbError){
+    await cloud.client.storage.from('ti-private-documents').remove([path]);
+    throw dbError;
+  }
+  toast('已保存私有文件至 Supabase Storage。');
+  await renderCloudDocuments();
+ }catch(err){toast('文件儲存失敗：'+readableError(err));}
+ finally{button.disabled=false;}
+}
+async function renderCloudDocuments(){
+ const box=$('cloudDocuments');
+ if(!cloud.user){box.replaceChildren(E('div','empty','登入後查看私有雲端文件。'));return;}
+ try{
+  const {data,error}=await cloud.client.from('ti_documents').select('*')
+   .eq('user_id',cloud.user.id).order('created_at',{ascending:false}).limit(100);
+  if(error)throw error;
+  box.replaceChildren();
+  if(!data?.length){box.append(E('div','empty','尚未上傳任何雲端文件。'));return;}
+  for(const file of data){
+    const wrap=E('div','watch-item'),head=E('header','');
+    child(head,E('h3','',file.filename),btn('下載','ghost-btn',async()=>{
+      const {data:link,error:e}=await cloud.client.storage.from('ti-private-documents').createSignedUrl(file.storage_path,60);
+      if(e||!link?.signedUrl)return toast('無法開啟檔案：'+readableError(e));
+      window.open(link.signedUrl,'_blank','noopener,noreferrer');
+    }),btn('刪除','ghost-btn',async()=>{
+      const {error:e}=await cloud.client.storage.from('ti-private-documents').remove([file.storage_path]);
+      if(e)return toast('刪除檔案失敗：'+readableError(e));
+      const {error:r}=await cloud.client.from('ti_documents').delete().eq('id',file.id);
+      if(r)return toast('清理文件紀錄失敗：'+readableError(r));
+      void renderCloudDocuments();
+    }));
+    child(wrap,head,E('p','',new Date(file.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})+'｜'+(file.bytes||0).toLocaleString('zh-TW')+' bytes'));
+    box.append(wrap);
+  }
+ }catch(err){box.replaceChildren(E('div','empty','私有文件讀取失敗：'+readableError(err)));}
+}
