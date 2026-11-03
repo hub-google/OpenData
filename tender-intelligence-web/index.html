@@ -21,6 +21,7 @@
       <button type="button" class="nav-item" data-view="advanced"><span>⌕</span> 進階搜尋</button>
       <button type="button" class="nav-item" data-view="radar"><span>◎</span> 我的商機雷達</button>
       <button type="button" class="nav-item" data-view="agencies"><span>▤</span> 機關情報</button>
+      <button type="button" class="nav-item" data-view="debarred"><span>▣</span> 拒絕往來公告</button>
       <button type="button" class="nav-item" data-view="vendors"><span>◇</span> 廠商與競品</button>
       <button type="button" class="nav-item" data-view="analytics"><span>▥</span> 決標行情</button>
       <p class="side-label">我的工作</p>
@@ -258,6 +259,25 @@
         <div id="directoryList" class="result-list"></div>
       </section>
 
+      <section id="view-debarred" class="view" hidden>
+ <div class="page-heading"><div class="eyebrow">OFFICIAL PROCUREMENT COMPLIANCE</div><h1>拒絕往來廠商官方公告查詢</h1>
+ <p>僅查詢工程會官方開放資料集 5988 實際刊登紀錄，可依公司名稱或廠商代碼篩選。</p></div>
+ <div class="notice warning">
+  有公開刊登紀錄，不等於現在仍在拒絕往來期間；應核對公告生效日、截止日、異議或申訴結果與政府電子採購網最新資料。
+  同名公司也不能直接當成同一個廠商。來源資料無法取得時，本頁會如實顯示同步錯誤。
+ </div>
+ <div class="panel">
+   <form id="debarredSearchForm" class="inline-form">
+    <input id="debarredKeyword" maxlength="100" placeholder="公司名稱（至少 2 字）或廠商代碼" required>
+    <button type="submit" class="primary-btn">搜尋已公開公告</button>
+    <button type="button" id="debarredRefresh" class="ghost-btn">更新同步狀態</button>
+   </form>
+   <p class="hint"><a href="https://data.gov.tw/dataset/5988" target="_blank" rel="noopener noreferrer">工程會「拒絕往來廠商公告」官方資料集與授權</a>，
+    <a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer">政府電子採購網即時查詢</a></p>
+ </div>
+ <div id="debarredStatus" class="notice" aria-live="polite">正在確認工程會官方資料來源及同步紀錄…</div>
+ <div id="debarredResults" class="result-list"></div>
+</section>
       <section id="view-guide" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">PROCUREMENT BASICS</div><h1>政府採購新手指南</h1>
         <p>以白話說明政府採購流程與常用名詞，附官方入口供查核；實際投標規則應以原公告及最新法規為準。</p></div>
@@ -414,5 +434,6 @@
 <script type="module" src="./operations.js"></script>
 <script type="module" src="./proposal.js"></script>
 <script type="module" src="./account-privacy.js"></script>
+<script type="module" src="./debarred.js"></script>
 </body>
 </html>

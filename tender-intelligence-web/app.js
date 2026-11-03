@@ -8,7 +8,7 @@ import {getClient,fetchArchive,fetchSourceStatus,cloudSaved,cloudWatches,cloudNo
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
 const listModes={latest:'最新公告',archive:'自有資料庫已收錄案件',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
-const viewNames={proposal:'標書差異與健檢',decisions:'投標決策評估',contracts:'合約與保證金',directory:'供應商名錄',guide:'採購新手指南',advanced:'進階搜尋',search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',billing:'方案與帳務',about:'資料說明'};
+const viewNames={debarred:'拒絕往來公告',proposal:'標書差異與健檢',decisions:'投標決策評估',contracts:'合約與保證金',directory:'供應商名錄',guide:'採購新手指南',advanced:'進階搜尋',search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',billing:'方案與帳務',about:'資料說明'};
 const states=['評估中','準備投標','已投標','待決標','已得標','未得標','不投'];
 const readableError = err => {
   const s=asText(err?.message||err);
