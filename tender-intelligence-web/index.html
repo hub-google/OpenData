@@ -216,6 +216,15 @@
         <div class="panel"><form id="vendorForm" class="inline-form"><select id="vendorMode" aria-label="廠商搜尋方式"><option value="name">公司名稱</option><option value="id">統一編號</option></select><input id="vendorQuery" placeholder="公司名稱或 8 碼統編" required><button class="primary-btn" type="submit">查詢廠商</button></form></div>
         <div class="section-heading"><h2>相關投標公告</h2><span id="vendorSummary" class="minor">尚未查詢</span></div>
         <div id="vendorOutput" class="result-list"><div class="empty">輸入廠商名稱或統一編號。</div></div>
+        <div class="panel analysis-panel">
+          <h2>依公告統編查詢別名證據</h2>
+          <p class="hint">僅在同一公告明確記載「唯一統編 + 唯一公司名稱」時才列為名稱證據；不會拿同場其他公司的名稱當成別名，也不宣稱政府登記已核實。</p>
+          <form id="vendorEvidenceForm" class="inline-form">
+            <input id="vendorEvidenceTaxId" pattern="[0-9]{8}" maxlength="8" inputmode="numeric" placeholder="輸入 8 碼廠商統編" required>
+            <button type="submit" class="ghost-btn">查看已入庫的名稱及參與公告</button>
+          </form>
+          <div id="vendorEvidenceOutput" class="watch-list" aria-live="polite">尚未查詢。</div>
+        </div>
       </section>
 
       <section id="view-issues" class="view" hidden>
@@ -236,6 +245,17 @@
       <section id="view-analytics" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">AWARD INTELLIGENCE</div><h1>決標行情分析</h1><p>只使用有公開「預算」與「決標金額」的相同樣本，計算決標／預算比例。沒有資料就不生成結論。</p></div>
         <div class="panel analysis-panel" id="analyticsOutput"><div class="empty">先查詢標案，再開啟此頁查看目前載入的可計算樣本。</div></div>
+        <div class="panel analysis-panel">
+          <h2>跨日已入庫決標／預算樣本</h2>
+          <p class="hint">只有公開預算和決標金額均為正數的案件才納入；按年度／大類／機關分層。結果包含樣本數、中位數與四分位數，不代表同規格報價或預測底價。</p>
+          <form id="awardSampleForm" class="inline-form">
+            <label>公告年度 <input id="awardYear" type="number" min="1999" max="2100" placeholder="全部"></label>
+            <label>採購大類<select id="awardGroup"><option value="">全部</option><option>工程</option><option>財物</option><option>勞務</option><option>未分類</option></select></label>
+            <label>機關文字<input id="awardAgency" maxlength="80" placeholder="選填"></label>
+            <button type="submit" class="ghost-btn">查詢已入庫有效樣本</button>
+          </form>
+          <div id="awardSampleOutput" class="watch-list" aria-live="polite">尚未查詢。</div>
+        </div>
         <div class="notice">提醒：本頁是目前回傳公告的樣本統計，不是全國行情，也不是未公開底價預測。先查詢特定產業／機關，再看分布才具有參考性。</div>
       </section>
 
@@ -528,6 +548,7 @@
 <script type="module" src="./advanced.js"></script>
   <script type="module" src="./issues.js"></script>
   <script type="module" src="./developer-api.js"></script>
+  <script type="module" src="./evidence.js"></script>
 <script type="module" src="./operations.js"></script>
 <script type="module" src="./proposal.js"></script>
 <script type="module" src="./account-privacy.js"></script>
