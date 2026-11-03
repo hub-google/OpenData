@@ -60,6 +60,7 @@ function showView(name){
   if(name==='team')void refreshWorkspaces();
   if(name==='alerts')renderWatches();
   if(name==='analytics')renderAnalytics();
+  if(name==='documents')void renderAiUsage();
   if(name==='vendors' && state.vendorRows.length)renderVendorRows();
 }
 async function api(path,params={},timeout=22000) {
@@ -930,6 +931,44 @@ setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)c
 
 // === PRD: authenticated personal workspace on the actual Supabase database ===
 // No paid gates; RLS enforces that only the account owner accesses personal records.
+async function renderAiUsage(){
+ const status=$('aiUsageStatus'),list=$('aiUsageHistory');
+ if(!status||!list)return;
+ if(!cloud.user||!cloud.client){
+  status.textContent='登入會員後可查看自己的 AI 使用紀錄。';list.replaceChildren();return;
+ }
+ const identity=cloud.user.id;
+ status.textContent='正在查詢已完成 AI 工作與額度…';
+ try{
+  const past=new Date(Date.now()-86400000).toISOString();
+  const [total,history]=await Promise.all([
+   cloud.client.from('ti_ai_jobs').select('id',{count:'exact',head:true})
+    .eq('user_id',identity).eq('state','success').gte('finished_at',past),
+   cloud.client.from('ti_ai_jobs')
+    .select('id,task_type,document_name,state,provider_model,error_summary,created_at,finished_at')
+    .eq('user_id',identity).order('created_at',{ascending:false}).limit(20)
+  ]);
+  if(total.error)throw total.error;if(history.error)throw history.error;
+  if(cloud.user?.id!==identity)return;
+  const used=Number(total.count||0);
+  status.textContent='最近 24 小時成功分析 '+used+'／20 次；尚可成功分析 '+
+   Math.max(0,20-used)+' 次。重複輸入且已有成功紀錄時優先取回原結果；失敗不計入成功配額。';
+  list.replaceChildren();
+  if(!history.data?.length){list.append(E('p','minor','尚無 AI 分析紀錄。'));return;}
+  for(const item of history.data){
+   const box=E('div','timeline-item'),label=item.task_type==='proposal_check'?'投標書健檢':'標書條款分析';
+   const symbol={success:'成功',pending:'處理中',error:'失敗'}[item.state]||item.state;
+   child(box,E('strong','',label+'｜'+item.document_name+'｜'+symbol),
+    E('p','minor',(item.finished_at?new Date(item.finished_at):new Date(item.created_at))
+     .toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+
+      (item.provider_model?'｜'+item.provider_model:'')+
+      (item.error_summary?'｜'+item.error_summary.slice(0,160):'')));
+   list.append(box);
+  }
+ }catch(e){
+  if(cloud.user?.id===identity)status.textContent='讀取 AI 額度失敗：'+readableError(e);
+ }
+}
 function initCloudUI(){
   $('accountButton').addEventListener('click',()=>{$('accountPanel').hidden=false;$('accountPanel').scrollIntoView({behavior:'smooth'});});
   $('closeAccount').addEventListener('click',()=>$('accountPanel').hidden=true);
@@ -1026,6 +1065,7 @@ function initCloudUI(){
     }catch(err){toast('建立待辦失敗：'+readableError(err));}
   });
   $('documentCloudSave').addEventListener('click',()=>void saveCloudDocument());
+  $('aiUsageRefresh').addEventListener('click',()=>void renderAiUsage());
   $('knowledgeSearchForm').addEventListener('submit',e=>void searchPrivateKnowledge(e));
   initTeamUI();
 }
@@ -1037,6 +1077,7 @@ function clearUserState(){
   $('taskList').replaceChildren(E('div','empty','請登入查看雲端待辦。'));
   $('cloudDocuments').replaceChildren(E('div','empty','請登入查看私有文件。'));
   $('knowledgeResults').replaceChildren();
+  $('aiUsageHistory').replaceChildren();$('aiUsageStatus').textContent='登入後查看 AI 使用紀錄。';
   $('knowledgeStatus').textContent='請登入後使用私有文件知識庫。';
   radarFullRequest++;radarFullPage=1;radarFullTotal=0;
   $('radarFullResults').replaceChildren();$('radarFullPage').textContent='尚未查詢';
