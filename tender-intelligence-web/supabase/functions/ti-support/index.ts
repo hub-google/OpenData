@@ -29,8 +29,7 @@ async function getUser(req:Request){
  const res=await fetch(URL+"/auth/v1/user",{headers:{apikey:PUBLIC,Authorization:"Bearer "+token},signal:AbortSignal.timeout(9000)});
  if(!res.ok)throw Error("登入已失效，請重新登入");
  const body=await res.json();
- if(body?.is_anonymous===true)return null;
- return body?.id&&uuid.test(body.id)?{id:body.id,email:String(body.email||""),confirmed:Boolean(body.email_confirmed_at)}:null;
+ return body?.id&&uuid.test(body.id)?{id:body.id,email:String(body.email||""),confirmed:Boolean(body.email_confirmed_at),is_demo:body.is_anonymous===true}:null;
 }
 async function visitor(body:any){
  const token=String(body?.visitor_token||"").toLowerCase();
@@ -39,7 +38,7 @@ async function visitor(body:any){
  return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes))).map(x=>x.toString(16).padStart(2,"0")).join("");
 }
 async function isStaff(user:{id:string;email?:string;confirmed?:boolean}|null){
- if(!user)return false;
+ if(!user||user.is_demo)return false;
  const existing=await query("ti_support_staff?select=user_id&user_id=eq."+user.id+"&limit=1");
  if(existing.length)return true;
  if(!user.confirmed||!user.email)return false;
@@ -63,7 +62,10 @@ async function owned(thread_id:string,user:{id:string}|null,hash:string){
  if(!uuid.test(thread_id))throw Error("客服紀錄編號無效");
  const rows=await query("ti_support_threads?select=*&id=eq."+thread_id+"&limit=1");
  const t=rows[0];
- if(!t||(t.user_id?(user?.id!==t.user_id):(t.visitor_hash!==hash)))throw Error("找不到可存取的客服紀錄");
+ const canAccess = t && (user?.is_demo
+   ? t.is_demo===true && t.user_id===user.id
+   : t.is_demo!==true && (t.user_id ? user?.id===t.user_id : t.visitor_hash===hash));
+ if(!t||!canAccess)throw Error("找不到可存取的客服紀錄");
  return t;
 }
 async function rateLimit(hash:string,kind:"ai"|"form",max:number){
@@ -75,6 +77,22 @@ async function rateLimit(hash:string,kind:"ai"|"form",max:number){
  if(!ids.length)return;
  const messages=await query("ti_support_messages?select=id&role=eq.customer&created_at=gte."+encodeURIComponent(since)+"&thread_id=in.("+ids.join(",")+")&limit="+(max+1));
  if(messages.length>=max)throw Error("24 小時內 AI 對話已達使用上限，請稍後再試");
+}
+async function ensureDemoTickets(user:{id:string,is_demo?:boolean},hash:string){
+ if(!user.is_demo)return;
+ const rows=await query("ti_support_threads?select=id&user_id=eq."+user.id+"&is_demo=eq.true&kind=eq.form&limit=1");
+ if(rows.length)return;
+ const first=(await query("ti_support_threads","POST",[{
+  user_id:user.id,visitor_hash:hash,kind:"form",is_demo:true,category:"system",
+  subject:"【測試】網站操作問題",status:"open",page_url:""
+ }]))[0];
+ await addMessage(first.id,"customer","這是隔離的測試工單。請使用「客服管理」分頁回覆並更改狀態。");
+ const second=(await query("ti_support_threads","POST",[{
+  user_id:user.id,visitor_hash:hash,kind:"form",is_demo:true,category:"billing",
+  subject:"【測試】訂閱方案詢問",status:"replied",page_url:""
+ }]))[0];
+ await addMessage(second.id,"customer","請問要在哪裡查看訂閱方案？（示範問題）");
+ await addMessage(second.id,"staff","請至左側「方案與帳務」查看。此為測試回覆，不代表實際付費已啟用。");
 }
 async function claimDaily(kind:"ai"|"form",max:number){
  const passed=await query("rpc/ti_support_claim_daily","POST",{p_kind:kind,p_cap:max});
@@ -119,17 +137,23 @@ Deno.serve(async req=>{
   const hash=await visitor(b);
   const user=await getUser(req);
   if(action==="bootstrap"){
+   if(user?.is_demo){
+    await ensureDemoTickets(user,hash);
+    return result(req,{gemini_ready:Boolean(GEMINI),staff:true,demo_mode:true,signed_in:true});
+   }
    // Once the visitor completes verified sign-in, attach only their previously anonymous browser threads.
-   if(user?.confirmed)await query("ti_support_threads?visitor_hash=eq."+hash+"&user_id=is.null","PATCH",{user_id:user.id});
-   return result(req,{gemini_ready:Boolean(GEMINI),staff:await isStaff(user),signed_in:Boolean(user)});
+   if(user?.confirmed)await query("ti_support_threads?visitor_hash=eq."+hash+"&user_id=is.null&is_demo=eq.false","PATCH",{user_id:user.id});
+   return result(req,{gemini_ready:Boolean(GEMINI),staff:await isStaff(user),demo_mode:false,signed_in:Boolean(user)});
   }
   if(action==="list"){
    const prefix="ti_support_threads?select=id,kind,category,subject,status,updated_at,created_at,customer_read_at&";
-   const guestQuery=prefix+"visitor_hash=eq."+hash+"&user_id=is.null&order=updated_at.desc&limit=60";
-   const results=user?await Promise.all([
-      query(prefix+"user_id=eq."+user.id+"&order=updated_at.desc&limit=60"),
+   const guestQuery=prefix+"visitor_hash=eq."+hash+"&user_id=is.null&is_demo=eq.false&order=updated_at.desc&limit=60";
+   const results=user?.is_demo
+    ?[await query(prefix+"user_id=eq."+user.id+"&is_demo=eq.true&order=updated_at.desc&limit=60")]
+    :user?await Promise.all([
+      query(prefix+"user_id=eq."+user.id+"&is_demo=eq.false&order=updated_at.desc&limit=60"),
       query(guestQuery)
-   ]):[await query(guestQuery)];
+    ]):[await query(guestQuery)];
    const unique=new Map<string,any>();
    for(const rows of results)for(const item of rows)unique.set(item.id,item);
    const threads=[...unique.values()].sort((a:any,b:any)=>String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,60);
@@ -148,7 +172,7 @@ Deno.serve(async req=>{
    if(subject.length<4||detail.length<10)return result(req,{error:"請填寫至少 4 字的主旨，以及至少 10 字的問題說明"},400);
    await claimDaily("form",1000);
    const item=(await query("ti_support_threads","POST",[{
-    user_id:user?.id||null,visitor_hash:hash,kind:"form",category,subject,
+    user_id:user?.id||null,visitor_hash:hash,kind:"form",is_demo:user?.is_demo===true,category,subject,
     page_url:safeLink(b.page_url),urgent:b.urgent===true,status:"open"
    }]))[0];
    await addMessage(item.id,"customer",detail);
@@ -166,7 +190,7 @@ Deno.serve(async req=>{
     if(t.status==="closed")return result(req,{error:"此對話已結束，請開啟新對話"},400);
    }else{
     t=(await query("ti_support_threads","POST",[{
-     user_id:user?.id||null,visitor_hash:hash,kind:"ai",
+     user_id:user?.id||null,visitor_hash:hash,kind:"ai",is_demo:user?.is_demo===true,
      category:"general",subject:text.slice(0,80),page_url:safeLink(b.page_url),status:"open"
     }]))[0];
    }
@@ -192,17 +216,20 @@ Deno.serve(async req=>{
    return result(req,{ok:true,message,status:"open"});
   }
   if(action==="admin_list"||action==="admin_read"||action==="admin_reply"||action==="admin_status"){
-   if(!await isStaff(user))return result(req,{error:"僅客服管理員可操作"},403);
+   const demo=user?.is_demo===true;
+   if(!demo&&!await isStaff(user))return result(req,{error:"僅客服管理員可操作"},403);
    if(action==="admin_list"){
     const status=String(b.status||"all");
     const filter=["open","in_progress","replied","closed"].includes(status)?"&status=eq."+status:"";
-    const rows=await query("ti_support_threads?select=id,user_id,kind,category,subject,status,urgent,page_url,created_at,updated_at&kind=eq.form"+filter+"&order=updated_at.desc&limit=100");
+    const scope=demo?"&is_demo=eq.true&user_id=eq."+user.id:"&is_demo=eq.false";
+    const rows=await query("ti_support_threads?select=id,user_id,kind,category,subject,status,urgent,page_url,created_at,updated_at&kind=eq.form"+scope+filter+"&order=updated_at.desc&limit=100");
     return result(req,{threads:rows});
    }
    const id=safeInput(b.thread_id,40);
    if(!uuid.test(id))return result(req,{error:"無效的工單編號"},400);
    const tt=(await query("ti_support_threads?select=*&id=eq."+id+"&limit=1"))[0];
-   if(!tt||tt.kind!=="form")return result(req,{error:"找不到人工工單"},404);
+   if(!tt||tt.kind!=="form"||(demo ? tt.is_demo!==true||tt.user_id!==user.id : tt.is_demo===true))
+    return result(req,{error:"找不到人工工單"},404);
    if(action==="admin_read"){
     const messages=await query("ti_support_messages?select=id,role,body,created_at&thread_id=eq."+id+"&order=id.asc&limit=250");
     return result(req,{thread:tt,messages});
