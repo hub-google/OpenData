@@ -37,7 +37,8 @@
       <p class="side-label">其他</p>
       <button type="button" class="nav-item" data-view="billing" hidden><span>▣</span> 方案與帳務</button>
       <button type="button" class="nav-item" data-view="directory"><span>♧</span> 供應商名錄</button>
-      <button type="button" class="nav-item" data-view="guide"><span>ⓘ</span> 採購新手指南</button>
+      <button type="button" class="nav-item" data-view="developer"><span>﹛﹜</span> 我的 API／MCP</button>
+        <button type="button" class="nav-item" data-view="guide"><span>ⓘ</span> 採購新手指南</button>
       <button type="button" class="nav-item" data-view="about"><span>ⓘ</span> 資料說明</button>
     </nav>
     <div class="sidebar-footer">
@@ -466,6 +467,32 @@
           </div>
         </div>
       </section>
+      <section id="view-developer" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">PERSONAL DEVELOPER ACCESS</div><h1>我的 API／MCP</h1>
+        <p>個人 API 金鑰可供自己使用的 CRM、BI 與 AI 工具查詢本人收藏案件及待辦。這不是全國標案資料的轉售 API。</p></div>
+        <div class="notice warning">金鑰權限只包含自己的收藏與任務，最多 20 筆／次、300 次／日、最多 5 把有效金鑰，有效期 90 日。金鑰只顯示一次，請勿貼到公開 GitHub、網頁原始碼或第三方對話中。</div>
+        <div class="panel">
+          <h2>建立個人 API 金鑰</h2>
+          <form id="devCreateForm" class="inline-form">
+            <label for="devKeyName">用途</label><input id="devKeyName" maxlength="80" placeholder="例如：我的 BI 報表" required>
+            <button type="submit" class="primary-btn" id="devCreateButton">產生金鑰（只顯示一次）</button>
+          </form>
+          <p id="devStatus" role="status" class="hint">登入後才可建立及管理本人金鑰。</p>
+          <div id="devSecretContainer" hidden>
+            <label for="devSecret">剛產生的金鑰（請立即保存，重新整理即不再顯示）</label>
+            <textarea id="devSecret" readonly rows="3" aria-label="剛產生的 API 金鑰"></textarea>
+            <button id="devCopySecret" type="button" class="ghost-btn">複製金鑰</button>
+          </div>
+          <h3>我的有效金鑰</h3><div id="devKeys" class="watch-list"></div>
+        </div>
+        <div class="panel">
+          <h2>REST 與 MCP 連接位址</h2>
+          <p class="hint">兩者共用相同金鑰，放在 HTTP 請求標頭 <code>x-ti-api-key</code>，不要放入網址參數。MCP 採用 HTTP POST JSON-RPC 2.0，支援 initialize、tools/list、tools/call，僅唯讀。</p>
+          <code id="devEndpoint">https://unapiwajmgqqtdkixaab.supabase.co/functions/v1/ti-member-api</code>
+          <p class="hint">REST 查詢：<code>?resource=saved&amp;limit=20&amp;offset=0</code> 或 <code>?resource=tasks&amp;limit=20&amp;offset=0</code>。API 與 MCP 不提供原始採購資料大量下載，公告請至官方來源核對。</p>
+        </div>
+      </section>
+
       <section id="view-about" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">DATA & TRUST</div><h1>資料來源與使用說明</h1><p>清楚說明哪些資料是真實來源、哪些只是本機計算，以及還沒完成的後端功能。</p></div>
         <div class="panel prose">
@@ -495,6 +522,7 @@
 <script type="module" src="./delivery.js"></script>
 <script type="module" src="./advanced.js"></script>
   <script type="module" src="./issues.js"></script>
+  <script type="module" src="./developer-api.js"></script>
 <script type="module" src="./operations.js"></script>
 <script type="module" src="./proposal.js"></script>
 <script type="module" src="./account-privacy.js"></script>
