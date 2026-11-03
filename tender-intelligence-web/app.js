@@ -55,7 +55,8 @@ function showView(name){
   document.querySelector('.sidebar').classList.remove('mobile-open');
   window.scrollTo({top:0,behavior:'instant'});
   if(name==='radar')renderRadar();
-  if(name==='tracking')renderTracking();\n  if(name==='billing')void renderBilling();
+  if(name==='tracking')renderTracking();
+  if(name==='billing')void renderBilling();
   if(name==='team')void refreshWorkspaces();
   if(name==='alerts')renderWatches();
   if(name==='analytics')renderAnalytics();
