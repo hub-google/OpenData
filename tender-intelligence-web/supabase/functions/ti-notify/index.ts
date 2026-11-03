@@ -25,7 +25,10 @@ function link(r){
   const p=new URLSearchParams({mode:"title",q:r.subject});
   return TENDER+"?"+p.toString();
 }
-async function sendEmail(recipient,events,digest){
+async function sendEmail(recipient,events,digest,userId){
+  const token=await rpc("ti_issue_unsubscribe_token",{target_user:userId});
+  if(!/^[0-9a-f]{64}$/.test(token||""))throw Error("unsubscribe token unavailable");
+  const unsubscribeURL=URL+"/functions/v1/ti-unsubscribe?token="+token;
   const lines=events.slice(0,20).map(r=>'<li><b>'+html(r.reason)+'</b> '+html(r.subject)+
   '<br>'+html(r.agency)+' ／ 案號 '+html(r.job_number)+
   '<br><a href="'+link(r)+'">開啟標案搜尋</a></li>').join("");
@@ -35,11 +38,12 @@ async function sendEmail(recipient,events,digest){
     method:"POST",headers:{"Authorization":"Bearer "+RESEND,"Content-Type":"application/json"},
     body:JSON.stringify({
        from:EMAIL_FROM,to:[recipient],subject,
+       headers:{"List-Unsubscribe":"<"+unsubscribeURL+">","List-Unsubscribe-Post":"List-Unsubscribe=One-Click"},
        html:'<h2>政府標案監控</h2><p>以下為你主動訂閱的政府標案資料異動：</p><ul>'+lines+
          '</ul><p>資料來源：政府電子採購網，透過 OpenFun API；請以官方公告為準。</p>'+
-         '<p><a href="'+TENDER+'">開啟標案平台，管理或停用通知</a></p>',
+         '<p><a href="'+unsubscribeURL+'">一鍵取消 Email 訂閱</a> ｜ <a href="'+TENDER+'">開啟標案平台管理通知</a></p>',
        text:'政府標案監控\n'+events.map(r=>r.reason+' '+r.subject+' '+r.agency+' '+r.job_number+' '+link(r)).join('\n')+
-         '\n停用通知請登入 '+TENDER+' 後在監控與提醒內操作。'
+         '\n取消 Email 訂閱：'+unsubscribeURL+'\n通知設定：'+TENDER
     }),signal:AbortSignal.timeout(25000)
   });
   const x=await r.json().catch(()=>({}));
@@ -88,7 +92,7 @@ Deno.serve(async req=>{
       const digest=prefs?.[0]?.daily_digest!==false;
       if(digest&&taipeiHour!==8){skipped+=events.length;continue;}
       const first=events[0];
-      const deliveryId=await sendEmail(first.recipient,events,digest);
+      const deliveryId=await sendEmail(first.recipient,events,digest,user);
       for(const r of events){
         await rpc("ti_record_delivery",{
           p_notification:r.notification_id,p_user:r.user_id,p_channel:"email",p_status:"sent",
