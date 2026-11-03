@@ -1,0 +1,62 @@
+
+/* Taiwan Tender Intelligence floating support center */
+.ti-support-fab{position:fixed;right:24px;bottom:22px;z-index:120;display:flex;align-items:center;gap:10px;border:0;border-radius:999px;background:linear-gradient(135deg,#173a78,#2863d4);color:white;font-weight:750;font-size:14px;min-height:56px;padding:10px 19px 10px 10px;box-shadow:0 12px 35px rgba(14,42,93,.3);transition:transform .15s,box-shadow .15s}
+.ti-support-fab:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(14,42,93,.36)}
+.ti-fab-icon{display:grid;place-items:center;background:rgba(255,255,255,.2);width:35px;height:35px;border-radius:50%;font-size:24px}
+.ti-support-unread{position:absolute;top:2px;right:5px;width:12px;height:12px;background:#fa7455;border:2px solid white;border-radius:50%}
+.ti-support-panel{position:fixed;bottom:92px;right:24px;z-index:121;display:flex;flex-direction:column;width:min(420px,calc(100vw - 24px));height:min(640px,calc(100dvh - 110px));background:#fff;border:1px solid #e3eaf5;border-radius:19px;box-shadow:0 20px 75px rgba(13,35,69,.24);overflow:hidden}
+.ti-support-panel[hidden],.ti-support-panel [hidden]{display:none!important}
+.ti-support-head{display:flex;gap:12px;align-items:center;padding:17px 18px;background:#152c50;color:#fff}
+.ti-support-head-icon{height:39px;width:39px;border-radius:12px;background:#3d70d9;display:grid;place-items:center;font-size:23px}
+.ti-support-head-title{min-width:0;flex:1}.ti-support-head-title strong,.ti-support-head-title small{display:block}.ti-support-head-title strong{font-size:16px;line-height:1.45}.ti-support-head-title small{font-size:11px;color:#b4c9eb}
+.ti-support-icon-btn{border:0;color:white;background:rgba(255,255,255,.13);width:30px;height:30px;border-radius:8px;font-size:23px;display:grid;place-items:center}
+.ti-support-tabs{display:flex;gap:2px;flex-shrink:0;border-bottom:1px solid #e9edf5;background:#fff;padding:4px 9px 0}
+.ti-support-tabs button{padding:11px 9px;font-weight:700;font-size:12px;background:none;border:0;border-bottom:3px solid transparent;color:#69798d;flex:1;white-space:nowrap}
+.ti-support-tabs button.active{border-bottom-color:#2b68d9;color:#1f59c1}
+.ti-support-status{padding:9px 14px;flex-shrink:0;background:#eef5ff;color:#2458a0;font-size:12px;line-height:1.5}
+.ti-support-status.error{background:#fff1ef;color:#a42e23}.ti-support-status.success{background:#ecfaf4;color:#0d6c4c}
+.ti-support-body{min-height:0;flex:1;display:flex;flex-direction:column}
+.ti-support-view{min-height:0;flex:1;overflow-y:auto;padding:16px;scrollbar-width:thin}
+.ti-support-chat{display:flex;flex-direction:column;gap:10px;padding:0}
+.ti-support-section-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 15px}
+.ti-support-pill{background:#fff6e5;color:#8c5b0a;font-size:11px;padding:4px 9px;border-radius:999px}
+.ti-support-pill.is-live{background:#e8f7ee;color:#17764a}
+.ti-support-link-btn{color:#2c63c6;background:none;border:0;font-weight:700;font-size:12px;padding:4px 2px}
+.ti-support-messages{flex:1;min-height:130px;overflow:auto;padding:6px 15px;display:flex;flex-direction:column;gap:12px}
+.ti-support-intro{text-align:center;margin:auto 0;color:#314462}.ti-support-intro-icon{margin:0 auto 8px;width:51px;height:51px;border-radius:16px;background:#e9f0fe;color:#2a5fce;font-size:30px;display:grid;place-items:center}
+.ti-support-intro strong{font-size:17px}.ti-support-intro p{color:#6c7c8e;font-size:12px;line-height:1.75;max-width:300px;margin:8px auto}
+.ti-support-bubble{max-width:90%;align-self:flex-start;padding:11px 13px;background:#f1f5fa;border-radius:12px 12px 12px 3px;word-break:break-word}
+.ti-support-bubble.customer{align-self:flex-end;background:#2864d7;color:white;border-radius:12px 12px 3px 12px}
+.ti-support-bubble.staff{background:#e6f5ec}
+.ti-support-bubble small{font-size:10px;display:block;opacity:.72;font-weight:750;margin-bottom:3px}
+.ti-support-bubble p{white-space:pre-wrap;margin:0;font-size:13px;line-height:1.65}
+.ti-support-compose{display:flex;align-items:end;gap:8px;border:1px solid #e1e8f1;background:#fbfcfe;margin:0 12px;padding:6px;border-radius:13px}
+.ti-support-compose textarea{flex:1;min-width:0;border:0;outline:none;background:transparent;resize:none;font-size:13px;padding:8px;max-height:115px}
+.ti-support-compose button{border:0;border-radius:9px;background:#2c65d1;color:white;font-size:16px;width:34px;height:34px;flex-shrink:0}
+.ti-support-compose button:disabled,.ti-support-primary:disabled{opacity:.55;cursor:wait}
+.ti-support-chat-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 13px 12px;color:#8490a2;font-size:10px}
+.ti-support-chat-footer button{border:0;background:none;font-size:11px;color:#2b63c9;font-weight:700;white-space:nowrap}
+.ti-support-form-intro{padding:1px 0 12px;border-bottom:1px solid #eef1f6;margin-bottom:14px}
+.ti-support-form-intro strong{font-size:16px}.ti-support-form-intro p{color:#728095;margin:6px 0 0;font-size:12px}
+.ti-support-feedback,.ti-support-admin-reply{display:flex;flex-direction:column;gap:14px}
+.ti-support-feedback>label:not(.ti-support-check){display:flex;flex-direction:column;gap:6px;color:#253c5b;font-weight:700;font-size:12px}
+.ti-support-label-index{display:inline-block;font-size:10px;color:#3672d8;background:#ecf3ff;border-radius:5px;padding:0 5px;margin-right:6px}
+.ti-support-feedback input:not([type=checkbox]),.ti-support-feedback textarea,.ti-support-feedback select,.ti-support-filter select,.ti-support-admin-reply textarea{width:100%;border:1px solid #dbe4f1;border-radius:9px;padding:10px 11px;background:#fff;color:#20334b;outline:none;font-size:13px;font-weight:400}
+.ti-support-feedback input:focus,.ti-support-feedback textarea:focus,.ti-support-feedback select:focus,.ti-support-admin-reply textarea:focus{border-color:#3677e7;box-shadow:0 0 0 3px #eaf1ff}
+.ti-support-feedback textarea,.ti-support-admin-reply textarea{resize:vertical;min-height:100px}
+.ti-support-check{display:flex;align-items:center;gap:9px;font-size:12px;color:#4f5f73}.ti-support-check input{width:16px;height:16px;accent-color:#3068d2}
+.ti-support-guest-note{background:#f5f8fc;color:#617188;border-radius:9px;padding:10px;font-size:11px;line-height:1.6;margin:0}
+.ti-support-primary{width:100%;border:0;border-radius:10px;background:#275fd0;color:white;font-weight:750;padding:12px 15px}
+.ti-support-ticket-list{display:flex;flex-direction:column;gap:7px;padding:0 0 10px;color:#60728a;font-size:12px}
+.ti-support-ticket-row{background:#fff;border:1px solid #e3eaf3;border-radius:10px;padding:12px;text-align:left;color:#213652;width:100%}
+.ti-support-ticket-row:hover{border-color:#89aef3;background:#f9fbff}
+.ti-support-ticket-row-top{display:flex;gap:8px;align-items:start;justify-content:space-between}.ti-support-ticket-row strong{font-size:12px;line-height:1.45}
+.ti-support-ticket-row small{display:block;margin-top:6px;color:#8795a7}
+.ti-support-ticket-tag{white-space:nowrap;font-size:10px;padding:3px 7px;border-radius:99px;background:#e9edf4;color:#586984}
+.ti-support-ticket-tag.open{background:#fff3e5;color:#a46611}.ti-support-ticket-tag.in_progress{background:#eaf2ff;color:#3466b5}.ti-support-ticket-tag.replied{background:#e6f7ee;color:#13724e}
+.ti-support-ticket-detail{margin-top:8px;border-top:1px solid #e5ebf3;padding-top:12px}.ti-support-ticket-detail>strong{display:block;margin-top:8px;font-size:14px}
+.ti-support-detail-meta{color:#7a879b;font-size:11px}
+.ti-support-detail-messages{display:flex;flex-direction:column;gap:9px;margin:13px 0;padding:10px;background:#f8fafc;border-radius:12px;max-height:320px;overflow:auto}
+.ti-support-filter{display:flex;align-items:center;gap:8px;color:#576b84;font-size:12px;margin-bottom:10px}
+.ti-support-filter select{flex:1;padding:7px!important}.ti-support-admin-reply{gap:8px}
+@media(max-width:600px){.ti-support-fab{right:14px;bottom:14px;padding:8px;min-height:54px;min-width:54px;justify-content:center}.ti-fab-label{display:none}.ti-fab-icon{height:38px;width:38px}.ti-support-panel{right:8px;bottom:78px;width:calc(100vw - 16px);height:calc(100dvh - 96px);max-height:700px;border-radius:16px}}
