@@ -147,8 +147,8 @@ async function restoreChat(){
   activeChat="";localStorage.removeItem(CHAT_KEY);drawMessages([]);
  }
 }
-async function initialize(){
- if(initialized)return;
+async function initialize(force=false){
+ if(initialized&&!force)return;
  try{
   const x=await api("bootstrap");
   initialized=true;staff=x.staff;
@@ -157,7 +157,7 @@ async function initialize(){
   $("tiSupportAiStatus").classList.toggle("is-live",x.gemini_ready);
   $("tiSupportGuestHint").textContent=x.signed_in?"此問題會連結你的登入帳號，可跨裝置查看回覆。":"未登入時，請使用同一瀏覽器查看後續回覆；登入後提交可跨裝置查詢。";
   await Promise.all([restoreChat(),loadUnread()]);
- }catch(e){messageStatus("客服載入失敗："+e.message,"error");$("tiSupportAiStatus").textContent="目前無法確認 AI 狀態";}
+ }catch(e){initialized=false;messageStatus("客服載入失敗："+e.message,"error");$("tiSupportAiStatus").textContent="目前無法確認 AI 狀態";}
 }
 async function loadUnread(){
  try{
@@ -168,7 +168,7 @@ async function loadUnread(){
 function openSupport(){
  const panel=$("tiSupportPanel");panel.hidden=!panel.hidden;
  $("tiSupportFab").setAttribute("aria-expanded",String(!panel.hidden));
- if(!panel.hidden){void initialize();$("tiSupportClose").focus();}
+ if(!panel.hidden){void initialize(true);$("tiSupportClose").focus();}
  else $("tiSupportFab").focus();
 }
 $("tiSupportFab").addEventListener("click",openSupport);
@@ -199,7 +199,17 @@ $("tiSupportChatForm").addEventListener("submit",async e=>{
 });
 $("tiSupportToForm").addEventListener("click",()=>{
  setTab("form");
- if(lastQuestion&&!$("tiSupportFeedbackForm").elements.message.value)$("tiSupportFeedbackForm").elements.message.value=lastQuestion;
+ const f=$("tiSupportFeedbackForm"),draft=f.elements.message;
+ if(!draft.value.trim()){
+  const turns=[...$("tiSupportMessages").querySelectorAll(".ti-support-bubble")].slice(-8).map(n=>{
+   const who=n.classList.contains("customer")?"使用者":"AI 客服";
+   return who+"："+(n.querySelector("p")?.textContent||"");
+  });
+  const transcript=turns.join("\n").slice(0,5200);
+  draft.value=transcript?"我需要真人協助，以下是先前與 AI 客服的對話：\n"+transcript:(lastQuestion||"");
+  if(!f.elements.subject.value)f.elements.subject.value="AI 客服轉真人協助";
+ }
+ draft.focus();
 });
 $("tiSupportFeedbackForm").addEventListener("submit",async e=>{
  e.preventDefault();const f=e.currentTarget;if(!f.reportValidity())return;
