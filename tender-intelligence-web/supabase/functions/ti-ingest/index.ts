@@ -1,6 +1,6 @@
 // Scheduled API importer: OpenFun PCC (public API, no scraping).
 // The cron token is stored in Supabase Vault; no browser or GitHub secret is required.
-const SRC="https://pcc-api.openfun.app/api", URL=Deno.env.get("SUPABASE_URL")||"",
+const SRC="https://pcc-api.openfun.app/api", DB_URL=Deno.env.get("SUPABASE_URL")||"",
  KEY=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const text=v=>v==null?"":String(v);
 const num=v=>{if(v===null||v===undefined||v==="")return null;const n=Number(text(v).replace(/[,元NT$新臺幣\s]/g,""));return Number.isFinite(n)&&n>=0?n:null};
@@ -12,7 +12,7 @@ async function json(url,ms=35000){
 async function db(route,method="GET",body=null,prefer=""){
  const h={apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"};
  if(prefer)h.Prefer=prefer;
- const r=await fetch(URL+"/rest/v1/"+route,{method,headers:h,body:body===null?undefined:JSON.stringify(body),signal:AbortSignal.timeout(50000)});
+ const r=await fetch(DB_URL+"/rest/v1/"+route,{method,headers:h,body:body===null?undefined:JSON.stringify(body),signal:AbortSignal.timeout(50000)});
  const s=await r.text();if(!r.ok)throw Error("database "+r.status+" "+route.split("?")[0]+" "+s.slice(0,220));
  try{return s?JSON.parse(s):null}catch{return s}
 }
@@ -184,7 +184,7 @@ async function ingest(mode){
 }
 Deno.serve(async(req)=>{
  if(req.method!=="POST")return Response.json({error:"POST only"},{status:405});
- if(!URL||!KEY)return Response.json({error:"Server missing database environment"},{status:503});
+ if(!DB_URL||!KEY)return Response.json({error:"Server missing database environment"},{status:503});
  const token=req.headers.get("x-ti-cron")||"";
  if(token.length<32)return Response.json({error:"Unauthorized"},{status:401});
  try{const allowed=await db("rpc/ti_verify_ingest_token","POST",{candidate:token});
