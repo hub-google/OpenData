@@ -68,7 +68,7 @@ async function enrich(c){
   if(!record)return null;
   for(const name of labels){
     const raw=pick(record.detail,name);
-    if(raw===null||raw===undefined)return null;
+    if(raw===null||raw===undefined)continue;
     const amount=num(raw);
     if(amount!==null)return amount;
   }
