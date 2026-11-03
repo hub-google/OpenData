@@ -10,6 +10,7 @@ on:
       - "tender-intelligence-web/app.js"
       - "tender-intelligence-web/backend.js"
       - "tender-intelligence-web/delivery.js"
+      - "tender-intelligence-web/advanced.js"
       - "tender-intelligence-web/supabase/functions/**"
       - "tender-intelligence-web/supabase/migrations/**"
       - "tender-intelligence-web/core.mjs"
@@ -36,6 +37,7 @@ jobs:
           node --check tender-intelligence-web/core.mjs
           node --check tender-intelligence-web/backend.js
           node --check tender-intelligence-web/delivery.js
+          node --check tender-intelligence-web/advanced.js
       - name: 安裝 Deno 執行環境
         uses: denoland/setup-deno@v2
         with:
@@ -56,7 +58,9 @@ jobs:
           assert '<script type="module" src="./app.js"></script>' in html
           assert '<link rel="stylesheet" href="./styles.css">' in html
           assert '<script type="module" src="./delivery.js"></script>' in html
-          for f in ("app.js","styles.css","core.mjs","backend.js","delivery.js"):
+          assert '<script type="module" src="./advanced.js"></script>' in html
+          assert 'id="view-advanced"' in html
+          for f in ("app.js","styles.css","core.mjs","backend.js","delivery.js","advanced.js"):
               assert (root/f).is_file(),f
           print("OK: required assets exist")
           PY
