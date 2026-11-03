@@ -78,6 +78,8 @@ support.innerHTML=`
   </section>
   <section data-support-view="admin" class="ti-support-view" hidden>
    <div class="ti-support-section-top"><strong>人工客服管理</strong><button type="button" id="tiSupportRefreshAdmin" class="ti-support-link-btn">重新整理</button></div>
+   <p id="tiSupportDemoBanner" class="ti-support-guest-note" hidden>目前為獨立測試客服後台，只會看到這個測試帳號的示範工單，不會讀取真實客戶資料。</p>
+   <button type="button" id="tiSupportDemoReset" class="ti-support-link-btn" hidden>重設測試工單</button>
    <label class="ti-support-filter">工單狀態<select id="tiSupportAdminFilter"><option value="all">全部</option><option value="open">待處理</option><option value="in_progress">處理中</option><option value="replied">已回覆</option><option value="closed">已結案</option></select></label>
    <div id="tiSupportAdminList" class="ti-support-ticket-list"></div>
    <div id="tiSupportAdminDetail" class="ti-support-ticket-detail" hidden></div>
@@ -154,6 +156,8 @@ async function initialize(force=false){
   initialized=true;staff=x.staff;
   $("tiSupportAdminTab").hidden=!staff;
   $("tiSupportAdminTab").textContent=x.demo_mode?"測試客服後台":"客服管理";
+  $("tiSupportDemoBanner").hidden=!x.demo_mode;
+  $("tiSupportDemoReset").hidden=!x.demo_mode;
   $("tiSupportAiStatus").textContent=x.gemini_ready?"Gemini AI 已配置":"AI 功能開發中";
   $("tiSupportAiStatus").classList.toggle("is-live",x.gemini_ready);
   $("tiSupportGuestHint").textContent=x.demo_mode?"這是獨立測試帳號，工單僅供你測試；登出後可能無法跨裝置找回。":x.signed_in?"此問題會連結你的登入帳號，可跨裝置查看回覆。":"未登入時，請使用同一瀏覽器查看後續回覆；登入後提交可跨裝置查詢。";
@@ -331,4 +335,14 @@ async function adminDetail(id){
 }
 $("tiSupportRefreshHistory").addEventListener("click",()=>void loadHistory());
 $("tiSupportRefreshAdmin").addEventListener("click",()=>void loadAdmin());
+$("tiSupportDemoReset").addEventListener("click",async()=>{
+ if(!confirm("確定清除這個測試帳號的所有示範工單，重新建立測試資料？此操作不會影響正式客戶資料。"))return;
+ const button=$("tiSupportDemoReset");button.disabled=true;
+ try{
+  await api("demo_reset");
+  messageStatus("已重設測試工單","success");
+  await loadAdmin();
+ }catch(e){messageStatus("重設失敗："+e.message,"error")}
+ finally{button.disabled=false}
+});
 $("tiSupportAdminFilter").addEventListener("change",()=>void loadAdmin());
