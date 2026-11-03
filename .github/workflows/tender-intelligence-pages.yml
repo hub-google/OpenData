@@ -1,0 +1,71 @@
+name: 發布政府標案情報平台
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "tender-intelligence-web/**"
+      - ".github/workflows/tender-intelligence-pages.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: opendata-tender-pages
+  cancel-in-progress: true
+
+jobs:
+  test-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: 取得原始碼
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 語法及規則測試
+        run: |
+          node --check tender-intelligence-web/app.js
+          node --check tender-intelligence-web/core.mjs
+          node --test tender-intelligence-web/tests/*.test.mjs
+      - name: 準備標案網站
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/tender-web
+          mkdir -p /tmp/tender-web
+          cp -R tender-intelligence-web/. /tmp/tender-web/
+          rm -rf /tmp/tender-web/tests
+      - name: 更新 gh-pages 的標案子目錄
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages
+          git checkout -B gh-pages origin/gh-pages
+          for attempt in 1 2 3 4 5; do
+            git fetch origin gh-pages
+            git reset --hard origin/gh-pages
+            rm -rf tender-intelligence-web
+            cp -R /tmp/tender-web tender-intelligence-web
+            touch .nojekyll
+            git add -A tender-intelligence-web .nojekyll
+            if git diff --cached --quiet; then
+              echo "No change to publish"
+              exit 0
+            fi
+            git commit -m "Publish Taiwan tender intelligence website"
+            if git push origin HEAD:gh-pages; then
+              echo "Published at /OpenData/tender-intelligence-web/"
+              exit 0
+            fi
+            echo "Retry after concurrent gh-pages update: $attempt"
+            sleep $((attempt * 2))
+          done
+          exit 1
