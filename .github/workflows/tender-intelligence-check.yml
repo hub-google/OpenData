@@ -18,6 +18,7 @@ on:
       - "tender-intelligence-web/supabase/functions/**"
       - "tender-intelligence-web/supabase/migrations/**"
       - "tender-intelligence-web/core.mjs"
+      - "tender-intelligence-web/search-expression.mjs"
       - "tender-intelligence-web/tests/**"
       - ".github/workflows/tender-intelligence-check.yml"
 
@@ -39,6 +40,7 @@ jobs:
         run: |
           node --check tender-intelligence-web/app.js
           node --check tender-intelligence-web/core.mjs
+          node --check tender-intelligence-web/search-expression.mjs
           node --check tender-intelligence-web/backend.js
           node --check tender-intelligence-web/delivery.js
           node --check tender-intelligence-web/advanced.js
@@ -68,6 +70,7 @@ jobs:
           assert '<link rel="stylesheet" href="./styles.css">' in html
           assert '<script type="module" src="./delivery.js"></script>' in html
           assert '<script type="module" src="./advanced.js"></script>' in html
+          assert (root/"search-expression.mjs").is_file()
           assert '<script type="module" src="./operations.js"></script>' in html
           assert '<script type="module" src="./proposal.js"></script>' in html
           assert '<script type="module" src="./account-privacy.js"></script>' in html
