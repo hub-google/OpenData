@@ -60,17 +60,31 @@ Deno.serve(async req=>{
  if(compact(formatted).length<300||formatted.length>130000)return response({error:"文件無法取得足夠文字或內容超過本次分析上限"},400,origin);
  const key=Deno.env.get("OPENAI_API_KEY");
  if(!key)return response({error:"標案專案尚未在 Supabase Secrets 設定 OPENAI_API_KEY，未執行 AI，也不會提供模擬健檢"},503,origin);
- const previous=await db("ti_ai_jobs?select=id&user_id=eq."+user.id+
-    "&created_at=gte."+encodeURIComponent(new Date(Date.now()-86400000).toISOString())+"&limit=21");
- if(previous.length>=20)return response({error:"每帳戶 24 小時最多執行 20 次 AI 文件分析"},429,origin);
- const task=await db("ti_ai_jobs","POST",[{
-  user_id:user.id,case_id:data.case_id||null,
-  document_name:String(data.proposal_name||"投標書").slice(0,240),
-  task_type:"proposal_check",state:"pending"
- }],"return=representation");
- const job=task?.[0]?.id;if(!job)return response({error:"無法建立文件分析記錄"},502,origin);
+ const model=Deno.env.get("TI_AI_MODEL")||"gpt-4.1-mini";
+ const digest=new Uint8Array(await crypto.subtle.digest("SHA-256",
+  new TextEncoder().encode("proposal_check|"+model+"|"+formatted)));
+ const fingerprint=Array.from(digest,b=>b.toString(16).padStart(2,"0")).join("");
+ let reservation;
  try{
-  const model=Deno.env.get("TI_AI_MODEL")||"gpt-4.1-mini";
+  reservation=await db("rpc/ti_reserve_ai_job","POST",{
+   p_user:user.id,p_task_type:"proposal_check",p_case_id:String(data.case_id||"").slice(0,190),
+   p_document_name:String(data.proposal_name||"投標書").slice(0,240),
+   p_request_hash:fingerprint
+  });
+ }catch(e){return response({error:"AI 額度檢查失敗："+String(e).slice(0,160)},502,origin);}
+ if(reservation?.state==="cached")
+  return response({job_id:reservation.job_id,model:reservation.model,
+   result:reservation.output,cached:true},200,origin);
+ if(reservation?.state==="processing")
+  return response({error:"相同文件的 AI 健檢正在執行，未重複扣額度",job_id:reservation.job_id},409,origin);
+ if(reservation?.state==="quota_exhausted")
+  return response({error:"24 小時內成功健檢已達 20 次上限；失敗不計額度"},429,origin);
+ if(reservation?.state==="retry_limit")
+  return response({error:"此文件連續重試失敗達安全上限，請修改文件或聯絡客服"},429,origin);
+ if(reservation?.state!=="claimed"||!reservation.job_id)
+  return response({error:"AI 任務未成功保留"},503,origin);
+ const job=reservation.job_id;
+ try{
   const prompt="你是台灣政府採購文件的比對輔助工具。這兩份資料均由用戶合法取得。"+
    "逐項找出招標文件中的資格、評選、附件、時程、履約與交付要求，及公司投標書有無對應內容。"+
    "只能引用原文文字片段，並逐一給出原文件頁碼。不得推測證照、實績、公司資格，"+
