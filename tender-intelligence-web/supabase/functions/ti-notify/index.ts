@@ -25,6 +25,17 @@ function link(r){
   const p=new URLSearchParams({mode:"title",q:r.subject});
   return TENDER+"?"+p.toString();
 }
+async function deterministicKey(prefix,value){
+ const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(prefix+value)));
+ return Array.from(digest.slice(0,16)).map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+async function lineRetryUuid(notificationId){
+ const d=new Uint8Array(await crypto.subtle.digest('SHA-256',
+   new TextEncoder().encode('ti-line:'+String(notificationId))));
+ const b=d.slice(0,16);b[6]=(b[6]&15)|80;b[8]=(b[8]&63)|128;
+ const h=Array.from(b).map(v=>v.toString(16).padStart(2,'0')).join('');
+ return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+}
 async function sendEmail(recipient,events,digest,userId){
   const token=await rpc("ti_issue_unsubscribe_token",{target_user:userId});
   if(!/^[0-9a-f]{64}$/.test(token||""))throw Error("unsubscribe token unavailable");
@@ -35,7 +46,8 @@ async function sendEmail(recipient,events,digest,userId){
   const subject=digest?'政府標案每日摘要｜'+events.length+' 筆符合監控':
     '政府標案更新｜'+events.length+' 筆新公告';
   const r=await fetch("https://api.resend.com/emails",{
-    method:"POST",headers:{"Authorization":"Bearer "+RESEND,"Content-Type":"application/json"},
+    method:"POST",headers:{"Authorization":"Bearer "+RESEND,"Content-Type":"application/json",
+      "Idempotency-Key":"ti-email-"+await deterministicKey(userId,events.map(r=>String(r.notification_id)).sort().join(','))},
     body:JSON.stringify({
        from:EMAIL_FROM,to:[recipient],subject,
        headers:{"List-Unsubscribe":"<"+unsubscribeURL+">","List-Unsubscribe-Post":"List-Unsubscribe=One-Click"},
@@ -56,12 +68,16 @@ async function sendLine(to,r){
     '\n'+scrub(r.agency)+'｜'+scrub(r.job_number)+
     '\n'+link(r)+'\n可在標案情報中心關閉推播。';
   const res=await fetch("https://api.line.me/v2/bot/message/push",{
-    method:"POST",headers:{"Authorization":"Bearer "+LINE_ACCESS,"Content-Type":"application/json"},
+    method:"POST",headers:{"Authorization":"Bearer "+LINE_ACCESS,"Content-Type":"application/json",
+      "X-Line-Retry-Key":await lineRetryUuid(r.notification_id)},
     body:JSON.stringify({to,messages:[{type:"text",text:message.slice(0,4000)}]}),
     signal:AbortSignal.timeout(18000)
   });
+  // LINE returns 409 for a retry key that was previously accepted: do not resend.
+  if(res.status===409&&res.headers.get("x-line-accepted-request-id"))
+    return res.headers.get("x-line-accepted-request-id");
   if(!res.ok)throw Error("LINE Messaging API HTTP "+res.status);
-  return res.headers.get("x-line-request-id")||"sent";
+  return res.headers.get("x-line-request-id")||"accepted";
 }
 Deno.serve(async req=>{
   if(req.method!=="POST")return Response.json({error:"POST only"},{status:405});
@@ -72,10 +88,12 @@ Deno.serve(async req=>{
     return Response.json({error:"unauthorized"},{status:401});
   }catch{return Response.json({error:"unauthorized"},{status:401});}
   const configured={email:!!RESEND&&!!EMAIL_FROM,line:!!LINE_ACCESS};
-  let candidates;
-  try{candidates=await rpc("ti_pending_deliveries",{max_items:60});}
-  catch(e){return Response.json({error:scrub(e),configured},{status:502});}
   const now=new Date(),taipeiHour=Number(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour:"2-digit",hour12:false}).format(now));
+  let candidates;
+  try{candidates=await rpc("ti_claim_deliveries",{
+    p_limit:60,p_email_ready:configured.email,p_line_ready:configured.line,p_digest_hour:taipeiHour===8
+  });}
+  catch(e){return Response.json({error:scrub(e),configured},{status:502});}
   const groupedEmail=new Map(),line=[];
   for(const r of candidates||[]){
     if(r.channel==="email"){
