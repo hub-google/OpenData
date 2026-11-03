@@ -8,6 +8,7 @@ const hashIv=Deno.env.get("ECPAY_HASH_IV")||"";
 const enabled=Deno.env.get("TI_BILLING_CHECKOUT_ENABLED")==="true";
 const stage=Deno.env.get("ECPAY_ENVIRONMENT")==="stage";
 const ready=enabled&&!!merchantId&&!!hashKey&&!!hashIv;
+const recurringEnabled=Deno.env.get("TI_BILLING_RECURRING_ENABLED")==="true";
 const root=stage?"https://payment-stage.ecpay.com.tw":"https://payment.ecpay.com.tw";
 const site="https://hub-google.github.io/OpenData/tender-intelligence-web/";
 const callback=dbUrl+"/functions/v1/ti-billing";
@@ -112,7 +113,7 @@ async function statusFor(req:Request,userId:string):Promise<Response>{
   sb.from("ti_billing_orders").select("id,plan_code,amount_twd,payment_kind,status,created_at,paid_at,cancelled_at").eq("user_id",userId).order("created_at",{ascending:false}).limit(20)
  ]);
  if(subscription.error||orders.error)return error(req,"無法讀取帳務資料",503);
- return reply(req,{ready,environment:stage?"stage":"production",subscription:subscription.data,
+ return reply(req,{ready,supports_recurring:ready&&recurringEnabled,environment:stage?"stage":"production",subscription:subscription.data,
    orders:orders.data||[]});
 }
 async function checkout(req:Request,userId:string,payload:Record<string,unknown>):Promise<Response>{
@@ -121,6 +122,7 @@ async function checkout(req:Request,userId:string,payload:Record<string,unknown>
  const paymentKind=String(payload.kind||"recurring");
  if(!["personal","professional","team"].includes(code)||!["recurring","one_time"].includes(paymentKind))
   return error(req,"不支援的訂閱方案或付款方式");
+ if(paymentKind==="recurring"&&!recurringEnabled)return error(req,"每月自動續扣須先取得綠界特約賣家及定期定額功能核准，目前未開通。",409);
  const {data:plan,error:pe}=await sb.from("ti_billing_plans").select("code,label,amount_twd,is_available").eq("code",code).single();
  if(pe||!plan?.is_available)return error(req,"目前未開放這個方案",409);
  const {data:subscription,error:se}=await sb.from("ti_billing_subscriptions").select("auto_renew,current_period_end").eq("user_id",userId).maybeSingle();
@@ -191,7 +193,7 @@ Deno.serve(async(req:Request)=>{
   if(req.method==="GET"&&url.searchParams.get("mode")==="plans"){
    const {data,error:e}=await sb.from("ti_billing_plans").select("code,label,amount_twd,is_available").eq("is_available",true).order("amount_twd");
    if(e)return error(req,"無法讀取方案",503);
-   return reply(req,{ready,environment:stage?"stage":"production",plans:data});
+   return reply(req,{ready,supports_recurring:ready&&recurringEnabled,environment:stage?"stage":"production",plans:data});
   }
   const user=await getUser(req);
   if(!user)return error(req,"請先登入後再管理訂閱",401);
