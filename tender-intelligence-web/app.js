@@ -360,8 +360,19 @@ function renderVendorRows(){
 }
 function renderAnalytics(){
   const rows=dedupe(state.rows);
-  const details=[...state.details.values()].flatMap(d=>Array.isArray(d.records)?d.records:[]);
-  const records=[...rows,...details];
+  const sampleMap=new Map();
+  function mergeSample(r){
+    if(!r?.unit_id||!r?.job_number)return;
+    const key=keyOf(r),old=sampleMap.get(key)||{title:'',budget:null,award:null};
+    const b=safeNumber(r.budget_amount??r.budget),a=safeNumber(r.award_amount??r.award);
+    if(b!==null)old.budget=b;
+    if(a!==null)old.award=a;
+    old.title=r.brief?.title||r.title||old.title;
+    sampleMap.set(key,old);
+  }
+  for(const r of rows)mergeSample(r);
+  for(const d of state.details.values())for(const r of d.records||[])mergeSample(r);
+  const records=[...sampleMap.values()];
   const stats=ratioStats(records);
   const el=$('analyticsOutput');el.replaceChildren(E('h2','','決標／預算比'));
   const box=E('div','stat-row');
@@ -372,7 +383,7 @@ function renderAnalytics(){
   if(stats.count<5){
     el.append(E('p','notice warning','目前有效樣本不足 5 筆，請打開幾筆決標公告詳情，或搜尋特定機關及廠商。部分 API 搜尋摘要不含金額，不能用空值推算行情。'));
   }
-  const dist=records.map(r=>{const a=safeNumber(r.award_amount??r.award),b=safeNumber(r.budget_amount??r.budget);return a===null||b===null||b===0?null:{ratio:a/b,name:r.brief?.title||r.title||'',agency:r.unit_name||r.agency||'',a,b};}).filter(Boolean).slice(0,30);
+  const dist=records.map(r=>{const a=safeNumber(r.award),b=safeNumber(r.budget);return a===null||b===null||b===0?null:{ratio:a/b,name:r.title||'',a,b};}).filter(Boolean).slice(0,30);
   if(dist.length){
     child(el,E('h3','','可計算樣本（最多展示 30 筆）'));
     const tb=E('table','analysis-list'),h=E('tr','');
@@ -383,7 +394,7 @@ function renderAnalytics(){
     }
     el.append(tb);
   }
-  el.append(E('p','minor','資料範圍：當前查詢結果 + 本次已打開的案件詳情。公告修正與多版本可能重複，僅適合初步探索，不能直接作全國平均或報價建議。'));
+  el.append(E('p','minor','資料範圍：當前查詢結果 + 本次已打開的案件詳情。已依機關代碼與案號去重，但不同決標方式與合約口徑仍需人工確認；僅適合初步探索，不能直接作全國平均或報價建議。'));
 }
 function renderTracking(){
   const out=$('trackingOutput');out.replaceChildren();
@@ -451,7 +462,6 @@ function trackingICS(){
     const ymd=item.due.replaceAll('-','');
     const next=new Date(item.due+'T12:00:00+08:00');next.setUTCDate(next.getUTCDate()+1);
     const iso=next.toISOString().slice(0,10).replaceAll('-','');
-    child(lines,''); // no-op removed during serialization
     lines.push('BEGIN:VEVENT','UID:'+encodeURIComponent(item.id)+'@opendata-tender','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z'),'DTSTART;VALUE=DATE:'+ymd,'DTEND;VALUE=DATE:'+iso,'SUMMARY:'+safe('內部投標截止：'+item.title),'DESCRIPTION:'+safe(item.notes||item.stage||''),'END:VEVENT');
   }
   lines.push('END:VCALENDAR');
@@ -513,7 +523,7 @@ async function checkWatches(){
         rule.newHits=fresh.slice(0,10).map(r=>({id:r.id,unit_id:r.unit_id,job_number:r.job_number,title:r.title,agency:r.agency,date:r.date,filename:r.filename}));
         rule.seen=[...new Set([...keys,...old])].slice(0,900);
         rule.initialized=true;rule.checkedAt=new Date().toISOString();totalNew+=fresh.length;
-        if(fresh.length && Notification.permission==='granted'){
+        if(fresh.length && typeof Notification!=='undefined' && Notification.permission==='granted'){
           new Notification('標案監控：'+rule.term,{body:'找到 '+fresh.length+' 筆新公告／新版本。請開啟監控頁查看。'});
         }
       }catch{failed++;}
