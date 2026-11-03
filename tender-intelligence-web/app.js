@@ -725,6 +725,33 @@ function initCloudUI(){
     }catch(err){$('accountInfo').textContent='寄送失敗：'+readableError(err);}
     finally{button.disabled=false;}
   });
+  $('accountGoogle').addEventListener('click',async()=>{
+    const button=$('accountGoogle');button.disabled=true;
+    try{
+      const sb=cloud.client||await getClient();
+      const {data,error}=await sb.auth.signInWithOAuth({
+        provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}
+      });
+      if(error)throw error;
+      if(data?.url)window.location.assign(data.url);
+      else throw Error('Google 服務未返回授權網址，請確認 Supabase 已啟用 Google 登入。');
+    }catch(err){$('accountInfo').textContent='Google 登入未啟用或失敗：'+readableError(err);}
+    finally{button.disabled=false;}
+  });
+  $('accountChangeEmail').addEventListener('submit',async e=>{
+    e.preventDefault();
+    if(!cloud.user)return toast('請先登入帳戶。');
+    const email=$('accountNewEmail').value.trim();
+    if(!email||email===cloud.user.email)return toast('請輸入不同的有效 Email。');
+    const button=e.target.querySelector('button');button.disabled=true;
+    try{
+      const {error}=await cloud.client.auth.updateUser({email});
+      if(error)throw error;
+      $('accountInfo').textContent='已提交 Email 變更要求；是否完成須依 Supabase 寄送的實際驗證信確認。';
+      $('accountNewEmail').value='';
+    }catch(err){$('accountInfo').textContent='更換 Email 失敗：'+readableError(err);}
+    finally{button.disabled=false;}
+  });
   $('accountLogout').addEventListener('click',async()=>{
     try{const {error}=await cloud.client.auth.signOut();if(error)throw error;
       cloud.user=null;clearUserState();renderAccount();toast('已登出，本機不保留上一個帳戶的私有資料。');
@@ -763,6 +790,8 @@ function renderAccount(){
   $('accountLogout').hidden=!cloud.user;
   $('accountSync').hidden=!cloud.user;
   $('accountLoginForm').hidden=!!cloud.user;
+  $('accountGoogle').hidden=!!cloud.user;
+  $('accountChangeEmail').hidden=!cloud.user;
   if(cloud.user)$('accountInfo').textContent='已驗證帳戶：'+cloud.user.email+'。追蹤、商機條件、監控與待辦由 Supabase 的 RLS 保護。';
 }
 async function initCloud(){
