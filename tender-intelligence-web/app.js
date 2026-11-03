@@ -212,10 +212,72 @@ async function openDetail(row){
     if(state.selected!==row)return;
     if(!Array.isArray(data.records))throw new Error('此案未回傳公告紀錄');
     state.details.set(row.id,data);
-    renderDetail(row,data);renderAnalytics();
+    renderDetail(row,data);renderAnalytics();void loadRelatedCases(row);
   }catch(err){
     $('detailContent').replaceChildren(E('div','empty','案件詳情載入失敗：'+readableError(err)));
   }
+}
+// Only the project database can supply the authoritative homepage counts.
+async function loadVerifiedHomepageKpis(){
+ const note=$('verifiedMetricsNote');
+ if(!note)return;
+ try{
+  const client=await getClient();
+  const {data,error}=await client.rpc('ti_home_kpis');
+  if(error)throw error;
+  if(!data||typeof data!=='object')throw Error('資料庫未提供統計');
+  const numeral=v=>Number(v||0).toLocaleString('zh-TW');
+  const d=String(data.latest_publication_day||'');
+  $('verifiedLatest').textContent=numeral(data.latest_notice_count);
+  $('verifiedLatestDate').textContent=/^\d{8}$/.test(d)?d.slice(0,4)+'/'+d.slice(4,6)+'/'+d.slice(6,8)+' 已入庫':'尚未確認公告日期';
+  $('verifiedOpen').textContent=numeral(data.verified_open);
+  $('verifiedSoon').textContent=numeral(data.due_soon);
+  $('verifiedFailed').textContent=numeral(data.failed);
+  $('verifiedUnknown').textContent=numeral(data.active_unknown_deadline);
+  const total=Number(data.total_cases||0),known=Number(data.deadline_known||0);
+  const checked=total?((known/total)*100).toFixed(1)+'%':'尚無資料';
+  const synced=data.last_success_at?new Date(data.last_success_at):null;
+  const syncText=synced&&!Number.isNaN(synced.getTime())?
+   synced.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false}):'尚無成功紀錄';
+  const overdue=synced&&Date.now()-synced.getTime()>2*3600000;
+  note.textContent='自有資料庫 '+numeral(total)+' 案；目前有明確截止時間 '+numeral(known)+
+   ' 案（'+checked+'）。「確認尚未截標」與「三日內截止」只計入有原文證據者，不能據此推斷其餘案件已截止。'+
+   '最後成功同步（台灣時間）：'+syncText+'。'+
+   (data.unresolved_source_dates?'另有 '+numeral(data.unresolved_source_dates)+' 個來源缺漏日期追蹤中。':'')+
+   (overdue?'注意：最近同步已超過兩小時，請核對資料說明。':'');
+  note.classList.toggle('warning',!!overdue);
+ }catch(e){
+  note.textContent='資料庫概況無法驗證：'+readableError(e)+'。請依「資料說明」及官方公告確認，不能把空值當零。';
+  note.classList.add('warning');
+ }
+}
+async function loadRelatedCases(row){
+ const box=$('relatedCases');
+ if(!box)return;
+ try{
+  const client=await getClient();
+  const {data,error}=await client.rpc('ti_related_cases',{p_case_id:row.id});
+  if(error)throw error;
+  if(state.selected!==row)return;
+  const related=Array.isArray(data)?data:[];
+  box.replaceChildren();
+  if(!related.length){box.append(E('p','minor','目前已收錄資料中無同機關且同採購大類的其他案件。'));return;}
+  for(const item of related){
+   const rec=normalize({
+    unit_id:item.unit_id,job_number:item.job_number,date:item.latest_notice_date,
+    unit_name:item.agency,budget_amount:item.budget_amount,award_amount:item.award_amount,
+    brief:{title:item.title,type:item.latest_notice_type,category:item.group_name}
+   });
+   if(!rec)continue;
+   const line=E('div','timeline-item');
+   child(line,btn(item.title,'case-title',()=>openDetail(rec)),
+    E('div','minor',dateLabel(item.latest_notice_date)+'｜案號 '+item.job_number+
+    '｜'+(item.latest_notice_type||'公告類型未提供')));
+   box.append(line);
+  }
+ }catch(e){
+  if(state.selected===row)box.replaceChildren(E('p','minor','關聯案查詢失敗：'+readableError(e)));
+ }
 }
 function renderDetail(row,data){
   const sum=summaryOf(data.records);const info=sum.fields;
@@ -291,6 +353,10 @@ function renderDetail(row,data){
     }
     page.append(supplierList);
   }
+  child(page,E('h3','','同機關、同採購大類的歷史案件（不是契約續標判定）'));
+  const related=E('div','detail-timeline','');related.id='relatedCases';
+  related.append(E('div','minor','正在查詢已成功收錄的相同機關與採購類別…'));
+  page.append(related);
   child(page,E('h3','','最新公告原始欄位'));
   const table=E('table','raw-fields');
   const latestDetail=latest?.detail&&typeof latest.detail==='object'?latest.detail:{};
@@ -702,6 +768,7 @@ if(Object.hasOwn(listModes,urlState.get('mode')||'') && (urlState.get('q')||'').
   search(urlState.get('mode'),urlState.get('q')||'',1);
 else search('latest','',1);
 void initCloud();
+void loadVerifiedHomepageKpis();
 setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)checkWatches();},20*60*1000);
 
 
