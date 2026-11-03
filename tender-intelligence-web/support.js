@@ -217,7 +217,9 @@ function ticketRow(t,onClick){
  const btn=document.createElement("button");btn.type="button";btn.className="ti-support-ticket-row";
  const top=document.createElement("span");top.className="ti-support-ticket-row-top";
  const title=document.createElement("strong");title.textContent=(t.kind==="ai"?"AI · ":"")+(t.subject||"客服紀錄");
- top.append(title,tag(t.status));
+ const flag=t.kind==="ai"?document.createElement("span"):tag(t.status);
+ if(t.kind==="ai"){flag.className="ti-support-ticket-tag replied";flag.textContent="對話紀錄";}
+ top.append(title,flag);
  const foot=document.createElement("small");foot.textContent=(categories[t.category]||"客服")+" · "+new Date(t.updated_at).toLocaleString("zh-TW",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
  btn.append(top,foot);btn.addEventListener("click",onClick);return btn;
 }
@@ -240,10 +242,27 @@ async function historyDetail(id){
   const back=document.createElement("button");back.className="ti-support-link-btn";back.type="button";back.textContent="← 返回紀錄";
   back.addEventListener("click",()=>{detail.hidden=true;void loadHistory()});
   const title=document.createElement("strong");title.textContent=thread.subject||"客服紀錄";
-  const info=document.createElement("p");info.className="ti-support-detail-meta";info.textContent="工單 #"+thread.id.slice(0,8).toUpperCase()+" · "+(statuses[thread.status]||thread.status);
+  const info=document.createElement("p");info.className="ti-support-detail-meta";info.textContent="紀錄 #"+thread.id.slice(0,8).toUpperCase()+" · "+(thread.kind==="ai"?"AI 對話紀錄":(statuses[thread.status]||thread.status));
   const messagesBox=document.createElement("div");messagesBox.className="ti-support-detail-messages";
   for(const m of messages)messagesBox.append(createBubble(m.role,m.body));
   detail.append(back,title,info,messagesBox);
+  if(thread.kind==="form"){
+   const followup=document.createElement("form");followup.className="ti-support-admin-reply";
+   const textarea=document.createElement("textarea");textarea.rows=3;textarea.minLength=2;textarea.maxLength=6000;textarea.required=true;textarea.placeholder="還有其他需要補充的內容嗎？";
+   const send=document.createElement("button");send.type="submit";send.className="ti-support-primary";send.textContent="補充問題";
+   followup.append(textarea,send);
+   followup.addEventListener("submit",async e=>{
+    e.preventDefault();send.disabled=true;messageStatus("");
+    try{
+     const x=await api("customer_reply",{thread_id:thread.id,message:textarea.value});
+     messagesBox.append(createBubble("customer",x.message.body));textarea.value="";
+     info.textContent="紀錄 #"+thread.id.slice(0,8).toUpperCase()+" · 待處理";
+     messageStatus("補充內容已保存，工單已重新進入待處理狀態。","success");
+    }catch(err){messageStatus("未成功保存："+err.message,"error")}
+    finally{send.disabled=false}
+   });
+   detail.append(followup);
+  }
   $("tiSupportUnread").hidden=true;
  }catch(e){detail.textContent="讀取失敗："+e.message}
 }
