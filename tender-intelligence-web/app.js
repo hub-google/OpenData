@@ -574,7 +574,7 @@ function loadLibrary(url,globalName){
     document.head.append(script);
   });
 }
-async function parseDocument(file){
+export async function parseDocument(file){
   const name=file.name.toLocaleLowerCase('zh-TW'),output=[];
   if(name.endsWith('.pdf')){
     const pdfjs=await loadLibrary('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','pdfjsLib');
@@ -590,9 +590,17 @@ async function parseDocument(file){
     const mammoth=await loadLibrary('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js','mammoth');
     const r=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
     output.push({source:'DOCX 段落（無精確頁碼）',text:r.value||''});
+  }else if(name.endsWith('.xlsx')){
+    const XLSX=await loadLibrary('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','XLSX');
+    const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellText:true,cellDates:false});
+    for(const sheetName of wb.SheetNames.slice(0,20)){
+      const text=XLSX.utils.sheet_to_csv(wb.Sheets[sheetName],{blankrows:false});
+      output.push({source:'工作表「'+sheetName+'」（非 PDF 頁碼）',text});
+    }
+    if(wb.SheetNames.length>20)toast('活頁簿只處理前 20 張工作表；其餘請另行檢查。');
   }else if(name.endsWith('.txt')||name.endsWith('.md')){
     output.push({source:'文字檔（無頁碼）',text:await file.text()});
-  }else throw Error('請使用 TXT、MD、PDF 或 DOCX');
+  }else throw Error('請使用 TXT、MD、PDF、DOCX 或 XLSX');
   return output;
 }
 const terms=[

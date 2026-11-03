@@ -29,6 +29,7 @@
       <button type="button" class="nav-item" data-view="contracts"><span>▦</span> 合約與保證金</button>
       <button type="button" class="nav-item" data-view="team"><span>♙</span> 團隊協作</button>
       <button type="button" class="nav-item" data-view="alerts"><span>♧</span> 監控與提醒</button>
+      <button type="button" class="nav-item" data-view="proposal"><span>▧</span> 標書差異與健檢</button>
       <button type="button" class="nav-item" data-view="documents"><span>▧</span> 標書條款整理</button>
       <p class="side-label">其他</p>
       <button type="button" class="nav-item" data-view="billing" hidden><span>▣</span> 方案與帳務</button>
@@ -294,7 +295,7 @@
       <section id="view-documents" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">DOCUMENT CHECKLIST</div><h1>標書條款整理</h1><p>從你合法取得的招標文件整理資格、截標、履約、評選與押標金關鍵段落，保留原始出處與頁碼。</p></div>
         <div class="notice warning"><strong>兩種分析方式：</strong>本機規則整理不需登入，文件不會上傳；AI 標單解析需要登入，僅傳送解析後的文件文字至已部署的後端與 AI 服務。若尚未配置 AI 金鑰，會明確顯示無法提供服務，不會產生假分析。掃描型 PDF 尚不支援 OCR。</div>
-        <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><button id="documentAI" class="ghost-btn" type="button">AI 解析資格／期限／評選條款</button><span id="documentFileName" class="minor"></span></div></div>
+        <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX、XLSX（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><button id="documentAI" class="ghost-btn" type="button">AI 解析資格／期限／評選條款</button><span id="documentFileName" class="minor"></span></div></div>
         <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div><div class="panel analysis-panel" id="documentAiOutput" aria-live="polite"><h2>AI 標單分析</h2><p class="minor">請登入並選擇合法取得的文件後使用。AI 僅整理原文，資格判斷仍需人工核對。</p></div>
         <div class="panel" style="margin-top:16px">
           <h2>私有雲端文件</h2>
@@ -335,6 +336,37 @@
           <p class="hint">如金流已扣款但狀態未更新，先按「重新整理付款狀態」。請勿重複付款；正式客服管道將於開通前公布。</p>
         </div>
       </section>
+      
+      <section id="view-proposal" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">DOCUMENT DIFF & PROPOSAL COMPLIANCE</div>
+        <h1>標書版本比對與投標書健檢</h1>
+        <p>同時檢視更正前後標書的原文差異；也能將招標要求與自己的投標書逐條核對，附來源頁碼與缺漏提示。</p></div>
+        <div class="notice warning">
+          「比較版本」只在本機執行，不會把文件送出。只有「AI 投標書健檢」需要登入並把兩份文件解析後的文字傳至 Supabase Edge Function 與 AI 供應商。
+          如未配置 AI 金鑰，會明確顯示無法執行，不提供模擬結果。掃描型 PDF 若無文字層仍須人工處理。
+        </div>
+        <div class="panel">
+          <h2>1. 更正前後條款差異（純本機，不用 AI）</h2>
+          <div class="inline-form">
+            <label>舊版標書<input type="file" id="versionBefore" accept=".txt,.md,.pdf,.docx,.xlsx"></label>
+            <label>新版標書<input type="file" id="versionAfter" accept=".txt,.md,.pdf,.docx,.xlsx"></label>
+            <button id="runVersionDiff" class="primary-btn" type="button">比較原文新增／刪除</button>
+          </div>
+          <div id="versionDiffOutput" class="analysis-panel" aria-live="polite"></div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <h2>2. AI 投標書條款覆核</h2>
+          <p class="hint">由你自行上傳招標文件與公司的投標書；只有能在實際原文中找到的引用才會列為具證據的比對結果。</p>
+          <div class="inline-form">
+            <label>招標要求原文<input type="file" id="proposalTender" accept=".txt,.md,.pdf,.docx,.xlsx"></label>
+            <label>公司投標書原文<input type="file" id="proposalResponse" accept=".txt,.md,.pdf,.docx,.xlsx"></label>
+            <button id="runProposalAI" class="primary-btn" type="button">啟動真實 AI 健檢</button>
+          </div>
+          <div id="proposalAiOutput" class="analysis-panel" aria-live="polite">
+            <p class="minor">尚未開始：AI 服務必須先在專案 Supabase Secrets 配置模型金鑰。</p>
+          </div>
+        </div>
+      </section>
       <section id="view-about" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">DATA & TRUST</div><h1>資料來源與使用說明</h1><p>清楚說明哪些資料是真實來源、哪些只是本機計算，以及還沒完成的後端功能。</p></div>
         <div class="panel prose">
@@ -364,5 +396,6 @@
 <script type="module" src="./delivery.js"></script>
 <script type="module" src="./advanced.js"></script>
 <script type="module" src="./operations.js"></script>
+<script type="module" src="./proposal.js"></script>
 </body>
 </html>
