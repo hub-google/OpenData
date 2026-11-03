@@ -186,7 +186,112 @@ function init(){
  $('advNext').addEventListener('click',()=>{if(latest&&page<Math.ceil(Number(latest.total)/30))void search(page+1);});
  $('advShare').addEventListener('click',()=>void copyUrl());
  $('advCsv').addEventListener('click',exportCsv);
+ $('advSaveRule').addEventListener('click',()=>void saveAdvancedRule());
+ $('advLoadRule').addEventListener('click',()=>void loadAdvancedRule());
+ $('advDeleteRule').addEventListener('click',()=>void deleteAdvancedRule());
+ $('advPreviewRule').addEventListener('click',()=>void previewAdvancedRule());
+ document.querySelector('[data-view="advanced"]')?.addEventListener('click',()=>void refreshAdvancedRules());
  document.querySelector('[data-view="advanced"]')?.addEventListener('click',()=>{if(!seen)void search(1);});
  loadUrl();
 }
 init();
+
+
+let savedRules=[];
+const ruleStatus=x=>$('advSavedStatus').textContent=x;
+async function authenticatedClient(){
+ const client=await getClient();
+ const {data,error}=await client.auth.getSession();
+ if(error)throw error;
+ if(!data?.session?.user?.id)throw Error('請先登入才能管理跨裝置搜尋條件。');
+ return {client,user:data.session.user};
+}
+async function refreshAdvancedRules(){
+ try{
+  const {client,user}=await authenticatedClient();
+  const {data,error}=await client.from('ti_saved_searches').select('id,name,criteria,updated_at')
+   .eq('user_id',user.id).order('updated_at',{ascending:false}).limit(100);
+  if(error)throw error;
+  savedRules=data||[];
+  const select=$('advSavedList'),old=select.value;
+  select.replaceChildren();
+  const empty=node('option','','請選擇已儲存搜尋條件');empty.value='';
+  select.append(empty);
+  for(const rule of savedRules){
+   const option=node('option','',rule.name);option.value=rule.id;select.append(option);
+  }
+  if(savedRules.some(x=>x.id===old))select.value=old;
+  ruleStatus('已從私人雲端載入 '+savedRules.length+' 組搜尋條件。');
+ }catch(e){
+  savedRules=[];$('advSavedList').replaceChildren(node('option','','請先登入會員'));
+  ruleStatus('搜尋條件讀取未完成：'+String(e.message||e));
+ }
+}
+async function saveAdvancedRule(){
+ const name=$('advSavedName').value.trim();
+ if(name.length<2||name.length>120)return ruleStatus('名稱須有 2–120 個字。');
+ let criteria;
+ try{
+  criteria=getForm();
+  args(criteria,1); // Validate all conditions before saving; do not store malformed searches.
+  const {client,user}=await authenticatedClient();
+  const {error}=await client.from('ti_saved_searches').upsert({
+   user_id:user.id,name,criteria,updated_at:new Date().toISOString()
+  },{onConflict:'user_id,name'});
+  if(error)throw error;
+  await refreshAdvancedRules();
+  ruleStatus('「'+name+'」完整篩選條件已儲存到你的私人帳戶。');
+ }catch(e){ruleStatus('儲存失敗：'+String(e.message||e));}
+}
+function ruleSelected(){
+ const rule=savedRules.find(x=>x.id===$('advSavedList').value);
+ if(!rule)throw Error('請先選擇一組已儲存條件。');
+ return rule;
+}
+function setFields(values){
+ for(const [key,id] of Object.entries(fields)){
+  if(!Object.hasOwn(values,key))continue;
+  const input=$(id),value=values[key];
+  if(input.type==='checkbox')input.checked=value===true;
+  else if(input.tagName==='SELECT'){
+   if([...input.options].some(opt=>opt.value===value))input.value=value;
+  }else input.value=value??'';
+ }
+}
+async function loadAdvancedRule(){
+ try{
+  const rule=ruleSelected();
+  args(rule.criteria,1);
+  setFields(rule.criteria);$('advSavedName').value=rule.name;
+  ruleStatus('已載入「'+rule.name+'」，正在以目前真正已入庫的公告重新查詢。');
+  await search(1);
+ }catch(e){ruleStatus('載入失敗：'+String(e.message||e));}
+}
+async function deleteAdvancedRule(){
+ try{
+  const rule=ruleSelected();
+  if(!confirm('確定刪除你自己的搜尋條件「'+rule.name+'」？'))return;
+  const {client,user}=await authenticatedClient();
+  const {error}=await client.from('ti_saved_searches').delete().eq('user_id',user.id).eq('id',rule.id);
+  if(error)throw error;
+  await refreshAdvancedRules();
+  ruleStatus('「'+rule.name+'」已從你自己的帳戶中刪除。');
+ }catch(e){ruleStatus('刪除未完成：'+String(e.message||e));}
+}
+async function previewAdvancedRule(){
+ try{
+  const rule=ruleSelected();
+  const params=args(rule.criteria,1);
+  const timezoneDate=new Intl.DateTimeFormat('en-CA',{
+    timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'
+  }).format(new Date(Date.now()-29*86400000));
+  const start=Number(timezoneDate.replace(/-/g,''));
+  params.p_date_from=Math.max(params.p_date_from||0,start);
+  params.p_limit=1;
+  const client=await getClient();
+  const {data,error}=await client.rpc('ti_archive_search',params);
+  if(error)throw error;
+  ruleStatus('「'+rule.name+'」在近 30 天「實際已成功入庫」日期中匹配 '+Number(data?.total||0).toLocaleString('zh-TW')+
+    ' 件；尚未回填的日期不包含在預覽，不代表全國所有標案。');
+ }catch(e){ruleStatus('預覽失敗：'+String(e.message||e));}
+}
