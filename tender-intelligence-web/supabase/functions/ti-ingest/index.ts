@@ -111,6 +111,38 @@ async function enrich(c){
  }
  return true;
 }
+// Background completeness pass: fetch REAL details for archived cases without
+// hallucinating budget, deadline, official link or contract terms.
+async function enrichMissingDetails(){
+ const candidates=await db("rpc/ti_pick_details_enrichment","POST",{p_limit:6});
+ if(!Array.isArray(candidates))throw Error("detail enrichment queue unavailable");
+ let success=0,failed=0;
+ const problems=[];
+ // Strict bounded concurrency: avoid unbounded requests to the public source.
+ for(let offset=0;offset<candidates.length;offset+=2){
+  await Promise.all(candidates.slice(offset,offset+2).map(async c=>{
+   let reason="",ok=false;
+   try{ok=await enrich({id:c.case_id,unit_id:c.unit_id,job_number:c.job_number});
+      if(!ok)reason="source returned no official detail records";
+   }catch(e){reason=text(e).slice(0,220)}
+   const id=encodeURIComponent(c.case_id);
+   try{
+    const previous=await db("ti_detail_enrichment_attempts?select=attempts&case_id=eq."+id+"&limit=1");
+    const attempts=Math.min(999,Number(previous?.[0]?.attempts||0)+1);
+    const delayHours=ok?0:Math.min(72,Math.pow(2,Math.min(5,attempts)));
+    await db("ti_detail_enrichment_attempts?on_conflict=case_id","POST",[{
+      case_id:c.case_id,attempts,last_attempt_at:new Date().toISOString(),
+      next_retry_at:new Date(Date.now()+delayHours*3600000).toISOString(),
+      success_at:ok?new Date().toISOString():null,
+      last_error:ok?null:reason||"detail enrichment incomplete"
+    }],"resolution=merge-duplicates,return=minimal");
+   }catch(e){console.error("detail queue save failed",text(e).slice(0,150));reason+="; queue-save error"}
+   if(ok)success++;else {failed++;problems.push({case_id:c.case_id,error:reason})}
+  }));
+ }
+ return {ok:true,mode:"details",attempted:candidates.length,succeeded:success,failed,
+  result:candidates.length?"processed":"no eligible source records",errors:problems.slice(0,3)};
+}
 async function ingest(mode){
  let run=null,day=null,found=0,added=0,details=0,backfillDate=null;
  try{
@@ -215,7 +247,7 @@ Deno.serve(async(req)=>{
  try{const allowed=await db("rpc/ti_verify_ingest_token","POST",{candidate:token});
   if(allowed!==true)return Response.json({error:"Unauthorized"},{status:401});
  }catch{return Response.json({error:"Unauthorized"},{status:401})}
- let mode="latest";try{const b=await req.json();if(["previous","backfill","retry"].includes(b.mode))mode=b.mode}catch{}
- const result=await ingest(mode);
+ let mode="latest";try{const b=await req.json();if(["previous","backfill","retry","details"].includes(b.mode))mode=b.mode}catch{}
+ const result=mode==="details"?await enrichMissingDetails():await ingest(mode);
  return Response.json(result,{status:result.ok?200:502,headers:{"Cache-Control":"no-store"}});
 });
