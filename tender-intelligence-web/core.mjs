@@ -49,7 +49,11 @@ export function stateOf(row) {
   if (/無法決標|流標|廢標/.test(s)) return '無法決標';
   if (/更正/.test(s)) return '更正';
   if (/決標/.test(s)) return '決標';
-  if (/招標|徵求|閱覽/.test(s)) return '招標';
+  if (/財物變賣|標售|標租/.test(s)) return '財物標售';
+  if (/公開閱覽/.test(s)) return '公開閱覽';
+  if (/公開徵求廠商提供參考資料/.test(s)) return '公開徵求';
+  if (/招標|取得報價單|取得企劃書/.test(s)) return '招標';
+  if (/徵求/.test(s)) return '公開徵求';
   return '其他';
 }
 export function normalize(row) {
