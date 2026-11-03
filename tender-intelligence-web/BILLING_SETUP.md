@@ -4,14 +4,14 @@
 
 ## 收款流程
 1. 會員 Email 驗證登入 → 左側「方案與帳務」 → 選擇個人 NT$590／月、專業 NT$1,590／月、團隊 NT$3,990／月（均為 PRD 測試假設，正式上線前由經營者確認）。
-2. 選擇信用卡每月定期扣款，或信用卡／ATM／超商等支援通路的「單次購買一個月」。
+2. 預設選擇信用卡／ATM／超商等支援通路「單次購買一個月」；**信用卡每月定期扣款只有綠界特約賣家、且取得定期定額核准後才可啟用**。一般賣家先以單次收費上線，不必為了訂閱方案先承擔特約賣家合約成本。
 3. 後端以資料庫鎖定售價、產生不重複訂單並簽署表單；前端只跳轉至 ECPay 託管頁，不接觸卡號。
 4. ECPay 付款成功後以伺服器 POST 回報；後端比對 MerchantID、CheckMacValue、金額、訂單及防重鍵；成功後在 ti_billing_payments 入帳並延長 ti_billing_subscriptions 1 個月。
 5. 使用者返回本站「方案與帳務」，查看訂閱有效日、歷史訂單。自動扣款者可透過綠界 API 終止未來扣款，不會把停止續訂當作退款。
 6. 收款款項進入綠界賣家結算帳戶，再依平台條款提領／撥款至商家驗證的銀行帳戶；本站無法代行銀行實名驗證。
 
 ## 經營者必須親自完成的事項
-- 在 **https://www.ecpay.com.tw/** 註冊綠界正式賣家，完成公司／商家資料、負責人實名、結算銀行帳戶與收單審核；另確認「信用卡定期定額」功能獲核准。
+- 在 **https://www.ecpay.com.tw/** 註冊綠界正式賣家，完成公司／商家資料、負責人實名、結算銀行帳戶與收單審核；若要每月自動扣款，須另向綠界申請特約賣家及確認「信用卡定期定額」獲准；一般賣家通常僅有國內信用卡一次付清、ATM、超商等。
 - 實際填寫商店名稱、公司／商號與統編（如適用）、客服 Email／電話、商家地址與合法營運資訊。
 - 向消費者明示訂閱價格、每月扣款方式、停止續費規定、退款辦法、服務條款、隱私權、發票／收據處理方式；電子發票開立須依經營實體及稅務規定準備，**本版尚未串接自動電子發票、退款 API**。
 - 確定第三方 OpenFun/PCC 政府採購來源的商業利用、重製及留存授權。此授權問題與收費系統是否能工作是不同議題。
@@ -23,13 +23,14 @@
 - `ECPAY_HASH_KEY`：特店 HashKey。
 - `ECPAY_HASH_IV`：特店 HashIV。
 - `ECPAY_ENVIRONMENT`：`stage`（測試）或 `production`（正式）。**預設實作為 production，但未取得金鑰且未明確啟用時，不可能建立付款訂單。**
-- `TI_BILLING_CHECKOUT_ENABLED`：必須明確設成 `true` 才開放結帳；預設未設定。
+- `TI_BILLING_CHECKOUT_ENABLED`：必須明確設成 `true` 才開放單次結帳；預設未設定。
+- `TI_BILLING_RECURRING_ENABLED`：僅取得綠界特約賣家資格、核准定期定額且完成測試後設成 `true`；預設未設定，前台自動扣款選項停用。
 - Supabase 已注入既有 `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`（後端專用）。
 - **不使用 GitHub Actions Secrets 來代替 Supabase Edge Function Secrets**，避免金鑰存在與服務執行環境不同的地方。
 
 正式後端：`https://unapiwajmgqqtdkixaab.supabase.co/functions/v1/ti-billing`
 
-對外狀態：`GET /?mode=plans` 返回 `ready:false` 時，網站付款按鈕將停用。
+對外狀態：`GET /?mode=plans` 返回 `ready:false` 時，網站付款按鈕將停用；`supports_recurring:false` 時自動扣款選項停用。
 會員 API：
 - `GET ?mode=status`（須 Supabase JWT）：個人訂閱與訂單狀態。
 - `POST` `{"action":"checkout","plan":"personal","kind":"recurring"}`（須 JWT）：建立並回傳 ECPay 託管付款表單。
@@ -54,6 +55,7 @@
 - **現有搜尋等既有功能仍維持免費。** 付款功能未開放不代表網站服務無法使用。
 
 官方技術文件：
+- https://support.ecpay.com.tw/25120/ （綠界賣家類型／定期定額開通資格）
 - https://developers.ecpay.com.tw/2868/ （定期定額）
 - https://developers.ecpay.com.tw/5631/ （定期付款結果）
 - https://developers.ecpay.com.tw/2900/ （取消定期定額）

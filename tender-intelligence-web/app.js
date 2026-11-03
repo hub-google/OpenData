@@ -684,7 +684,6 @@ function hook(){
   $('documentFile').addEventListener('change',()=>{$('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';});
 }
 hook();
-initBillingUI();
 initCloudUI();
 renderTracking();
 renderWatches();
@@ -695,7 +694,6 @@ if(Object.hasOwn(listModes,urlState.get('mode')||'') && (urlState.get('q')||'').
   search(urlState.get('mode'),urlState.get('q')||'',1);
 else search('latest','',1);
 void initCloud();
-if(new URLSearchParams(window.location.search).get('view')==='billing')showView('billing');
 setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)checkWatches();},20*60*1000);
 
 
@@ -1291,6 +1289,11 @@ async function renderBilling(){
   }
   // The production checkout remains deliberately disabled until real merchant credentials are installed.
   const canPay=plans.ready===true && plans.environment==='production';
+  const canRenew=canPay && plans.supports_recurring===true;
+  const recurring=document.querySelector('input[name="billingMethod"][value="recurring"]');
+  const oneTime=document.querySelector('input[name="billingMethod"][value="one_time"]');
+  recurring.disabled=!canRenew;
+  if(!canRenew)oneTime.checked=true;
   alertBox.textContent=!plans.ready
    ?'金流尚未開通：已建置綠界後端，但必須完成商家審核、部署正式 MerchantID／HashKey／HashIV，並核可收費服務後才能付款。'
    :plans.environment!=='production'
@@ -1339,7 +1342,7 @@ function initBillingUI(){
  $('billingRefresh').addEventListener('click',()=>void renderBilling());
  document.querySelectorAll('[data-billing-plan]').forEach(button=>button.addEventListener('click',async()=>{
   if(!cloud.user){$('accountPanel').hidden=false;$('accountPanel').scrollIntoView({behavior:'smooth'});toast('請先登入再購買方案。');return;}
-  const kind=document.querySelector('input[name="billingMethod"]:checked')?.value||'recurring';
+  const kind=document.querySelector('input[name="billingMethod"]:checked')?.value||'one_time';
   if(kind==='recurring'&&!$('billingConsent').checked){
    toast('請先確認每月自動續費條款。');$('billingConsent').focus();return;
   }
