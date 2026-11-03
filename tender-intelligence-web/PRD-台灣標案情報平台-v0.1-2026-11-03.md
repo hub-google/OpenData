@@ -4,7 +4,7 @@
 > **市場**：台灣（繁體中文、NT$、Asia/Taipei、民國／西元日期可切換）  
 > **整理日期**：2026-11-03  
 > **狀態**：需求草案，供討論與市場驗證；**非已完成的系統**  
-> **現有專案**：本倉庫 \`tender-intelligence-web/\`；原有 \`procurement-anomaly-radar-web/\` 為獨立公共監督研究，不與付費投標推薦直接混用  
+> **現有專案**：本倉庫 `tender-intelligence-web/`；原有 `procurement-anomaly-radar-web/` 為獨立公共監督研究，不與付費投標推薦直接混用  
 > **依據**：七個台灣競品公開功能／價格頁，含公開宣傳、FAQ、部分公開介面；未跨越登入付費牆、未聲稱已操作所有競品後台。
 
 ## 0. 版本判讀及產品原則
@@ -251,7 +251,7 @@
 
 ### V4. 成交價、底價與報價分析
 
-輸出同類採購的可比樣本、金額分布、預算比 \`decision_amount / budget\`、有公告底價時的底價比，按機關／類別／決標方式／規模／年份分層。
+輸出同類採購的可比樣本、金額分布、預算比 `decision_amount / budget`、有公告底價時的底價比，按機關／類別／決標方式／規模／年份分層。
 
 核心要求：
 - 同規格／數量／契約年期／維護內容不可直接混合。
@@ -366,7 +366,7 @@
 
 ### 10.1 建議沿用的低維運架構
 
-\`\`\`
+```
 合法官方資料／獲授權的供應 API
   ↓ 定時擷取 + 最近公告回補
 原始快照（來源、時間、hash、授權與擷取狀態）
@@ -378,26 +378,26 @@
   ├─ 會員 API -> 收藏、規則、投標管線
   ├─ 通知佇列 -> Email、LINE（冪等、退訂）
   └─ 私有 AI 文件管線 -> 擷取、引用、分析與配額
-\`\`\`
+```
 
 可先沿用 GitHub Pages 前端 + Cloudflare Workers 後端 + Turso／其他適用 SQL 資料庫 + 物件儲存，**但不能把 API Token、金流 Secret、LINE 密鑰寫進公開前端或 Git**。資料量放大後要實測搜尋與複合聚合效能；需要時再導入專用搜尋索引（非預設一開始就造大架構）。
 
 ### 10.2 核心資料表
 
-- \`source_registry\`：來源、授權、最後查核日與成功同步日。
-- \`raw_snapshot\`：原始回應、hash、擷取時間、來源 URL。
-- \`procurement_case\`：機關代碼、案號、採購類別與主檔，勿只以案名去重。
-- \`procurement_notice\`：公告 ID、類型、版本、公告日、截止日、官方 URL。
-- \`case_status_event\`：更正、撤銷、無法決標、決標等事件與生效時間。
-- \`agency\`：機關代碼、歷史改制、上級機關、別名。
-- \`vendor\`：統編（可能缺）、名稱、別名、來源信心。
-- \`bid_party\`：每次投標者、得標者、投標價、未得標原因（公告有才填）。
-- \`award\`：單／複數決標、決標金額、標的、底價及契約相關欄位。
-- \`user_profile\` / \`company_workspace\`：登入、公司輪廓與租戶。
-- \`watch_rule\` / \`rule_match\` / \`notification_event\`：監控、匹配、去重與投遞。
-- \`capture_project\` / \`task\` / \`project_document\`：投標商機看板、待辦、附件。
-- \`ai_report\` / \`ai_credit_ledger\`：抽取來源、版本、用量與扣點帳。
-- \`subscription\` / \`payment_event\`：方案、有效期間、webhook 事件與對帳。
+- `source_registry`：來源、授權、最後查核日與成功同步日。
+- `raw_snapshot`：原始回應、hash、擷取時間、來源 URL。
+- `procurement_case`：機關代碼、案號、採購類別與主檔，勿只以案名去重。
+- `procurement_notice`：公告 ID、類型、版本、公告日、截止日、官方 URL。
+- `case_status_event`：更正、撤銷、無法決標、決標等事件與生效時間。
+- `agency`：機關代碼、歷史改制、上級機關、別名。
+- `vendor`：統編（可能缺）、名稱、別名、來源信心。
+- `bid_party`：每次投標者、得標者、投標價、未得標原因（公告有才填）。
+- `award`：單／複數決標、決標金額、標的、底價及契約相關欄位。
+- `user_profile` / `company_workspace`：登入、公司輪廓與租戶。
+- `watch_rule` / `rule_match` / `notification_event`：監控、匹配、去重與投遞。
+- `capture_project` / `task` / `project_document`：投標商機看板、待辦、附件。
+- `ai_report` / `ai_credit_ledger`：抽取來源、版本、用量與扣點帳。
+- `subscription` / `payment_event`：方案、有效期間、webhook 事件與對帳。
 
 ### 10.3 不得犯的資料錯誤
 
@@ -471,7 +471,7 @@
 
 ### 目前程式碼距離 MVP 的差距
 
-本倉庫 \`tender-intelligence-web/index.html\` 在 2026-11-03 檢查仍是**寫死 10 筆模擬案件**的 HTML/JS 原型，沒有：官方真實同步、公告版本、主資料庫、會員、規則引擎、金流、通知、文件 AI。已有的搜尋框、產業／預算選擇器、收藏、CSV、側邊詳情只是**UI 示意**，不應當作完成度。這份 PRD **只新增文檔，不修改正式站或資料庫**。
+本倉庫 `tender-intelligence-web/index.html` 在 2026-11-03 檢查仍是**寫死 10 筆模擬案件**的 HTML/JS 原型，沒有：官方真實同步、公告版本、主資料庫、會員、規則引擎、金流、通知、文件 AI。已有的搜尋框、產業／預算選擇器、收藏、CSV、側邊詳情只是**UI 示意**，不應當作完成度。這份 PRD **只新增文檔，不修改正式站或資料庫**。
 
 ---
 
