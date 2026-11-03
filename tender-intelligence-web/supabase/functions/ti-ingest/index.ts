@@ -62,18 +62,52 @@ async function enrich(c){
  if(!records.length)return false;
  records.sort((a,b)=>Number(b.date||0)-Number(a.date||0));
  const latest=records[0],bid=records.find(x=>/招標|徵求|閱覽/.test(text(x?.brief?.type)));
+ // Source-derived amounts only. The daily list API commonly has no money fields.
+ // Never infer budget from award or vice versa.
+ const valueFrom=(record,labels)=>{
+  if(!record)return null;
+  for(const name of labels){
+    const raw=pick(record.detail,name);
+    if(raw===null||raw===undefined)return null;
+    const amount=num(raw);
+    if(amount!==null)return amount;
+  }
+  return null;
+ };
+ const budget=records.map(r=>valueFrom(r,["預算金額"])).find(v=>v!==null)??null;
+ const award=records.filter(r=>/決標/.test(text(r?.brief?.type))&&!/無法決標/.test(text(r?.brief?.type)))
+   .map(r=>valueFrom(r,["總決標金額","決標金額"])).find(v=>v!==null)??null;
  const detail=bid?.detail||{},link=official(latest.detail?.url)||official(detail.url);
  const fields={deadline_at:rocDate(pick(detail,"截止投標")),opening_at:rocDate(pick(detail,"開標時間")),
   location:text(pick(detail,"履約地點"))||null,period:text(pick(detail,"履約期限")).slice(0,4000)||null,
   deposit:text(pick(detail,"押標金額度")).slice(0,1000)||null,
   qualification:text(pick(detail,"廠商應附具之基本資格證明文件或物品")).slice(0,10000)||null,
   tender_method:text(pick(detail,"招標方式"))||null,decision_method:text(pick(detail,"決標方式"))||null,
-  official_page:link,source_api:src};
+  official_page:link,source_api:src,budget_amount:budget,award_amount:award};
  await db("ti_case_details?on_conflict=case_id","POST",[{case_id:c.id,latest_notice_id:c.id+"::"+latest.date+"::"+latest.filename,
   details:fields,records_count:records.length,fetched_at:new Date().toISOString()}],
   "resolution=merge-duplicates,return=minimal");
- if(link||fields.deadline_at)await db("ti_cases?id=eq."+encodeURIComponent(c.id),"PATCH",
-  {official_url:link,deadline_at:fields.deadline_at},"return=minimal");
+ const casePatch={};
+ if(link)casePatch.official_url=link;
+ if(fields.deadline_at)casePatch.deadline_at=fields.deadline_at;
+ if(budget!==null)casePatch.budget_amount=budget;
+ if(award!==null)casePatch.award_amount=award;
+ if(Object.keys(casePatch).length)await db("ti_cases?id=eq."+encodeURIComponent(c.id),"PATCH",casePatch,"return=minimal");
+ // The matching published notice keeps its own amount provenance.
+ for(const notice of records){
+   const partial={};
+   const b=valueFrom(notice,["預算金額"]);
+   const a=/決標/.test(text(notice?.brief?.type))&&!/無法決標/.test(text(notice?.brief?.type))
+      ?valueFrom(notice,["總決標金額","決標金額"]):null;
+   if(b!==null)partial.budget_amount=b;
+   if(a!==null)partial.award_amount=a;
+   const noticeLink=official(notice?.detail?.url);
+   if(noticeLink)partial.official_url=noticeLink;
+   if(Object.keys(partial).length){
+     const nid=c.id+"::"+notice.date+"::"+notice.filename;
+     await db("ti_notices?id=eq."+encodeURIComponent(nid),"PATCH",partial,"return=minimal");
+   }
+ }
  return true;
 }
 async function ingest(mode){
