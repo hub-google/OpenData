@@ -392,6 +392,67 @@ function renderDetail(row,data){
 function closeDetail(){
   state.selected=null;$('detailDrawer').hidden=true;$('backdrop').hidden=true;document.body.style.overflow='';
 }
+// PRD V1: cross-date matching from the actual RLS-protected archive, not just visible API rows.
+let radarFullPage=1,radarFullTotal=0,radarFullRequest=0;
+async function searchFullRadar(p=1){
+ const status=$('radarFullStatus'),results=$('radarFullResults');
+ const keywords=asText(store.profile.keywords).split(/[,，、\n]+/).map(x=>x.trim()).filter(Boolean);
+ const excludes=asText(store.profile.excludes).split(/[,，、\n]+/).map(x=>x.trim()).filter(Boolean);
+ if(!keywords.length){status.textContent='請先儲存產品或服務關鍵字。';return;}
+ if(keywords.length>12||excludes.length>12||[...keywords,...excludes].some(x=>x.length>60)){
+  status.textContent='包含與排除詞各最多 12 個，單詞最多 60 字，請調整並重新儲存。';return;
+ }
+ const token=++radarFullRequest,button=$('radarFullSearch');
+ button.disabled=true;status.textContent='正在自有資料庫跨日搜尋實際已入庫招標公告（不包含更正或決標），並排序關鍵字關聯性…';
+ try{
+  const client=await getClient();
+  const {data,error}=await client.rpc('ti_archive_search_v2',{
+   p_terms:keywords,p_exclude:excludes,p_any:true,p_kind:'招標',p_sort:'relevance',p_page:p,p_limit:30
+  });
+  if(error)throw error;
+  if(token!==radarFullRequest)return;
+  if(!data||!Array.isArray(data.rows))throw Error('資料庫回傳無效');
+  radarFullTotal=Number(data.total||0);radarFullPage=p;
+  results.replaceChildren();
+  let kept=0;
+  for(const item of data.rows){
+   const rec=normalize({
+    unit_id:item.unit_id,job_number:item.job_number,unit_name:item.agency,
+    date:item.latest_notice_date,filename:item.latest_filename,budget_amount:item.budget_amount,
+    award_amount:item.award_amount,
+    brief:{title:item.title,type:item.latest_notice_type,category:item.category||item.group_name}
+   });
+   if(!rec)continue;
+   const score=scoreCase(rec,store.profile);
+   // A source term can match agency/vendor names without proving product applicability.
+   const wrapper=E('div','');
+   wrapper.append(caseCard(rec,{radarScore:score.matched}));
+   const note=E('div','minor');
+   const explanations=score.reasons.length?score.reasons:['命中公告其他來源欄位，是否屬於你的業務仍待確認'];
+   const warnings=[...score.warnings];
+   if(!item.deadline_at)warnings.push('未取得原公告截止時間，不能確認是否還能投標');
+   else{
+    const d=new Date(item.deadline_at);
+    warnings.push(Number.isNaN(d.getTime())?'官方截止時間無法解析':
+     d<=new Date()?'已過已入庫截止時間，請核對是否有更正':
+     '已入庫截止時間：'+d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false}));
+   }
+   if(item.verified_location)explanations.push('公告履約地：'+item.verified_location);
+   if(store.profile.area&&!item.verified_location)warnings.push('履約地未公開，未使用機關地址代替');
+   note.textContent='符合：'+explanations.join('；')+'｜待核對：'+warnings.join('；');
+   note.style.padding='0 16px 9px';wrapper.append(note);results.append(wrapper);kept++;
+  }
+  if(!kept)results.append(E('div','empty','已入庫資料中無符合的招標公告，請調整關鍵字。'));
+  const maxPage=Math.max(1,Math.min(1000,Math.ceil(radarFullTotal/30)));
+  $('radarFullPage').textContent='第 '+p+'／'+maxPage+' 頁（每頁 30 件）';
+  $('radarFullPrev').disabled=p<=1;$('radarFullNext').disabled=p>=maxPage;
+  status.textContent='已入庫招標類公告共 '+radarFullTotal.toLocaleString('zh-TW')+
+   ' 案命中包含詞，按相關詞命中數及公告日排列；本頁 '+kept+
+   ' 案。不同公告類型、未完成歷史回填、資格與截止時間皆可能影響實際可投標性，這不是得標率。';
+ }catch(err){if(token===radarFullRequest)status.textContent='跨日商機查詢失敗：'+readableError(err);}
+ finally{if(token===radarFullRequest)button.disabled=false;}
+}
+
 function renderRadar(){
   const p=store.profile;
   $('profileKeywords').value=p.keywords||'';
@@ -753,6 +814,9 @@ function hook(){
     persist();if(cloud.user)void cloudSaveProfile();renderRadar();toast('已儲存商機條件'+(cloud.user?'並送出雲端同步':'（本機）')+'。');
   });
   $('radarGoSearch').addEventListener('click',()=>showView('search'));
+  $('radarFullSearch').addEventListener('click',()=>void searchFullRadar(1));
+  $('radarFullPrev').addEventListener('click',()=>{if(radarFullPage>1)void searchFullRadar(radarFullPage-1);});
+  $('radarFullNext').addEventListener('click',()=>{if(radarFullPage<Math.ceil(radarFullTotal/30))void searchFullRadar(radarFullPage+1);});
   $('agencyForm').addEventListener('submit',e=>{e.preventDefault();const id=$('agencyId').value.trim();if(id)loadAgency(id);});
   $('vendorForm').addEventListener('submit',e=>{e.preventDefault();const q=$('vendorQuery').value.trim();const mode=$('vendorMode').value;if(q)loadVendors(mode,q);});
   $('trackingCsv').addEventListener('click',trackingCSV);
@@ -875,6 +939,9 @@ function clearUserState(){
   $('cloudDocuments').replaceChildren(E('div','empty','請登入查看私有文件。'));
   $('knowledgeResults').replaceChildren();
   $('knowledgeStatus').textContent='請登入後使用私有文件知識庫。';
+  radarFullRequest++;radarFullPage=1;radarFullTotal=0;
+  $('radarFullResults').replaceChildren();$('radarFullPage').textContent='尚未查詢';
+  $('radarFullStatus').textContent='請儲存關鍵字後重新查詢資料庫跨日商機。';
 }
 function renderAccount(){
   if(state.view==='billing')void renderBilling();
