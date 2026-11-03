@@ -10,7 +10,6 @@ on:
       - "company-radar-web/**"
       - "site-selection-web/**"
       - "construction-radar-web/**"
-      - "tender-intelligence-web/**"
       - "procurement-anomaly-radar-web/**"
       - "disaster-risk-web/**"
       - ".github/workflows/company-radar-pages.yml"
