@@ -114,7 +114,12 @@ async function ingest(mode){
  let run=null,day=null,found=0,added=0,details=0,backfillDate=null;
  try{
   let date;
-  if(mode==="backfill"){
+  if(mode==="retry"){
+    const due=await db("ti_backfill_gaps?select=source_date&resolved_at=is.null&next_retry_at=lte."+
+      encodeURIComponent(new Date().toISOString())+"&order=source_date.asc&limit=1");
+    if(!due?.length)return {ok:true,mode:"retry",status:"paused",reason:"no source gaps currently eligible"};
+    date=due[0].source_date;backfillDate=date;
+  }else if(mode==="backfill"){
     const ready=await db("rpc/ti_backfill_ready","POST",{});
     if(!ready)return {ok:true,mode:"backfill",status:"paused",reason:"日期範圍已完成、暫停或達到自訂資料庫容量上限"};
     const state=await db("ti_backfill_state?select=next_date,oldest_date,enabled&id=eq.openfun-pcc&limit=1");
@@ -134,7 +139,7 @@ async function ingest(mode){
   if(!run)throw Error("ingest run initialization failed");
   const list=await json(SRC+"/listbydate?date="+day,45000);
   if(!Array.isArray(list.records))throw Error("source response is missing records");
-  if(list.records.length===0 && mode!=="backfill")throw Error("source returned no announcements");
+  if(list.records.length===0 && !["backfill","retry"].includes(mode))throw Error("source returned no announcements");
   const at=new Date().toISOString(),notices=new Map(),cases=new Map();
   for(const row of list.records){
    const x=norm(row,at);if(!x)continue;
@@ -148,23 +153,28 @@ async function ingest(mode){
   // Backfill runs have a tighter detail quota to keep old-year imports cheap.
   const cached=await db("ti_case_details?select=case_id&limit=10000");
   const known=new Set((cached||[]).map(x=>x.case_id));
-  const detailsQuota=mode==="backfill"?2:15;
+  const detailsQuota=["backfill","retry"].includes(mode)?2:15;
   for(const c of [...cases.values()].filter(x=>!known.has(x.id)&&/招標|決標|更正/.test(x.latest_notice_type||"")).slice(0,detailsQuota)){
    try{if(await enrich(c))details++}catch(e){console.warn("detail unavailable",c.id,text(e).slice(0,130))}
   }
   const finished=new Date().toISOString();
   await db("ti_ingest_runs?id=eq."+run,"PATCH",
    {finished_at:finished,status:"success",fetched_count:found,new_notice_count:added,detail_count:details},"return=minimal");
-  if(mode==="backfill"){
+  if(mode==="backfill"||mode==="retry"){
     await db("ti_backfill_days?on_conflict=source_date","POST",[
       {source_date:backfillDate,fetched_count:found,inserted_count:added,finished_at:finished}
     ],"resolution=merge-duplicates,return=minimal");
-    const next=new Date(backfillDate+"T12:00:00Z");
-    next.setUTCDate(next.getUTCDate()-1);
-    await db("ti_backfill_state?id=eq.openfun-pcc","PATCH",{
-      next_date:next.toISOString().slice(0,10),last_success_at:finished,
-      last_attempt_at:finished,last_error:null
+    await db("ti_backfill_gaps?source_date=eq."+backfillDate,"PATCH",{
+      resolved_at:finished,last_attempt_at:finished
     },"return=minimal");
+    if(mode==="backfill"){
+      const next=new Date(backfillDate+"T12:00:00Z");
+      next.setUTCDate(next.getUTCDate()-1);
+      await db("ti_backfill_state?id=eq.openfun-pcc","PATCH",{
+        next_date:next.toISOString().slice(0,10),last_success_at:finished,
+        last_attempt_at:finished,last_error:null
+      },"return=minimal");
+    }
   }else{
     await db("ti_sources?id=eq.openfun-pcc","PATCH",{last_success_at:finished,last_error:null,updated_at:finished},"return=minimal");
   }
@@ -173,11 +183,25 @@ async function ingest(mode){
   const msg=text(e).slice(0,300),finished=new Date().toISOString();console.error("ingest failed",msg);
   if(run)try{await db("ti_ingest_runs?id=eq."+run,"PATCH",
    {finished_at:finished,status:"error",fetched_count:found,new_notice_count:added,detail_count:details,error_summary:msg},"return=minimal")}catch{}
-  if(mode==="backfill")try{
-    await db("ti_backfill_state?id=eq.openfun-pcc","PATCH",{
-      last_attempt_at:finished,last_error:msg
-    },"return=minimal");
-  }catch{}
+  if(mode==="backfill"||mode==="retry")try{
+    if(backfillDate){
+      const existing=await db("ti_backfill_gaps?select=attempts&source_date=eq."+backfillDate+"&limit=1");
+      await db("ti_backfill_gaps?on_conflict=source_date","POST",[{
+        source_date:backfillDate,error_summary:msg,
+        attempts:Number(existing?.[0]?.attempts||0)+1,
+        last_attempt_at:finished,next_retry_at:new Date(Date.now()+4*3600000).toISOString(),
+        resolved_at:null
+      }],"resolution=merge-duplicates,return=minimal");
+    }
+    if(mode==="backfill"&&backfillDate){
+      const next=new Date(backfillDate+"T12:00:00Z");
+      next.setUTCDate(next.getUTCDate()-1);
+      await db("ti_backfill_state?id=eq.openfun-pcc","PATCH",{
+        next_date:next.toISOString().slice(0,10),last_attempt_at:finished,
+        last_error:msg+"（已留存缺漏並排程重試）"
+      },"return=minimal");
+    }
+  }catch(err){console.error("error recording gap",String(err).slice(0,180))}
   else try{await db("ti_sources?id=eq.openfun-pcc","PATCH",{last_error_at:finished,last_error:msg},"return=minimal")}catch{}
   return {ok:false,date:day,error:msg};
  }
@@ -190,7 +214,7 @@ Deno.serve(async(req)=>{
  try{const allowed=await db("rpc/ti_verify_ingest_token","POST",{candidate:token});
   if(allowed!==true)return Response.json({error:"Unauthorized"},{status:401});
  }catch{return Response.json({error:"Unauthorized"},{status:401})}
- let mode="latest";try{const b=await req.json();if(["previous","backfill"].includes(b.mode))mode=b.mode}catch{}
+ let mode="latest";try{const b=await req.json();if(["previous","backfill","retry"].includes(b.mode))mode=b.mode}catch{}
  const result=await ingest(mode);
  return Response.json(result,{status:result.ok?200:502,headers:{"Cache-Control":"no-store"}});
 });
