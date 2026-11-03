@@ -11,6 +11,8 @@ on:
       - "tender-intelligence-web/backend.js"
       - "tender-intelligence-web/delivery.js"
       - "tender-intelligence-web/advanced.js"
+      - "tender-intelligence-web/developer-api.js"
+      - "tender-intelligence-web/issues.js"
       - "tender-intelligence-web/operations.js"
       - "tender-intelligence-web/proposal.js"
       - "tender-intelligence-web/account-privacy.js"
@@ -44,6 +46,8 @@ jobs:
           node --check tender-intelligence-web/backend.js
           node --check tender-intelligence-web/delivery.js
           node --check tender-intelligence-web/advanced.js
+          node --check tender-intelligence-web/developer-api.js
+          node --check tender-intelligence-web/issues.js
           node --check tender-intelligence-web/operations.js
           node --check tender-intelligence-web/proposal.js
           node --check tender-intelligence-web/account-privacy.js
@@ -83,11 +87,15 @@ jobs:
           for view in ('decisions','contracts','directory','guide'):
               assert f'id="view-{view}"' in html,view
           assert 'id="view-advanced"' in html
+          for key in ('issues','developer'):
+              assert f'id="view-{key}"' in html,key
+          assert '<script type="module" src="./issues.js"></script>' in html
+          assert '<script type="module" src="./developer-api.js"></script>' in html
           for marker in ('verifiedMetrics','verifiedLatest','verifiedOpen','verifiedSoon','verifiedUnknown',
                          'advDeadlineStart','advDeadlineEnd','radarFullSearch','radarFullResults',
                          'knowledgeSearchForm','knowledgeResults','trackingXlsx'):
               assert f'id="{marker}"' in html,marker
-          for f in ("app.js","styles.css","core.mjs","backend.js","delivery.js","advanced.js","operations.js","proposal.js","account-privacy.js","debarred.js","support.js","support.css"):
+          for f in ("app.js","styles.css","core.mjs","backend.js","delivery.js","advanced.js","issues.js","developer-api.js","operations.js","proposal.js","account-privacy.js","debarred.js","support.js","support.css"):
               assert (root/f).is_file(),f
           print("OK: required assets exist")
           PY
