@@ -1,0 +1,46 @@
+name: 測試政府標案情報平台
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "tender-intelligence-web/index.html"
+      - "tender-intelligence-web/styles.css"
+      - "tender-intelligence-web/app.js"
+      - "tender-intelligence-web/core.mjs"
+      - "tender-intelligence-web/tests/**"
+      - ".github/workflows/tender-intelligence-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-unit-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: 讀取程式碼
+        uses: actions/checkout@v4
+      - name: 設定 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 驗證 JavaScript 語法
+        run: |
+          node --check tender-intelligence-web/app.js
+          node --check tender-intelligence-web/core.mjs
+      - name: 執行資料解析及安全性單元測試
+        run: node --test tender-intelligence-web/tests/*.test.mjs
+      - name: 驗證網頁參照的檔案存在
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path("tender-intelligence-web")
+          html=(root/"index.html").read_text(encoding="utf-8")
+          assert '<script type="module" src="./app.js"></script>' in html
+          assert '<link rel="stylesheet" href="./styles.css">' in html
+          for f in ("app.js","styles.css","core.mjs"):
+              assert (root/f).is_file(),f
+          print("OK: required assets exist")
+          PY
