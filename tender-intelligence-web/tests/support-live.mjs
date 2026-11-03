@@ -50,6 +50,7 @@ try{
   category:'system',subject:'Demo smoke test ticket',
   message:'This is an isolated integration-test report, not a real customer request.'
  },201);
+ await new Promise(resolve=>setTimeout(resolve,5200));
  const supplement=await call(first,'customer_reply',{thread_id:form.thread_id,message:'測試使用者補充留言'});
  assert.equal(supplement.ok,true);
  const second=await createDemo();demos.push(second);
