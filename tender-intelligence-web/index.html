@@ -1,50 +1,162 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>政府標案情報平台｜OpenData Lab</title>
-<style>
-:root{--nav:#101828;--bg:#f5f7fa;--card:#fff;--text:#182230;--muted:#667085;--line:#e4e7ec;--blue:#2563eb}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text)}
-.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}.side{background:var(--nav);color:#fff;padding:26px 18px;position:sticky;top:0;height:100vh}.brand{font-weight:800;font-size:20px}.sub{font-size:12px;color:#98a2b3;line-height:1.6;margin-top:8px}.nav{margin-top:30px}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;padding:12px;border-radius:9px;text-align:left;margin:4px 0;cursor:pointer}.nav button.active,.nav button:hover{background:#1d2939;color:#fff}
-.main{padding:26px 30px 50px;max-width:1500px}.top{display:flex;justify-content:space-between;gap:16px}.eyebrow{color:var(--blue);font-weight:700;font-size:12px}.top h1{margin:5px 0 6px;font-size:28px}.muted{color:var(--muted);font-size:13px}.pill{background:#eef4ff;color:#1849a9;padding:8px 11px;border-radius:999px;font-size:12px;font-weight:700;height:fit-content}.notice{margin:18px 0;background:#fffaeb;border:1px solid #fedf89;padding:11px 14px;border-radius:10px;font-size:12px;color:#7a2e0e}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:12px}.stat{padding:16px}.stat span{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:24px;margin-top:6px}.panel{margin-top:14px;padding:16px}.filters{display:grid;grid-template-columns:1.5fr repeat(4,1fr) auto;gap:10px}.filters input,.filters select{border:1px solid #d0d5dd;border-radius:8px;padding:10px;background:#fff;width:100%}.btn{border:1px solid #d0d5dd;background:#fff;color:#344054;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
-.tablehead,.row{display:grid;grid-template-columns:70px 1.7fr 1.1fr .9fr .9fr 1fr 44px;align-items:center;gap:10px}.tablehead{padding:12px 10px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--line)}.row{padding:13px 10px;border-bottom:1px solid #f0f2f5}.row:hover{background:#f9fafb}.score{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:18px;background:#eff8ff;color:#175cd3}.score.hot{background:#ecfdf3;color:#027a48}.name{border:0;background:none;padding:0;font-size:14px;font-weight:750;cursor:pointer;text-align:left}.small{font-size:11px;color:var(--muted);margin-top:4px}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{font-size:13px}.tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#f2f4f7;font-size:11px}.star{font-size:22px;background:none;border:0;color:#f59e0b;cursor:pointer}
-.drawerback{position:fixed;inset:0;background:#10182870}.drawer{position:fixed;right:0;top:0;width:min(540px,92vw);height:100vh;background:#fff;padding:26px;overflow:auto;box-shadow:-12px 0 30px #0002}.hidden{display:none}.close{float:right;border:0;background:#f2f4f7;width:36px;height:36px;border-radius:9px;cursor:pointer}.reason{background:#f8fafc;border:1px solid var(--line);padding:10px;border-radius:9px;margin:8px 0;font-size:13px}.detail{display:grid;grid-template-columns:1fr 1fr;gap:10px}.detail>div{border:1px solid var(--line);padding:11px;border-radius:9px}.detail span{display:block;color:var(--muted);font-size:11px}
-@media(max-width:1000px){.shell{grid-template-columns:1fr}.side{display:none}.main{padding:18px}.grid{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.tablehead{display:none}.row{grid-template-columns:58px 1fr 1fr}.row .hide-sm{display:none}}@media(max-width:600px){.grid,.filters{grid-template-columns:1fr}.row{grid-template-columns:55px 1fr 40px}.row .metric,.row .tagwrap{display:none}}
-</style></head>
-<body><div class="shell">
-<aside class="side"><div class="brand">OpenData Lab</div><div class="sub">Top 5 商業化原型<br>04｜政府標案情報平台</div><div class="nav"><button class="active">今日值得追</button><button onclick="showSaved()">追蹤標案</button><button onclick="location.href='../'">企業商機雷達</button></div></aside>
-<main class="main"><div class="top"><div><div class="eyebrow">PUBLIC PROCUREMENT INTELLIGENCE</div><h1>政府標案情報平台</h1><div class="muted">不是另一個標案搜尋器，而是直接告訴你：今天哪些案值得追、誰常得標、下一次何時可能重買。</div></div><div class="pill">商業價值 89 / 100</div></div>
-<div class="notice">MVP 示意版：以下標案與廠商為模擬資料。正式版應串政府採購決標資料、公司基本資料與歷史得標紀錄。</div>
-<div class="grid"><div class="stat"><span>今日候選</span><strong id="sTotal">0</strong></div><div class="stat"><span>高匹配 ≥ 85</span><strong id="sHot">0</strong></div><div class="stat"><span>總預算</span><strong id="sBudget">—</strong></div><div class="stat"><span>近 90 天可能重購</span><strong id="sRenew">0</strong></div></div>
-<section class="panel"><div class="filters">
-<input id="q" placeholder="搜尋標案、機關或關鍵字">
-<select id="industry"><option>網路設備</option><option>資安</option><option>醫療設備</option><option>教育科技</option><option>辦公設備</option></select>
-<select id="agency"><option value="all">所有機關類型</option><option>中央機關</option><option>地方政府</option><option>學校</option><option>醫院</option></select>
-<select id="minBudget"><option value="0">所有金額</option><option value="500">500 萬以上</option><option value="1000">1,000 萬以上</option><option value="3000">3,000 萬以上</option></select>
-<select id="sort"><option value="score">依匹配分數</option><option value="budget">依預算</option><option value="deadline">依截止日</option></select>
-<button class="btn" onclick="exportCsv()">匯出 CSV</button></div>
-<div class="tablehead"><div>分數</div><div>標案</div><div>機關</div><div>預算</div><div>截止</div><div>競爭情報</div><div></div></div><div id="list"></div></section></main></div>
-<div id="back" class="drawerback hidden" onclick="closeDrawer()"></div><aside id="drawer" class="drawer hidden"><button class="close" onclick="closeDrawer()">×</button><div id="drawerBody"></div></aside>
-<script>
-const tenders=[
-{id:1,n:"核心交換器與網路設備汰換案",agency:"臺北市政府資訊局",type:"地方政府",cat:"網路設備",budget:2860,deadline:"2026-10-02",winner:"聯網科技",rival:"啟碁系統、宏達資訊",cycle:36,months:1,score:94,history:"近 3 次同類案皆由 3 家廠商輪流得標"},
-{id:2,n:"資料中心零信任與資安設備建置",agency:"數位發展部",type:"中央機關",cat:"資安",budget:5200,deadline:"2026-10-08",winner:"安拓資訊",rival:"凌群、精誠",cycle:30,months:2,score:92,history:"近年資安預算逐年提高"},
-{id:3,n:"校園無線網路升級採購",agency:"國立臺灣大學",type:"學校",cat:"網路設備",budget:1480,deadline:"2026-09-30",winner:"聯成科技",rival:"群環、神通",cycle:24,months:1,score:89,history:"多校區分批採購，過去兩年皆有續案"},
-{id:4,n:"智慧病房資訊設備更新",agency:"臺北市立聯合醫院",type:"醫院",cat:"醫療設備",budget:3650,deadline:"2026-10-12",winner:"醫電科技",rival:"佳世達、神通",cycle:48,months:4,score:88,history:"歷史案偏好具醫療整合經驗廠商"},
-{id:5,n:"國中小平板與教學平台擴充",agency:"新北市政府教育局",type:"地方政府",cat:"教育科技",budget:6100,deadline:"2026-10-15",winner:"宏碁資訊",rival:"台灣大哥大、遠傳",cycle:24,months:3,score:91,history:"大型採購通常分批次與後續維運"},
-{id:6,n:"辦公電腦與顯示器汰換",agency:"財政部",type:"中央機關",cat:"辦公設備",budget:980,deadline:"2026-10-05",winner:"精誠資訊",rival:"宏碁、凌群",cycle:36,months:2,score:82,history:"固定週期汰換，需求可預測"},
-{id:7,n:"區域網路防火牆更新",agency:"高雄市政府",type:"地方政府",cat:"資安",budget:1320,deadline:"2026-10-01",winner:"安碁資訊",rival:"中華電信、精誠",cycle:30,months:1,score:86,history:"過去得標集中於少數 SI"},
-{id:8,n:"教學大樓網路骨幹更新",agency:"國立政治大學",type:"學校",cat:"網路設備",budget:760,deadline:"2026-09-28",winner:"群環科技",rival:"聯成、中華電信",cycle:36,months:1,score:87,history:"近一次標案金額較三年前成長"},
-{id:9,n:"醫療影像儲存與伺服器擴充",agency:"臺中榮民總醫院",type:"醫院",cat:"醫療設備",budget:4380,deadline:"2026-10-20",winner:"神通資訊",rival:"佳世達、華電聯網",cycle:42,months:5,score:84,history:"既有系統相容性是重要進入門檻"},
-{id:10,n:"分署端點資安與 EDR 授權",agency:"勞動部",type:"中央機關",cat:"資安",budget:2140,deadline:"2026-10-06",winner:"精誠資訊",rival:"安碁、敦陽",cycle:12,months:2,score:90,history:"訂閱授權型產品具年度續約機會"}
-];
-let saved=new Set(JSON.parse(localStorage.getItem("tender-radar-saved")||"[]")),current=[];const el=id=>document.getElementById(id);
-function match(t){let s=t.score;if(t.cat===el("industry").value)s+=5;else s-=9;return Math.max(45,Math.min(99,s))}
-function render(){const q=el("q").value.trim(),a=el("agency").value,min=+el("minBudget").value,sort=el("sort").value;current=tenders.filter(t=>(!q||(t.n+t.agency+t.cat).includes(q))&&(a==="all"||t.type===a)&&t.budget>=min);current.sort((x,y)=>sort==="budget"?y.budget-x.budget:sort==="deadline"?x.deadline.localeCompare(y.deadline):match(y)-match(x));el("list").innerHTML=current.map(t=>'<div class="row"><div class="score '+(match(t)>=90?"hot":"")+'">'+match(t)+'</div><div><button class="name" onclick="openDrawer('+t.id+')">'+t.n+'</button><div class="small">'+t.cat+' ・ '+t.type+'</div></div><div class="tagwrap"><span class="tag">'+t.agency+'</span></div><div class="metric"><span>預算</span><b>'+t.budget.toLocaleString()+' 萬</b></div><div class="metric hide-sm"><span>截止日</span><b>'+t.deadline.slice(5)+'</b></div><div class="metric hide-sm"><span>上次得標</span><b>'+t.winner+'</b></div><button class="star" onclick="toggleSave('+t.id+')">'+(saved.has(t.id)?"★":"☆")+'</button></div>').join("");el("sTotal").textContent=current.length;el("sHot").textContent=current.filter(t=>match(t)>=85).length;el("sBudget").textContent=(current.reduce((s,t)=>s+t.budget,0)/10000).toFixed(1)+" 億";el("sRenew").textContent=current.filter(t=>t.months<=3).length}
-function openDrawer(id){const t=tenders.find(x=>x.id===id);el("drawerBody").innerHTML='<div class="eyebrow">'+t.type+' ・ '+t.cat+'</div><h2>'+t.n+'</h2><p class="muted">'+t.agency+'</p><div class="score" style="width:70px;height:70px;font-size:26px">'+match(t)+'</div><h3>競爭情報</h3><div class="reason">✓ 上次得標廠商：'+t.winner+'</div><div class="reason">✓ 主要競爭者：'+t.rival+'</div><div class="reason">✓ '+t.history+'</div><div class="detail"><div><span>預算</span><b>'+t.budget.toLocaleString()+' 萬</b></div><div><span>投標截止</span><b>'+t.deadline+'</b></div><div><span>歷史採購週期</span><b>約 '+t.cycle+' 個月</b></div><div><span>可能重購訊號</span><b>'+t.months+' 個月內</b></div></div>';el("back").classList.remove("hidden");el("drawer").classList.remove("hidden")}
-function closeDrawer(){el("back").classList.add("hidden");el("drawer").classList.add("hidden")}
-function toggleSave(id){saved.has(id)?saved.delete(id):saved.add(id);localStorage.setItem("tender-radar-saved",JSON.stringify([...saved]));render()}
-function showSaved(){current=tenders.filter(t=>saved.has(t.id));el("list").innerHTML=current.map(t=>'<div class="row"><div class="score">'+match(t)+'</div><div><button class="name" onclick="openDrawer('+t.id+')">'+t.n+'</button><div class="small">'+t.cat+'</div></div><div class="tagwrap"><span class="tag">'+t.agency+'</span></div><div class="metric"><span>預算</span><b>'+t.budget+' 萬</b></div><div class="metric hide-sm"><span>截止</span><b>'+t.deadline.slice(5)+'</b></div><div class="metric hide-sm"><span>上次得標</span><b>'+t.winner+'</b></div><button class="star" onclick="toggleSave('+t.id+')">★</button></div>').join("")}
-function exportCsv(){const rows=[["標案","機關","類別","匹配分數","預算萬元","截止日","上次得標","競爭者"],...current.map(t=>[t.n,t.agency,t.cat,match(t),t.budget,t.deadline,t.winner,t.rival])];const csv="\ufeff"+rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="政府標案情報.csv";a.click()}
-["q","industry","agency","minBudget","sort"].forEach(id=>el(id).addEventListener(id==="q"?"input":"change",render));render();
-</script></body></html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111f34">
+  <meta name="description" content="台灣政府採購標案情報中心：公開搜尋真實標案、機關與廠商歷史、投標追蹤、成交行情與標書條款整理。">
+  <title>台灣標案情報中心｜OpenData Lab</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="./" aria-label="標案情報中心首頁">
+      <span class="brand-icon">標</span>
+      <span><strong>標案情報中心</strong><small>OpenData · Taiwan</small></span>
+    </a>
+    <p class="side-label">搜尋與情報</p>
+    <nav class="nav" aria-label="主要功能">
+      <button type="button" class="nav-item active" data-view="search"><span>⌕</span> 標案搜尋</button>
+      <button type="button" class="nav-item" data-view="radar"><span>◎</span> 我的商機雷達</button>
+      <button type="button" class="nav-item" data-view="agencies"><span>▤</span> 機關情報</button>
+      <button type="button" class="nav-item" data-view="vendors"><span>◇</span> 廠商與競品</button>
+      <button type="button" class="nav-item" data-view="analytics"><span>▥</span> 決標行情</button>
+      <p class="side-label">我的工作</p>
+      <button type="button" class="nav-item" data-view="tracking"><span>▣</span> 投標工作台 <b id="trackingCount" class="mini-count">0</b></button>
+      <button type="button" class="nav-item" data-view="alerts"><span>♧</span> 監控與提醒</button>
+      <button type="button" class="nav-item" data-view="documents"><span>▧</span> 標書條款整理</button>
+      <p class="side-label">其他</p>
+      <button type="button" class="nav-item" data-view="about"><span>ⓘ</span> 資料說明</button>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="status-dot"></span> 公開測試版本
+      <p>沒有付費限制。標案由公開資料 API 即時讀取；個人追蹤目前只保存在這台裝置。</p>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="topbar-left"><button type="button" id="mobileMenu" class="mobile-menu" aria-label="開啟功能選單">☰</button><span id="currentViewLabel">標案搜尋</span><span class="topbar-sep">/</span><span class="topbar-sub">台灣政府採購</span></div>
+      <div class="topbar-right"><span id="apiStatus" class="connection-tag">等待讀取資料</span><a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer" class="external-link">政府電子採購網 ↗</a></div>
+    </header>
+    <main class="main">
+      <section id="view-search" class="view">
+        <div class="hero">
+          <div><div class="eyebrow">PUBLIC PROCUREMENT INTELLIGENCE</div><h1>找到值得投入的政府標案</h1><p>搜尋真實公告、追蹤更正與決標，連接機關及廠商歷史。所有資料均可回到原始來源查核。</p></div>
+          <div class="hero-emblem" aria-hidden="true">⌕</div>
+        </div>
+        <div class="metrics" id="metrics">
+          <div class="metric"><span>本次載入公告</span><strong id="metricLoaded">—</strong><small>非全國總數</small></div>
+          <div class="metric"><span>去重後案件</span><strong id="metricCases">—</strong><small>依機關與案號去重</small></div>
+          <div class="metric"><span>招標類公告</span><strong id="metricOpen">—</strong><small>不等於尚未截標</small></div>
+          <div class="metric"><span>已收藏</span><strong id="metricSaved">0</strong><small>保存在本機瀏覽器</small></div>
+        </div>
+        <div class="panel search-panel">
+          <form id="searchForm" class="search-form">
+            <label for="searchMode" class="sr-only">搜尋類型</label>
+            <select id="searchMode" aria-label="搜尋類型">
+              <option value="latest">最新公告</option>
+              <option value="title">標案名稱</option>
+              <option value="vendor">廠商名稱</option>
+              <option value="companyId">廠商統編</option>
+              <option value="agency">機關名稱</option>
+            </select>
+            <input id="searchQuery" type="search" placeholder="例如：資安、空調、清潔、統編、機關名稱" autocomplete="off" maxlength="120" aria-label="搜尋關鍵字">
+            <button class="primary-btn" type="submit">搜尋標案</button>
+          </form>
+          <div class="preset-row"><span>快速搜尋</span><button type="button" data-preset="資訊">資訊</button><button type="button" data-preset="清潔">清潔</button><button type="button" data-preset="營造">營造</button><button type="button" data-preset="醫療">醫療</button><button type="button" data-preset="保全">保全</button><button type="button" data-preset="latest">今日公告</button></div>
+          <div class="filters">
+            <label>公告類型<select id="statusFilter"><option value="全部">全部公告</option><option value="招標">招標</option><option value="決標">決標</option><option value="更正">更正</option><option value="無法決標">無法決標</option></select></label>
+            <label>採購標的<select id="groupFilter"><option value="全部">全部類別</option><option value="工程">工程</option><option value="財物">財物</option><option value="勞務">勞務</option><option value="未分類">未分類</option></select></label>
+            <label>最低公開預算（元）<input id="budgetFilter" type="number" min="0" step="10000" placeholder="不限"></label>
+            <label>結果排序<select id="sortFilter"><option value="date">最新公告</option><option value="budget">公開預算高至低</option><option value="title">標案名稱</option></select></label>
+          </div>
+          <p class="hint">篩選作用於本次 API 回傳的公告；搜尋 API 每頁至多 100 筆。部分公告的預算、截標時間需進入詳情才能確認。</p>
+        </div>
+        <div id="dataError" class="notice danger" role="alert" hidden></div>
+        <div class="section-heading"><div><h2 id="resultsHeading">最新公告</h2><p id="resultInfo">正在讀取真實公告…</p></div><div class="heading-actions"><button id="exportCsv" type="button" class="ghost-btn">↓ CSV</button><button id="exportRss" type="button" class="ghost-btn">↓ RSS 檔案</button><button id="reloadBtn" type="button" class="ghost-btn">重新整理</button></div></div>
+        <div id="resultList" class="result-list" aria-live="polite"><div class="empty">正在連線公開標案來源…</div></div>
+        <div class="pagination"><button id="prevPage" type="button" class="ghost-btn">上一頁</button><span id="pageInfo">第 1 頁</span><button id="nextPage" type="button" class="ghost-btn">下一頁</button></div>
+      </section>
+
+      <section id="view-radar" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">PERSONALIZED LEAD MATCHING</div><h1>我的商機雷達</h1><p>設定公司可以承接的業務，從本次真實搜尋結果挑出適合的案件。評分是關鍵字匹配，不是得標機率。</p></div>
+        <div class="panel">
+          <form id="profileForm" class="setting-form">
+            <label class="wide">產品／服務關鍵字 <span class="req">必填</span><textarea id="profileKeywords" rows="2" placeholder="例如：資訊系統、網路設備、資安、維護"></textarea></label>
+            <label class="wide">排除業務<textarea id="profileExcludes" rows="2" placeholder="例如：土木、醫療器材"></textarea></label>
+            <label>最低預算（元）<input id="profileMin" type="number" min="0" step="10000" placeholder="不限"></label>
+            <label>最高預算（元）<input id="profileMax" type="number" min="0" step="10000" placeholder="不限"></label>
+            <label class="wide">期望履約區域（目前供紀錄，不用機關地址推斷）<input id="profileArea" placeholder="例如：台北、新北"></label>
+            <div class="form-actions"><button class="primary-btn" type="submit">儲存並分析</button><button id="radarGoSearch" class="ghost-btn" type="button">返回標案搜尋</button></div>
+          </form>
+        </div>
+        <div class="section-heading"><h2>符合條件的案件</h2><span class="minor">僅分析目前已載入的查詢結果</span></div>
+        <div id="radarResults" class="result-list"></div>
+      </section>
+
+      <section id="view-agencies" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">BUYER INTELLIGENCE</div><h1>機關採購情報</h1><p>查詢機關年度發包件數、決標金額、主要得標廠商。依 API 官方統計回應顯示。</p></div>
+        <div class="panel"><form id="agencyForm" class="inline-form"><label class="sr-only" for="agencyId">機關代碼</label><input id="agencyId" placeholder="輸入機關代碼，例如 A.15.2" required><button class="primary-btn" type="submit">查詢機關統計</button></form><p class="hint">在標案詳情中點選「查看此機關統計」可自動帶入正確代碼。</p></div>
+        <div id="agencyOutput" class="panel analysis-panel"><div class="empty">先輸入機關代碼或從案件詳情開啟。</div></div>
+      </section>
+
+      <section id="view-vendors" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">SUPPLIER INTELLIGENCE</div><h1>廠商與競爭情報</h1><p>以公司名稱或統編查詢真實採購參與紀錄、公告中的其他公司；無公開投標名單就不推算完整競爭關係。</p></div>
+        <div class="panel"><form id="vendorForm" class="inline-form"><select id="vendorMode" aria-label="廠商搜尋方式"><option value="name">公司名稱</option><option value="id">統一編號</option></select><input id="vendorQuery" placeholder="公司名稱或 8 碼統編" required><button class="primary-btn" type="submit">查詢廠商</button></form></div>
+        <div class="section-heading"><h2>相關投標公告</h2><span id="vendorSummary" class="minor">尚未查詢</span></div>
+        <div id="vendorOutput" class="result-list"><div class="empty">輸入廠商名稱或統一編號。</div></div>
+      </section>
+
+      <section id="view-analytics" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">AWARD INTELLIGENCE</div><h1>決標行情分析</h1><p>只使用有公開「預算」與「決標金額」的相同樣本，計算決標／預算比例。沒有資料就不生成結論。</p></div>
+        <div class="panel analysis-panel" id="analyticsOutput"><div class="empty">先查詢標案，再開啟此頁查看目前載入的可計算樣本。</div></div>
+        <div class="notice">提醒：本頁是目前回傳公告的樣本統計，不是全國行情，也不是未公開底價預測。先查詢特定產業／機關，再看分布才具有參考性。</div>
+      </section>
+
+      <section id="view-tracking" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">BID PIPELINE</div><h1>我的投標工作台</h1><p>將搜尋到的真實案件加入工作台、記錄進度、備註及內部截止日。此版本僅存本機，未提供跨裝置同步。</p></div>
+        <div class="toolbar"><button id="trackingCsv" class="ghost-btn" type="button">↓ 匯出追蹤 CSV</button><button id="trackingIcs" class="ghost-btn" type="button">↓ 匯出日曆 ICS</button><button id="trackingImport" class="ghost-btn" type="button">↑ 匯入備份</button><input id="trackingImportFile" type="file" accept=".json,application/json" hidden><button id="trackingBackup" class="ghost-btn" type="button">↓ 備份 JSON</button></div>
+        <div id="trackingOutput" class="tracking-grid"></div>
+      </section>
+
+      <section id="view-alerts" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">WATCH & ALERTS</div><h1>監控與提醒</h1><p>監控規則目前由這台瀏覽器執行。可以手動檢查新公告，頁面開啟時定期檢查；不是伺服器背景推播。</p></div>
+        <div class="notice warning">目前沒有會員資料庫、Email／LINE 後端及推播金鑰，因此<strong>關閉網頁後不會執行通知</strong>，也不會寄 Email／LINE。先把真實規則比對與差異偵測功能做起來，不偽裝成已發訊息。</div>
+        <div class="panel"><form id="watchForm" class="inline-form"><input id="watchTerm" placeholder="要監控的標案關鍵字（例如：資安）" maxlength="70" required><button class="primary-btn" type="submit">新增監控</button></form><div class="toolbar"><button id="checkWatch" class="ghost-btn" type="button">立即檢查新公告</button><button id="enableDesktop" class="ghost-btn" type="button">允許此裝置通知</button><span id="watchCheckedAt" class="minor">尚未檢查</span></div></div>
+        <div id="watchOutput" class="watch-list"></div>
+      </section>
+
+      <section id="view-documents" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">DOCUMENT CHECKLIST</div><h1>標書條款整理</h1><p>從你合法取得的招標文件整理資格、截標、履約、評選與押標金關鍵段落，保留原始出處與頁碼。</p></div>
+        <div class="notice warning"><strong>此版是瀏覽器本機「關鍵字規則解析」，不是 AI 模型。</strong>支援 TXT、MD、PDF、DOCX；文件不會上傳至我們的伺服器。掃描 PDF 無文字層時無法直接辨識；正式 AI 健檢與跨文件知識庫需要另外部署具權限的後端。</div>
+        <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><span id="documentFileName" class="minor"></span></div></div>
+        <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div>
+      </section>
+
+      <section id="view-about" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">DATA & TRUST</div><h1>資料來源與使用說明</h1><p>清楚說明哪些資料是真實來源、哪些只是本機計算，以及還沒完成的後端功能。</p></div>
+        <div class="panel prose">
+          <h2>資料來源</h2>
+          <p>本網站從第三方公開的 <a href="https://pcc-api.openfun.app/" target="_blank" rel="noopener noreferrer">OpenFun 政府採購公告 API</a> 即時取得資料。該 API 蒐集政府電子採購網公開公告。官方紀錄請以 <a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer">政府電子採購網</a> 為準。機關年度統計使用 OpenFun /api/unitstat。</p>
+          <p>API 不需 Token 的呼叫可能有流量限制或資料延遲；錯誤時顯示原因，不使用模擬資料冒充。API 可跨網域呼叫，但**公開可讀不代表可無限制商業再利用**，正式商用前應依官方資料集授權與採購網著作權政策評估。</p>
+          <h2>有哪些是真正的功能？</h2>
+          <p>真實資料搜尋、公告詳情與歷史、機關年度統計、廠商公告查詢、依資料可用性計算決標比、CSV／RSS 檔案下載、個人商機匹配、追蹤看板、ICS 日曆、瀏覽器開頁檢查通知、本機文字文件檢核。</p>
+          <h2>哪些尚未接後端？</h2>
+          <p>多裝置同步、會員登入、雲端儲存、Email／LINE 背景通知、正式 AI 模型解析、批次歷史全量統計，以及更完整來源的商用授權。這些功能不以假按鈕充數，也不收費。</p>
+          <h2>開源與研究</h2>
+          <p><a href="https://github.com/hub-google/OpenData/tree/main/tender-intelligence-web" target="_blank" rel="noopener noreferrer">GitHub 原始碼與 PRD</a>；資料實際歸屬及使用條件以原提供者為準。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div id="backdrop" class="backdrop" hidden></div>
+<aside id="detailDrawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="detailTitle" hidden>
+  <header class="drawer-head"><span>採購案件詳情</span><button id="closeDetail" type="button" aria-label="關閉詳情">✕</button></header>
+  <div id="detailContent" class="drawer-body"><div class="empty">正在讀取…</div></div>
+</aside>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
