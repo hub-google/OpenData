@@ -1,115 +1,102 @@
-# 台灣標案情報中心（實作版）
+# 台灣政府標案情報中心（2026-11-03）
 
-> 對應 PRD：`PRD-台灣標案情報平台-v0.1-2026-11-03.md`
+> 官方網站：https://hub-google.github.io/OpenData/tender-intelligence-web/
 >
-> 入口：https://hub-google.github.io/OpenData/tender-intelligence-web/
+> 需求規格：[PRD v0.1](./PRD-台灣標案情報平台-v0.1-2026-11-03.md)
 >
-> 2026-11-03：以真實公開資料取代舊版寫死 10 筆模擬資料。所有目前完成的功能不設付費牆。
+> **目前所有已實作的功能均免費；無付費牆，沒有啟用扣款。**「方案與帳務」尚不開放。
+>
+> **產品狀態：可公開測試的開發版，不是所有 PRD 項目皆已驗收完成。**請勿將部分功能程式已部署與完整商業服務畫上等號。
 
-## 收費系統（2026-11-03，新加入，尚未啟用真實收款）
-
-- 前台左側新增「方案與帳務」：個人／專業／團隊 PRD 測試價位，會員可查詢付款歷史與訂閱狀態。
-- Supabase 已部署 `ti-billing` Edge Function 與 `ti_billing_*` 表格，支援綠界單次付款、每月信用卡定期扣款及停止後續扣款的程式流程；付款回調伺服器驗證簽章及防重，**未完成商家實際金流端到端測試**。
-- 預設 `TI_BILLING_CHECKOUT_ENABLED` 未設；未提供正式綠界 MerchantID/HashKey/HashIV，方案頁付款按鈕保持停用。**目前不會收款。**
-- 既有搜尋等功能未設付費限制；正式商用前需確認資料來源使用授權、用戶條款、退款政策與發票。
-- 開通／操作／驗收說明：[`BILLING_SETUP.md`](./BILLING_SETUP.md)。
-
-## 功能現況
-
-| 功能 | 狀態 | 真正資料／限制 |
-|---|---|---|
-| 最新公告 | ✅（已驗證） | 公開 API `/getinfo` → `/listbydate`，沒有使用假資料 |
-| 關鍵字搜尋 | ✅ | `/searchbytitle` |
-| 公司名稱／統編搜尋 | ✅ | `/searchbycompanyname`、`/searchbycompanyid` |
-| 機關名稱搜尋 | ✅ | `/listbyunit?unit_name=...` |
-| 公告類型、類別、預算篩選 | ✅ | 只篩本次 API 取回的案件，**不假裝全國結果都已過濾** |
-| 標案詳細資料與公告歷程 | ✅ | `/tender?unit_id=...&job_number=...`；官方公告 URL 只使用來源實際存在且主機為 web.pcc.gov.tw 的連結 |
-| 機關年度採購統計與常見得標商 | ✅ | `/unitstat?unit_id=...` |
-| 廠商案件／公告廠商名稱 | ✅ | 公開 API 查詢；不把得標商當作完整投標廠商 |
-| 決標／預算比 | ✅（限樣本） | 本次查詢／已查看詳情內、可同時取得公開決標金額與預算的案件，依機關與案號去重；不足樣本則提示 |
-| 公司個人化關鍵字匹配 | ✅（規則版） | 未登入時本機保存；登入後可同步至 Supabase `ti_profiles`；不是得標機率 |
-| 投標收藏、階段、備註、內部期限 | ✅（登入後讀寫待驗） | 未登入時使用 localStorage；登入後讀寫 RLS 隔離的 `ti_saved_cases`，可匯出 CSV、ICS、JSON |
-| 公告監控／新版本比較 | ✅（後端已部署） | 未登入時瀏覽器比對；登入後 `ti_watch_rules` 與新公告入庫觸發 `ti_notifications`，關閉網頁後仍留站內紀錄；尚無 Email／LINE 推播 |
-| 系統通知 | ✅（網頁開啟時） | 須使用者明確同意瀏覽器通知；不寄 Email 或 LINE |
-| RSS | ✅（靜態下載） | 匯出當次結果為 .rss 文件，不是可長期訂閱的後端 URL |
-| TXT/MD/PDF/DOCX 標書整理 | ✅（本機規則版） | 提取文字並依條款關鍵詞分類，列出 PDF 頁碼／DOCX 段落；使用 PDF.js/Mammoth CDN，掃描型 PDF 不支援 OCR |
-| AI 模型分析、文件引用與評選健檢 | ⚠️（後端與 UI 已部署，未驗證成功推論） | `ti-document-ai` 依原文字頁碼呼叫模型並核對引用；必須登入且 Supabase Edge Function 設定 `OPENAI_API_KEY`。若未設定會明確回 503，不使用假 AI |
-| Email／LINE 伺服器背景通知 | ⏳ | 尚未部署通知後端、用戶綁定及合法的金鑰 |
-| 多人團隊／跨裝置同步 | ⚠️（已開發，未經真實多人驗收） | Supabase Auth、`ti_workspaces`、成員權限、一次性邀請、共用案件及任務的程式與 RLS 已部署；需實際多帳戶驗證 |
-| 完整全國歷史價比／精準重購預測 | ⏳ | 需授權完整資料、建立主資料庫、契約期限資料及可比樣本 |
-| 完整官方電子領標／投標文件自動送件 | 不在範圍 | 以政府電子採購網為唯一權威 |
-
-
-## 2026-11-03 真實資料管線與更新頻率（已實際部署）
+## 一、真實資料來源、保存與更新頻率
 
 | 項目 | 實際方式 |
 |---|---|
-| 台灣政府公開採購公告 | 透過第三方 OpenFun PCC API 的 `/getinfo`、`/listbydate` 取得，不直接自行抓政府 HTML |
-| 單案詳細公告 | OpenFun `/tender?unit_id=...&job_number=...`；來源官網仍為最終依據 |
-| 儲存位置 | 既有 Supabase 專案 `unapiwajmgqqtdkixaab`，獨立 `public.ti_cases`、`ti_notices`、`ti_case_details`、`ti_ingest_runs`、`ti_sources` |
-| 定期最新公告 | Supabase pg_cron `ti_pcc_hourly_ingest`，**台灣時間每小時 12 分** |
-| 前日補抓 | pg_cron `ti_pcc_previous_day_backfill`，**台灣時間每日 02:32** |
-| 執行與錯誤 | `ti-ingest` Edge Function，使用 Vault 內的專用驗證 token；每次寫入 `ti_ingest_runs` |
-| 公告去重 | `機關代碼::案號::公告日期::檔名` 對應唯一公告，原始公告簡表以 JSON 保存 |
-| 詳細資料 | 每次同步嘗試補足最多 15 筆尚未快取的案件詳情；不宣稱全部案件已完整解析 |
-| 首次成功入庫 | 2026-11-03 14:56（台灣時間），2,350 公告、2,217 去重案件 |
-| 2026-11-03 15:12 再次同步 | 成功；2,350 公告、0 筆新增公告、補足 9 筆案件詳情（累積 18 筆） |
+| 官方權威公告 | [政府電子採購網](https://web.pcc.gov.tw/) |
+| 目前標案資料供應 | [OpenFun PCC API](https://pcc-api.openfun.app/) — 第三方提供之政府採購公告結構化 API |
+| 取得方式 | **GET JSON API**；本專案標案資料同步**並非直接爬取**政府網頁 HTML |
+| 主要路由 | `/api/getinfo`、`/api/listbydate?date=YYYYMMDD`、`/api/tender?unit_id=...&job_number=...`、`/api/searchbytitle`、`/api/searchbycompanyid`、`/api/listbyunit?unit_id=...`、`/api/unitstat` |
+| 主要資料庫 | Supabase PostgreSQL（專案 `unapiwajmgqqtdkixaab`），獨立 `public.ti_*` 資料表 |
+| 原始公告快照 | `ti_notices.raw_brief`（逐筆公告的來源 JSON 欄位）、`ti_notices.id`（機關＋案號＋公告日＋版本檔名） |
+| 案件主表 | `ti_cases`，按機關代碼＋案號合併，區分一案與多次公告 |
+| 公告詳情 | `ti_case_details`，按逐次同步容量限額補抓；不是所有案件都有完整細節 |
+| 同步與來源紀錄 | `ti_ingest_runs`、`ti_sources`；失敗會保留真實 HTTP 錯誤 |
+| 最新公告同步 | Supabase pg_cron：**每小時第 12 分**，台灣時間 |
+| 前一天補抓 | Supabase pg_cron：**每日 02:32**，台灣時間 |
+| 歷史逐日回填 | Supabase pg_cron：**每 20 分鐘一次**，台灣時間；每次成功後前進一天 |
+| 來源缺口重試 | 另有每四小時一次的缺口重試；記錄於 `ti_backfill_gaps` |
+| 初期歷史目標 | 自 2026/11/02 逐日回填至 2026/08/01；目前不代表已完成或涵蓋全國歷史 |
+| 保護措施 | `ti_backfill_state` 控制啟用狀態、前進游標、300 MiB 資料表容量警戒 |
+| 密鑰保存 | Supabase Vault 儲存排程驗證 token；服務角色金鑰僅在 Supabase Edge Function 環境，不存在公開 Git 或瀏覽器 |
 
-以上資料筆數來自實際 SQL 查詢，不是固定寫入展示頁的樣本。注意資料來源授權仍待商用確認。
+**2026-11-03 實際稽核紀錄**：
 
-### 安全與資料隔離
+- 11/03：2,350 筆公告成功入庫。
+- 11/02：2,280 筆公告成功回填。
+- 10/30：3,383 筆公告成功回填。
+- 累計 **8,013 筆成功匯入的公告**（此數字是 2026-11-03 稽核快照，非即時承諾）。
+- 10/31 與 11/01：來源 API `/listbydate` 回傳 **HTTP 500**，被明確記錄為缺口；**沒有假裝這兩日零公告，也沒有補編任何公告**，會排程重試。
+- 最新完整覆蓋日期及成功／失敗請以資料庫 `ti_ingest_runs`、`ti_backfill_days`、`ti_backfill_gaps` 和網站「資料說明」為準。
 
-所有 `ti_*` 私人表格與團隊表格啟用 RLS；雲端工作台需登入。公開案件查詢與使用者私有資料的權限分開。私有文件使用 Supabase Storage 的 `ti-private-documents` 桶，依帳戶 ID 路徑限制權限。正式產線驗收仍須對不同帳戶做跨租戶測試。
+**資料授權**：公開 API 可讀取及 API 程式碼開源，**不等於政府採購公告可以任意商用、複製或再授權**。上線營利前仍需向資料提供者及主管機關確認正式商業再利用條件。部分政府開放資料集只涵蓋 GPA 案件，不能代替全國完整公告。
 
-## 前端架構
+## 二、目前真的做了什麼
 
-- `index.html`：各功能頁面／抽屜及語意結構。
-- `styles.css`：行動裝置、桌面版響應式設計。
-- `core.mjs`：純函數資料轉換、日期、公告類別、去重、統計、條件匹配與安全 URL。
-- `app.js`：即時 API、互動、下載、localStorage 與文件文字解析。
-- `tests/core.test.mjs`：無外部套件的 Node.js 單元測試。
+| PRD 功能 | 實作／驗收 |
+|---|---|
+| 公開標案搜尋，含最新公告、案名、統編、廠商、機關 | ✅ 已部署；最新案與機關名稱搜尋經真實瀏覽器驗證 |
+| 官方來源連結、單案歷次公告、資料缺漏顯示 | ✅ 已部署；個別案件瀏覽測試成功 |
+| 自有 Supabase 歷史查詢 | ✅ 已部署；網站與 SQL 已驗證；**只能搜尋已入庫的日期** |
+| 機關／廠商情報 | ✅ 已部署；機關名稱查詢在瀏覽器驗證成功；其他資料品質仍受來源欄位限制 |
+| 成交／預算比例 | ⚠️ 僅在來源明確提供兩個金額、樣本數足夠時才可算；不是全國行情 |
+| 個人化商機匹配／監控規則／收藏 | ✅ 前端與 Supabase RLS 資料表已部署，單帳戶跨裝置讀寫還需登入實測 |
+| 伺服器站內監控提醒 | ✅ 觸發器依真實新公告匹配、保留 `ti_notifications`；新用戶通知仍需端到端測試 |
+| Email 訂閱／LINE 推播 | ⚠️ 收件同意、退訂開關、佇列、15 分鐘背景任務、失敗紀錄、LINE OAuth 綁定程式已部署；**專屬金鑰尚未設定，不會寄出** |
+| 投標待辦／個人追蹤管理／CSV／ICS | ✅ 已開發，未登入時使用本機資料，登入後轉 Supabase；帳戶協作仍需驗收 |
+| 團隊工作區、邀請、權限、共用案件／任務 | ⚠️ 角色 RLS、一次性邀請與介面已部署；尚未用多個真實帳戶做完整驗收 |
+| 私有文件保存與下載 | ⚠️ 私有 Supabase Storage、帳戶路徑 RLS 已部署；尚未作實際登入上傳驗收 |
+| 瀏覽器本機標單條款整理 | ✅ 可解析文字型 TXT、MD、DOCX、PDF，PDF 保留來源頁碼；掃描 PDF 不可辨識 |
+| 真 AI 標單引用分析 | ⚠️ `ti-document-ai` 已部署，對原文引用做核對；沒有配置 `OPENAI_API_KEY`，未能完成正式模型呼叫 |
+| 價格歷史、重購預告、完整同場競品分析 | ⏳ 需更長期間與特定欄位真資料，**不能在只有少量真實金額時製造結論** |
+| 特殊採購、共同供應契約、標售、分包、審查員資料 | ⏳ 尚未全部接入合法且涵蓋範圍清楚的獨立來源 |
+| 企業唯讀 API／MCP、完整工作流 AI、付款與電子發票 | ⏳ 尚未全部完成；付款因本次**不區分付費**明確不開放 |
 
-所有動態來源文字以 `textContent` 載入，避免直接把第三方標題插入未清理的 HTML。
-沒有提交任何服務角色金鑰、LINE Token、付款憑證或 AI 私密金鑰。前端 `backend.js` 只有 Supabase 的公開 publishable key；登入後可由使用者主動把文件上傳到 Supabase 私有儲存桶 `ti-private-documents`。
+完整逐項驗收參見：[PRD 開發驗收清單](./PRD-實作驗收-2026-11-03.md)。
 
-## 資料來源及商用限制
+## 三、外部服務配置（尚未設定）
 
-公開查詢：
-- https://pcc-api.openfun.app/
-- https://github.com/openfunltd/pcc.g0v.ronny.tw/blob/master/webdata/skill.md
+Edge Function `ti-service-status` 僅公開「是否有設定」的布林值，不會公開密鑰內容。實際讀取為：
 
-真正權威：
-- https://web.pcc.gov.tw/
-- https://data.gov.tw/dataset/172020
-- https://data.gov.tw/dataset/172023
+| 功能 | Supabase Secrets 需要的名稱 | 目前實際設定 |
+|---|---|---|
+| AI 文件分析 | `OPENAI_API_KEY` | **未設定** |
+| Email 寄送 | `RESEND_API_KEY`、`TI_EMAIL_FROM` | **未設定** |
+| LINE 登入綁定 | `TI_LINE_LOGIN_CHANNEL_ID`、`TI_LINE_LOGIN_CHANNEL_SECRET` | **未設定** |
+| LINE Messaging API 推播 | `TI_LINE_CHANNEL_ACCESS_TOKEN` | **未設定** |
 
-OpenFun 的網站公開表示 API 開放 CORS、可以前端直接使用，但同時提醒採購網原始著作權及商業利用的不同規範。**能用 API 查詢不等於自動取得完整商用重製、再授權權利。** 本版用於產品功能測試，正式商業化前應確定資料來源、存取／留存及衍生資料利用授權。
+LINE 開發者後台需要設定 callback `https://unapiwajmgqqtdkixaab.supabase.co/functions/v1/ti-line-connect`。**LINE Login 與 Messaging API Channel 應在同一 LINE Provider 下，不能拿其他專案的 LINE 憑證直接代用。**
 
-API 匿名可能出現 429 或來源延遲。若發生，畫面顯示真實錯誤，不會返回模擬資料。自有 Supabase DB 目前僅保存排程已經匯入的日期，不代表有全國完整歷史。
+不要把私密金鑰貼到 GitHub README、前端 JS、GitHub Pages 或聊天訊息；僅設定在 Supabase Edge Function Secrets。服務未配置時前端要顯示未啟用，不顯示任何假成功。
 
-## 部署方式
+## 四、檔案與模組
 
-- `.github/workflows/tender-intelligence-check.yml`：每次改動 JavaScript 與相關檔案，執行 Node.js 語法與單元測試。
-- `.github/workflows/tender-intelligence-pages.yml`：有標案目錄變更時，通過測試後只更新 `gh-pages/tender-intelligence-web/` 子目錄；不因為標案網站更新而重跑其他資料爬蟲。
-- 既有全站排程 `company-radar-pages.yml` 在執行每日其他資料更新時，仍會複製本目錄最新版本。
+- `index.html`, `styles.css`：同一個桌機／手機響應式網站。
+- `core.mjs`：公告日期解析（民國年／台北時區）、去重、金額判讀、CSV 安全性與匹配統計。
+- `app.js`, `backend.js`, `delivery.js`：搜尋、會員登入、追蹤、機關／廠商、通知、團隊、文件及真實資料庫查詢。
+- `supabase/functions/ti-ingest/index.ts`：每小時 API 入庫、歷史回填、缺口重試、正式公告金額補查。
+- `supabase/functions/ti-notify/index.ts`：使用者同意後的 Email/LINE 傳送（缺少供應商密鑰時不得回報已送達）。
+- `supabase/functions/ti-line-connect/index.ts`：LINE 官方 OAuth2 身份驗證與使用者自願綁定。
+- `supabase/functions/ti-document-ai/index.ts`：需要實際 AI 金鑰與正式登入的文件檢核。
+- `supabase/functions/ti-service-status/index.ts`：僅顯示外部服務啟用狀態，不露出私密值。
+- `supabase/migrations/`：資料表、角色權限、排程、通知佇列、文件桶、歷史缺口。
+- `tests/core.test.mjs`：已建立的資料解析和安全性測試。
+- `.github/workflows/tender-intelligence-check.yml`：Node 語法、單元測試、Edge Function Deno 語法及網頁引用檢查。
+- `.github/workflows/tender-intelligence-pages.yml`：更新標案網站至 GitHub Pages，不重建其他 OpenData 專案資料。
 
-本機直接啟用需有能提供 ES modules 的靜態伺服器（例如 `python -m http.server`），不要直接使用 `file://`。
+## 五、營運驗收必須的剩餘工作
 
-## 測試
-
-```bash
-node --check tender-intelligence-web/app.js
-node --check tender-intelligence-web/core.mjs
-node --test tender-intelligence-web/tests/*.test.mjs
-```
-
-測試涵蓋：ROC 日期、API 欄位、公告去重、缺漏金額、案件狀態、決標價比、關鍵字／預算適配、CSV 公式注入與官方來源 URL 安全限制。
-
-## 待完成／未驗收（不假裝已完成）
-
-1. **資料授權**：確認 OpenFun/PCC 商用使用、資料留存與衍生資料再利用權利。
-2. **全國完整歷史資料**：目前僅有排程匯入日期的真資料；未完成全量回補與歷史價格可比樣本建置。
-3. **登入與多人驗收**：完整 Email magic-link 寄送、帳戶登入、跨裝置同步、團隊邀請、文件權限需真實多帳戶端到端測試。
-4. **Email／LINE 背景推播**：目前已完成資料庫通知紀錄，不代表已串接正式 Email／LINE 發送服務。
-5. **AI 模型驗收**：Edge Function 和 UI 已部署，但必須有保管於 Supabase 的正式模型金鑰、測試文件以及成功呼叫紀錄才能算完成。
-6. **深度情報**：完整同場投標資料、採購重購預測、團隊文件 AI 知識庫、企業 API/MCP 尚未完整實作。
+1. 獲得可確認的資料商業使用授權，建立長期可持續的資料來源契約／官方開放資料策略。
+2. 持續讓歷史回填跑到實際可用的完整範圍，查清上游 10/31、11/01 缺漏並核實每日期成功。
+3. 以兩個真實 Supabase 帳戶測試 Email magic link、儲存追蹤、私人文件隔離、團隊一次性邀請及權限。
+4. 在該專案的 Supabase Secrets 設定 AI／Email／LINE 真正服務憑證並完成一次真實推論／寄信／LINE 推播驗收。
+5. 在具備實際同場投標、招決標完整金額、契約到期等資料前，禁止標示沒根據的「勝率」、「未公開底價預測」或「精準重購時間」。
