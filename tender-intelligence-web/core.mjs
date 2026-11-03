@@ -138,15 +138,16 @@ export function scoreCase(row, profile={}) {
   else if(hits.length)reasons.push('命中業務關鍵字：'+hits.join('、'));
   else warnings.push('未命中業務關鍵字');
   const min=safeNumber(profile.min),max=safeNumber(profile.max);
+  let budgetExcluded=false;
   if(min!==null||max!==null) {
     if(row.budget===null) warnings.push('未公開預算，無法驗證金額門檻');
-    else if((min!==null&&row.budget<min)||(max!==null&&row.budget>max)) warnings.push('預算超出設定範圍');
+    else if((min!==null&&row.budget<min)||(max!==null&&row.budget>max)) {warnings.push('預算超出設定範圍');budgetExcluded=true;}
     else reasons.push('預算在設定範圍內');
   }
   const area=asText(profile.area).trim();
   if(area)warnings.push('尚無完整履約地欄位；不以機關地址冒充履約地：'+area);
   // An interpretable *match count*, deliberately not an invented win probability.
-  return {matched:hits.length,reasons,warnings,excluded:blocks.length>0,qualifies:!blocks.length&&hits.length>0};
+  return {matched:hits.length,reasons,warnings,excluded:blocks.length>0,qualifies:!blocks.length&&!budgetExcluded&&hits.length>0};
 }
 export function compareDeadline(s) {
   const d=parseDate(s);
