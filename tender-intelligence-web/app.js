@@ -3,10 +3,11 @@ import {
   normalize,dedupe,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
+import {getClient,fetchArchive,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
-const listModes={latest:'最新公告',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
+const listModes={latest:'最新公告',archive:'自有資料庫已收錄案件',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
 const viewNames={search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',analytics:'決標行情',tracking:'投標工作台',alerts:'監控與提醒',documents:'標書條款整理',about:'資料說明'};
 const states=['評估中','準備投標','已投標','待決標','已得標','未得標','不投'];
 const readableError = err => {
@@ -73,7 +74,7 @@ async function api(path,params={},timeout=22000) {
 function makeQuery(){
   const q=$('searchQuery').value.trim();
   const mode=$('searchMode').value;
-  if(mode!=='latest'&&!q){$('searchQuery').focus();toast('請輸入關鍵字、公司或機關名稱。');return null;}
+  if(mode!=='latest'&&mode!=='archive'&&!q){$('searchQuery').focus();toast('請輸入關鍵字、公司或機關名稱。');return null;}
   if(mode==='companyId'&&!/^\d{8}$/.test(q)){toast('統編搜尋請輸入 8 碼數字。');return null;}
   return {mode,query:q};
 }
@@ -88,7 +89,11 @@ async function search(mode,query='',sourcePage=1){
   setStatus('正在連線公開 API');
   try{
     let data;
-    if(mode==='latest'){
+    if(mode==='archive'){
+      data=await fetchArchive({page:sourcePage,search:query});
+      state.totalPages=Math.max(1,Number(data.total_pages||1));
+      state.lastSearch='Supabase 已收錄資料庫'+(query?'：'+query:'');
+    }else if(mode==='latest'){
       if(!state.date) {
         const info=await api('/getinfo');
         const raw=asText(info['最新資料時間']);
@@ -182,7 +187,7 @@ function toggleSaved(row){
     title:row.title,agency:row.agency,date:row.date,
     budget:row.budget,stage:'評估中',notes:'',due:'',added_at:new Date().toISOString()
   };
-  persist();renderSearch();renderTracking();renderRadar();toast(store.saved[row.id]?'已加入投標工作台':'已從投標工作台移除');
+  persist();if(cloud.user)void cloudSaveSingle(row,!!store.saved[row.id]);renderSearch();renderTracking();renderRadar();toast(store.saved[row.id]?'已加入投標工作台':'已從投標工作台移除');
 }
 function buildDetailCell(label,value){
   const box=E('div','');child(box,E('small','',label),E('strong','',value===null||value===undefined||value===''?'未公開':value));return box;
@@ -408,18 +413,18 @@ function renderTracking(){
     const stageL=E('label','','投標階段'),select=E('select','');
     for(const stage of states){const opt=E('option','',stage);opt.value=stage;select.append(opt);}
     select.value=item.stage||'評估中';
-    select.addEventListener('change',()=>{item.stage=select.value;persist();toast('已保存投標階段');});
+    select.addEventListener('change',()=>{item.stage=select.value;persist();if(cloud.user)void cloudSaveSingle(item,true);toast('已保存投標階段');});
     stageL.append(select);
     const dateL=E('label','','我的內部截止日'),input=E('input','');input.type='date';input.value=item.due||'';
-    input.addEventListener('change',()=>{item.due=input.value;persist();});
+    input.addEventListener('change',()=>{item.due=input.value;persist();if(cloud.user)void cloudSaveSingle(item,true);});
     dateL.append(input);
     const notesL=E('label','','備註／待辦'),area=E('textarea','');
     area.value=item.notes||'';area.placeholder='例如：聯絡產品部提供設備規格、準備公司證照';
-    area.addEventListener('change',()=>{item.notes=area.value.slice(0,4000);persist();});
+    area.addEventListener('change',()=>{item.notes=area.value.slice(0,4000);persist();if(cloud.user)void cloudSaveSingle(item,true);});
     notesL.append(area);child(f,stageL,dateL,notesL);
     const acts=E('div','track-actions');
     child(acts,btn('打開公告詳情','ghost-btn',()=>openDetail(item)),btn('移除','ghost-btn',()=>{
-      delete store.saved[item.id];persist();renderTracking();renderSearch();toast('已移除追蹤');
+      delete store.saved[item.id];persist();if(cloud.user)void cloudSaveSingle(item,false);renderTracking();renderSearch();toast('已移除追蹤');
     }));
     child(card,f,acts);out.append(card);
   }
@@ -494,7 +499,7 @@ function renderWatches(){
   for(const rule of store.watches){
     const block=E('section','watch-item'),head=E('header','');
     child(head,E('h3','','關鍵字：'+rule.term),btn('刪除','ghost-btn',()=>{
-      store.watches=store.watches.filter(x=>x.id!==rule.id);persist();renderWatches();
+      store.watches=store.watches.filter(x=>x.id!==rule.id);persist();renderWatches();if(cloud.user&&rule.serverId)void cloudDeleteWatch(rule.serverId);
     }));block.append(head);
     block.append(E('p','','上次檢查：'+(rule.checkedAt?new Date(rule.checkedAt).toLocaleString('zh-TW'):'尚未檢查')+'｜'+(rule.initialized?'已建立比對基準':'第一次檢查會建立基準，不把舊公告當作新通知')));
     const arr=Array.isArray(rule.newHits)?rule.newHits:[];
@@ -637,7 +642,7 @@ function hook(){
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('detailDrawer').hidden)closeDetail();});
   $('profileForm').addEventListener('submit',e=>{
     e.preventDefault();store.profile={keywords:$('profileKeywords').value.trim().slice(0,500),excludes:$('profileExcludes').value.trim().slice(0,500),min:$('profileMin').value,max:$('profileMax').value,area:$('profileArea').value.trim().slice(0,100)};
-    persist();renderRadar();toast('已儲存商機條件（本機）。');
+    persist();if(cloud.user)void cloudSaveProfile();renderRadar();toast('已儲存商機條件'+(cloud.user?'並送出雲端同步':'（本機）')+'。');
   });
   $('radarGoSearch').addEventListener('click',()=>showView('search'));
   $('agencyForm').addEventListener('submit',e=>{e.preventDefault();const id=$('agencyId').value.trim();if(id)loadAgency(id);});
@@ -652,7 +657,7 @@ function hook(){
     if(term.length<2){toast('監控關鍵字至少兩個字。');return;}
     if(store.watches.some(x=>x.term===term)){toast('這條規則已存在。');return;}
     store.watches.push({id:String(Date.now())+'-'+store.watches.length,term,seen:[],newHits:[],initialized:false,checkedAt:''});
-    $('watchTerm').value='';persist();renderWatches();
+    $('watchTerm').value='';persist();renderWatches();if(cloud.user)void cloudCreateWatch(term);
   });
   $('checkWatch').addEventListener('click',checkWatches);
   $('enableDesktop').addEventListener('click',async()=>{
@@ -665,9 +670,11 @@ function hook(){
   $('documentFile').addEventListener('change',()=>{$('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';});
 }
 hook();
+initCloudUI();
 renderTracking();
 renderWatches();
 renderRadar();
 renderAnalytics();
 search('latest','',1);
+void initCloud();
 setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)checkWatches();},20*60*1000);
