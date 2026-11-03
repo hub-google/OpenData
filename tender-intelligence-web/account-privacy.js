@@ -6,7 +6,7 @@ function status(text){$('accountDeleteStatus').textContent=text;}
 function error(e){return String(e?.message||e||'未知錯誤').slice(0,250);}
 function toggle(next){
  user=next||null;
- $('accountDeleteForm').hidden=!user;
+ $('accountDeleteForm').hidden=!user||user.is_anonymous===true;
  $('accountDeleteEmail').value='';
  $('accountDeletePhrase').value='';
  status(user?'此操作將永久移除你自己的帳戶及私有文件。':'');
