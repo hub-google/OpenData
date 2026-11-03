@@ -93,8 +93,18 @@ begin
  set plan_code=excluded.plan_code,
      source_order_id=excluded.source_order_id,
      current_period_end=greatest(public.ti_billing_subscriptions.current_period_end,now())+interval '1 month',
-     auto_renew=excluded.auto_renew,
-     status='active',
+     auto_renew=case
+       when public.ti_billing_subscriptions.source_order_id=excluded.source_order_id
+        and public.ti_billing_subscriptions.status='cancelled'
+       then false
+       else excluded.auto_renew
+     end,
+     status=case
+       when public.ti_billing_subscriptions.source_order_id=excluded.source_order_id
+        and public.ti_billing_subscriptions.status='cancelled'
+       then 'cancelled'
+       else 'active'
+     end,
      updated_at=now();
  return true;
 end;
