@@ -684,7 +684,6 @@ function hook(){
   $('documentFile').addEventListener('change',()=>{$('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';});
 }
 hook();
-initBillingUI();
 initCloudUI();
 renderTracking();
 renderWatches();
@@ -695,7 +694,6 @@ if(Object.hasOwn(listModes,urlState.get('mode')||'') && (urlState.get('q')||'').
   search(urlState.get('mode'),urlState.get('q')||'',1);
 else search('latest','',1);
 void initCloud();
-if(new URLSearchParams(window.location.search).get('view')==='billing')showView('billing');
 setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)checkWatches();},20*60*1000);
 
 
