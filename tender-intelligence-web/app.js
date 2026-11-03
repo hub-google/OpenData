@@ -3,7 +3,7 @@ import {
   normalize,dedupe,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications} from './backend.js';
+import {getClient,fetchArchive,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -28,7 +28,7 @@ function loadStore() {
 }
 const store=loadStore();
 const cloud={client:null,user:null,taskRows:[]};
-const state={rows:[],searchRows:[],sourcePage:1,clientPage:1,totalPages:1,mode:'latest',query:'',date:null,
+const state={docPages:[],rows:[],searchRows:[],sourcePage:1,clientPage:1,totalPages:1,mode:'latest',query:'',date:null,
   running:0,view:'search',selected:null,details:new Map(),vendorRows:[],docRows:[],watchRunning:false,lastSearch:'最新公告'};
 let toastTimer=null;
 const E=(tag,cls,text)=>{
@@ -600,6 +600,7 @@ async function analyzeDocument(){
   $('documentOutput').replaceChildren(E('div','empty','正在本機擷取文件文字並分類條款…'));
   try{
     const pages=await parseDocument(file);
+    state.docPages=pages;
     const hits=[];
     for(const page of pages){
       const paragraphs=page.text.replace(/\r/g,'\n').split(/[\n。；;]+/).map(s=>s.trim().replace(/\s+/g,' ')).filter(s=>s.length>=8);
@@ -668,6 +669,7 @@ function hook(){
     toast(result==='granted'?'已取得裝置通知權限。網頁開啟期間才能執行檢查。':'尚未允許裝置通知。');
   });
   $('documentAnalyze').addEventListener('click',analyzeDocument);
+  $('documentAI').addEventListener('click',()=>void analyzeDocumentAI());
   $('documentCsv').addEventListener('click',exportDoc);
   $('documentFile').addEventListener('change',()=>{$('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';});
 }
@@ -1162,4 +1164,69 @@ function initTeamUI(){
  });
  const invite=new URL(window.location.href).searchParams.get('invite');
  if(invite)sessionStorage.setItem('ti_pending_invite',invite);
+}
+
+
+async function analyzeDocumentAI(){
+  const file=$('documentFile').files?.[0];
+  const target=$('documentAiOutput');
+  if(!file){toast('請先選擇合法取得的標書文件。');return;}
+  if(!cloud.user||!cloud.client){toast('使用 AI 需要先登入；本機規則整理不用登入。');$('accountPanel').hidden=false;return;}
+  if(file.size>15*1024*1024){toast('文件上限 15MB。');return;}
+  const button=$('documentAI');button.disabled=true;
+  target.replaceChildren(E('h2','','AI 標單分析'),E('p','minor','正在擷取文件文字；AI 不會補填原文未揭露的數字或資格。'));
+  try{
+    // OCR is deliberately not simulated. Human-review is required for image-only scans.
+    const pages=await parseDocument(file);
+    const actual=pages.filter(p=>asText(p.text).trim());
+    if(!actual.length)throw Error('這份文件沒有可讀文字層；掃描型 PDF 需要 OCR，本站不會虛構資格。');
+    const {data:{session},error:sessionError}=await cloud.client.auth.getSession();
+    if(sessionError)throw sessionError;
+    if(!session?.access_token)throw Error('驗證已失效，請重新登入。');
+    const response=await fetch(DATABASE_URL+'/functions/v1/ti-document-ai',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+session.access_token,
+        apikey:PUBLISHABLE_KEY
+      },
+      body:JSON.stringify({document_name:file.name,pages:actual}),
+      signal:AbortSignal.timeout(118000)
+    });
+    const data=await response.json().catch(()=>({error:'AI 服務回傳格式不正確'}));
+    if(!response.ok)throw Error(data.error||'AI 服務錯誤 '+response.status);
+    if(!data?.result||!Array.isArray(data.result.requirements))throw Error('AI 回傳資料結構不完整');
+    const result=data.result;
+    const header=E('div','');
+    child(header,E('h2','','AI 標單分析（實際執行）'),
+      E('p','minor','模型：'+asText(data.model)+'｜分析頁數：'+asText(data.source_pages)+'｜紀錄 ID：'+asText(data.job_id)));
+    target.replaceChildren(header,E('p','',result.summary||'模型未提供摘要'));
+    const warnings=Array.isArray(result.warnings)?result.warnings:[];
+    if(warnings.length){
+      const wrap=E('div','notice warning');
+      child(wrap,E('strong','','需要人工確認：'));
+      for(const line of warnings.slice(0,15))child(wrap,E('p','',line));
+      target.append(wrap);
+    }
+    const groups=new Map();
+    for(const req of result.requirements){
+      const arr=groups.get(req.category)||[];arr.push(req);groups.set(req.category,arr);
+    }
+    for(const [category,rows] of groups){
+      target.append(E('h3','',category+'（'+rows.length+'）'));
+      for(const req of rows){
+        const block=E('div','timeline-item');
+        child(block,E('strong','',req.requirement),
+          E('p','minor','來源：'+req.source_page+'｜原文：「'+req.evidence+'」'),
+          E('p','',req.action||'請核對文件原文'));
+        if(req.needs_human_check)block.append(E('span','case-tag failed','需要人工核對'));
+        target.append(block);
+      }
+    }
+    if(!groups.size)target.append(E('p','notice warning','沒有符合原文證據檢核的 AI 條款。請人工核對完整標書。'));
+    toast('AI 服務已回傳可核對原文的分析。');
+  }catch(err){
+    target.replaceChildren(E('h2','','AI 標單分析'),E('div','notice danger',
+      '本次沒有取得可用的 AI 分析：'+readableError(err)+'。不會以關鍵字檢索結果冒充 AI 報告。'));
+  }finally{button.disabled=false;}
 }
