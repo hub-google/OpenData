@@ -178,7 +178,7 @@
 </section>
 
       <section id="view-radar" class="view" hidden>
-        <div class="page-heading"><div class="eyebrow">PERSONALIZED LEAD MATCHING</div><h1>我的商機雷達</h1><p>設定公司可以承接的業務，從本次真實搜尋結果挑出適合的案件。評分是關鍵字匹配，不是得標機率。</p></div>
+        <div class="page-heading"><div class="eyebrow">PERSONALIZED LEAD MATCHING</div><h1>我的商機雷達</h1><p>儲存業務條件後，可直接查詢自有資料庫已收錄的跨日招標公告，不限目前頁面載入的案件。命中程度不是得標機率，未公開的截止時間仍需人工確認。</p></div>
         <div class="panel">
           <form id="profileForm" class="setting-form">
             <label class="wide">產品／服務關鍵字 <span class="req">必填</span><textarea id="profileKeywords" rows="2" placeholder="例如：資訊系統、網路設備、資安、維護"></textarea></label>
@@ -186,11 +186,17 @@
             <label>最低預算（元）<input id="profileMin" type="number" min="0" step="10000" placeholder="不限"></label>
             <label>最高預算（元）<input id="profileMax" type="number" min="0" step="10000" placeholder="不限"></label>
             <label class="wide">期望履約區域（目前供紀錄，不用機關地址推斷）<input id="profileArea" placeholder="例如：台北、新北"></label>
-            <div class="form-actions"><button class="primary-btn" type="submit">儲存並分析</button><button id="radarGoSearch" class="ghost-btn" type="button">返回標案搜尋</button></div>
+            <div class="form-actions"><button class="primary-btn" type="submit">儲存條件並分析本頁</button><button id="radarFullSearch" class="ghost-btn" type="button">查詢資料庫跨日商機</button><button id="radarGoSearch" class="ghost-btn" type="button">返回標案搜尋</button></div>
           </form>
         </div>
-        <div class="section-heading"><h2>符合條件的案件</h2><span class="minor">僅分析目前已載入的查詢結果</span></div>
+        <div class="section-heading"><h2>符合條件的案件</h2><span class="minor">本頁篩選與資料庫跨日結果分開顯示</span></div>
         <div id="radarResults" class="result-list"></div>
+        <div class="panel">
+          <h3>自有資料庫跨日商機（以已入庫招標公告為準）</h3>
+          <p id="radarFullStatus" class="minor" role="status">請儲存關鍵字，再點「查詢資料庫跨日商機」。只看已入庫資料，未知預算與截止日會顯示待核對。</p>
+          <div id="radarFullResults" class="result-list"></div>
+          <div class="pagination"><button id="radarFullPrev" class="ghost-btn" type="button" disabled>上一頁</button><span id="radarFullPage">尚未查詢</span><button id="radarFullNext" class="ghost-btn" type="button" disabled>下一頁</button></div>
+        </div>
       </section>
 
       <section id="view-agencies" class="view" hidden>
