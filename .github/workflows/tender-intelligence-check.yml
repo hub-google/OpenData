@@ -8,6 +8,10 @@ on:
       - "tender-intelligence-web/index.html"
       - "tender-intelligence-web/styles.css"
       - "tender-intelligence-web/app.js"
+      - "tender-intelligence-web/backend.js"
+      - "tender-intelligence-web/delivery.js"
+      - "tender-intelligence-web/supabase/functions/**"
+      - "tender-intelligence-web/supabase/migrations/**"
       - "tender-intelligence-web/core.mjs"
       - "tender-intelligence-web/tests/**"
       - ".github/workflows/tender-intelligence-check.yml"
@@ -30,6 +34,17 @@ jobs:
         run: |
           node --check tender-intelligence-web/app.js
           node --check tender-intelligence-web/core.mjs
+          node --check tender-intelligence-web/backend.js
+          node --check tender-intelligence-web/delivery.js
+      - name: 安裝 Deno 執行環境
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: 驗證 Supabase Edge Function 語法
+        run: |
+          for file in tender-intelligence-web/supabase/functions/ti-*/index.ts; do
+            deno check "$file"
+          done
       - name: 執行資料解析及安全性單元測試
         run: node --test tender-intelligence-web/tests/*.test.mjs
       - name: 驗證網頁參照的檔案存在
@@ -40,7 +55,8 @@ jobs:
           html=(root/"index.html").read_text(encoding="utf-8")
           assert '<script type="module" src="./app.js"></script>' in html
           assert '<link rel="stylesheet" href="./styles.css">' in html
-          for f in ("app.js","styles.css","core.mjs"):
+          assert '<script type="module" src="./delivery.js"></script>' in html
+          for f in ("app.js","styles.css","core.mjs","backend.js","delivery.js"):
               assert (root/f).is_file(),f
           print("OK: required assets exist")
           PY
