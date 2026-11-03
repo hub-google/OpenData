@@ -65,6 +65,15 @@
         </form>
         <div id="accountInfo" class="minor">尚未登入，本機追蹤仍可使用。</div>
         <div class="toolbar"><button id="accountLogout" class="ghost-btn" type="button" hidden>登出</button><button id="accountSync" class="ghost-btn" type="button" hidden>立即同步</button></div>
+        <form id="accountDeleteForm" class="setting-form" hidden>
+          <h3>刪除自己的會員帳戶與私有資料</h3>
+          <p class="notice warning">此操作不可復原。會移除你的雲端追蹤、通知規則、私人標單、決策紀錄與自行刊登的公司檔案。擁有公司工作區時，必須先轉移或刪除該工作區；不會擅自刪除其他成員共享資料。</p>
+          <label>再次輸入目前登入 Email<input id="accountDeleteEmail" type="email" autocomplete="off" placeholder="完整登入信箱" required></label>
+          <label>請逐字輸入「刪除我的帳戶」<input id="accountDeletePhrase" autocomplete="off" placeholder="刪除我的帳戶" required></label>
+          <div class="form-actions"><button type="submit" id="accountDeleteSubmit" class="ghost-btn">永久刪除我的帳戶</button></div>
+          <p id="accountDeleteStatus" class="minor"></p>
+        </form>
+
       </section>
       <section id="view-search" class="view">
         <div class="hero">
@@ -404,5 +413,6 @@
 <script type="module" src="./advanced.js"></script>
 <script type="module" src="./operations.js"></script>
 <script type="module" src="./proposal.js"></script>
+<script type="module" src="./account-privacy.js"></script>
 </body>
 </html>
