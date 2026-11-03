@@ -217,6 +217,21 @@ async function openDetail(row){
     $('detailContent').replaceChildren(E('div','empty','案件詳情載入失敗：'+readableError(err)));
   }
 }
+// F10: exact-case share links, never a broad title-search substitution.
+async function openCaseFromUrl(){
+ const q=new URLSearchParams(window.location.search);
+ const unit=q.get('case_unit'),job=q.get('case_no');
+ if(!unit||!job)return;
+ if(unit.length>80||job.length>100||/[<>]/.test(unit+job))return;
+ try{
+  const data=await api('/tender',{unit_id:unit,job_number:job},35000);
+  const rows=Array.isArray(data.records)?dedupe(data.records):[];
+  const chosen=rows.find(r=>r.unit_id===unit&&r.job_number===job);
+  if(!chosen)throw Error('來源未回傳這個機關與案號');
+  state.details.set(chosen.id,data);
+  await openDetail(chosen);
+ }catch(err){toast('專屬案件連結暫時無法載入：'+readableError(err));}
+}
 // Only the project database can supply the authoritative homepage counts.
 async function loadVerifiedHomepageKpis(){
  const note=$('verifiedMetricsNote');
@@ -297,6 +312,12 @@ function renderDetail(row,data){
     closeDetail();$('agencyId').value=row.unit_id;showView('agencies');loadAgency(row.unit_id);
   }));
   const apiLink='https://pcc-api.openfun.app/api/tender?'+new URLSearchParams({unit_id:row.unit_id,job_number:row.job_number}).toString();
+  child(actions,btn('複製此案專屬連結','ghost-btn',async()=>{
+    const url=new URL(window.location.href);url.search='';
+    url.searchParams.set('case_unit',row.unit_id);url.searchParams.set('case_no',row.job_number);
+    try{await navigator.clipboard.writeText(url.toString());toast('已複製此案專屬網址');}
+    catch{toast('無法存取剪貼簿，請使用瀏覽器的分享功能。');}
+  }));
   child(actions,link('資料 API ↗',apiLink));if(sum.latestFields.url||info.url)child(actions,link('官方原始公告 ↗',sum.latestFields.url||info.url));
   page.append(actions);
   const grid=E('div','detail-grid');
@@ -769,6 +790,7 @@ if(Object.hasOwn(listModes,urlState.get('mode')||'') && (urlState.get('q')||'').
 else search('latest','',1);
 void initCloud();
 void loadVerifiedHomepageKpis();
+void openCaseFromUrl();
 setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)checkWatches();},20*60*1000);
 
 
