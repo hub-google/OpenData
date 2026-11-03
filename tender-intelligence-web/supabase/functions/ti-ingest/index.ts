@@ -77,19 +77,30 @@ async function enrich(c){
  return true;
 }
 async function ingest(mode){
- let run=null,day=null,found=0,added=0,details=0;
+ let run=null,day=null,found=0,added=0,details=0,backfillDate=null;
  try{
-  const info=await json(SRC+"/getinfo");
-  const iso=text(info["最新資料時間"]).slice(0,10);
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso))throw Error("source latest date unavailable");
-  let date=iso;
-  if(mode==="previous"){const d=new Date(iso+"T12:00:00Z");d.setUTCDate(d.getUTCDate()-1);date=d.toISOString().slice(0,10)}
+  let date;
+  if(mode==="backfill"){
+    const ready=await db("rpc/ti_backfill_ready","POST",{});
+    if(!ready)return {ok:true,mode:"backfill",status:"paused",reason:"日期範圍已完成、暫停或達到自訂資料庫容量上限"};
+    const state=await db("ti_backfill_state?select=next_date,oldest_date,enabled&id=eq.openfun-pcc&limit=1");
+    if(!state?.length||!state[0].enabled)throw Error("history backfill control unavailable");
+    date=state[0].next_date;
+    backfillDate=date;
+  }else{
+    const info=await json(SRC+"/getinfo");
+    const iso=text(info["最新資料時間"]).slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(iso))throw Error("source latest date unavailable");
+    date=iso;
+    if(mode==="previous"){const d=new Date(iso+"T12:00:00Z");d.setUTCDate(d.getUTCDate()-1);date=d.toISOString().slice(0,10)}
+  }
   day=Number(date.replaceAll("-",""));
   const runs=await db("ti_ingest_runs","POST",[{source_date:day,status:"running"}],"return=representation");
   run=runs?.[0]?.id;
   if(!run)throw Error("ingest run initialization failed");
   const list=await json(SRC+"/listbydate?date="+day,45000);
-  if(!Array.isArray(list.records)||list.records.length===0)throw Error("source returned no announcements");
+  if(!Array.isArray(list.records))throw Error("source response is missing records");
+  if(list.records.length===0 && mode!=="backfill")throw Error("source returned no announcements");
   const at=new Date().toISOString(),notices=new Map(),cases=new Map();
   for(const row of list.records){
    const x=norm(row,at);if(!x)continue;
@@ -97,25 +108,43 @@ async function ingest(mode){
    if(!p||x.c.latest_notice_date>p.latest_notice_date||
      (x.c.latest_notice_date===p.latest_notice_date&&x.c.latest_filename>p.latest_filename))cases.set(x.c.id,x.c);
   }
-  found=notices.size;if(found===0)throw Error("source had no valid notices");
+  found=notices.size;if(found===0 && list.records.length>0)throw Error("source had no valid notices");
   await batches("ti_cases",[...cases.values()]);
   added=await batches("ti_notices",[...notices.values()],true);
-  // Rotate through as-yet-unenriched cases rather than requesting the same first 12 forever.
+  // Backfill runs have a tighter detail quota to keep old-year imports cheap.
   const cached=await db("ti_case_details?select=case_id&limit=10000");
   const known=new Set((cached||[]).map(x=>x.case_id));
-  for(const c of [...cases.values()].filter(x=>!known.has(x.id)&&/招標|決標|更正/.test(x.latest_notice_type||"")).slice(0,15)){
+  const detailsQuota=mode==="backfill"?2:15;
+  for(const c of [...cases.values()].filter(x=>!known.has(x.id)&&/招標|決標|更正/.test(x.latest_notice_type||"")).slice(0,detailsQuota)){
    try{if(await enrich(c))details++}catch(e){console.warn("detail unavailable",c.id,text(e).slice(0,130))}
   }
   const finished=new Date().toISOString();
   await db("ti_ingest_runs?id=eq."+run,"PATCH",
    {finished_at:finished,status:"success",fetched_count:found,new_notice_count:added,detail_count:details},"return=minimal");
-  await db("ti_sources?id=eq.openfun-pcc","PATCH",{last_success_at:finished,last_error:null,updated_at:finished},"return=minimal");
-  return {ok:true,date:day,announcements:found,new_notices:added,details_enriched:details,finished_at:finished};
+  if(mode==="backfill"){
+    await db("ti_backfill_days?on_conflict=source_date","POST",[
+      {source_date:backfillDate,fetched_count:found,inserted_count:added,finished_at:finished}
+    ],"resolution=merge-duplicates,return=minimal");
+    const next=new Date(backfillDate+"T12:00:00Z");
+    next.setUTCDate(next.getUTCDate()-1);
+    await db("ti_backfill_state?id=eq.openfun-pcc","PATCH",{
+      next_date:next.toISOString().slice(0,10),last_success_at:finished,
+      last_attempt_at:finished,last_error:null
+    },"return=minimal");
+  }else{
+    await db("ti_sources?id=eq.openfun-pcc","PATCH",{last_success_at:finished,last_error:null,updated_at:finished},"return=minimal");
+  }
+  return {ok:true,mode,date:day,announcements:found,new_notices:added,details_enriched:details,finished_at:finished};
  }catch(e){
   const msg=text(e).slice(0,300),finished=new Date().toISOString();console.error("ingest failed",msg);
   if(run)try{await db("ti_ingest_runs?id=eq."+run,"PATCH",
    {finished_at:finished,status:"error",fetched_count:found,new_notice_count:added,detail_count:details,error_summary:msg},"return=minimal")}catch{}
-  try{await db("ti_sources?id=eq.openfun-pcc","PATCH",{last_error_at:finished,last_error:msg},"return=minimal")}catch{}
+  if(mode==="backfill")try{
+    await db("ti_backfill_state?id=eq.openfun-pcc","PATCH",{
+      last_attempt_at:finished,last_error:msg
+    },"return=minimal");
+  }catch{}
+  else try{await db("ti_sources?id=eq.openfun-pcc","PATCH",{last_error_at:finished,last_error:msg},"return=minimal")}catch{}
   return {ok:false,date:day,error:msg};
  }
 }
@@ -127,7 +156,7 @@ Deno.serve(async(req)=>{
  try{const allowed=await db("rpc/ti_verify_ingest_token","POST",{candidate:token});
   if(allowed!==true)return Response.json({error:"Unauthorized"},{status:401});
  }catch{return Response.json({error:"Unauthorized"},{status:401})}
- let mode="latest";try{const b=await req.json();if(b.mode==="previous")mode="previous"}catch{}
+ let mode="latest";try{const b=await req.json();if(["previous","backfill"].includes(b.mode))mode=b.mode}catch{}
  const result=await ingest(mode);
  return Response.json(result,{status:result.ok?200:502,headers:{"Cache-Control":"no-store"}});
 });
