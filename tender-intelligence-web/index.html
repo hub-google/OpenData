@@ -24,6 +24,7 @@
       <button type="button" class="nav-item" data-view="analytics"><span>▥</span> 決標行情</button>
       <p class="side-label">我的工作</p>
       <button type="button" class="nav-item" data-view="tracking"><span>▣</span> 投標工作台 <b id="trackingCount" class="mini-count">0</b></button>
+      <button type="button" class="nav-item" data-view="team"><span>♙</span> 團隊協作</button>
       <button type="button" class="nav-item" data-view="alerts"><span>♧</span> 監控與提醒</button>
       <button type="button" class="nav-item" data-view="documents"><span>▧</span> 標書條款整理</button>
       <p class="side-label">其他</p>
@@ -142,6 +143,26 @@
         </div>
       </section>
 
+      <section id="view-team" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">TEAM COLLABORATION</div><h1>團隊投標協作</h1><p>建立公司工作區、產生一次性邀請連結、共用投標案件及待辦。必須登入，使用資料庫權限隔離。</p></div>
+        <div class="panel">
+          <form id="workspaceCreateForm" class="inline-form">
+            <input id="workspaceName" maxlength="120" placeholder="輸入公司／團隊名稱" required>
+            <button type="submit" class="primary-btn">建立工作區</button>
+          </form>
+          <div class="toolbar">
+            <select id="workspaceSelect" aria-label="選擇工作區"><option value="">尚無工作區</option></select>
+            <button id="workspaceInvite" type="button" class="ghost-btn">產生邀請連結</button>
+            <button id="workspaceRefresh" type="button" class="ghost-btn">刷新團隊資料</button>
+          </div>
+          <div id="workspaceInviteLink" class="minor"></div>
+          <form id="workspaceJoinForm" class="inline-form" style="margin-top:16px">
+            <input id="workspaceJoinCode" placeholder="貼上別人分享的一次性邀請碼" required>
+            <button class="ghost-btn" type="submit">加入工作區</button>
+          </form>
+        </div>
+        <div id="workspaceOutput" class="panel analysis-panel"><div class="empty">登入並建立或加入工作區後，即可共用真實標案。</div></div>
+      </section>
       <section id="view-alerts" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">WATCH & ALERTS</div><h1>監控與提醒</h1><p>監控規則目前由這台瀏覽器執行。可以手動檢查新公告，頁面開啟時定期檢查；不是伺服器背景推播。</p></div>
         <div class="notice warning">目前沒有會員資料庫、Email／LINE 後端及推播金鑰，因此<strong>關閉網頁後不會執行通知</strong>，也不會寄 Email／LINE。先把真實規則比對與差異偵測功能做起來，不偽裝成已發訊息。</div>
