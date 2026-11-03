@@ -56,6 +56,13 @@
           <input id="accountEmail" type="email" autocomplete="email" placeholder="輸入 Email 收取登入連結" required>
           <button class="primary-btn" type="submit">寄送登入連結</button>
         </form>
+        <div class="toolbar">
+          <button id="accountGoogle" class="ghost-btn" type="button">使用 Google 帳戶登入</button>
+        </div>
+        <form id="accountChangeEmail" class="inline-form" hidden>
+          <input id="accountNewEmail" type="email" autocomplete="email" placeholder="輸入要更換的新 Email" required>
+          <button type="submit" class="ghost-btn">申請更換登入 Email</button>
+        </form>
         <div id="accountInfo" class="minor">尚未登入，本機追蹤仍可使用。</div>
         <div class="toolbar"><button id="accountLogout" class="ghost-btn" type="button" hidden>登出</button><button id="accountSync" class="ghost-btn" type="button" hidden>立即同步</button></div>
       </section>
