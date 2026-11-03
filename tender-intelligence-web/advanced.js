@@ -282,10 +282,11 @@ async function previewAdvancedRule(){
  try{
   const rule=ruleSelected();
   const params=args(rule.criteria,1);
-  const timezoneDate=new Intl.DateTimeFormat('en-CA',{
+  const parts=new Intl.DateTimeFormat('en-US',{
     timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'
-  }).format(new Date(Date.now()-29*86400000));
-  const start=Number(timezoneDate.replace(/-/g,''));
+  }).formatToParts(new Date(Date.now()-29*86400000));
+  const dateParts=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+  const start=Number(dateParts.year+dateParts.month+dateParts.day);
   params.p_date_from=Math.max(params.p_date_from||0,start);
   params.p_limit=1;
   const client=await getClient();
