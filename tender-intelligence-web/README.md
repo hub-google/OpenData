@@ -34,7 +34,7 @@
 - 11/03：2,350 筆公告成功入庫。
 - 11/02：2,280 筆公告成功回填。
 - 10/30：3,383 筆公告成功回填。
-- 累計 **8,013 筆成功匯入的公告**（此數字是 2026-11-03 稽核快照，非即時承諾）。
+- 累計 **8,013 筆成功匯入的公告，7,087 件按機關與案號去重的案件**（2026-11-03 實際 SQL 稽核快照，非即時承諾）。
 - 10/31 與 11/01：來源 API `/listbydate` 回傳 **HTTP 500**，被明確記錄為缺口；**沒有假裝這兩日零公告，也沒有補編任何公告**，會排程重試。
 - 最新完整覆蓋日期及成功／失敗請以資料庫 `ti_ingest_runs`、`ti_backfill_days`、`ti_backfill_gaps` 和網站「資料說明」為準。
 
@@ -50,7 +50,7 @@
 | 機關／廠商情報 | ✅ 已部署；機關名稱查詢在瀏覽器驗證成功；其他資料品質仍受來源欄位限制 |
 | 成交／預算比例 | ⚠️ 僅在來源明確提供兩個金額、樣本數足夠時才可算；不是全國行情 |
 | 個人化商機匹配／監控規則／收藏 | ✅ 前端與 Supabase RLS 資料表已部署，單帳戶跨裝置讀寫還需登入實測 |
-| 伺服器站內監控提醒 | ✅ 觸發器依真實新公告匹配、保留 `ti_notifications`；新用戶通知仍需端到端測試 |
+| 伺服器站內監控提醒 | ✅ 新公告觸發器 + 截止 T−7／T−3／T−1（可自訂 1–30 天）每日 07:50 掃描官方截止時間；保留 `ti_notifications`；新用戶通知仍需端到端測試 |
 | Email 訂閱／LINE 推播 | ⚠️ 收件同意、退訂開關、佇列、15 分鐘背景任務、失敗紀錄、LINE OAuth 綁定程式已部署；**專屬金鑰尚未設定，不會寄出** |
 | 投標待辦／個人追蹤管理／CSV／ICS | ✅ 已開發，未登入時使用本機資料，登入後轉 Supabase；帳戶協作仍需驗收 |
 | 團隊工作區、邀請、權限、共用案件／任務 | ⚠️ 角色 RLS、一次性邀請與介面已部署；尚未用多個真實帳戶做完整驗收 |
@@ -88,7 +88,7 @@ LINE 開發者後台需要設定 callback `https://unapiwajmgqqtdkixaab.supabase
 - `supabase/functions/ti-line-connect/index.ts`：LINE 官方 OAuth2 身份驗證與使用者自願綁定。
 - `supabase/functions/ti-document-ai/index.ts`：需要實際 AI 金鑰與正式登入的文件檢核。
 - `supabase/functions/ti-service-status/index.ts`：僅顯示外部服務啟用狀態，不露出私密值。
-- `supabase/migrations/`：資料表、角色權限、排程、通知佇列、文件桶、歷史缺口。
+- `supabase/migrations/`：資料表、角色權限、排程、通知佇列、文件桶、歷史缺口與官方截標 T−N 提醒。
 - `tests/core.test.mjs`：已建立的資料解析和安全性測試。
 - `.github/workflows/tender-intelligence-check.yml`：Node 語法、單元測試、Edge Function Deno 語法及網頁引用檢查。
 - `.github/workflows/tender-intelligence-pages.yml`：更新標案網站至 GitHub Pages，不重建其他 OpenData 專案資料。
