@@ -127,11 +127,11 @@
       
 <section id="view-advanced" class="view" hidden>
  <div class="page-heading"><div class="eyebrow">ARCHIVE SEARCH</div><h1>進階標案搜尋</h1>
- <p>在實際已入庫的跨日公告中，搜尋案名、案號、機關與公告明列的廠商。支援 AND／OR／排除詞、台／臺同義、官方截止日範圍與真正伺服器分頁，不把沒收錄的日期當零案件。</p></div>
+ <p>在實際已入庫的跨日公告中，搜尋案名、案號、機關與公告明列的廠商。支援 (AND／OR) 括號組合、NOT／-排除、台／臺同義、官方截止日範圍與真正伺服器分頁，不把沒收錄的日期當零案件。</p></div>
  <div class="panel">
   <form id="advancedForm" class="setting-form">
-   <label class="wide">全文關鍵字（可用 AND / OR / -排除，雙引號包住片語）
-    <input id="advQuery" maxlength="450" placeholder='例如：「網路設備」 AND 維護 -租賃'>
+   <label class="wide">全文關鍵字（支援 AND / OR / NOT / 括號 / -排除；AND 優先於 OR；雙引號包片語）
+    <input id="advQuery" maxlength="450" placeholder='例如：(「網路設備」 OR 資安) AND 維護 -租賃'>
    </label>
    <label class="wide">額外排除詞（逗號分隔）<input id="advExclude" maxlength="350" placeholder="例如：租賃,拆除"></label>
    <label>關鍵字組合<select id="advAny"><option value="false">必須包含全部 AND</option><option value="true">包含任一 OR</option></select></label>

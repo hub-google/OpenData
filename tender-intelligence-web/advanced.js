@@ -2,6 +2,7 @@
 // This module has no service-role secrets and uses public, RLS-protected Supabase RPC.
 import {getClient} from './backend.js';
 import {csvEscape,formatMoney,dateLabel,safeOfficial} from './core.mjs';
+import {parseSearchExpression} from './search-expression.mjs';
 
 const $=id=>document.getElementById(id);
 const fields={
@@ -47,13 +48,20 @@ function parseQuery(raw,extra,selectedAny){
 }
 function ymd(v){return v?Number(v.replaceAll('-','')):null;}
 function args(d,p){
- const query=parseQuery(d.q,d.x,d.any);
+ const expr=parseSearchExpression(d.q);
+ const query=expr?{
+  terms:expr.positives,
+  excludes:[...new Set(d.x.split(/[,，、\n]+/).map(t).filter(Boolean))],
+  any:false
+ }:parseQuery(d.q,d.x,d.any);
+ if(query.excludes.length>12||query.excludes.some(x=>x.length>60))
+  throw Error('排除詞最多 12 個，每詞最多 60 字。');
  if(d.start&&d.end&&d.start>d.end)throw Error('公告起始日期不得晚於結束日期。');
  if(d.deadlineStart&&d.deadlineEnd&&d.deadlineStart>d.deadlineEnd)throw Error('截止日起始日期不得晚於結束日期。');
  const min=d.min!==''?Number(d.min):null,max=d.max!==''?Number(d.max):null;
  if(min!==null&&max!==null&&max<min)throw Error('最高公開預算不可小於最低公開預算。');
  return {
-  p_terms:query.terms,p_exclude:query.excludes,p_any:query.any,
+  p_terms:query.terms,p_exclude:query.excludes,p_any:query.any,p_expression:expr?.tree||null,
   p_agency:t(d.agency),p_kind:d.kind,p_group:d.group,p_location:t(d.location),
   p_method:t(d.method),p_min_budget:min,p_max_budget:max,
   p_date_from:ymd(d.start),p_date_to:ymd(d.end),
@@ -114,7 +122,7 @@ async function search(p=1){
  $('advSubmit').disabled=true;status('正在查詢自有 Supabase 中實際已收錄的公告，跨日期條件在資料庫端處理…');
  try{
   const client=await getClient();
-  const {data,error}=await client.rpc('ti_archive_search_v2',opts);
+  const {data,error}=await client.rpc('ti_archive_search_v3',opts);
   if(error)throw error;
   if(n!==request)return;
   if(!data||!Array.isArray(data.rows))throw Error('資料庫沒有傳回有效的分頁結果');
@@ -292,7 +300,7 @@ async function previewAdvancedRule(){
   params.p_date_from=Math.max(params.p_date_from||0,start);
   params.p_limit=1;
   const client=await getClient();
-  const {data,error}=await client.rpc('ti_archive_search_v2',params);
+  const {data,error}=await client.rpc('ti_archive_search_v3',params);
   if(error)throw error;
   ruleStatus('「'+rule.name+'」在近 30 天「實際已成功入庫」日期中匹配 '+Number(data?.total||0).toLocaleString('zh-TW')+
     ' 件；尚未回填的日期不包含在預覽，不代表全國所有標案。');
