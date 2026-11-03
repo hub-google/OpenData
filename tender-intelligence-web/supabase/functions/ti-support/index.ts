@@ -76,6 +76,10 @@ async function rateLimit(hash:string,kind:"ai"|"form",max:number){
  const messages=await query("ti_support_messages?select=id&role=eq.customer&created_at=gte."+encodeURIComponent(since)+"&thread_id=in.("+ids.join(",")+")&limit="+(max+1));
  if(messages.length>=max)throw Error("24 小時內 AI 對話已達使用上限，請稍後再試");
 }
+async function claimDaily(kind:"ai"|"form",max:number){
+ const passed=await query("rpc/ti_support_claim_daily","POST",{p_kind:kind,p_cap:max});
+ if(passed!==true)throw Error("今日客服服務使用量已達上限，請明天再試");
+}
 async function addMessage(thread:string,role:string,body:string){
  const rows=await query("ti_support_messages","POST",[{thread_id:thread,role,body}]);
  return rows[0];
@@ -142,6 +146,7 @@ Deno.serve(async req=>{
    const category=options.includes(b.category)?b.category:"other";
    const subject=safeInput(b.subject,160),detail=safeInput(b.message,6000);
    if(subject.length<4||detail.length<10)return result(req,{error:"請填寫至少 4 字的主旨，以及至少 10 字的問題說明"},400);
+   await claimDaily("form",1000);
    const item=(await query("ti_support_threads","POST",[{
     user_id:user?.id||null,visitor_hash:hash,kind:"form",category,subject,
     page_url:safeLink(b.page_url),urgent:b.urgent===true,status:"open"
@@ -153,6 +158,7 @@ Deno.serve(async req=>{
    const text=safeInput(b.message,1800);
    if(!text||text.length<2)return result(req,{error:"請至少輸入 2 個字"},400);
    await rateLimit(hash,"ai",30);
+   if(GEMINI)await claimDaily("ai",500);
    let t:any;
    if(b.thread_id){
     t=await owned(safeInput(b.thread_id,40),user,hash);
