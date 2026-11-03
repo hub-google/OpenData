@@ -24,7 +24,8 @@
       <button type="button" class="nav-item" data-view="agencies"><span>▤</span> 機關情報</button>
       <button type="button" class="nav-item" data-view="debarred"><span>▣</span> 拒絕往來公告</button>
       <button type="button" class="nav-item" data-view="vendors"><span>◇</span> 廠商與競品</button>
-      <button type="button" class="nav-item" data-view="analytics"><span>▥</span> 決標行情</button>
+      <button type="button" class="nav-item" data-view="issues"><span>!</span> 無法決標／快截止</button>
+        <button type="button" class="nav-item" data-view="analytics"><span>▥</span> 決標行情</button>
       <p class="side-label">我的工作</p>
       <button type="button" class="nav-item" data-view="tracking"><span>▣</span> 投標工作台 <b id="trackingCount" class="mini-count">0</b></button>
       <button type="button" class="nav-item" data-view="decisions"><span>✓</span> 投標決策評估</button>
@@ -214,6 +215,21 @@
         <div class="panel"><form id="vendorForm" class="inline-form"><select id="vendorMode" aria-label="廠商搜尋方式"><option value="name">公司名稱</option><option value="id">統一編號</option></select><input id="vendorQuery" placeholder="公司名稱或 8 碼統編" required><button class="primary-btn" type="submit">查詢廠商</button></form></div>
         <div class="section-heading"><h2>相關投標公告</h2><span id="vendorSummary" class="minor">尚未查詢</span></div>
         <div id="vendorOutput" class="result-list"><div class="empty">輸入廠商名稱或統一編號。</div></div>
+      </section>
+
+      <section id="view-issues" class="view" hidden>
+        <div class="page-heading"><div class="eyebrow">SOURCE-VERIFIED PROCUREMENT STATUS</div><h1>無法決標與快截止</h1>
+        <p>以已入庫最新公告類型及官方截止時間查詢。沒有截止日的案件不會假定已截止；相同案名的再次招標候選，不代表官方已認定重招。</p></div>
+        <div class="panel">
+          <form id="issueForm" class="inline-form">
+            <label for="issueMode">分類</label><select id="issueMode"><option value="failed">最新公告為無法決標</option><option value="closing">七日內截止（已有官方時間）</option><option value="undated">招標公告／但截止日不明</option></select>
+            <label for="issueKeyword">案名／機關／案號</label><input id="issueKeyword" maxlength="80" placeholder="選填，台／臺相同">
+            <button id="issueSubmit" type="submit" class="primary-btn">查詢已入庫公告</button>
+          </form>
+          <p id="issueStatus" class="hint" role="status">尚未查詢。</p>
+        </div>
+        <div id="issueResults" class="result-list"></div>
+        <div class="pagination"><button id="issuePrev" type="button" class="ghost-btn" disabled>上一頁</button><span id="issuePage">—</span><button id="issueNext" type="button" class="ghost-btn" disabled>下一頁</button></div>
       </section>
 
       <section id="view-analytics" class="view" hidden>
@@ -478,6 +494,7 @@
 <script type="module" src="./app.js"></script>
 <script type="module" src="./delivery.js"></script>
 <script type="module" src="./advanced.js"></script>
+  <script type="module" src="./issues.js"></script>
 <script type="module" src="./operations.js"></script>
 <script type="module" src="./proposal.js"></script>
 <script type="module" src="./account-privacy.js"></script>
