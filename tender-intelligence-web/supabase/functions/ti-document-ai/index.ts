@@ -4,8 +4,8 @@
 const SUPA=Deno.env.get("SUPABASE_URL")||"";
 const SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const PUBLIC_KEY=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY")||"sb_publishable_L09XC4Tekm6cZaPTTczm3g_Aap-SOSy";
-const corsOrigin=o=>o==="https://hub-google.github.io"||o==="http://localhost:8000"||o==="http://127.0.0.1:8000"?o:"https://hub-google.github.io";
-function output(data,status,origin){return Response.json(data,{status,headers:{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"authorization,apikey,content-type","Vary":"Origin","Cache-Control":"no-store"}})}
+const corsOrigin=(o:string)=>o==="https://hub-google.github.io"||o==="http://localhost:8000"||o==="http://127.0.0.1:8000"?o:"https://hub-google.github.io";
+function output(data:unknown,status:number,origin:string){return Response.json(data,{status,headers:{"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"authorization,apikey,content-type","Vary":"Origin","Cache-Control":"no-store"}})}
 const schema={type:"object",additionalProperties:false,properties:{
  summary:{type:"string"},
  warnings:{type:"array",items:{type:"string"}},
@@ -16,8 +16,8 @@ const schema={type:"object",additionalProperties:false,properties:{
  },required:["category","requirement","evidence","source_page","action","needs_human_check"]}}
 },required:["summary","warnings","requirements"]};
 const keyHeaders={apikey:SERVICE,Authorization:"Bearer "+SERVICE,"Content-Type":"application/json"};
-async function db(path,method="GET",body=null,prefer=""){
- const h={...keyHeaders};if(prefer)h.Prefer=prefer;
+async function db(path:string,method="GET",body:any=null,prefer=""):Promise<any>{
+ const h:Record<string,string>={...keyHeaders};if(prefer)h.Prefer=prefer;
  const r=await fetch(SUPA+"/rest/v1/"+path,{method,headers:h,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(17000)});
  if(!r.ok)throw Error("Database "+r.status);
  const t=await r.text();return t?JSON.parse(t):null;
@@ -34,7 +34,7 @@ Deno.serve(async req=>{
  const user=await who.json();
  if(!user?.id)return output({error:"無法驗證使用者"},401,origin);
  let b;try{b=await req.json()}catch{return output({error:"請提供 JSON"},400,origin)}
- const pages=Array.isArray(b?.pages)?b.pages:[];
+ const pages:Array<{source?:string;text?:string}>=Array.isArray(b?.pages)?b.pages:[];
  if(!pages.length||pages.length>150)return output({error:"請提供 1-150 頁可讀的文字"},400,origin);
  const compact=pages.map(p=>({page:String(p.source||"未標頁碼").slice(0,50),text:String(p.text||"").slice(0,5500)})).filter(x=>x.text.trim());
  const input=compact.map(p=>"["+p.page+"]\n"+p.text).join("\n\n");
@@ -56,13 +56,13 @@ Deno.serve(async req=>{
   }),signal:AbortSignal.timeout(90000)});
   const data=await response.json();
   if(!response.ok)throw Error("AI 服務回應 "+response.status+": "+String(data?.error?.message||"失敗").slice(0,180));
-  const plain=(data.output||[]).flatMap(x=>x.content||[]).filter(x=>x.type==="output_text").map(x=>x.text).join("");
+  const plain=(data.output||[]).flatMap((x:any)=>x.content||[]).filter((x:any)=>x.type==="output_text").map((x:any)=>x.text).join("");
   if(!plain)throw Error("AI 沒有返回可用的文字報告");
   const result=JSON.parse(plain);
   if(!Array.isArray(result.requirements))throw Error("AI 回傳結構不符合規格");
   // Defense-in-depth: drop citations that do not point to an actual supplied source label.
   const sources=new Set(compact.map(p=>p.page));
-  result.requirements=result.requirements.filter(x=>sources.has(x.source_page)&&
+  result.requirements=result.requirements.filter((x:any)=>sources.has(x.source_page)&&
      compact.some(p=>p.page===x.source_page&&p.text.includes(String(x.evidence||"").trim())));
   await db("ti_ai_jobs?id=eq."+jobId,"PATCH",{
    state:"success",provider_model:model,output:result,finished_at:new Date().toISOString()
