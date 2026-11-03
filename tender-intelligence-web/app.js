@@ -197,7 +197,7 @@ function toggleSaved(row){
   else store.saved[row.id]={
     id:row.id,unit_id:row.unit_id,job_number:row.job_number,
     title:row.title,agency:row.agency,date:row.date,
-    budget:row.budget,stage:'評估中',notes:'',due:'',added_at:new Date().toISOString()
+    budget:row.budget,stage:'評估中',notes:'',due:'',read_at:null,added_at:new Date().toISOString()
   };
   persist();if(cloud.user)void cloudSaveSingle(row,!!store.saved[row.id]);renderSearch();renderTracking();renderRadar();toast(store.saved[row.id]?'已加入投標工作台':'已從投標工作台移除');
 }
@@ -212,7 +212,7 @@ async function openDetail(row){
     if(state.selected!==row)return;
     if(!Array.isArray(data.records))throw new Error('此案未回傳公告紀錄');
     state.details.set(row.id,data);
-    renderDetail(row,data);renderAnalytics();void loadRelatedCases(row);
+    renderDetail(row,data);renderAnalytics();void loadRelatedCases(row);if(store.saved[row.id])void setSavedRead(row.id,true,true);
   }catch(err){
     $('detailContent').replaceChildren(E('div','empty','案件詳情載入失敗：'+readableError(err)));
   }
@@ -561,6 +561,27 @@ function renderAnalytics(){
   }
   el.append(E('p','minor','資料範圍：當前查詢結果 + 本次已打開的案件詳情。已依機關代碼與案號去重，但不同決標方式與合約口徑仍需人工確認；僅適合初步探索，不能直接作全國平均或報價建議。'));
 }
+async function setSavedRead(caseId,isRead,automatic=false){
+ const entry=store.saved[caseId];if(!entry)return;
+ if(isRead&&entry.read_at&&automatic)return;
+ const previous=entry.read_at??null;
+ entry.read_at=isRead?new Date().toISOString():null;
+ persist();renderTracking();
+ if(cloud.user&&cloud.client){
+  try{
+   const account=cloud.user.id;
+   const {error}=await cloud.client.from('ti_saved_cases').update({
+    read_at:entry.read_at,updated_at:new Date().toISOString()
+   }).eq('user_id',account).eq('case_id',caseId);
+   if(error)throw error;
+  }catch(err){
+   if(store.saved[caseId]===entry){entry.read_at=previous;persist();renderTracking();}
+   toast('閱讀狀態雲端同步失敗：'+readableError(err));
+   return;
+  }
+ }
+ if(!automatic)toast(isRead?'已標記已讀':'已標記未讀');
+}
 function renderTracking(){
   const out=$('trackingOutput');out.replaceChildren();
   const items=Object.values(store.saved);
@@ -569,6 +590,8 @@ function renderTracking(){
   for(const item of items.sort((a,b)=>asText(b.added_at).localeCompare(asText(a.added_at)))){
     const card=E('section','track-card');
     child(card,btn(item.title,'case-title',()=>openDetail(item)),E('div','minor',item.agency||'機關未公開'));
+    const stateTag=E('div','minor',item.read_at?'已讀：'+new Date(item.read_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}):'尚未閱讀');
+    card.append(stateTag);
     const f=E('div','track-fields');
     const stageL=E('label','','投標階段'),select=E('select','');
     for(const stage of states){const opt=E('option','',stage);opt.value=stage;select.append(opt);}
@@ -583,7 +606,7 @@ function renderTracking(){
     area.addEventListener('change',()=>{item.notes=area.value.slice(0,4000);persist();if(cloud.user)void cloudSaveSingle(item,true);});
     notesL.append(area);child(f,stageL,dateL,notesL);
     const acts=E('div','track-actions');
-    child(acts,btn('打開公告詳情','ghost-btn',()=>openDetail(item)),btn('移除','ghost-btn',()=>{
+    child(acts,btn(item.read_at?'標記未讀':'標記已讀','ghost-btn',()=>void setSavedRead(item.id,!item.read_at)),btn('打開公告詳情','ghost-btn',()=>openDetail(item)),btn('移除','ghost-btn',()=>{
       delete store.saved[item.id];persist();if(cloud.user)void cloudSaveSingle(item,false);renderTracking();renderSearch();toast('已移除追蹤');
     }));
     child(card,f,acts);out.append(card);
@@ -667,7 +690,7 @@ async function trackingImport(file){
     for(const x of Object.values(d.saved)){
       if(!x||!asText(x.unit_id)||!asText(x.job_number)||!asText(x.title))continue;
       const id=asText(x.unit_id)+'::'+asText(x.job_number);
-      store.saved[id]={id,unit_id:asText(x.unit_id).slice(0,100),job_number:asText(x.job_number).slice(0,100),title:asText(x.title).slice(0,500),agency:asText(x.agency).slice(0,300),date:x.date,stage:states.includes(x.stage)?x.stage:'評估中',notes:asText(x.notes).slice(0,4000),due:/^\d{4}-\d{2}-\d{2}$/.test(asText(x.due))?x.due:'',added_at:asText(x.added_at)};
+      store.saved[id]={id,unit_id:asText(x.unit_id).slice(0,100),job_number:asText(x.job_number).slice(0,100),title:asText(x.title).slice(0,500),agency:asText(x.agency).slice(0,300),date:x.date,stage:states.includes(x.stage)?x.stage:'評估中',notes:asText(x.notes).slice(0,4000),due:/^\d{4}-\d{2}-\d{2}$/.test(asText(x.due))?x.due:'',read_at:null,added_at:asText(x.added_at)};
       count++;
       if(count>=1000)break;
     }
@@ -1071,7 +1094,7 @@ async function cloudHydrate(){
         id:s.case_id,unit_id:s.unit_id||s.case_id.split('::')[0],
         job_number:s.job_number||s.case_id.split('::').slice(1).join('::'),
         title:s.title||s.case_id,agency:s.agency||'',budget:s.budget_amount,
-        stage:s.stage,notes:s.notes||'',due:s.internal_deadline||'',added_at:s.added_at
+        stage:s.stage,notes:s.notes||'',due:s.internal_deadline||'',read_at:s.read_at||null,added_at:s.added_at
       };
     }
     for(const k of Object.keys(store.saved))delete store.saved[k];
@@ -1109,7 +1132,7 @@ async function cloudSaveSingle(item,exists,silent=false){
         agency:item.agency||item.unit_name||'',unit_id:item.unit_id,job_number:item.job_number,
         budget_amount:item.budget??item.budget_amount??null,
         stage:states.includes(item.stage)?item.stage:'評估中',
-        notes:item.notes||'',internal_deadline:item.due||null,updated_at:new Date().toISOString()
+        notes:item.notes||'',internal_deadline:item.due||null,read_at:item.read_at||null,updated_at:new Date().toISOString()
       };
       const {error}=await cloud.client.from('ti_saved_cases').upsert(payload,{onConflict:'user_id,case_id'});
       if(error)throw error;
