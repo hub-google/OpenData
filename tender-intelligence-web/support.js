@@ -153,9 +153,10 @@ async function initialize(force=false){
   const x=await api("bootstrap");
   initialized=true;staff=x.staff;
   $("tiSupportAdminTab").hidden=!staff;
+  $("tiSupportAdminTab").textContent=x.demo_mode?"測試客服後台":"客服管理";
   $("tiSupportAiStatus").textContent=x.gemini_ready?"Gemini AI 已配置":"AI 功能開發中";
   $("tiSupportAiStatus").classList.toggle("is-live",x.gemini_ready);
-  $("tiSupportGuestHint").textContent=x.signed_in?"此問題會連結你的登入帳號，可跨裝置查看回覆。":"未登入時，請使用同一瀏覽器查看後續回覆；登入後提交可跨裝置查詢。";
+  $("tiSupportGuestHint").textContent=x.demo_mode?"這是獨立測試帳號，工單僅供你測試；登出後可能無法跨裝置找回。":x.signed_in?"此問題會連結你的登入帳號，可跨裝置查看回覆。":"未登入時，請使用同一瀏覽器查看後續回覆；登入後提交可跨裝置查詢。";
   await Promise.all([restoreChat(),loadUnread()]);
  }catch(e){initialized=false;messageStatus("客服載入失敗："+e.message,"error");$("tiSupportAiStatus").textContent="目前無法確認 AI 狀態";}
 }
@@ -171,6 +172,14 @@ function openSupport(){
  if(!panel.hidden){void initialize(true);$("tiSupportClose").focus();}
  else $("tiSupportFab").focus();
 }
+window.addEventListener("ti-demo-account-ready",async()=>{
+ if($("tiSupportPanel").hidden){
+  $("tiSupportPanel").hidden=false;
+  $("tiSupportFab").setAttribute("aria-expanded","true");
+ }
+ await initialize(true);
+ if(staff)setTab("admin");
+});
 $("tiSupportFab").addEventListener("click",openSupport);
 $("tiSupportClose").addEventListener("click",openSupport);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("tiSupportPanel").hidden)openSupport()});
