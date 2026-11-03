@@ -107,9 +107,18 @@ async function search(mode,query='',sourcePage=1){
       state.totalPages=1;
       state.lastSearch='最新公告 '+dateLabel(state.date);
     }else if(mode==='agency'){
-      data=await api('/listbyunit',{unit_name:query,limit:100,page:sourcePage},35000);
-      state.totalPages=Math.max(1,Number(data.total_page||1));
-      state.lastSearch='機關名稱 '+query;
+      // listbyunit only accepts an actual unit_id, never a free-text unit_name.
+      const response=await api('/unit',{},35000);
+      const units=response.units&&typeof response.units==='object'?response.units:response;
+      const matches=Object.entries(units).filter(([id,name])=>typeof name==='string'
+        && (id===query||name.includes(query)));
+      if(!matches.length)throw Error('找不到相符的機關代碼。請改用機關正式名稱或代碼。');
+      matches.sort((a,b)=>Number(b[1]===query)-Number(a[1]===query)||a[1].length-b[1].length);
+      const [unitId,unitName]=matches[0];
+      data=await api('/listbyunit',{unit_id:unitId,page:sourcePage},35000);
+      state.totalPages=Math.max(1,Number(data.total_pages||data.total_page||1));
+      state.lastSearch='機關：'+unitName+'（'+unitId+'）'+
+        (matches.length>1?'，共 '+matches.length+' 個名稱符合；目前顯示最接近的機關':'');
     }else{
       const route=mode==='title'?'/searchbytitle':mode==='vendor'?'/searchbycompanyname':'/searchbycompanyid';
       data=await api(route,{query,page:sourcePage},35000);
@@ -681,7 +690,10 @@ renderTracking();
 renderWatches();
 renderRadar();
 renderAnalytics();
-search('latest','',1);
+const urlState=new URLSearchParams(window.location.search);
+if(Object.hasOwn(listModes,urlState.get('mode')||'') && (urlState.get('q')||'').length<121)
+  search(urlState.get('mode'),urlState.get('q')||'',1);
+else search('latest','',1);
 void initCloud();
 if(new URLSearchParams(window.location.search).get('view')==='billing')showView('billing');
 setInterval(()=>{if(document.visibilityState==='visible'&&store.watches.length)checkWatches();},20*60*1000);
@@ -773,11 +785,16 @@ async function initCloud(){
 function showSourceStatus(st){
   const source=st.source||{},run=st.run||{};
   const done=source.last_success_at?new Date(source.last_success_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}):'尚未完成';
+  const history=st.backfill||{};
+  const historyText='｜歷史回填：已完成 '+(st.backfillDays||0)+' 天，下一天 '+
+    (history.next_date||'未開始')+'，目標最早 '+(history.oldest_date||'未設定')+
+    (history.last_error?'，最近錯誤：'+history.last_error:'');
   $('sourceStatus').textContent=
     '資料取得方式：GET API（不是自行爬取 HTML）｜來源：'+(source.provider||'OpenFun PCC')+
-    '｜自有資料庫：Supabase unapiwajmgqqtdkixaab｜已收錄案件：'+(st.cases||0).toLocaleString('zh-TW')+
+    '｜自有資料庫：Supabase unapiwajmgqqtdkixaab｜公告：'+(st.notices||0).toLocaleString('zh-TW')+
+    ' 筆、案件：'+(st.cases||0).toLocaleString('zh-TW')+
     '｜預定同步：每 '+(source.frequency_minutes||'?')+' 分鐘｜上次成功：'+done+
-    '｜最新工作：'+(run.status||'無紀錄')+'，取得 '+(run.fetched_count||0)+' 筆公告'+
+    '｜最新工作：'+(run.status||'無紀錄')+'，取得 '+(run.fetched_count||0)+' 筆公告'+historyText+
     (source.last_error?'｜最近錯誤：'+source.last_error:'')+
     '｜資料商用再利用授權：'+(source.commercial_license_status||'待查');
 }
