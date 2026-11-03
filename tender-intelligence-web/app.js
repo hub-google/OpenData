@@ -1412,14 +1412,26 @@ async function renderWorkspace(){
  if(!cloud.user||!id){box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
  box.replaceChildren(E('div','empty','正在讀取團隊案件及任務…'));
  try{
-  const [members,cases,tasks]=await Promise.all([
+  const [members,cases,tasks,comments,activity]=await Promise.all([
    cloud.client.from('ti_workspace_members').select('user_id,role,joined_at').eq('workspace_id',id),
    cloud.client.from('ti_workspace_cases').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
-   cloud.client.from('ti_workspace_tasks').select('*').eq('workspace_id',id).order('updated_at',{ascending:false})
+   cloud.client.from('ti_workspace_tasks').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
+   cloud.client.from('ti_workspace_task_comments').select('id,task_id,author_id,body,created_at').eq('workspace_id',id).order('created_at',{ascending:false}).limit(200),
+   cloud.client.from('ti_workspace_activity').select('id,actor_id,entity_kind,entity_id,action,summary,changed_at').eq('workspace_id',id).order('changed_at',{ascending:false}).limit(40)
   ]);
-  if(members.error)throw members.error;if(cases.error)throw cases.error;if(tasks.error)throw tasks.error;
+  for(const result of [members,cases,tasks,comments,activity])if(result.error)throw result.error;
   const me=members.data.find(m=>m.user_id===cloud.user.id);
   const canEdit=!!me&&me.role!=='viewer';
+  const canReview=!!me&&['owner','admin'].includes(me.role);
+  const memberSelect=(current='',includeEmpty=true)=>{
+   const choose=E('select','');
+   if(includeEmpty){const opt=E('option','','未指派');opt.value='';choose.append(opt);}
+   for(const m of members.data||[]){
+    const opt=E('option','',m.user_id===cloud.user.id?'我本人（'+m.role+'）':m.user_id.slice(0,8)+'…（'+m.role+'）');
+    opt.value=m.user_id;choose.append(opt);
+   }
+   choose.value=current||'';return choose;
+  };
   box.replaceChildren();
   child(box,E('h2','','團隊案件 '+(cases.data?.length||0)+' 件 · 成員 '+(members.data?.length||0)+' 人'),
     E('p','minor','你的權限：'+(me?.role||'未知')+'。跨裝置案件會存到 ti_workspace_cases；角色由 RLS 驗證。'));
@@ -1505,23 +1517,37 @@ async function renderWorkspace(){
      .eq('workspace_id',id).eq('case_id',item.case_id);
     if(error)toast('備註更新失敗：'+readableError(error));
    });
-   child(line,stage,notes);wrap.append(line);box.append(wrap);
+   const owner=memberSelect(item.owner_id);
+   owner.disabled=!canEdit;owner.title='案件負責人（只允許團隊成員）';
+   owner.addEventListener('change',async()=>{
+    const {error}=await cloud.client.from('ti_workspace_cases')
+     .update({owner_id:owner.value||null,updated_at:new Date().toISOString()})
+     .eq('workspace_id',id).eq('case_id',item.case_id);
+    if(error){toast('案件指派失敗：'+readableError(error));void renderWorkspace();}
+    else toast('已更新案件負責人，並保留操作紀錄。');
+   });
+   child(line,stage,notes,owner);wrap.append(line);box.append(wrap);
   }
   child(box,E('h3','','共用待辦'));
   if(canEdit){
    const form=E('form','inline-form');form.style.marginBottom='16px';
    const name=E('input','');name.required=true;name.maxLength=300;name.placeholder='例如：準備報價附件';
    const due=E('input','');due.type='date';
+   const assignee=memberSelect();assignee.title='指定任務負責人';
+   const caseRef=E('select','');caseRef.title='關聯團隊案件';
+   const defaultCase=E('option','','不關聯案件');defaultCase.value='';caseRef.append(defaultCase);
+   for(const record of cases.data||[]){const opt=E('option','',record.title);opt.value=record.case_id;caseRef.append(opt);}
    const submit=E('button','primary-btn','建立團隊待辦');submit.type='submit';
    form.addEventListener('submit',async e=>{
     e.preventDefault();
     const {error}=await cloud.client.from('ti_workspace_tasks').insert({
-     workspace_id:id,title:name.value.trim(),due_at:due.value?due.value+'T23:59:00+08:00':null,created_by:cloud.user.id
+     workspace_id:id,title:name.value.trim(),due_at:due.value?due.value+'T23:59:00+08:00':null,
+     assigned_to:assignee.value||null,case_id:caseRef.value||null,created_by:cloud.user.id
     });
     if(error)toast('新增待辦失敗：'+readableError(error));
     else void renderWorkspace();
    });
-   child(form,name,due,submit);box.append(form);
+   child(form,name,due,assignee,caseRef,submit);box.append(form);
   }
   if(!tasks.data?.length)box.append(E('p','minor','尚未建立團隊待辦。'));
   for(const task of tasks.data||[]){
@@ -1532,7 +1558,54 @@ async function renderWorkspace(){
     if(error)toast('更新任務失敗：'+readableError(error));else void renderWorkspace();
    });
    child(head,check,E('h3','',task.title),E('span','minor',task.due_at?new Date(task.due_at).toLocaleDateString('zh-TW'):'無期限'));
-   wrap.append(head);box.append(wrap);
+   wrap.append(head);
+   const controls=E('div','inline-form');
+   const responsible=memberSelect(task.assigned_to);
+   responsible.disabled=!canEdit;responsible.title='任務負責人';
+   responsible.addEventListener('change',async()=>{
+    const {error}=await cloud.client.from('ti_workspace_tasks')
+     .update({assigned_to:responsible.value||null,updated_at:new Date().toISOString()})
+     .eq('id',task.id).eq('workspace_id',id);
+    if(error){toast('任務指派失敗：'+readableError(error));void renderWorkspace();}
+    else toast('已更新任務負責人。');
+   });
+   controls.append(responsible);
+   const review=E('select','');
+   for(const s of ['未送審','待審核','通過','退回']){
+    const opt=E('option','',s);opt.value=s;review.append(opt);
+   }
+   review.value=task.review_status||'未送審';
+   review.disabled=!canReview||!task.done;
+   review.title='只有管理員／擁有者可以審核已完成任務';
+   review.addEventListener('change',async()=>{
+    const {error}=await cloud.client.from('ti_workspace_tasks')
+     .update({review_status:review.value,updated_at:new Date().toISOString()})
+     .eq('id',task.id).eq('workspace_id',id);
+    if(error)toast('審核失敗：'+readableError(error));
+    void renderWorkspace();
+   });
+   controls.append(review);wrap.append(controls);
+   const discussions=E('div','detail-timeline');
+   const related=(comments.data||[]).filter(m=>m.task_id===task.id).reverse().slice(-15);
+   for(const comment of related){
+    const when=new Date(comment.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'});
+    discussions.append(E('p','minor',when+'｜'+(comment.author_id===cloud.user.id?'我本人':comment.author_id.slice(0,8)+'…')+'：'+comment.body));
+   }
+   wrap.append(discussions);
+   if(canEdit){
+    const form=E('form','inline-form'),input=E('input',''),send=E('button','ghost-btn','留言');
+    input.maxLength=2000;input.required=true;input.placeholder='任務討論、完成證據說明';
+    send.type='submit';
+    form.addEventListener('submit',async e=>{
+     e.preventDefault();if(!input.value.trim())return;
+     const {error}=await cloud.client.from('ti_workspace_task_comments').insert({
+      workspace_id:id,task_id:task.id,author_id:cloud.user.id,body:input.value.trim()
+     });
+     if(error)toast('留言失敗：'+readableError(error));else void renderWorkspace();
+    });
+    child(form,input,send);wrap.append(form);
+   }
+   box.append(wrap);
   }
   child(box,E('h3','','團隊成員'));
   const tb=E('table','analysis-list');
@@ -1541,6 +1614,13 @@ async function renderWorkspace(){
      E('td','',member.role),E('td','',new Date(member.joined_at).toLocaleDateString('zh-TW')));tb.append(tr);
   }
   box.append(tb);
+  child(box,E('h3','','最近操作紀錄'));
+  if(!activity.data?.length)box.append(E('p','minor','尚無團隊操作紀錄。'));
+  else for(const event of activity.data){
+   const actor=event.actor_id===cloud.user.id?'我本人':event.actor_id?event.actor_id.slice(0,8)+'…':'系統';
+   const when=new Date(event.changed_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'});
+   box.append(E('p','minor',when+'｜'+actor+'｜'+event.entity_kind+' '+event.action+'｜'+event.summary));
+  }
  }catch(err){box.replaceChildren(E('div','empty','團隊讀取失敗：'+readableError(err)));}
 }
 async function acceptWorkspaceInvitation(token){
