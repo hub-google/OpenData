@@ -42,13 +42,30 @@ Deno.serve(async req=>{
  const name=String(b?.document_name||"document").slice(0,250);
  const key=Deno.env.get("OPENAI_API_KEY");
  if(!key)return output({error:"此專案尚未在 Supabase Edge Function Secrets 設定 OPENAI_API_KEY；未呼叫任何 AI，也沒有產生模擬結果"},503,origin);
- const previous=await db("ti_ai_jobs?select=id&user_id=eq."+user.id+"&created_at=gte."+encodeURIComponent(new Date(Date.now()-86400000).toISOString())+"&limit=21");
- if((previous||[]).length>=20)return output({error:"今天已達每帳戶 20 次的 AI 防濫用額度"},429,origin);
- const created=await db("ti_ai_jobs","POST",[{user_id:user.id,document_name:name,case_id:b.case_id||null,state:"pending"}],"return=representation");
- const jobId=created?.[0]?.id;
- if(!jobId)return output({error:"無法建立分析紀錄"},503,origin);
+ const model="gpt-4.1-mini";
+ const digest=new Uint8Array(await crypto.subtle.digest("SHA-256",
+  new TextEncoder().encode("qualification_check|"+model+"|"+input)));
+ const fingerprint=Array.from(digest,b=>b.toString(16).padStart(2,"0")).join("");
+ let reservation;
  try{
-  const model="gpt-4.1-mini";
+  reservation=await db("rpc/ti_reserve_ai_job","POST",{
+   p_user:user.id,p_task_type:"qualification_check",p_case_id:String(b.case_id||"").slice(0,190),
+   p_document_name:name,p_request_hash:fingerprint
+  });
+ }catch(e){return output({error:"AI 額度檢查失敗："+String(e).slice(0,160)},502,origin);}
+ if(reservation?.state==="cached")
+  return output({job_id:reservation.job_id,result:reservation.output,
+    model:reservation.model,source_pages:compact.length,cached:true},200,origin);
+ if(reservation?.state==="processing")
+  return output({error:"相同文件的 AI 分析正在執行，請稍後查看結果，未重複扣除額度",job_id:reservation.job_id},409,origin);
+ if(reservation?.state==="quota_exhausted")
+  return output({error:"24 小時內成功分析已達 20 次上限，失敗不計入額度"},429,origin);
+ if(reservation?.state==="retry_limit")
+  return output({error:"此文件的連續失敗重試已達安全上限，請修改文件或聯絡客服"},429,origin);
+ if(reservation?.state!=="claimed"||!reservation.job_id)
+  return output({error:"AI 任務未成功保留"},503,origin);
+ const jobId=reservation.job_id;
+ try{
   const prompt="你是臺灣政府採購文件整理助手。只整理使用者貼出的真實原文；不得推測未出現的法規、數字、底價、得標率、投標資格與日期。每一項 requirement 必須提供原文短引 evidence 和來源頁碼 source_page；缺乏來源即不要列出。僅提供人工核對清單，不作法律判定。文件：\n\n"+input;
   const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({
    model,input:prompt,max_output_tokens:2400,store:false,
