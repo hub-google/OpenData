@@ -618,6 +618,27 @@ function trackingCSV(){
   const arr=[['標案','機關','機關代碼','案號','階段','內部截止','備註'],...items.map(x=>[x.title,x.agency,x.unit_id,x.job_number,x.stage,x.due,x.notes])];
   download('\uFEFF'+arr.map(r=>r.map(csvEscape).join(',')).join('\r\n'),'投標工作台.csv','text/csv;charset=utf-8');
 }
+async function trackingExcel(){
+ const items=Object.values(store.saved);
+ if(!items.length){toast('目前沒有追蹤案件可以匯出。');return;}
+ const button=$('trackingXlsx');button.disabled=true;
+ try{
+  const XLSX=await loadLibrary('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','XLSX');
+  const fields=['標案','機關','機關代碼','案號','階段','內部截止','備註'];
+  const rows=[fields,...items.map(x=>[x.title,x.agency,x.unit_id,x.job_number,x.stage,x.due,x.notes])];
+  const sheet=XLSX.utils.aoa_to_sheet(rows);
+  // Treat all exported user-provided text as strings, never as Excel formula cells.
+  for(const [address,cell] of Object.entries(sheet)){
+   if(address.startsWith('!')||!cell||typeof cell!=='object')continue;
+   delete cell.f;cell.t='s';cell.v=String(cell.v??'');
+  }
+  sheet['!cols']=[{wch:50},{wch:32},{wch:18},{wch:26},{wch:15},{wch:18},{wch:65}];
+  const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,sheet,'投標工作台');
+  XLSX.writeFile(book,'投標工作台.xlsx',{compression:true});
+  toast('已匯出實際追蹤案件的 Excel 檔案。');
+ }catch(e){toast('Excel 匯出失敗：'+readableError(e));}
+ finally{button.disabled=false;}
+}
 function trackingICS(){
   const selected=Object.values(store.saved).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x.due||''));
   if(!selected.length){toast('請先在工作台填寫至少一筆內部截止日。');return;}
@@ -820,6 +841,7 @@ function hook(){
   $('agencyForm').addEventListener('submit',e=>{e.preventDefault();const id=$('agencyId').value.trim();if(id)loadAgency(id);});
   $('vendorForm').addEventListener('submit',e=>{e.preventDefault();const q=$('vendorQuery').value.trim();const mode=$('vendorMode').value;if(q)loadVendors(mode,q);});
   $('trackingCsv').addEventListener('click',trackingCSV);
+  $('trackingXlsx').addEventListener('click',()=>void trackingExcel());
   $('trackingIcs').addEventListener('click',trackingICS);
   $('trackingBackup').addEventListener('click',trackingBackup);
   $('trackingImport').addEventListener('click',()=>$('trackingImportFile').click());
