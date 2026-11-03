@@ -2,7 +2,7 @@
 const URL=Deno.env.get("SUPABASE_URL")||"";
 const SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const PUBLIC=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY")||"sb_publishable_L09XC4Tekm6cZaPTTczm3g_Aap-SOSy";
-const GEMINI=Deno.env.get("GEMINI_API_KEY")||Deno.env.get("GOOGLE_API_KEY")||"";
+const GEMINI=Deno.env.get("GEMINI_API_KEY")||Deno.env.get("GOOGLE_API_KEY")||Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY")||"";
 const MODEL="gemini-3.5-flash-lite";
 const UNAVAILABLE="AI 客服功能開發中，請使用「問題回報」提交需求，我們會在網站內回覆。";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -29,7 +29,7 @@ async function getUser(req:Request){
  const res=await fetch(URL+"/auth/v1/user",{headers:{apikey:PUBLIC,Authorization:"Bearer "+token},signal:AbortSignal.timeout(9000)});
  if(!res.ok)throw Error("登入已失效，請重新登入");
  const body=await res.json();
- return body?.id&&uuid.test(body.id)?{id:body.id}:null;
+ return body?.id&&uuid.test(body.id)?{id:body.id,email:String(body.email||""),confirmed:Boolean(body.email_confirmed_at)}:null;
 }
 async function visitor(body:any){
  const token=String(body?.visitor_token||"").toLowerCase();
@@ -37,10 +37,21 @@ async function visitor(body:any){
  const bytes=new TextEncoder().encode(token);
  return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes))).map(x=>x.toString(16).padStart(2,"0")).join("");
 }
-async function isStaff(user:{id:string}|null){
+async function isStaff(user:{id:string;email?:string;confirmed?:boolean}|null){
  if(!user)return false;
- const rows=await query("ti_support_staff?select=user_id&user_id=eq."+user.id+"&limit=1");
- return rows.length>0;
+ const existing=await query("ti_support_staff?select=user_id&user_id=eq."+user.id+"&limit=1");
+ if(existing.length)return true;
+ if(!user.confirmed||!user.email)return false;
+ const normalized=user.email.trim().toLowerCase();
+ const digest=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(normalized)))).map(n=>n.toString(16).padStart(2,"0")).join("");
+ const allowed=await query("ti_support_admin_owners?select=email_sha256&email_sha256=eq."+digest+"&limit=1");
+ if(!allowed.length)return false;
+ try{await query("ti_support_staff","POST",[{user_id:user.id}]);}
+ catch(e){
+  const raced=await query("ti_support_staff?select=user_id&user_id=eq."+user.id+"&limit=1");
+  if(!raced.length)throw e;
+ }
+ return true;
 }
 function safeInput(v:unknown,max:number){return String(v||"").trim().slice(0,max)}
 function safeLink(v:unknown){
@@ -51,7 +62,7 @@ async function owned(thread_id:string,user:{id:string}|null,hash:string){
  if(!uuid.test(thread_id))throw Error("客服紀錄編號無效");
  const rows=await query("ti_support_threads?select=*&id=eq."+thread_id+"&limit=1");
  const t=rows[0];
- if(!t||!((user&&t.user_id===user.id)||t.visitor_hash===hash))throw Error("找不到可存取的客服紀錄");
+ if(!t||(t.user_id?(user?.id!==t.user_id):(t.visitor_hash!==hash)))throw Error("找不到可存取的客服紀錄");
  return t;
 }
 async function rateLimit(hash:string,kind:"ai"|"form",max:number){
@@ -104,9 +115,16 @@ Deno.serve(async req=>{
   const user=await getUser(req);
   if(action==="bootstrap")return result(req,{gemini_ready:Boolean(GEMINI),staff:await isStaff(user),signed_in:Boolean(user)});
   if(action==="list"){
-   const filter=user?"or=(visitor_hash.eq."+hash+",user_id.eq."+user.id+")":"visitor_hash=eq."+hash;
-   const rows=await query("ti_support_threads?select=id,kind,category,subject,status,updated_at,created_at,customer_read_at&"+filter+"&order=updated_at.desc&limit=60");
-   return result(req,{threads:rows});
+   const prefix="ti_support_threads?select=id,kind,category,subject,status,updated_at,created_at,customer_read_at&";
+   const guestQuery=prefix+"visitor_hash=eq."+hash+"&user_id=is.null&order=updated_at.desc&limit=60";
+   const results=user?await Promise.all([
+      query(prefix+"user_id=eq."+user.id+"&order=updated_at.desc&limit=60"),
+      query(guestQuery)
+   ]):[await query(guestQuery)];
+   const unique=new Map<string,any>();
+   for(const rows of results)for(const item of rows)unique.set(item.id,item);
+   const threads=[...unique.values()].sort((a:any,b:any)=>String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,60);
+   return result(req,{threads});
   }
   if(action==="read"){
    const t=await owned(safeInput(b.thread_id,40),user,hash);
