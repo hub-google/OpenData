@@ -412,6 +412,12 @@
         <div class="notice warning"><strong>兩種分析方式：</strong>本機規則整理不需登入，文件不會上傳；AI 標單解析需要登入，僅傳送解析後的文件文字至已部署的後端與 AI 服務。若尚未配置 AI 金鑰，會明確顯示無法提供服務，不會產生假分析。掃描型 PDF 尚不支援 OCR。</div>
         <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX、XLSX（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><button id="documentAI" class="ghost-btn" type="button">AI 解析資格／期限／評選條款</button><span id="documentFileName" class="minor"></span></div></div>
         <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div><div class="panel analysis-panel" id="documentAiOutput" aria-live="polite"><h2>AI 標單分析</h2><p class="minor">請登入並選擇合法取得的文件後使用。AI 僅整理原文，資格判斷仍需人工核對。</p></div>
+        <div class="panel analysis-panel">
+          <div class="section-heading"><h2>我的 AI 使用額度與歷程</h2><button id="aiUsageRefresh" type="button" class="ghost-btn">刷新紀錄</button></div>
+          <p class="hint">只計算最近 24 小時成功完成的標書分析／投標書健檢。相同來源重送會優先讀取原結果，不重複扣除額度；失敗任務不計入。這不代表 AI 已配置金鑰或正式付款。</p>
+          <div id="aiUsageStatus" role="status" class="minor">登入後查看額度。</div>
+          <div id="aiUsageHistory" class="watch-list"></div>
+        </div>
         <div class="panel" style="margin-top:16px">
           <h2>私有雲端文件</h2>
           <p class="hint">登入後才可上傳至 Supabase 私有儲存區；同一個帳戶可跨裝置下載。未登入不會把文件送出。</p>
