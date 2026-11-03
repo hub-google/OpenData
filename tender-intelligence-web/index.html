@@ -61,7 +61,7 @@
           <div class="metric"><span>本次載入公告</span><strong id="metricLoaded">—</strong><small>非全國總數</small></div>
           <div class="metric"><span>去重後案件</span><strong id="metricCases">—</strong><small>依機關與案號去重</small></div>
           <div class="metric"><span>招標類公告</span><strong id="metricOpen">—</strong><small>不等於尚未截標</small></div>
-          <div class="metric"><span>已收藏</span><strong id="metricSaved">0</strong><small>保存在本機瀏覽器</small></div>
+          <div class="metric"><span>已收藏</span><strong id="metricSaved">0</strong><small>登入後可雲端同步</small></div>
         </div>
         <div class="panel search-panel">
           <form id="searchForm" class="search-form">
@@ -127,7 +127,7 @@
       </section>
 
       <section id="view-tracking" class="view" hidden>
-        <div class="page-heading"><div class="eyebrow">BID PIPELINE</div><h1>我的投標工作台</h1><p>將搜尋到的真實案件加入工作台、記錄進度、備註及內部截止日。此版本僅存本機，未提供跨裝置同步。</p></div>
+        <div class="page-heading"><div class="eyebrow">BID PIPELINE</div><h1>我的投標工作台</h1><p>將搜尋到的真實案件加入工作台、記錄進度、備註及內部截止日。登入後可跨裝置同步；未登入時保留本機追蹤。</p></div>
         <div class="toolbar"><button id="trackingCsv" class="ghost-btn" type="button">↓ 匯出追蹤 CSV</button><button id="trackingIcs" class="ghost-btn" type="button">↓ 匯出日曆 ICS</button><button id="trackingImport" class="ghost-btn" type="button">↑ 匯入備份</button><input id="trackingImportFile" type="file" accept=".json,application/json" hidden><button id="trackingBackup" class="ghost-btn" type="button">↓ 備份 JSON</button></div>
         <div id="trackingOutput" class="tracking-grid"></div>
         <div class="panel" style="margin-top:22px">
@@ -174,9 +174,9 @@
 
       <section id="view-documents" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">DOCUMENT CHECKLIST</div><h1>標書條款整理</h1><p>從你合法取得的招標文件整理資格、截標、履約、評選與押標金關鍵段落，保留原始出處與頁碼。</p></div>
-        <div class="notice warning"><strong>此版是瀏覽器本機「關鍵字規則解析」，不是 AI 模型。</strong>支援 TXT、MD、PDF、DOCX；文件不會上傳至我們的伺服器。掃描 PDF 無文字層時無法直接辨識；正式 AI 健檢與跨文件知識庫需要另外部署具權限的後端。</div>
-        <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><span id="documentFileName" class="minor"></span></div></div>
-        <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div>
+        <div class="notice warning"><strong>兩種分析方式：</strong>本機規則整理不需登入，文件不會上傳；AI 標單解析需要登入，僅傳送解析後的文件文字至已部署的後端與 AI 服務。若尚未配置 AI 金鑰，會明確顯示無法提供服務，不會產生假分析。掃描型 PDF 尚不支援 OCR。</div>
+        <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><button id="documentAI" class="ghost-btn" type="button">AI 解析資格／期限／評選條款</button><span id="documentFileName" class="minor"></span></div></div>
+        <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div><div class="panel analysis-panel" id="documentAiOutput" aria-live="polite"><h2>AI 標單分析</h2><p class="minor">請登入並選擇合法取得的文件後使用。AI 僅整理原文，資格判斷仍需人工核對。</p></div>
         <div class="panel" style="margin-top:16px">
           <h2>私有雲端文件</h2>
           <p class="hint">登入後才可上傳至 Supabase 私有儲存區；同一個帳戶可跨裝置下載。未登入不會把文件送出。</p>
@@ -195,8 +195,8 @@
           <p>API 不需 Token 的呼叫可能有流量限制或資料延遲；錯誤時顯示原因，不使用模擬資料冒充。API 可跨網域呼叫，但**公開可讀不代表可無限制商業再利用**，正式商用前應依官方資料集授權與採購網著作權政策評估。</p>
           <h2>有哪些是真正的功能？</h2>
           <p>真實資料搜尋、公告詳情與歷史、機關年度統計、廠商公告查詢、依資料可用性計算決標比、CSV／RSS 檔案下載、個人商機匹配、追蹤看板、ICS 日曆、瀏覽器開頁檢查通知、本機文字文件檢核。</p>
-          <h2>哪些尚未接後端？</h2>
-          <p>多裝置同步、會員登入、雲端儲存、Email／LINE 背景通知、正式 AI 模型解析、批次歷史全量統計，以及更完整來源的商用授權。這些功能不以假按鈕充數，也不收費。</p>
+          <h2>哪些尚未完成驗收？</h2>
+          <p>會員與雲端保存、多人協作及 AI 文件解析的後端程式已建立，實際帳戶登入與 AI 服務仍需通過端到端測試；AI 另須配置金鑰才能運作。LINE／Email 背景外送需要獨立且合法授權的發送服務；目前只有伺服器產生的站內通知。全量歷史資料持續回補中，尚未完成所有年度收錄及商業授權確認。</p>
           <h2>開源與研究</h2>
           <p><a href="https://github.com/hub-google/OpenData/tree/main/tender-intelligence-web" target="_blank" rel="noopener noreferrer">GitHub 原始碼與 PRD</a>；資料實際歸屬及使用條件以原提供者為準。</p>
         </div>
