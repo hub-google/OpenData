@@ -21,6 +21,7 @@ async function load(){
   $('emailToggle').checked=!!p.email_enabled;
   $('lineToggle').checked=!!p.line_enabled;
   $('digestToggle').checked=p.daily_digest!==false;
+  $('reminderDays').value=Array.isArray(p.reminder_days)?p.reminder_days.join(','):'7,3,1';
   const connected=!!link.data;
   configured=await readiness();
   const emailStatus=configured.email_ready?(p.email_enabled?'使用者已同意，服務已配置（仍須實測寄達）':'服務已配置，尚未同意接收'):
@@ -49,7 +50,12 @@ async function startLogin(){
 }
 async function save(){
  if(!user){msg('請先登入帳戶。');return;}
- const record={user_id:user.id,email_enabled:$('emailToggle').checked,
+ const raw=$('reminderDays').value.trim();
+ const days=raw.split(/[,，、\s]+/).filter(Boolean).map(x=>Number(x));
+ if(days.length>6||days.some(x=>!Number.isInteger(x)||x<1||x>30)||new Set(days).size!==days.length){
+  msg('截標提醒需設定最多六個不重複的整數天數，範圍 1–30，例如：7,3,1。');return;
+ }
+ const record={user_id:user.id,reminder_days:days,email_enabled:$('emailToggle').checked,
     line_enabled:$('lineToggle').checked,daily_digest:$('digestToggle').checked,
     updated_at:new Date().toISOString()};
  try{
