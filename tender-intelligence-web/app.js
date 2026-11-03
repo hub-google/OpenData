@@ -1264,7 +1264,12 @@ async function renderCloudInbox(){
       const {error}=await cloud.client.from('ti_notifications').update({seen_at:new Date().toISOString()}).eq('id',note.id);
       if(!error)void renderCloudInbox();
     }),E('span','case-tag',note.seen_at?'已讀':'未讀'));
-    child(wrap,top,E('p','',note.reason+'｜監控關鍵字：'+(note.ti_watch_rules?.keywords||'')+'｜'+new Date(note.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})));
+    const ids=Array.isArray(note.match_rule_ids)?note.match_rule_ids:[];
+    const related=ids.map(id=>store.watches.find(w=>w.serverId===id)?.term).filter(Boolean);
+    const summary=related.length?related.join('、'):
+      note.ti_watch_rules?.keywords|| (ids.length?'先前符合 '+ids.length+' 條監控規則（部分已刪除）':'來源規則待查');
+    child(wrap,top,E('p','',note.reason+'｜符合 '+Math.max(1,ids.length)+' 條監控：'+summary+
+      '｜'+new Date(note.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})));
     box.append(wrap);
   }
  }catch(err){box.replaceChildren(E('div','empty','雲端通知載入失敗：'+readableError(err)));}

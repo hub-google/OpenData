@@ -62,7 +62,7 @@ export async function cloudWatches(client,user){
   return data||[];
 }
 export async function cloudNotifications(client,user){
-  const {data,error}=await client.from("ti_notifications").select("id,created_at,case_id,notice_id,reason,seen_at,ti_cases(title,agency,job_number,unit_id),ti_watch_rules(keywords)")
+  const {data,error}=await client.from("ti_notifications").select("id,created_at,case_id,notice_id,reason,seen_at,match_rule_ids,ti_cases(title,agency,job_number,unit_id),ti_watch_rules(keywords)")
     .eq("user_id",user.id).order("created_at",{ascending:false}).limit(100);
   if(error)throw error;
   return data||[];
