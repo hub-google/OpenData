@@ -31,6 +31,14 @@ test('normalizes real OpenFun response shape',()=>{
   assert.equal(groupOf(base),'財物');
   assert.equal(stateOf({...base,brief:{type:'決標公告'}}),'決標');
 });
+test('separates actual source solicitation, preview and sale types',()=>{
+  const make=type=>({...base,brief:{...base.brief,type}});
+  assert.equal(stateOf(make('公開取得報價單或企劃書公告')),'招標');
+  assert.equal(stateOf(make('公開徵求廠商提供參考資料公告')),'公開徵求');
+  assert.equal(stateOf(make('招標文件公開閱覽公告資料公告')),'公開閱覽');
+  assert.equal(stateOf(make('財物變賣公告')),'財物標售');
+  assert.equal(stateOf(make('無法決標公告')),'無法決標');
+});
 test('deduplicates same case version while retaining latest announcement',()=>{
   const old={...base,date:20261031,filename:'TIQ-1-123'};
   const latest={...base,filename:'TIQ-1-71150000',brief:{...base.brief,type:'更正公告'}};
