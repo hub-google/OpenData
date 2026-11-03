@@ -60,3 +60,11 @@
 .ti-support-filter{display:flex;align-items:center;gap:8px;color:#576b84;font-size:12px;margin-bottom:10px}
 .ti-support-filter select{flex:1;padding:7px!important}.ti-support-admin-reply{gap:8px}
 @media(max-width:600px){.ti-support-fab{right:14px;bottom:14px;padding:8px;min-height:54px;min-width:54px;justify-content:center}.ti-fab-label{display:none}.ti-fab-icon{height:38px;width:38px}.ti-support-panel{right:8px;bottom:78px;width:calc(100vw - 16px);height:calc(100dvh - 96px);max-height:700px;border-radius:16px}}
+
+/* One-click sandbox login. Clearly distinct from a verified production account. */
+.ti-demo-login-box{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;margin:14px 0;border:1px solid #afc8f2;border-radius:12px;background:#edf4ff}
+.ti-demo-login-box strong{color:#214e98;font-size:15px}
+.ti-demo-login-box p{margin:4px 0 0;color:#617392;line-height:1.65;font-size:12px}
+.ti-demo-login-box button{flex-shrink:0;min-width:150px}
+#accountDemoQuick{font-size:12px;padding:9px 13px;white-space:nowrap}
+@media(max-width:700px){.ti-demo-login-box{flex-direction:column;align-items:stretch}.ti-demo-login-box button{width:100%}#accountDemoQuick{padding:8px 10px;font-size:11px}}
