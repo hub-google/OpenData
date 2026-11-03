@@ -365,6 +365,16 @@
           <p class="hint">登入後才可上傳至 Supabase 私有儲存區；同一個帳戶可跨裝置下載。未登入不會把文件送出。</p>
           <button id="documentCloudSave" class="ghost-btn" type="button">將所選文件保存至私有雲端</button>
           <div id="cloudDocuments" class="watch-list" style="margin-top:14px"><div class="empty">尚未登入，無法讀取私有雲端文件。</div></div>
+          <div class="panel" style="margin-top:18px">
+            <h3>私有標書知識庫｜跨文件原文搜尋</h3>
+            <p class="hint">登入後可對本人已儲存的前 8 份 PDF／DOCX／TXT／MD 文件進行本機關鍵字搜尋；逐份從私有儲存區授權下載，搜尋結果保留原文檔名和頁碼／段落。內容不會傳送給 AI，這不是語意檢索，也不能替代人工資格確認。</p>
+            <form id="knowledgeSearchForm" class="inline-form">
+              <input id="knowledgeQuery" maxlength="120" required placeholder="搜尋原文，例如：履約保證金">
+              <button id="knowledgeSearchButton" type="submit" class="ghost-btn">搜尋我的知識庫</button>
+            </form>
+            <div id="knowledgeStatus" class="minor" role="status">需要登入及至少一份已上傳文件。</div>
+            <div id="knowledgeResults" class="watch-list" aria-live="polite"></div>
+          </div>
         </div>
       </section>
 
