@@ -127,7 +127,7 @@
       
 <section id="view-advanced" class="view" hidden>
  <div class="page-heading"><div class="eyebrow">ARCHIVE SEARCH</div><h1>進階標案搜尋</h1>
- <p>在實際已入庫的跨日公告中，搜尋案名、案號、機關與公告明列的廠商。支援 AND／OR／排除詞、多軸篩選與真正伺服器分頁，不把沒收錄的日期當零案件。</p></div>
+ <p>在實際已入庫的跨日公告中，搜尋案名、案號、機關與公告明列的廠商。支援 AND／OR／排除詞、台／臺同義、官方截止日範圍與真正伺服器分頁，不把沒收錄的日期當零案件。</p></div>
  <div class="panel">
   <form id="advancedForm" class="setting-form">
    <label class="wide">全文關鍵字（可用 AND / OR / -排除，雙引號包住片語）
@@ -136,7 +136,7 @@
    <label class="wide">額外排除詞（逗號分隔）<input id="advExclude" maxlength="350" placeholder="例如：租賃,拆除"></label>
    <label>關鍵字組合<select id="advAny"><option value="false">必須包含全部 AND</option><option value="true">包含任一 OR</option></select></label>
    <label>機關名稱或代碼<input id="advAgency" maxlength="100" placeholder="例如：臺北市政府"></label>
-   <label>公告類型<select id="advKind"><option value="">全部</option><option>招標</option><option>更正</option><option>決標</option><option>無法決標</option></select></label>
+   <label>公告類型<select id="advKind"><option value="">全部</option><option>招標</option><option>更正</option><option>決標</option><option>無法決標</option><option>公開閱覽</option><option>公開徵求</option><option>財物變賣</option></select></label>
    <label>採購類別<select id="advGroup"><option value="">全部</option><option>工程</option><option>財物</option><option>勞務</option><option>未分類</option></select></label>
    <label>實際公告履約地（未公開者不納入）<input id="advLocation" maxlength="80" placeholder="例如：臺南市"></label>
    <label>實際公告招標方式（未公開者不納入）<input id="advMethod" maxlength="80" placeholder="例如：公開招標"></label>
@@ -144,7 +144,9 @@
    <label>最高已公開預算（元）<input type="number" id="advMax" min="0" step="1" placeholder="不限"></label>
    <label>公告日期起<input type="date" id="advStart"></label>
    <label>公告日期迄<input type="date" id="advEnd"></label>
-   <label>排序<select id="advSort"><option value="date">最新公告</option><option value="deadline">最早截標（已公開）</option><option value="budget">預算高至低</option><option value="award">決標金額高至低</option><option value="title">案名</option></select></label>
+   <label>官方截止日期起（未公開者不納入）<input type="date" id="advDeadlineStart"></label>
+   <label>官方截止日期迄（未公開者不納入）<input type="date" id="advDeadlineEnd"></label>
+   <label>排序<select id="advSort"><option value="relevance">關鍵字關聯性（同分最新優先）</option><option value="date">最新公告</option><option value="deadline">最早截標（已公開）</option><option value="budget">預算高至低</option><option value="award">決標金額高至低</option><option value="title">案名</option></select></label>
    <label><input type="checkbox" id="advOpen"> 只看官方截止時間尚未到、且目前為招標／更正公告的案件</label>
    <div class="form-actions">
      <button type="submit" class="primary-btn" id="advSubmit">搜尋歷史資料庫</button>
