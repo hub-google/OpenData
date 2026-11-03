@@ -11,6 +11,7 @@ const ready=enabled&&!!merchantId&&!!hashKey&&!!hashIv;
 const root=stage?"https://payment-stage.ecpay.com.tw":"https://payment.ecpay.com.tw";
 const site="https://hub-google.github.io/OpenData/tender-intelligence-web/";
 const callback=dbUrl+"/functions/v1/ti-billing";
+const periodicCallback=callback+"?period=1";
 const sb=createClient(dbUrl,serviceKey,{auth:{autoRefreshToken:false,persistSession:false}});
 
 function cors(req:Request):Record<string,string>{
@@ -75,18 +76,28 @@ async function incoming(req:Request):Promise<Response>{
  const expected=await checkMac(fields);
  if(!equalsFixed(expected,fields.CheckMacValue.toUpperCase()))
    return new Response("0|invalid mac",{status:400});
+ if(fields.SimulatePaid==="1")return new Response("1|OK");
  if(fields.RtnCode!=="1"){
    // Failed authorizations never confer paid access. The merchant can review them in ECPay.
    return new Response("1|OK");
  }
- const amount=Number(fields.TradeAmt);
- if(!Number.isSafeInteger(amount)||amount<=0||!fields.TradeNo)
+ const recurringPeriod=new URL(req.url).searchParams.get("period")==="1";
+ if(recurringPeriod && (fields.PeriodType!=="M"||fields.Frequency!=="1"||
+      !Number.isSafeInteger(Number(fields.TotalSuccessTimes))||
+      Number(fields.TotalSuccessTimes)<2))
+   return new Response("0|invalid period",{status:400});
+ const amount=Number(recurringPeriod?(fields.Amount||fields.amount):fields.TradeAmt);
+ // ECPay can preserve the recurring order's TradeNo across months. Each successful
+ // authorization is uniquely identified by the signed TotalSuccessTimes.
+ const paymentKey=recurringPeriod?
+   fields.MerchantTradeNo+":PERIOD:"+fields.TotalSuccessTimes:fields.TradeNo;
+ if(!Number.isSafeInteger(amount)||amount<=0||!paymentKey)
    return new Response("0|invalid payment",{status:400});
  const {data, error:e}=await sb.rpc("ti_record_ecpay_payment",{
   p_merchant_trade_no:fields.MerchantTradeNo,
-  p_provider_trade_no:fields.TradeNo,
+  p_provider_trade_no:paymentKey,
   p_amount_twd:amount,
-  p_paid_at:parseTaiwanDate(fields.PaymentDate||""),
+  p_paid_at:parseTaiwanDate(fields.PaymentDate||fields.ProcessDate||fields.process_date||""),
   p_method:fields.PaymentType||"Credit"
  });
  if(e||data!==true){
@@ -137,7 +148,7 @@ async function checkout(req:Request,userId:string,payload:Record<string,unknown>
   ChoosePayment:recurring?"Credit":"ALL",EncryptType:"1"
  };
  if(recurring)Object.assign(fields,{PeriodAmount:String(plan.amount_twd),PeriodType:"M",
-  Frequency:"1",ExecTimes:"999",PeriodReturnURL:callback});
+  Frequency:"1",ExecTimes:"99",PeriodReturnURL:periodicCallback});
  fields.CheckMacValue=await checkMac(fields);
  return reply(req,{checkout_url:root+"/Cashier/AioCheckOut/V5",fields,
   payment_kind:paymentKind,amount_twd:plan.amount_twd});

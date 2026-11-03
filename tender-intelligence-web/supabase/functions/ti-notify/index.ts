@@ -1,0 +1,126 @@
+// Supabase ti-notify: scheduled outbound Email and LINE transport.
+// No fake success: provider credentials must exist as Supabase Secrets.
+// Dedicated to the tender project; never use LINE channels from unrelated apps.
+const URL=Deno.env.get("SUPABASE_URL")||"";
+const ROLE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
+const RESEND=Deno.env.get("RESEND_API_KEY")||"";
+const EMAIL_FROM=Deno.env.get("TI_EMAIL_FROM")||"";
+const LINE_ACCESS=Deno.env.get("TI_LINE_CHANNEL_ACCESS_TOKEN")||"";
+const TENDER="https://hub-google.github.io/OpenData/tender-intelligence-web/";
+const h={apikey:ROLE,Authorization:"Bearer "+ROLE,"Content-Type":"application/json"};
+const scrub=v=>String(v??"").replace(/[\r\n]+/g," ").slice(0,550);
+const html=s=>scrub(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+async function rpc(name,body){
+  const r=await fetch(URL+"/rest/v1/rpc/"+name,{method:"POST",headers:h,body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
+  if(!r.ok)throw Error("database "+name+" HTTP "+r.status);
+  return await r.json();
+}
+async function rest(path){
+  const r=await fetch(URL+"/rest/v1/"+path,{headers:h,signal:AbortSignal.timeout(15000)});
+  if(!r.ok)throw Error("database read HTTP "+r.status);
+  return r.json();
+}
+function link(r){
+  const p=new URLSearchParams({mode:"title",q:r.subject});
+  return TENDER+"?"+p.toString();
+}
+async function sendEmail(recipient,events,digest){
+  const lines=events.slice(0,20).map(r=>'<li><b>'+html(r.reason)+'</b> '+html(r.subject)+
+  '<br>'+html(r.agency)+' ／ 案號 '+html(r.job_number)+
+  '<br><a href="'+link(r)+'">開啟標案搜尋</a></li>').join("");
+  const subject=digest?'政府標案每日摘要｜'+events.length+' 筆符合監控':
+    '政府標案更新｜'+events.length+' 筆新公告';
+  const r=await fetch("https://api.resend.com/emails",{
+    method:"POST",headers:{"Authorization":"Bearer "+RESEND,"Content-Type":"application/json"},
+    body:JSON.stringify({
+       from:EMAIL_FROM,to:[recipient],subject,
+       html:'<h2>政府標案監控</h2><p>以下為你主動訂閱的政府標案資料異動：</p><ul>'+lines+
+         '</ul><p>資料來源：政府電子採購網，透過 OpenFun API；請以官方公告為準。</p>'+
+         '<p><a href="'+TENDER+'">開啟標案平台，管理或停用通知</a></p>',
+       text:'政府標案監控\n'+events.map(r=>r.reason+' '+r.subject+' '+r.agency+' '+r.job_number+' '+link(r)).join('\n')+
+         '\n停用通知請登入 '+TENDER+' 後在監控與提醒內操作。'
+    }),signal:AbortSignal.timeout(25000)
+  });
+  const x=await r.json().catch(()=>({}));
+  if(!r.ok)throw Error("Resend "+r.status+" "+scrub(x.message||x.name||"寄送失敗"));
+  if(!x.id)throw Error("Email provider did not return message id");
+  return x.id;
+}
+async function sendLine(to,r){
+  const message='【政府標案通知】'+scrub(r.reason)+'\n'+scrub(r.subject)+
+    '\n'+scrub(r.agency)+'｜'+scrub(r.job_number)+
+    '\n'+link(r)+'\n可在標案情報中心關閉推播。';
+  const res=await fetch("https://api.line.me/v2/bot/message/push",{
+    method:"POST",headers:{"Authorization":"Bearer "+LINE_ACCESS,"Content-Type":"application/json"},
+    body:JSON.stringify({to,messages:[{type:"text",text:message.slice(0,4000)}]}),
+    signal:AbortSignal.timeout(18000)
+  });
+  if(!res.ok)throw Error("LINE Messaging API HTTP "+res.status);
+  return res.headers.get("x-line-request-id")||"sent";
+}
+Deno.serve(async req=>{
+  if(req.method!=="POST")return Response.json({error:"POST only"},{status:405});
+  if(!URL||!ROLE)return Response.json({error:"server configuration missing"},{status:503});
+  const token=req.headers.get("x-ti-cron")||"";
+  if(token.length<32)return Response.json({error:"unauthorized"},{status:401});
+  try{if(await rpc("ti_verify_ingest_token",{candidate:token})!==true)
+    return Response.json({error:"unauthorized"},{status:401});
+  }catch{return Response.json({error:"unauthorized"},{status:401});}
+  const configured={email:!!RESEND&&!!EMAIL_FROM,line:!!LINE_ACCESS};
+  let candidates;
+  try{candidates=await rpc("ti_pending_deliveries",{max_items:60});}
+  catch(e){return Response.json({error:scrub(e),configured},{status:502});}
+  const now=new Date(),taipeiHour=Number(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Taipei",hour:"2-digit",hour12:false}).format(now));
+  const groupedEmail=new Map(),line=[];
+  for(const r of candidates||[]){
+    if(r.channel==="email"){
+      let list=groupedEmail.get(r.user_id);
+      if(!list){list=[];groupedEmail.set(r.user_id,list);}
+      list.push(r);
+    }else if(r.channel==="line")line.push(r);
+  }
+  let sent=0,failed=0,skipped=0;
+  for(const [user,events] of groupedEmail){
+    if(!configured.email){skipped+=events.length;continue;}
+    try{
+      const prefs=await rest("ti_delivery_settings?select=daily_digest&user_id=eq."+encodeURIComponent(user)+"&limit=1");
+      const digest=prefs?.[0]?.daily_digest!==false;
+      if(digest&&taipeiHour!==8){skipped+=events.length;continue;}
+      const first=events[0];
+      const deliveryId=await sendEmail(first.recipient,events,digest);
+      for(const r of events){
+        await rpc("ti_record_delivery",{
+          p_notification:r.notification_id,p_user:r.user_id,p_channel:"email",p_status:"sent",
+          p_provider_id:deliveryId,p_error:""
+        });
+        sent++;
+      }
+    }catch(e){
+      for(const r of events){
+        try{await rpc("ti_record_delivery",{
+          p_notification:r.notification_id,p_user:r.user_id,p_channel:"email",p_status:"failed",
+          p_provider_id:"",p_error:scrub(e)
+        });}catch{}
+        failed++;
+      }
+    }
+  }
+  if(configured.line)for(const r of line){
+    try{
+      const id=await sendLine(r.recipient,r);
+      await rpc("ti_record_delivery",{
+        p_notification:r.notification_id,p_user:r.user_id,p_channel:"line",p_status:"sent",
+        p_provider_id:id,p_error:""
+      });sent++;
+    }catch(e){
+      failed++;
+      try{await rpc("ti_record_delivery",{
+        p_notification:r.notification_id,p_user:r.user_id,p_channel:"line",p_status:"failed",
+        p_provider_id:"",p_error:scrub(e)
+      });}catch{}
+    }
+  }
+  else skipped+=line.length;
+  return Response.json({ok:true,configured,pending:(candidates||[]).length,sent,failed,skipped,
+    note:"sent counts only confirmed provider responses; no simulated delivery"},{headers:{"Cache-Control":"no-store"}});
+});
