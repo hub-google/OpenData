@@ -47,12 +47,16 @@
   <div class="workspace">
     <header class="topbar">
       <div class="topbar-left"><button type="button" id="mobileMenu" class="mobile-menu" aria-label="開啟功能選單">☰</button><span id="currentViewLabel">標案搜尋</span><span class="topbar-sep">/</span><span class="topbar-sub">台灣政府採購</span></div>
-      <div class="topbar-right"><button type="button" id="accountButton" class="ghost-btn">登入／跨裝置同步</button><span id="apiStatus" class="connection-tag">等待讀取資料</span><a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer" class="external-link">政府電子採購網 ↗</a></div>
+      <div class="topbar-right"><button type="button" id="accountDemoQuick" class="primary-btn">測試帳號一鍵登入</button><button type="button" id="accountButton" class="ghost-btn">登入／跨裝置同步</button><span id="apiStatus" class="connection-tag">等待讀取資料</span><a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer" class="external-link">政府電子採購網 ↗</a></div>
     </header>
     <main class="main">
       <section id="accountPanel" class="panel account-panel" hidden>
         <div class="section-heading"><h2>帳戶與跨裝置同步</h2><button id="closeAccount" type="button" class="ghost-btn">關閉</button></div>
-        <p class="hint">採 Supabase Email 驗證登入；只有本人能查看追蹤、監控、待辦與上傳文件。無需購買方案。</p>
+        <p class="hint">可直接使用獨立測試帳號，無需輸入 Email 或密碼。正式會員仍可用 Email 驗證或 Google 登入。</p>
+        <div class="ti-demo-login-box">
+          <div><strong>測試帳號已準備好</strong><p>僅測試用：自動建立個人測試帳號，並提供隔離的客服管理工單，不會看到正式客戶資料。</p></div>
+          <button type="button" id="accountDemoLogin" class="primary-btn">一鍵登入測試帳號</button>
+        </div>
         <form id="accountLoginForm" class="inline-form">
           <label for="accountEmail" class="sr-only">電子郵件</label>
           <input id="accountEmail" type="email" autocomplete="email" placeholder="輸入 Email 收取登入連結" required>
