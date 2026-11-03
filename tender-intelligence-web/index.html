@@ -88,6 +88,14 @@
           <div class="metric"><span>招標類公告</span><strong id="metricOpen">—</strong><small>不等於尚未截標</small></div>
           <div class="metric"><span>已收藏</span><strong id="metricSaved">0</strong><small>登入後可雲端同步</small></div>
         </div>
+        <div class="metrics" id="verifiedMetrics" aria-label="自有資料庫已核對的標案概況">
+          <div class="metric"><span>最新收錄公告</span><strong id="verifiedLatest">—</strong><small id="verifiedLatestDate">以公告日期為準</small></div>
+          <div class="metric"><span>確認尚未截標</span><strong id="verifiedOpen">—</strong><small>僅含有官方截止時間者</small></div>
+          <div class="metric"><span>三日內截止</span><strong id="verifiedSoon">—</strong><small>僅已確認時間者</small></div>
+          <div class="metric"><span>目前無法決標公告</span><strong id="verifiedFailed">—</strong><small>依案件最新公告類型</small></div>
+          <div class="metric"><span>截止日待查</span><strong id="verifiedUnknown">—</strong><small>招標類但尚無明確截止資訊</small></div>
+        </div>
+        <p class="hint" id="verifiedMetricsNote" role="status">正在查詢實際入庫數據及欄位完整度；未知欄位不會當成 0。</p>
         <div class="panel search-panel">
           <form id="searchForm" class="search-form">
             <label for="searchMode" class="sr-only">搜尋類型</label>
