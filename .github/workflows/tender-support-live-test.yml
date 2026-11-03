@@ -1,0 +1,28 @@
+name: 政府標案測試帳號端到端驗收
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "tender-intelligence-web/tests/support-live.mjs"
+      - ".github/workflows/tender-support-live-test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  demo-support:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: 取得最新網站程式碼
+        uses: actions/checkout@v4
+      - name: 安裝 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 安裝固定版本 Supabase Auth SDK
+        run: npm install --no-save --no-package-lock --ignore-scripts @supabase/supabase-js@2.58.0
+      - name: 驗證真實測試帳號登入、客服工單與資料隔離
+        run: node tender-intelligence-web/tests/support-live.mjs
