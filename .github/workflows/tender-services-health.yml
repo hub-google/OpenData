@@ -1,0 +1,29 @@
+name: 政府標案外部服務可用性及未授權安全驗收
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/tender-services-health.yml"
+      - "tender-intelligence-web/tests/service-readiness.mjs"
+      - "tender-intelligence-web/supabase/functions/ti-billing/**"
+      - "tender-intelligence-web/supabase/functions/ti-notify/**"
+      - "tender-intelligence-web/supabase/functions/ti-ingest/**"
+      - "tender-intelligence-web/supabase/functions/ti-service-status/**"
+      - "tender-intelligence-web/supabase/functions/ti-rss/**"
+
+permissions:
+  contents: read
+
+jobs:
+  external-services:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 檢查真實服務的 readiness、RSS 及未授權操作防護
+        run: node tender-intelligence-web/tests/service-readiness.mjs
