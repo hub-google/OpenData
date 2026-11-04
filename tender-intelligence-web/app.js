@@ -46,7 +46,7 @@ function link(text,href){
 }
 function persist(){try{localStorage.setItem(STORE,JSON.stringify(store));}catch{toast('本機儲存空間不足，操作未成功保存。');}}
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,4300);}
-function setStatus(message,type=''){$('apiStatus').textContent=message;$('apiStatus').className='connection-tag '+type;}
+function setStatus(message,type=''){const el=$('apiStatus');el.textContent=message;el.className='connection-tag '+type;el.title=message;el.setAttribute('aria-label',message);}
 function showView(name){
   if(!viewNames[name])return;
   state.view=name;
