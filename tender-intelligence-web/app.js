@@ -1461,14 +1461,15 @@ async function renderWorkspace(){
  if(!cloud.user||!id){box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
  box.replaceChildren(E('div','empty','正在讀取團隊案件及任務…'));
  try{
-  const [members,cases,tasks,comments,activity]=await Promise.all([
+  const [members,cases,tasks,comments,activity,watches]=await Promise.all([
    cloud.client.from('ti_workspace_members').select('user_id,role,joined_at').eq('workspace_id',id),
    cloud.client.from('ti_workspace_cases').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
    cloud.client.from('ti_workspace_tasks').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
    cloud.client.from('ti_workspace_task_comments').select('id,task_id,author_id,body,created_at').eq('workspace_id',id).order('created_at',{ascending:false}).limit(200),
-   cloud.client.from('ti_workspace_activity').select('id,actor_id,entity_kind,entity_id,action,summary,changed_at').eq('workspace_id',id).order('changed_at',{ascending:false}).limit(40)
+   cloud.client.from('ti_workspace_activity').select('id,actor_id,entity_kind,entity_id,action,summary,changed_at').eq('workspace_id',id).order('changed_at',{ascending:false}).limit(40),
+   cloud.client.from('ti_workspace_watch_rules').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}).limit(100)
   ]);
-  for(const result of [members,cases,tasks,comments,activity])if(result.error)throw result.error;
+  for(const result of [members,cases,tasks,comments,activity,watches])if(result.error)throw result.error;
   const me=members.data.find(m=>m.user_id===cloud.user.id);
   const canEdit=!!me&&me.role!=='viewer';
   const canReview=!!me&&['owner','admin'].includes(me.role);
@@ -1671,6 +1672,65 @@ async function renderWorkspace(){
     child(form,input,send);wrap.append(form);
    }
    box.append(wrap);
+  }
+  child(box,E('h3','','團隊共用監控規則'));
+  box.append(E('p','minor','所有成員共用關鍵字監控；只由團隊 Owner／Admin 建立或修改。命中公告時每位成員都只會收到一則同版本通知。'));
+  if(canReview){
+   const form=E('form','inline-form');
+   const keywords=E('input','');keywords.required=true;keywords.maxLength=120;keywords.placeholder='監控關鍵字（2–120 字）';
+   const excludes=E('input','');excludes.maxLength=250;excludes.placeholder='排除詞（選填，逗號分隔）';
+   const agency=E('input','');agency.maxLength=80;agency.placeholder='機關代碼（選填）';
+   const group=E('select','');
+   for(const [value,caption] of [['','全部採購類型'],['工程','工程'],['財物','財物'],['勞務','勞務'],['未分類','未分類']]){
+    const option=E('option','',caption);option.value=value;group.append(option);
+   }
+   const min=E('input','');min.type='number';min.min='0';min.placeholder='最低預算（選填）';
+   const max=E('input','');max.type='number';max.min='0';max.placeholder='最高預算（選填）';
+   const submit=E('button','primary-btn','新增共用監控');submit.type='submit';
+   form.addEventListener('submit',async ev=>{
+    ev.preventDefault();const lower=min.value===''?null:Number(min.value),upper=max.value===''?null:Number(max.value);
+    if(keywords.value.trim().length<2||lower!==null&&lower<0||upper!==null&&upper<0||
+      lower!==null&&upper!==null&&lower>upper)return toast('請確認監控關鍵字及預算區間。');
+    submit.disabled=true;
+    const {error}=await cloud.client.from('ti_workspace_watch_rules').insert({
+     workspace_id:id,created_by:cloud.user.id,
+     keywords:keywords.value.trim(),excludes:excludes.value.trim(),
+     agency_id:agency.value.trim()||null,group_name:group.value||null,
+     min_budget:lower,max_budget:upper
+    });
+    submit.disabled=false;
+    if(error)toast('建立團隊規則失敗：'+readableError(error));
+    else{toast('團隊共用監控已保存。');void renderWorkspace();}
+   });
+   child(form,keywords,excludes,agency,group,min,max,submit);box.append(form);
+  }
+  if(!watches.data?.length)box.append(E('p','minor','目前沒有團隊共用監控。'));
+  for(const rule of watches.data||[]){
+   const item=E('div','watch-item'),heading=E('header','');
+   heading.append(E('strong','',rule.keywords+'｜'+(rule.enabled?'監控中':'已暫停')));
+   if(canReview){
+    const active=btn(rule.enabled?'暫停':'啟用','ghost-btn',async()=>{
+     const {error}=await cloud.client.from('ti_workspace_watch_rules')
+      .update({enabled:!rule.enabled,updated_at:new Date().toISOString()})
+      .eq('id',rule.id).eq('workspace_id',id);
+     if(error)toast('調整失敗：'+readableError(error));else void renderWorkspace();
+    });
+    const del=btn('刪除','ghost-btn',async()=>{
+     if(!confirm('確定刪除這條團隊共用監控？'))return;
+     const {error}=await cloud.client.from('ti_workspace_watch_rules')
+      .delete().eq('id',rule.id).eq('workspace_id',id);
+     if(error)toast('刪除失敗：'+readableError(error));else void renderWorkspace();
+    });
+    child(heading,active,del);
+   }
+   const desc=[
+    rule.excludes?'排除 '+rule.excludes:'',
+    rule.agency_id?'機關代碼 '+rule.agency_id:'',
+    rule.group_name?'採購類別 '+rule.group_name:'',
+    rule.min_budget!=null?'預算至少 '+Number(rule.min_budget).toLocaleString('zh-TW'):'',
+    rule.max_budget!=null?'預算至多 '+Number(rule.max_budget).toLocaleString('zh-TW'):''
+   ].filter(Boolean).join('｜');
+   item.append(heading,E('p','minor',desc||'不限制其他條件'));box.append(item);
   }
   child(box,E('h3','','團隊成員'));
   const tb=E('table','analysis-list');
