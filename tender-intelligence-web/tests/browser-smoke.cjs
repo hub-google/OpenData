@@ -241,6 +241,22 @@ async function firstAdvancedId(){
        screen:document.documentElement.clientWidth,
        body:document.documentElement.scrollWidth
      }));
+     if(width.body>width.screen+8){
+       const offenders=await mobile.evaluate(()=>{
+         const limit=document.documentElement.clientWidth;
+         return [...document.querySelectorAll('body *')].filter(el=>{
+           const rect=el.getBoundingClientRect(),style=getComputedStyle(el);
+           return style.display!=='none'&&style.visibility!=='hidden'&&
+             rect.width>0&&rect.right>limit+8&&rect.left<limit;
+         }).sort((a,b)=>b.getBoundingClientRect().right-a.getBoundingClientRect().right)
+           .slice(0,22).map(el=>({tag:el.tagName,id:el.id,
+             cls:String(el.className).slice(0,90),
+             right:Math.round(el.getBoundingClientRect().right),
+             width:Math.round(el.getBoundingClientRect().width),
+             text:(el.textContent||'').trim().slice(0,40)}));
+       });
+       console.log('MOBILE_OVERFLOW_DIAGNOSTIC '+JSON.stringify(offenders));
+     }
      assert.ok(width.body<=width.screen+8,'Unexpected mobile horizontal scroll: '+JSON.stringify(width));
      await mobile.locator('#mobileMenu').click();
      assert.ok(await mobile.locator('.sidebar').evaluate(el=>el.classList.contains('mobile-open')));
