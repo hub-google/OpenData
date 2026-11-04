@@ -126,7 +126,18 @@ async function search(p=1){
  status('正在查詢自有 Supabase 中實際已收錄的公告，跨日期條件在資料庫端處理…');
  try{
   const client=await getClient();
-  const {data,error}=await client.rpc('ti_archive_search_v4',opts);
+  const t=Array.isArray(opts.p_terms)&&opts.p_terms.length===1?opts.p_terms[0]:'';
+  const fast=opts.p_expression===null&&opts.p_any===false&&
+   Array.isArray(opts.p_exclude)&&opts.p_exclude.length===0&&
+   t.length>=2&&t.length<=60&&!/[%_\\]/.test(t)&&
+   opts.p_sort==='date'&&
+   !opts.p_agency&&!opts.p_kind&&!opts.p_group&&!opts.p_location&&!opts.p_method&&!opts.p_decision_method&&
+   opts.p_min_budget===null&&opts.p_max_budget===null&&
+   opts.p_date_from===null&&opts.p_date_to===null&&
+   !opts.p_deadline_start&&!opts.p_deadline_end&&!opts.p_deadline_only;
+  const {data,error}=fast
+   ?await client.rpc('ti_archive_search_simple',{p_term:t,p_page:opts.p_page,p_limit:opts.p_limit})
+   :await client.rpc('ti_archive_search_v4',opts);
   if(error)throw error;
   if(n!==request)return;
   if(!data||!Array.isArray(data.rows))throw Error('資料庫沒有傳回有效的分頁結果');
