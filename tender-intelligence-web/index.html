@@ -533,6 +533,10 @@
         <div class="panel prose">
           <h2>真實資料庫與同步狀態</h2>
           <div id="sourceStatus" class="notice">正在查詢自有 Supabase 資料庫的最新同步資訊…</div>
+          <h2>每日來源資料品質核對</h2>
+          <div id="qualityCheckStatus" role="status" class="notice">正在讀取上次自動核對紀錄…</div>
+          <h2>資料來源與授權登記</h2>
+          <div id="qualitySources" class="watch-list" role="region" aria-label="資料來源與授權狀態">尚未載入。</div>
           <h2>資料來源</h2>
           <p>本網站從第三方公開的 <a href="https://pcc-api.openfun.app/" target="_blank" rel="noopener noreferrer">OpenFun 政府採購公告 API</a> 即時取得資料。該 API 蒐集政府電子採購網公開公告。官方紀錄請以 <a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer">政府電子採購網</a> 為準。機關年度統計使用 OpenFun /api/unitstat。</p>
           <p>API 無 Token 可能有流量限制或延遲；出錯時不會使用模擬資料。公開可讀不等於可無限制商業再利用，正式商用仍須釐清來源授權。</p>
@@ -559,6 +563,7 @@
   <script type="module" src="./issues.js"></script>
   <script type="module" src="./developer-api.js"></script>
   <script type="module" src="./evidence.js"></script>
+  <script type="module" src="./quality.js"></script>
 <script type="module" src="./operations.js"></script>
 <script type="module" src="./proposal.js"></script>
 <script type="module" src="./account-privacy.js"></script>
