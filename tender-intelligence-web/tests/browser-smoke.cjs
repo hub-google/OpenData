@@ -43,6 +43,14 @@ async function firstAdvancedId(){
    assert.ok(values.length>0,'No latest cards');
    assert.ok(values.some(v=>v.startsWith('NT$')),'All latest budget values appear unknown');
  });
+ await check('Latest list includes distinct source notice versions, not just case master rows',async()=>{
+   const announcements=Number((await page.locator('#metricLoaded').innerText()).replace(/,/g,''));
+   const cases=Number((await page.locator('#metricCases').innerText()).replace(/,/g,''));
+   const info=await page.locator('#resultInfo').innerText();
+   assert.ok(announcements>=cases&&announcements>0,'Latest notice count smaller than case count');
+   assert.ok(info.includes('已入庫')&&info.includes('公告'),'Unknown source provenance');
+   assert.ok((await page.locator('#resultList .case-meta').first().innerText()).includes('公告編號'));
+ });
  await check('Latest page next button changes the visible page',async()=>{
    const original=await page.locator('#pageInfo').innerText();
    const title=await page.locator('#resultList .case-title').first().innerText();
@@ -214,7 +222,7 @@ async function firstAdvancedId(){
    await page.locator('#agencyId').fill('3.13.50');
    await page.locator('#agencyForm button[type="submit"]').click();
    await page.locator('#agencyOutput table').waitFor({timeout:60000});
-   assert.ok((await page.locator('#agencyOutput').innerText()).includes('已入庫年度統計'));
+   assert.ok((await page.locator('#agencyOutput').innerText()).includes('已確認得標廠商'));
    await page.locator('#agencyMonthlyOutput table').waitFor({timeout:60000});
    assert.ok((await page.locator('#agencyMonthlyOutput tr').count())>1);
    await page.locator('#agencyRepeatOutput .watch-item').first().waitFor({timeout:60000});
