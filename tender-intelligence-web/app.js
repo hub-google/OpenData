@@ -4,7 +4,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchLatestAmounts,fetchLatestCachedNotices,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -118,23 +118,37 @@ async function search(mode,query='',sourcePage=1){
       }
       state.totalPages=1;
     }else if(mode==='agency'){
-      // listbyunit only accepts an actual unit_id, never a free-text unit_name.
-      const response=await api('/unit',{},35000);
-      const units=response.units&&typeof response.units==='object'?response.units:response;
-      const matches=Object.entries(units).filter(([id,name])=>typeof name==='string'
-        && (id===query||name.includes(query)));
-      if(!matches.length)throw Error('找不到相符的機關代碼。請改用機關正式名稱或代碼。');
-      matches.sort((a,b)=>Number(b[1]===query)-Number(a[1]===query)||a[1].length-b[1].length);
-      const [unitId,unitName]=matches[0];
-      data=await api('/listbyunit',{unit_id:unitId,page:sourcePage},35000);
-      state.totalPages=Math.max(1,Number(data.total_pages||data.total_page||1));
-      state.lastSearch='機關：'+unitName+'（'+unitId+'）'+
-        (matches.length>1?'，共 '+matches.length+' 個名稱符合；目前顯示最接近的機關':'');
+      try{
+        // listbyunit only accepts an actual unit_id, never a free-text unit_name.
+        const response=await api('/unit',{},35000);
+        const units=response.units&&typeof response.units==='object'?response.units:response;
+        const matches=Object.entries(units).filter(([id,name])=>typeof name==='string'
+          && (id===query||name.includes(query)));
+        if(!matches.length)throw Error('找不到相符的機關代碼。請改用機關正式名稱或代碼。');
+        matches.sort((a,b)=>Number(b[1]===query)-Number(a[1]===query)||a[1].length-b[1].length);
+        const [unitId,unitName]=matches[0];
+        data=await api('/listbyunit',{unit_id:unitId,page:sourcePage},35000);
+        state.totalPages=Math.max(1,Number(data.total_pages||data.total_page||1));
+        state.lastSearch='機關：'+unitName+'（'+unitId+'）'+
+          (matches.length>1?'，共 '+matches.length+' 個名稱符合；目前顯示最接近的機關':'');
+      }catch(sourceError){
+        if(token!==state.running)return;
+        data=await fetchBasicArchiveSearch({mode,query,page:sourcePage});
+        state.totalPages=Math.max(1,Number(data.total_pages||1));
+        state.lastSearch='已入庫機關搜尋：'+query+'｜即時來源無法連線，顯示上次成功同步資料';
+      }
     }else{
-      const route=mode==='title'?'/searchbytitle':mode==='vendor'?'/searchbycompanyname':'/searchbycompanyid';
-      data=await api(route,{query,page:sourcePage},35000);
-      state.totalPages=Math.max(1,Number(data.total_pages||1));
-      state.lastSearch=(listModes[mode]||'搜尋')+'：'+query;
+      try{
+        const route=mode==='title'?'/searchbytitle':mode==='vendor'?'/searchbycompanyname':'/searchbycompanyid';
+        data=await api(route,{query,page:sourcePage},35000);
+        state.totalPages=Math.max(1,Number(data.total_pages||1));
+        state.lastSearch=(listModes[mode]||'搜尋')+'：'+query;
+      }catch(sourceError){
+        if(token!==state.running)return;
+        data=await fetchBasicArchiveSearch({mode,query,page:sourcePage});
+        state.totalPages=Math.max(1,Number(data.total_pages||1));
+        state.lastSearch='已入庫'+(listModes[mode]||'搜尋')+'：'+query+'｜即時來源無法連線，顯示上次成功同步資料';
+      }
     }
     if(token!==state.running)return;
     let records=Array.isArray(data.records)?data.records:[];
@@ -151,7 +165,7 @@ async function search(mode,query='',sourcePage=1){
     }
     state.rows=records.map(normalize).filter(Boolean);
     renderSearch();
-    setStatus((cachedLatest?'資料庫備援正常':'來源連線正常')+' · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),'success');
+    setStatus((cachedLatest||state.lastSearch.startsWith('已入庫')?'資料庫備援正常':'來源連線正常')+' · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),'success');
   }catch(err){
     if(token!==state.running)return;
     state.rows=[];state.searchRows=[];state.totalPages=1;
