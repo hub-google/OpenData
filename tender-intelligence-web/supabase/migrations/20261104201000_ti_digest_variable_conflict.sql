@@ -3,7 +3,7 @@ create or replace function public.ti_claim_digest_batches(
  p_email_ready boolean default false,p_line_ready boolean default false,p_limit integer default 12
 ) returns table(batch_id uuid,user_id uuid,channel text,recipient text,
  notifications jsonb,attempts integer)
-language plpgsql security definer set search_path='' as $
+language plpgsql security definer set search_path='' as $$
 #variable_conflict use_column
 declare ids uuid[];
 begin
