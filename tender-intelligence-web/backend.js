@@ -57,6 +57,38 @@ export async function fetchLatestAmounts(yyyymmdd){
   }
   throw Error('單日案件數超過核對上限，請改由詳細查詢確認');
 }
+// When OpenFun rejects cross-origin fetches, read the latest successfully
+// ingested official announcements instead of rendering an empty homepage.
+// This is clearly labelled cached data, never claimed to be a live API response.
+export async function fetchLatestCachedNotices(){
+  const client=await getClient();
+  const {data:head,error:headError}=await client.from("ti_cases")
+    .select("latest_notice_date").order("latest_notice_date",{ascending:false})
+    .limit(1);
+  if(headError)throw headError;
+  const date=Number(head?.[0]?.latest_notice_date);
+  if(!/^\d{8}$/.test(String(date)))throw Error('資料庫尚無有效公告日期');
+  const records=[],perPage=1000;
+  for(let page=0;page<100;page++){
+    const from=page*perPage;
+    const {data,error}=await client.from("ti_cases")
+      .select("unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount")
+      .eq("latest_notice_date",date)
+      .order("id",{ascending:true})
+      .range(from,from+perPage-1);
+    if(error)throw error;
+    for(const r of data||[]){
+      records.push({
+        unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
+        date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
+        budget_amount:r.budget_amount,award_amount:r.award_amount,
+        brief:{title:r.title,type:r.latest_notice_type,category:r.category}
+      });
+    }
+    if((data||[]).length<perPage) return {records,date:String(date),source:'database'};
+  }
+  throw Error('最近一日公告筆數超過資料庫單次核對上限');
+}
 export async function fetchSourceStatus(){
  const client=await getClient();
  const [source,run,coverage,backfill,days,notices]=await Promise.all([
