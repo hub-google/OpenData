@@ -32,6 +32,31 @@ export async function fetchArchive({page=1,search=""}={}){
     brief:{title:r.title,type:r.latest_notice_type,category:r.category}
   })),total_pages:Math.max(1,Math.ceil((count||0)/100)),total_records:count||0};
 }
+// Cross-check latest OpenFun daily summaries with source-derived amounts already
+// ingested into the public case index. Daily list summaries omit budget_amount.
+export async function fetchLatestAmounts(yyyymmdd){
+  const day=String(yyyymmdd||'');
+  if(!/^\\d{8}$/.test(day))throw Error('公告日期格式不正確');
+  const client=await getClient();
+  const amounts=new Map();
+  const perPage=1000;
+  for(let page=0;page<100;page++){
+    const from=page*perPage;
+    const {data,error}=await client.from("ti_cases")
+      .select("unit_id,job_number,budget_amount,award_amount")
+      .eq("latest_notice_date",Number(day))
+      .order("id",{ascending:true})
+      .range(from,from+perPage-1);
+    if(error)throw error;
+    for(const row of data||[]){
+      amounts.set(String(row.unit_id)+"::"+String(row.job_number),{
+        budget_amount:row.budget_amount,award_amount:row.award_amount
+      });
+    }
+    if((data||[]).length<perPage)return amounts;
+  }
+  throw Error('單日案件數超過核對上限，請改由詳細查詢確認');
+}
 export async function fetchSourceStatus(){
  const client=await getClient();
  const [source,run,coverage,backfill,days,notices]=await Promise.all([
