@@ -26,6 +26,11 @@ async function batches(table,rows,ignore=false){
  }
  return inserted;
 }
+async function upsertCasesWithoutRegression(rows){
+  for(let i=0;i<rows.length;i+=125){
+    await db("rpc/ti_upsert_case_briefs","POST",{p_cases:rows.slice(i,i+125)});
+  }
+}
 function norm(r,stamp){
  const unit=text(r?.unit_id),job=text(r?.job_number),fn=text(r?.filename),dt=Number(r?.date);
  if(!unit||!job||!fn||!Number.isInteger(dt)||dt<19990101||dt>20991231)return null;
@@ -181,7 +186,7 @@ async function ingest(mode){
      (x.c.latest_notice_date===p.latest_notice_date&&x.c.latest_filename>p.latest_filename))cases.set(x.c.id,x.c);
   }
   found=notices.size;if(found===0 && list.records.length>0)throw Error("source had no valid notices");
-  await batches("ti_cases",[...cases.values()]);
+  await upsertCasesWithoutRegression([...cases.values()]);
   added=await batches("ti_notices",[...notices.values()],true);
   // Backfill runs have a tighter detail quota to keep old-year imports cheap.
   const cached=await db("ti_case_details?select=case_id&limit=10000");
