@@ -45,6 +45,11 @@ async function load(){
   $('emailToggle').checked=!!p.email_enabled;
   $('lineToggle').checked=!!p.line_enabled;
   $('digestToggle').checked=p.daily_digest!==false;
+  $('emailHour').value=String(p.email_hour??8);
+  $('lineFrequency').value=p.line_frequency||'daily';
+  $('lineHour').value=String(p.line_hour??8);
+  $('lineUrgent').checked=p.line_urgent_immediate!==false;
+  updateDeliveryMode();
   $('reminderDays').value=Array.isArray(p.reminder_days)?p.reminder_days.join(','):'7,3,1';
   const connected=!!link.data;
   configured=await readiness();
@@ -80,8 +85,15 @@ async function save(){
  if(days.length>6||days.some(x=>!Number.isInteger(x)||x<1||x>30)||new Set(days).size!==days.length){
   msg('截標提醒需設定最多六個不重複的整數天數，範圍 1–30，例如：7,3,1。');return;
  }
+ const emailHour=Number($('emailHour').value),lineHour=Number($('lineHour').value);
+ if(!Number.isInteger(emailHour)||emailHour<0||emailHour>23||
+    !Number.isInteger(lineHour)||lineHour<0||lineHour>23){
+  msg('摘要時間必須為台灣時間 00:00 至 23:00 的整點。');return;
+ }
  const record={user_id:user.id,reminder_days:days,email_enabled:$('emailToggle').checked,
     line_enabled:$('lineToggle').checked,daily_digest:$('digestToggle').checked,
+    email_hour:emailHour,line_frequency:$('lineFrequency').value,line_hour:lineHour,
+    line_urgent_immediate:$('lineUrgent').checked,
     updated_at:new Date().toISOString()};
  try{
   if(record.line_enabled){
@@ -107,7 +119,25 @@ async function unlink(){
   await load();msg($('deliveryStatus').textContent+'｜LINE 已解除綁定。');
  }catch(e){msg('解除綁定失敗：'+errors(e));}
 }
+function updateDeliveryMode(){
+ $('emailHour').disabled=!$('digestToggle').checked;
+ $('lineHour').disabled=$('lineFrequency').value!=='daily';
+}
+function fillHours(){
+ for(const id of ['emailHour','lineHour']){
+  const select=$(id);select.replaceChildren();
+  for(let i=0;i<24;i++){
+   const option=document.createElement('option');
+   option.value=String(i);option.textContent=String(i).padStart(2,'0')+':00';
+   select.append(option);
+  }
+  select.value='8';
+ }
+}
 async function init(){
+ fillHours();
+ $('lineFrequency').addEventListener('change',updateDeliveryMode);
+ $('digestToggle').addEventListener('change',updateDeliveryMode);
  $('saveDelivery').addEventListener('click',()=>void save());
  $('deliveryHistoryRefresh').addEventListener('click',()=>void receipts());
  $('connectLine').addEventListener('click',()=>void startLogin());
