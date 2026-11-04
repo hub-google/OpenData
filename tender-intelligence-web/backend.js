@@ -32,6 +32,17 @@ export async function fetchArchive({page=1,search=""}={}){
     brief:{title:r.title,type:r.latest_notice_type,category:r.category}
   })),total_pages:Math.max(1,Math.ceil((count||0)/100)),total_records:count||0};
 }
+// Exact-field backup searches when the upstream API blocks browser CORS.
+// All rows come from the already-ingested public government announcements.
+export async function fetchBasicArchiveSearch({mode,query,page=1}={}){
+  const client=await getClient();
+  const {data,error}=await client.rpc("ti_basic_archive_search",{
+    p_mode:mode,p_query:String(query||''),p_page:page,p_limit:100
+  });
+  if(error)throw error;
+  if(!data||!Array.isArray(data.records))throw Error('資料庫未提供有效的搜尋結果');
+  return data;
+}
 // Cross-check latest OpenFun daily summaries with source-derived amounts already
 // ingested into the public case index. Daily list summaries omit budget_amount.
 export async function fetchLatestAmounts(yyyymmdd){
