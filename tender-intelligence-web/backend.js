@@ -145,6 +145,14 @@ export async function fetchArchivedCaseDetail(unitId,jobNumber){
     partial_history:notices.length>500,
     summary_only:!notices.length};
 }
+export async function fetchAgencyArchivedAnnual(unitId){
+  const id=String(unitId||'').trim();
+  if(!id||id.length>80)throw Error('機關代碼無效');
+  const client=await getClient();
+  const {data,error}=await client.rpc('ti_agency_archived_annual',{p_unit_id:id});
+  if(error)throw error;
+  return data;
+}
 export async function fetchSourceStatus(){
  const client=await getClient();
  const [source,run,coverage,backfill,days,notices]=await Promise.all([
