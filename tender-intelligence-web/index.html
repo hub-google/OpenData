@@ -209,6 +209,20 @@
         <div class="page-heading"><div class="eyebrow">BUYER INTELLIGENCE</div><h1>機關採購情報</h1><p>查詢機關年度發包件數、決標金額、主要得標廠商。依 API 官方統計回應顯示。</p></div>
         <div class="panel"><form id="agencyForm" class="inline-form"><label class="sr-only" for="agencyId">機關代碼</label><input id="agencyId" placeholder="輸入機關代碼，例如 A.15.2" required><button class="primary-btn" type="submit">查詢機關統計</button></form><p class="hint">在標案詳情中點選「查看此機關統計」可自動帶入正確代碼。</p></div>
         <div id="agencyOutput" class="panel analysis-panel"><div class="empty">先輸入機關代碼或從案件詳情開啟。</div></div>
+        <div class="panel analysis-panel">
+          <div class="section-heading"><h2>每月採購紀錄（自有公告資料庫）</h2></div>
+          <form id="agencyMonthlyForm" class="inline-form">
+            <label>公告年度 <input id="agencyMonthlyYear" type="number" min="1999" max="2100" required></label>
+            <button type="submit" class="ghost-btn">按月查詢已入庫資料</button>
+          </form>
+          <p class="hint">只統計本平台已成功收錄的公告；每月按案號去重計算金額，沒有資料的月份不能直接視為零採購。</p>
+          <div id="agencyMonthlyOutput" class="watch-list" aria-live="polite">請先查詢機關。</div>
+        </div>
+        <div class="panel analysis-panel">
+          <h2>同機關相似名稱的歷史採購（可能重購證據）</h2>
+          <p class="hint">僅列同機關、相同正規化案名、不同正式案號的候選紀錄與公告日期；契約期限有公告原文才顯示，不會推估下次採購時間。</p>
+          <div id="agencyRepeatOutput" class="watch-list" aria-live="polite">請先查詢機關。</div>
+        </div>
       </section>
 
       <section id="view-vendors" class="view" hidden>
@@ -564,6 +578,7 @@
   <script type="module" src="./developer-api.js"></script>
   <script type="module" src="./evidence.js"></script>
   <script type="module" src="./quality.js"></script>
+  <script type="module" src="./agency-deep.js"></script>
 <script type="module" src="./operations.js"></script>
 <script type="module" src="./proposal.js"></script>
 <script type="module" src="./account-privacy.js"></script>
