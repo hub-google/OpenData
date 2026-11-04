@@ -36,7 +36,7 @@ export async function fetchArchive({page=1,search=""}={}){
 // ingested into the public case index. Daily list summaries omit budget_amount.
 export async function fetchLatestAmounts(yyyymmdd){
   const day=String(yyyymmdd||'');
-  if(!/^\\d{8}$/.test(day))throw Error('公告日期格式不正確');
+  if(!/^\d{8}$/.test(day))throw Error('公告日期格式不正確');
   const client=await getClient();
   const amounts=new Map();
   const perPage=1000;
