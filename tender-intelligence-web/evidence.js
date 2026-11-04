@@ -37,11 +37,20 @@ async function award(e){
  e.preventDefault();const box=$('awardSampleOutput');
  const year=$('awardYear').value.trim(),agency=$('awardAgency').value.trim();
  const group=$('awardGroup').value;
+ const method=$('awardMethod').value.trim();
+ const min=$('awardMinBudget').value===''?null:Number($('awardMinBudget').value);
+ const max=$('awardMaxBudget').value===''?null:Number($('awardMaxBudget').value);
+ if((min!==null&&(!Number.isFinite(min)||min<0))||
+    (max!==null&&(!Number.isFinite(max)||max<0))||
+    (min!==null&&max!==null&&min>max)){
+  box.textContent='公開預算範圍不正確，請確認上下限。';return;
+ }
  if(year&&!/^\d{4}$/.test(year)){box.textContent='年度請填寫 4 位數西元年。';return;}
  box.replaceChildren(element('p','正在讀取跨日真實價格樣本…','minor'));
  try{
-  const client=await getClient(),{data,error}=await client.rpc('ti_award_samples',{
-   p_group:group,p_agency:agency,p_year:year?Number(year):null,p_limit:30
+  const client=await getClient(),{data,error}=await client.rpc('ti_award_samples_v2',{
+   p_group:group,p_agency:agency,p_year:year?Number(year):null,
+   p_method:method,p_min_budget:min,p_max_budget:max,p_limit:30
   });
   if(error)throw error;
   box.replaceChildren();
@@ -51,14 +60,18 @@ async function award(e){
     ['75% 分位',data.q3_ratio==null?'無樣本':(Number(data.q3_ratio)*100).toFixed(1)+'%']];
   for(const [title,value] of entries){const card=element('div','','stat-compact');card.append(element('span',title),element('b',value));summary.append(card);}
   box.append(summary);
-  box.append(element('p',Number(data.count)<5?'樣本少於 5，不適合推斷行情。':'沒有做規格、數量、得標方式與年期的可比性校正；中位數只是本次條件下的觀察數值。','notice warning'));
+  box.append(element('p',Number(data.count)<5?'樣本少於 5，不適合推斷行情。':
+   '僅同條件原始公告樣本；有 '+n(data.method_unknown_count)+' 件未提供決標方式、'+
+   n(data.contract_period_unknown_count)+' 件未提供可辨識履約期限。未校正規格、數量、複數決標或年期，不能用來推薦報價。','notice warning'));
   const rows=data.rows||[];
   for(const row of rows){
    const div=element('div','','timeline-item');
    div.append(link(row.unit_id,row.job_number,row.title||'案名未公開'));
    div.append(element('p',d(row.latest_notice_date)+'｜'+(row.agency||'機關未公開')+
      '｜'+(row.group_name||'未分類')+'｜預算 '+cash(row.budget_amount)+'｜決標 '+cash(row.award_amount)+
-     '｜決標／預算 '+(Number(row.ratio)*100).toFixed(1)+'%','minor'));
+     '｜決標／預算 '+(Number(row.ratio)*100).toFixed(1)+'%'+
+     (row.decision_method?'｜決標方式 '+row.decision_method:'｜決標方式未公開')+
+     (row.contract_period_source?'｜履約期限 '+String(row.contract_period_source).slice(0,80):'') ,'minor'));
    box.append(div);
   }
   if(!rows.length)box.append(element('p','目前沒有足夠的雙金額真實公告樣本。','empty'));
