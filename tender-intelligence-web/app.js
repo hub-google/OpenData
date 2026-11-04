@@ -125,7 +125,8 @@ async function search(mode,query='',sourcePage=1){
   }
 }
 function searchLocally(){
-  state.searchRows=filtered(dedupe(state.rows),{
+  // The latest feed is a list of notices, not a list of distinct cases.
+  state.searchRows=filtered(state.mode==='latest'?state.rows:dedupe(state.rows),{
     group:$('groupFilter').value,status:$('statusFilter').value,
     minBudget:$('budgetFilter').value,sort:$('sortFilter').value
   });
@@ -140,7 +141,7 @@ function renderSearch(){
   $('trackingCount').textContent=Object.keys(store.saved).length;
   const localPages=Math.max(1,Math.ceil(rows.length/20));
   state.clientPage=Math.min(state.clientPage,localPages);
-  $('resultInfo').textContent=state.lastSearch+'｜本次 '+'已入庫資料庫'+' '+state.rows.length+' 筆公告，去重並篩選後 '+rows.length+' 件（頁內篩選，不代表全國總數）';
+  $('resultInfo').textContent=state.lastSearch+'｜已入庫 '+state.rows.length+' 筆'+(state.mode==='latest'?'公告、'+dedupe(state.rows).length+' 件不同案件':'案件')+'；篩選後 '+rows.length+' 筆（只代表已同步範圍，不代表全國總數）';
   const subset=rows.slice((state.clientPage-1)*20,state.clientPage*20);
   $('resultList').replaceChildren(...(subset.length?subset.map(r=>caseCard(r)): [E('div','empty',state.rows.length?'沒有符合本頁篩選條件的案件，請放寬篩選。':'此查詢無資料，或資料來源暫時無法回傳。')]));
   $('pageInfo').textContent='來源第 '+state.sourcePage+'/'+state.totalPages+' 頁 · 這批第 '+state.clientPage+'/'+localPages+' 頁';
@@ -168,6 +169,7 @@ function caseCard(row,{radarScore=null}={}){
   if(row.job_number)child(m,E('span','', '· 案號 '+row.job_number));
   const second=E('div','case-meta');
   child(second,E('span','','公告 '+dateLabel(row.date)),E('span','','· '+(row.noticeType||'類型未公開')));
+  if(state.mode==='latest'&&row.filename&&row.filename!=='db-cached')child(second,E('span','','· 公告編號 '+row.filename));
   if(radarScore!==null)child(second,E('span','case-tag','關鍵字匹配 '+radarScore+' 項'));
   child(left,m,second);
   const amount=E('div','');
