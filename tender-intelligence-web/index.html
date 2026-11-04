@@ -262,11 +262,14 @@
         <div class="panel analysis-panel" id="analyticsOutput"><div class="empty">先查詢標案，再開啟此頁查看目前載入的可計算樣本。</div></div>
         <div class="panel analysis-panel">
           <h2>跨日已入庫決標／預算樣本</h2>
-          <p class="hint">只有公開預算和決標金額均為正數的案件才納入；按年度／大類／機關分層。結果包含樣本數、中位數與四分位數，不代表同規格報價或預測底價。</p>
+          <p class="hint">只有公開預算和決標金額均為正數的案件才納入；按年度／大類／機關／決標方式／公開預算規模分層。結果包含樣本數、中位數與四分位數，不代表同規格報價或預測底價。</p>
           <form id="awardSampleForm" class="inline-form">
             <label>公告年度 <input id="awardYear" type="number" min="1999" max="2100" placeholder="全部"></label>
             <label>採購大類<select id="awardGroup"><option value="">全部</option><option>工程</option><option>財物</option><option>勞務</option><option>未分類</option></select></label>
             <label>機關文字<input id="awardAgency" maxlength="80" placeholder="選填"></label>
+            <label>決標方式（僅原公告有提供者）<input id="awardMethod" maxlength="80" placeholder="例如：最低標"></label>
+            <label>最低公開預算<input id="awardMinBudget" type="number" min="0" step="1" placeholder="不限"></label>
+            <label>最高公開預算<input id="awardMaxBudget" type="number" min="0" step="1" placeholder="不限"></label>
             <button type="submit" class="ghost-btn">查詢已入庫有效樣本</button>
           </form>
           <div id="awardSampleOutput" class="watch-list" aria-live="polite">尚未查詢。</div>
