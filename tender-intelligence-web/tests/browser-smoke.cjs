@@ -52,6 +52,29 @@ async function firstAdvancedId(){
    const after=await page.locator('#resultList .case-title').first().innerText();
    assert.notEqual(after,title);
  });
+ await check('Source-backed case detail opens despite upstream API CORS',async()=>{
+   const title=await page.locator('#resultList .case-title').first().innerText();
+   await page.locator('#resultList .case-title').first().click();
+   await page.locator('#detailContent .detail-grid').waitFor({timeout:45000});
+   const content=await page.locator('#detailContent').innerText();
+   assert.ok(content.includes(title),'Detail shows a different case');
+   assert.ok(content.includes('已成功入庫')||content.includes('公告歷程'),'Source evidence unavailable');
+   assert.ok(!content.includes('案件詳情載入失敗'),content);
+ });
+ await check('Exact-case share link opens same agency and case',async()=>{
+   const cells=await page.locator('#detailContent .detail-grid strong').allTextContents();
+   const unit=cells[0],job=cells[1];
+   assert.ok(unit&&job,'Missing exact unit ID or case number');
+   const p=await browser.newPage({locale:'zh-TW'});
+   try{
+     await p.goto(base+'?'+new URLSearchParams({case_unit:unit,case_no:job}),{waitUntil:'domcontentloaded'});
+     await p.locator('#detailContent .detail-grid').waitFor({timeout:45000});
+     const vals=await p.locator('#detailContent .detail-grid strong').allTextContents();
+     assert.equal(vals[0],unit);
+     assert.equal(vals[1],job);
+   }finally{await p.close();}
+   await page.locator('#closeDetail').click();
+ });
  async function searchBasic(mode,keyword){
    await page.locator('#searchMode').selectOption(mode);
    await page.locator('#searchQuery').fill(keyword);
@@ -75,6 +98,24 @@ async function firstAdvancedId(){
  });
  await check('Basic company ID search matches stored company IDs',async()=>{
    await searchBasic('companyId','03794905');
+ });
+ await check('Vendor intelligence list works through archived actual notices',async()=>{
+   await page.locator('[data-view="vendors"]').first().click();
+   await page.locator('#vendorMode').selectOption('id');
+   await page.locator('#vendorQuery').fill('03794905');
+   await page.locator('#vendorForm button[type="submit"]').click();
+   await page.locator('#vendorOutput .case-card').first().waitFor({timeout:45000});
+   assert.ok((await page.locator('#vendorSummary').innerText()).includes('已入庫來源資料'));
+ });
+ await check('Manual keyword watch checks data without upstream CORS',async()=>{
+   await page.locator('[data-view="alerts"]').first().click();
+   await page.locator('#watchTerm').fill('醫療');
+   await page.locator('#watchForm button[type="submit"]').click();
+   await page.locator('#watchOutput .watch-item').first().waitFor({timeout:10000});
+   await page.locator('#checkWatch').click();
+   await page.waitForFunction(()=>
+     (document.getElementById('watchOutput')?.textContent||'').includes('已建立比對基準'),null,{timeout:45000});
+   assert.ok((await page.locator('#watchOutput').innerText()).includes('上次檢查'));
  });
  await check('Advanced search default page 1 loads',async()=>{
    await page.locator('[data-view="advanced"]').first().click();
@@ -172,6 +213,8 @@ async function firstAdvancedId(){
    await page.locator('[data-view="agencies"]').first().click();
    await page.locator('#agencyId').fill('3.13.50');
    await page.locator('#agencyForm button[type="submit"]').click();
+   await page.locator('#agencyOutput table').waitFor({timeout:60000});
+   assert.ok((await page.locator('#agencyOutput').innerText()).includes('已入庫年度統計'));
    await page.locator('#agencyMonthlyOutput table').waitFor({timeout:60000});
    assert.ok((await page.locator('#agencyMonthlyOutput tr').count())>1);
    await page.locator('#agencyRepeatOutput .watch-item').first().waitFor({timeout:60000});
