@@ -27,6 +27,18 @@ const call=async(demo,action,params={},expected=200)=>{
  assert.equal(response.status,expected,action+' expected '+expected+' got '+response.status+': '+JSON.stringify(json));
  return json;
 };
+// Public visitor bootstrap must not accidentally receive staff or demo rights.
+const publicVisitor=randomBytes(32).toString('hex');
+const guestResponse=await fetch(API,{method:'POST',headers:{
+ 'content-type':'application/json',apikey:PUBLISHABLE_KEY
+},body:JSON.stringify({action:'bootstrap',visitor_token:publicVisitor}),
+signal:AbortSignal.timeout(30000)});
+const guestData=await guestResponse.json();
+assert.equal(guestResponse.status,200,'guest bootstrap: '+JSON.stringify(guestData));
+assert.equal(guestData.signed_in,false,'guest was marked as authenticated');
+assert.equal(guestData.staff,false,'guest obtained staff permission');
+assert.equal(guestData.demo_mode,false,'guest entered demo mode');
+console.log('PASS: anonymous guest bootstrap has no privileged permissions.');
 const demos=[];
 try{
  const first=await createDemo();demos.push(first);
