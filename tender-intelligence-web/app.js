@@ -1,10 +1,10 @@
 import {loadAgencyEvidence} from './agency-deep.js';
 import {
   API_ROOT,asText,keyOf,safeNumber,formatMoney,parseDate,dateLabel,typeOf,
-  normalize,dedupe,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
+  normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,fetchLatestAmounts,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -128,7 +128,18 @@ async function search(mode,query='',sourcePage=1){
       state.lastSearch=(listModes[mode]||'搜尋')+'：'+query;
     }
     if(token!==state.running)return;
-    const records=Array.isArray(data.records)?data.records:[];
+    let records=Array.isArray(data.records)?data.records:[];
+    if(mode==='latest'){
+      try{
+        const amounts=await fetchLatestAmounts(state.date);
+        if(token!==state.running)return;
+        records=mergeCaseAmounts(records,amounts);
+        state.lastSearch+='｜預算已交叉核對已入庫的官方公告';
+      }catch(err){
+        if(token!==state.running)return;
+        state.lastSearch+='｜部分預算未能核對，請查閱個案公告';
+      }
+    }
     state.rows=records.map(normalize).filter(Boolean);
     renderSearch();
     setStatus('來源連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),'success');
@@ -188,7 +199,7 @@ function caseCard(row,{radarScore=null}={}){
   if(radarScore!==null)child(second,E('span','case-tag','關鍵字匹配 '+radarScore+' 項'));
   child(left,m,second);
   const amount=E('div','');
-  child(amount,E('small','','公開預算'),E('strong','',formatMoney(row.budget)));
+  child(amount,E('small','','公開預算'),E('strong','',row.budget===null?'尚無可確認資料':formatMoney(row.budget)));
   const favorite=btn(store.saved[row.id]?'★':'☆','favorite-btn'+(store.saved[row.id]?' saved':''),()=>toggleSaved(row));
   favorite.setAttribute('aria-label',store.saved[row.id]?'移除追蹤':'加入追蹤');
   child(right,amount,favorite);child(card,left,right);
