@@ -130,7 +130,7 @@ async function search(p=1){
   const fast=opts.p_expression===null&&opts.p_any===false&&
    Array.isArray(opts.p_exclude)&&opts.p_exclude.length===0&&
    t.length>=2&&t.length<=60&&!/[%_\\]/.test(t)&&
-   opts.p_sort==='date'&&
+   (opts.p_sort==='date'||opts.p_sort==='relevance')&&
    !opts.p_agency&&!opts.p_kind&&!opts.p_group&&!opts.p_location&&!opts.p_method&&!opts.p_decision_method&&
    opts.p_min_budget===null&&opts.p_max_budget===null&&
    opts.p_date_from===null&&opts.p_date_to===null&&
