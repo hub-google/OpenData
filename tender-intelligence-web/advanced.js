@@ -7,7 +7,7 @@ import {parseSearchExpression} from './search-expression.mjs';
 const $=id=>document.getElementById(id);
 const fields={
  q:'advQuery',x:'advExclude',any:'advAny',agency:'advAgency',kind:'advKind',
- group:'advGroup',location:'advLocation',method:'advMethod',min:'advMin',max:'advMax',
+ group:'advGroup',location:'advLocation',method:'advMethod',decision:'advDecisionMethod',min:'advMin',max:'advMax',
  start:'advStart',end:'advEnd',deadlineStart:'advDeadlineStart',deadlineEnd:'advDeadlineEnd',sort:'advSort',open:'advOpen'
 };
 let page=1,latest=null,request=0,seen=false;
@@ -63,7 +63,7 @@ function args(d,p){
  return {
   p_terms:query.terms,p_exclude:query.excludes,p_any:query.any,p_expression:expr?.tree||null,
   p_agency:t(d.agency),p_kind:d.kind,p_group:d.group,p_location:t(d.location),
-  p_method:t(d.method),p_min_budget:min,p_max_budget:max,
+  p_method:t(d.method),p_decision_method:t(d.decision),p_min_budget:min,p_max_budget:max,
   p_date_from:ymd(d.start),p_date_to:ymd(d.end),
   p_deadline_start:d.deadlineStart||null,p_deadline_end:d.deadlineEnd||null,
   p_deadline_only:Boolean(d.open),p_sort:d.sort,p_page:p,p_limit:30
@@ -97,6 +97,7 @@ function makeCard(r){
  if(r.deadline_at)line.append(node('span','','截標 '+date(r.deadline_at)));
  if(r.verified_location)line.append(node('span','','履約地（公告）：'+r.verified_location));
  if(r.verified_tender_method)line.append(node('span','','招標方式：'+r.verified_tender_method));
+ if(r.verified_decision_method)line.append(node('span','','決標方式：'+r.verified_decision_method));
  left.append(meta,line);
  const links=node('div','detail-actions');
  const api=document.createElement('a');api.href=rawLink(r);api.target='_blank';
@@ -122,7 +123,7 @@ async function search(p=1){
  $('advSubmit').disabled=true;status('正在查詢自有 Supabase 中實際已收錄的公告，跨日期條件在資料庫端處理…');
  try{
   const client=await getClient();
-  const {data,error}=await client.rpc('ti_archive_search_v3',opts);
+  const {data,error}=await client.rpc('ti_archive_search_v4',opts);
   if(error)throw error;
   if(n!==request)return;
   if(!data||!Array.isArray(data.rows))throw Error('資料庫沒有傳回有效的分頁結果');
@@ -179,7 +180,7 @@ function exportCsv(){
  const headings=['案名','機關','案號','公告類型','公告日期','預算','決標金額','公告履約地','公告招標方式','政府原公告','OpenFun API'];
  const data=latest.rows.map(r=>[
   r.title,r.agency,r.job_number,r.latest_notice_type,r.latest_notice_date,
-  r.budget_amount,r.award_amount,r.verified_location,r.verified_tender_method,
+  r.budget_amount,r.award_amount,r.verified_location,r.verified_tender_method,r.verified_decision_method,
   safeOfficial(r.official_url),rawLink(r)
  ]);
  const csv=[headings,...data].map(row=>row.map(csvEscape).join(',')).join('\r\n');
@@ -300,7 +301,7 @@ async function previewAdvancedRule(){
   params.p_date_from=Math.max(params.p_date_from||0,start);
   params.p_limit=1;
   const client=await getClient();
-  const {data,error}=await client.rpc('ti_archive_search_v3',params);
+  const {data,error}=await client.rpc('ti_archive_search_v4',params);
   if(error)throw error;
   ruleStatus('「'+rule.name+'」在近 30 天「實際已成功入庫」日期中匹配 '+Number(data?.total||0).toLocaleString('zh-TW')+
     ' 件；尚未回填的日期不包含在預覽，不代表全國所有標案。');
