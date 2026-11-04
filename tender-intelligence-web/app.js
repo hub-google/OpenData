@@ -1248,7 +1248,11 @@ async function renderCloudInbox(){
  if(!cloud.user){box.replaceChildren(E('div','empty','登入後可查看雲端自動比對的新公告。'));return;}
  box.replaceChildren(E('div','empty','正在讀取通知…'));
  try{
-  const data=await cloudNotifications(cloud.client,cloud.user);
+  const [data,teamResponse]=await Promise.all([
+   cloudNotifications(cloud.client,cloud.user),
+   cloud.client.from('ti_workspace_watch_rules').select('id,keywords').limit(500)
+  ]);
+  const sharedTerms=new Map((teamResponse.data||[]).map(r=>[r.id,r.keywords]));
   box.replaceChildren();
   if(!data.length){box.append(E('div','empty','尚無新公告通知；監控建立後，下一次成功匯入的新公告才會進行比對。'));return;}
   for(const note of data){
@@ -1267,7 +1271,8 @@ async function renderCloudInbox(){
       if(!error)void renderCloudInbox();
     }),E('span','case-tag',note.stale_at?'截止時間已更新／舊提醒失效':note.seen_at?'已讀':'未讀'));
     const ids=Array.isArray(note.match_rule_ids)?note.match_rule_ids:[];
-    const related=ids.map(id=>store.watches.find(w=>w.serverId===id)?.term).filter(Boolean);
+    const related=ids.map(id=>store.watches.find(w=>w.serverId===id)?.term||
+      (sharedTerms.has(id)?'團隊：'+sharedTerms.get(id):null)).filter(Boolean);
     const summary=related.length?related.join('、'):
       note.ti_watch_rules?.keywords|| (ids.length?'先前符合 '+ids.length+' 條監控規則（部分已刪除）':'來源規則待查');
     child(wrap,top,E('p','',note.reason+'｜符合 '+Math.max(1,ids.length)+' 條監控：'+summary+
