@@ -7,6 +7,10 @@ on:
     paths:
       - ".github/workflows/tender-browser-smoke.yml"
       - "tender-intelligence-web/tests/browser-smoke.cjs"
+      - "tender-intelligence-web/app.js"
+      - "tender-intelligence-web/backend.js"
+      - "tender-intelligence-web/core.mjs"
+      - "tender-intelligence-web/advanced.js"
 
 permissions:
   contents: read
