@@ -1,0 +1,35 @@
+name: 真實瀏覽器驗證政府標案搜尋
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/tender-browser-smoke.yml"
+      - "tender-intelligence-web/tests/browser-smoke.cjs"
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 安裝 Playwright Chromium
+        run: |
+          npm install --prefix /tmp/tender-browser --no-save playwright@1.56.1
+          /tmp/tender-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: 以真實瀏覽器操作公開搜尋與進階分頁
+        run: node tender-intelligence-web/tests/browser-smoke.cjs
+      - name: 保留失敗截圖
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tender-browser-smoke-failure
+          path: /tmp/tender-browser-artifacts/
+          if-no-files-found: ignore
