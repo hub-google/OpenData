@@ -193,14 +193,11 @@ function buildDetailCell(label,value){
 }
 async function loadCaseHistory(unit,job){
   try{
-    const data=await api('/tender',{unit_id:unit,job_number:job},35000);
-    if(!Array.isArray(data.records)||!data.records.length)
-      throw Error('即時來源未回傳此案歷史');
+    return await fetchArchivedCaseDetail(unit,job);
+  }catch(archiveError){
+    const data=await api('/tender',{unit_id:unit,job_number:job},12000);
+    if(!Array.isArray(data.records)||!data.records.length)throw archiveError;
     return data;
-  }catch(sourceError){
-    // Source CORS and intermittent network failures must not break exact-case
-    // links; the backup is restricted to same unit ID + job number.
-    return fetchArchivedCaseDetail(unit,job);
   }
 }
 async function openDetail(row){
