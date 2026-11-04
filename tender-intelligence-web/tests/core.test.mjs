@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  parseDate,dateLabel,safeNumber,normalize,dedupe,filtered,groupOf,stateOf,
+  parseDate,dateLabel,safeNumber,normalize,dedupe,mergeCaseAmounts,filtered,groupOf,stateOf,
   fieldsOf,summaryOf,amountRatio,ratioStats,scoreCase,csvEscape,safeOfficial,keyOf
 } from '../core.mjs';
 
@@ -38,6 +38,17 @@ test('separates actual source solicitation, preview and sale types',()=>{
   assert.equal(stateOf(make('招標文件公開閱覽公告資料公告')),'公開閱覽');
   assert.equal(stateOf(make('財物變賣公告')),'財物標售');
   assert.equal(stateOf(make('無法決標公告')),'無法決標');
+});
+test('fills missing listbydate budget only from exactly matching ingested case',()=>{
+  const rows=[base,{...base,job_number:'unmatched'},{...base,job_number:'has-original',budget_amount:300}];
+  const amounts=new Map([[keyOf(base),{budget_amount:1250000,award_amount:800000}],
+    [base.unit_id+'::has-original',{budget_amount:900000}]]);
+  const merged=mergeCaseAmounts(rows,amounts);
+  assert.equal(merged[0].budget_amount,1250000);
+  assert.equal(merged[0].award_amount,800000);
+  assert.equal(merged[1].budget_amount,null);
+  assert.equal(merged[2].budget_amount,300);
+  assert.equal(mergeCaseAmounts(rows,new Map())[0].budget_amount,null);
 });
 test('deduplicates same case version while retaining latest announcement',()=>{
   const old={...base,date:20261031,filename:'TIQ-1-123'};
