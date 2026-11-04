@@ -120,7 +120,10 @@ async function search(p=1){
  let opts;
  try{opts=args(getForm(),p);}
  catch(e){status('查詢條件錯誤：'+e.message,true);return;}
- $('advSubmit').disabled=true;status('正在查詢自有 Supabase 中實際已收錄的公告，跨日期條件在資料庫端處理…');
+ $('advSubmit').disabled=true;
+ $('advPrev').disabled=true;$('advNext').disabled=true;
+ $('advPageInfo').textContent='正在載入第 '+p+' 頁…';
+ status('正在查詢自有 Supabase 中實際已收錄的公告，跨日期條件在資料庫端處理…');
  try{
   const client=await getClient();
   const {data,error}=await client.rpc('ti_archive_search_v4',opts);
@@ -139,7 +142,15 @@ async function search(p=1){
    ' 件｜本頁 '+data.rows.length+' 件，'+known+' 件有原公告履約地。'+
    ' 未完成回填或來源 API 失敗的日期不在搜尋結果內；未知金額與履約地不會被猜測。');
  }catch(e){
-  if(n===request)status('資料庫進階搜尋失敗：'+String(e.message||e).slice(0,220),true);
+  if(n===request){
+   const maxPage=Math.max(1,Math.ceil(Number(latest?.total||0)/30));
+   $('advPageInfo').textContent=latest
+     ? '第 '+page+'／'+maxPage+' 頁（切換失敗，請重試）'
+     : '查詢失敗，請重試';
+   $('advPrev').disabled=!latest||page<=1;
+   $('advNext').disabled=!latest||page>=maxPage;
+   status('資料庫進階搜尋失敗：'+String(e.message||e).slice(0,220),true);
+  }
  }finally{
   if(n===request)$('advSubmit').disabled=false;
  }
