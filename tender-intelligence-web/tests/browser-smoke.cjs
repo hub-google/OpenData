@@ -52,6 +52,30 @@ async function firstAdvancedId(){
    const after=await page.locator('#resultList .case-title').first().innerText();
    assert.notEqual(after,title);
  });
+ async function searchBasic(mode,keyword){
+   await page.locator('#searchMode').selectOption(mode);
+   await page.locator('#searchQuery').fill(keyword);
+   await page.locator('#searchForm button[type="submit"]').click();
+   await page.waitForFunction(term=>
+     (document.getElementById('resultInfo')?.textContent||'').includes(term)
+     && document.querySelectorAll('#resultList .case-card').length>0,
+     keyword,{timeout:45000});
+   assert.ok(await page.locator('#resultList .case-card').count()>0);
+ }
+ await check('Basic title search works when OpenFun CORS fails',async()=>{
+   await searchBasic('title','醫療');
+   assert.ok((await page.locator('#resultList .case-title').first().innerText()).includes('醫療'));
+ });
+ await check('Basic agency-name search works on actual stored agencies',async()=>{
+   await searchBasic('agency','國防部');
+   assert.ok((await page.locator('#resultList .case-card').first().innerText()).includes('國防部'));
+ });
+ await check('Basic vendor name search uses real notice company records',async()=>{
+   await searchBasic('vendor','台灣糖業股份有限公司');
+ });
+ await check('Basic company ID search matches stored company IDs',async()=>{
+   await searchBasic('companyId','03794905');
+ });
  await check('Advanced search default page 1 loads',async()=>{
    await page.locator('[data-view="advanced"]').first().click();
    await waitPage(1,60000);
