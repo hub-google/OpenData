@@ -1,3 +1,4 @@
+import {loadAgencyEvidence} from './agency-deep.js';
 import {
   API_ROOT,asText,keyOf,safeNumber,formatMoney,parseDate,dateLabel,typeOf,
   normalize,dedupe,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
@@ -499,6 +500,7 @@ function renderRadar(){
   }
 }
 async function loadAgency(id){
+  void loadAgencyEvidence(id);
   $('agencyId').value=id;
   const out=$('agencyOutput');out.replaceChildren(E('div','empty','正在讀取機關年度統計…'));
   try{
