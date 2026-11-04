@@ -77,7 +77,36 @@ async function award(e){
   if(!rows.length)box.append(element('p','目前沒有足夠的雙金額真實公告樣本。','empty'));
  }catch(err){box.replaceChildren(element('p','查詢失敗：'+String(err.message||err),'notice warning'));}
 }
+async function coMentions(){
+ const tax=$('vendorEvidenceTaxId').value.trim(),box=$('vendorCoMentionsOutput');
+ if(!/^\d{8}$/.test(tax)){box.replaceChildren(element('p','請先在上方輸入 8 碼統編。','minor'));return;}
+ box.replaceChildren(element('p','正在查詢同份公告有列出哪些公司統編…','minor'));
+ try{
+  const client=await getClient(),{data,error}=await client.rpc('ti_vendor_co_mentions',{p_tax_id:tax,p_limit:15});
+  if(error)throw error;
+  box.replaceChildren(element('p','該統編見於 '+n(data.source_notice_count)+
+   ' 份已入庫公告。以下僅為「共同出現在同份公告」，不是競爭者認定。','minor'));
+  if(!data.co_mentions?.length){
+   box.append(element('p','目前沒有同公告列出其他有效八碼公司代碼。','minor'));return;
+  }
+  for(const company of data.co_mentions){
+   const row=element('section','','watch-item');
+   const h=element('h3','統編 '+company.other_company_id+
+    '｜同公告 '+n(company.shared_notices)+' 次｜不同案件 '+n(company.shared_cases)+' 件');
+   row.append(h);
+   row.append(element('p','最早 '+d(company.first_date)+'／最近 '+d(company.last_date)+
+    '；當事人角色未經來源證實。','minor'));
+   for(const cited of company.cases||[]){
+    const item=element('div','','timeline-item');
+    item.append(link(cited.unit_id,cited.job_number,d(cited.source_date)+'｜'+cited.title));
+    row.append(item);
+   }
+   box.append(row);
+  }
+ }catch(err){box.replaceChildren(element('p','同公告公司查詢失敗：'+String(err.message||err),'minor'));}
+}
 $('vendorEvidenceForm').addEventListener('submit',e=>void vendor(e));
+$('vendorCoMentionsButton').addEventListener('click',()=>void coMentions());
 $('awardSampleForm').addEventListener('submit',e=>void award(e));
 document.querySelector('[data-view="analytics"]').addEventListener('click',()=>{
  if($('awardSampleOutput').textContent==='尚未查詢。')void award({preventDefault(){}});
