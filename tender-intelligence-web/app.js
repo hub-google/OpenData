@@ -1263,13 +1263,14 @@ async function renderCloudInbox(){
       if(row)await openDetail(row);
       const {error}=await cloud.client.from('ti_notifications').update({seen_at:new Date().toISOString()}).eq('id',note.id);
       if(!error)void renderCloudInbox();
-    }),E('span','case-tag',note.seen_at?'已讀':'未讀'));
+    }),E('span','case-tag',note.stale_at?'截止時間已更新／舊提醒失效':note.seen_at?'已讀':'未讀'));
     const ids=Array.isArray(note.match_rule_ids)?note.match_rule_ids:[];
     const related=ids.map(id=>store.watches.find(w=>w.serverId===id)?.term).filter(Boolean);
     const summary=related.length?related.join('、'):
       note.ti_watch_rules?.keywords|| (ids.length?'先前符合 '+ids.length+' 條監控規則（部分已刪除）':'來源規則待查');
     child(wrap,top,E('p','',note.reason+'｜符合 '+Math.max(1,ids.length)+' 條監控：'+summary+
-      '｜'+new Date(note.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})));
+      '｜'+new Date(note.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})+
+      (note.stale_at?'｜此提醒已因來源截止日變更而失效，請查看最新公告':'')));
     box.append(wrap);
   }
  }catch(err){box.replaceChildren(E('div','empty','雲端通知載入失敗：'+readableError(err)));}
