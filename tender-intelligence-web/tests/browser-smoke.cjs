@@ -119,7 +119,52 @@ async function firstAdvancedId(){
    await search();
    assert.equal(await page.locator('#advResults .case-card').count(),0);
  });
- console.log('ALL PUBLIC SEARCH BROWSER SMOKE TESTS PASSED');
+ await check('Verified decision-method filter excludes missing decision method',async()=>{
+   await page.locator('[data-view="advanced"]').first().click();
+   await page.locator('#advQuery').fill('');
+   await page.locator('#advAgency').fill('');
+   await page.locator('#advDecisionMethod').fill('最低標');
+   await search();
+   assert.ok((await page.locator('#advResults .case-card').count())>0,'No real minimum-bid-method samples');
+   const lines=await page.locator('#advResults .case-card').allTextContents();
+   assert.ok(lines.every(s=>s.includes('決標方式：最低標')),'Unknown decision method was included');
+ });
+ await check('Source-only failed-bid explorer loads actual notices',async()=>{
+   await page.locator('[data-view="issues"]').first().click();
+   await page.waitForFunction(()=>document.getElementById('issueStatus')?.textContent?.includes('找到'),null,{timeout:60000});
+   assert.ok((await page.locator('#issueResults .case-card').count())>0);
+ });
+ await check('Archive award-price strata by decision method and budget',async()=>{
+   await page.locator('[data-view="analytics"]').first().click();
+   await page.locator('#awardMethod').fill('最低標');
+   await page.locator('#awardMinBudget').fill('100000');
+   await page.locator('#awardMaxBudget').fill('5000000');
+   await page.locator('#awardSampleForm button[type="submit"]').click();
+   await page.waitForFunction(()=>document.getElementById('awardSampleOutput')?.textContent?.includes('可比較樣本'),null,{timeout:60000});
+   assert.ok((await page.locator('#awardSampleOutput .timeline-item').count())>0,'No evidence-priced cases');
+ });
+ await check('Actual agency monthly and repeated-name archive evidence',async()=>{
+   await page.locator('[data-view="agencies"]').first().click();
+   await page.locator('#agencyId').fill('3.13.50');
+   await page.locator('#agencyForm button[type="submit"]').click();
+   await page.locator('#agencyMonthlyOutput table').waitFor({timeout:60000});
+   assert.ok((await page.locator('#agencyMonthlyOutput tr').count())>1);
+   await page.locator('#agencyRepeatOutput .watch-item').first().waitFor({timeout:60000});
+ });
+ await check('Daily source-quality report exposes completeness and licensing',async()=>{
+   await page.locator('[data-view="about"]').first().click();
+   await page.waitForFunction(()=>document.getElementById('qualityCheckStatus')?.textContent?.includes('案件'),null,{timeout:45000});
+   assert.ok((await page.locator('#qualitySources .timeline-item').count())>0);
+ });
+ await check('Public vendor co-mentions show actual cross-referenced notices',async()=>{
+   await page.locator('[data-view="vendors"]').first().click();
+   await page.locator('#vendorEvidenceTaxId').fill('24935439');
+   await page.locator('#vendorCoMentionsButton').click();
+   await page.locator('#vendorCoMentionsOutput .watch-item').first().waitFor({timeout:45000});
+   const text=await page.locator('#vendorCoMentionsOutput').innerText();
+   assert.ok(text.includes('同份公告')||text.includes('同公告'));
+ });
+ console.log('ALL PRD PUBLIC BROWSER SMOKE TESTS PASSED');
 })().catch(async(e)=>{
  if(page)await page.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});
  console.error(e.stack||e);
