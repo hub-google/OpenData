@@ -232,6 +232,25 @@ async function firstAdvancedId(){
    const text=await page.locator('#vendorCoMentionsOutput').innerText();
    assert.ok(text.includes('同份公告')||text.includes('同公告'));
  });
+ await check('Mobile viewport: latest notices, menu, detail drawer without horizontal overflow',async()=>{
+   const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'zh-TW'});
+   try{
+     await mobile.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
+     await mobile.locator('#resultList .case-card').first().waitFor({timeout:45000});
+     const width=await mobile.evaluate(()=>({
+       screen:document.documentElement.clientWidth,
+       body:document.documentElement.scrollWidth
+     }));
+     assert.ok(width.body<=width.screen+8,'Unexpected mobile horizontal scroll: '+JSON.stringify(width));
+     await mobile.locator('#mobileMenu').click();
+     assert.ok(await mobile.locator('.sidebar').evaluate(el=>el.classList.contains('mobile-open')));
+     await mobile.locator('.sidebar [data-view="search"]').first().click();
+     await mobile.locator('#resultList .case-title').first().click();
+     await mobile.locator('#detailContent .detail-grid').first().waitFor({timeout:45000});
+     const drawer=await mobile.locator('#detailDrawer').boundingBox();
+     assert.ok(drawer&&drawer.width<=width.screen+8,'Detail drawer wider than viewport');
+   }finally{await mobile.close();}
+ });
  console.log('ALL PRD PUBLIC BROWSER SMOKE TESTS PASSED');
 })().catch(async(e)=>{
  if(page)await page.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});
