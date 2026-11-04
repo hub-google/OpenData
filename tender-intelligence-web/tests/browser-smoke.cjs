@@ -22,7 +22,8 @@ async function waitPage(n,timeout=45000){
 async function search(){
  await page.locator('#advSubmit').click();
  await waitPage(1);
- assert.ok((await page.locator('#advStatus').innerText()).includes('實際已入庫資料符合條件'));
+ const message=await page.locator('#advStatus').innerText();
+ assert.ok(message.includes('實際已入庫資料符合條件'),'進階搜尋未完成：'+message);
 }
 async function firstAdvancedId(){
  return await page.locator('#advResults .case-card a.case-title').first().getAttribute('href');
