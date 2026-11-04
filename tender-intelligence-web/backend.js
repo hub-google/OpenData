@@ -100,6 +100,51 @@ export async function fetchLatestCachedNotices(){
   }
   throw Error('最近一日公告筆數超過資料庫單次核對上限');
 }
+// Exact-case history fallback for browsers blocked by upstream CORS.
+// Return only source-backed records already ingested in Supabase. Detail fields
+// with no original evidence stay null, not fabricated or inferred.
+export async function fetchArchivedCaseDetail(unitId,jobNumber){
+  const unit=String(unitId||''),job=String(jobNumber||'');
+  if(!unit||!job||unit.length>80||job.length>100)throw Error('機關代碼或案號格式不正確');
+  const id=unit+'::'+job,client=await getClient();
+  const [caseResult,noticesResult,detailResult]=await Promise.all([
+    client.from('ti_cases').select('id,unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,deadline_at').eq('id',id).maybeSingle(),
+    client.from('ti_notices').select('id,source_date,filename,notice_type,title,category,budget_amount,award_amount,official_url,raw_brief,company_names,company_ids,company_role_keys').eq('case_id',id).order('source_date',{ascending:false}).order('filename',{ascending:false}).limit(501),
+    client.from('ti_case_details').select('latest_notice_id,details').eq('case_id',id).maybeSingle()
+  ]);
+  for(const response of [caseResult,noticesResult,detailResult])if(response.error)throw response.error;
+  const item=caseResult.data;
+  if(!item)throw Error('自有資料庫尚未收錄此機關代碼與案號，請以政府官方公告核對');
+  const notices=noticesResult.data||[];
+  const detail=detailResult.data?.details||{};
+  const sourceFields={
+    ...(detail.location?{'採購資料:履約地點':detail.location}:{}),
+    ...(detail.period?{'採購資料:履約期限':detail.period}:{}),
+    ...(detail.deposit?{'領投開標:押標金額度':detail.deposit}:{}),
+    ...(detail.qualification?{'採購資料:廠商應附具之基本資格證明文件或物品':detail.qualification}:{}),
+    ...(detail.tender_method?{'採購資料:招標方式':detail.tender_method}:{}),
+    ...(detail.decision_method?{'採購資料:決標方式':detail.decision_method}:{})
+  };
+  const records=(notices.length?notices:[{
+    source_date:item.latest_notice_date,filename:item.latest_filename,
+    notice_type:item.latest_notice_type,title:item.title,category:item.category,
+    budget_amount:item.budget_amount,award_amount:item.award_amount,
+    official_url:item.official_url,raw_brief:null
+  }]).slice(0,500).map(n=>({
+    unit_id:unit,job_number:job,unit_name:item.agency,
+    date:n.source_date,filename:n.filename,
+    budget_amount:n.budget_amount,award_amount:n.award_amount,
+    brief:n.raw_brief&&typeof n.raw_brief==='object'
+      ?n.raw_brief:{title:n.title||item.title,type:n.notice_type,category:n.category||item.category},
+    detail:{
+      ...(n.official_url?{url:n.official_url}:{}),
+      ...(n.id&&n.id===detailResult.data?.latest_notice_id?sourceFields:{})
+    }
+  }));
+  return {unit_name:item.agency,records,source:'ingested_archive',
+    partial_history:notices.length>500,
+    summary_only:!notices.length};
+}
 export async function fetchSourceStatus(){
  const client=await getClient();
  const [source,run,coverage,backfill,days,notices]=await Promise.all([
