@@ -4,7 +4,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -504,7 +504,70 @@ function renderRadar(){
 async function loadAgency(id){
   void loadAgencyEvidence(id);
   $('agencyId').value=id;
-  const out=$('agencyOutput');out.replaceChildren(E('div','empty','正在讀取機關年度統計…'));
+  const out=$('agencyOutput');out.replaceChildren(E('div','empty','正在讀取機關已入庫統計…'));
+  try{
+    const [annual,confirmed]=await Promise.all([
+      fetchAgencyArchivedAnnual(id),fetchAgencyConfirmedWinners(id)
+    ]);
+    if($('agencyId').value!==id)return;
+    const years=Array.isArray(annual?.years)?annual.years:[];
+    out.replaceChildren(E('h2','','機關統計：'+(annual?.agency||id)),
+      E('p','notice warning','資料來自本站已入庫的政府公告。年度按案件「最新公告日期」歸類，不是官方全量年度統計；得標排行僅計有明確得標廠商角色的已入庫公告，不把所有投標公司當作得標者。'));
+    if(!years.length){
+      out.append(E('div','empty','目前未收錄此機關的資料，不能據此推定官方沒有採購。'));
+      return;
+    }
+    const summary=E('div','stat-row');
+    for(const [label,value] of [
+      ['已入庫案件',Number(annual.total_cases||0).toLocaleString('zh-TW')+' 件'],
+      ['涵蓋最新公告年度',years.length+' 年'],
+      ['已收錄決標金額合計',formatMoney(years.reduce((a,y)=>a+Number(y.award_amount_sum||0),0))]
+    ]){
+      const item=E('div','stat-compact');
+      child(item,E('span','',label),E('b','',value));summary.append(item);
+    }
+    out.append(summary);
+    const tbl=E('table','analysis-list'),header=E('tr','');
+    for(const v of ['最新公告年度','案件數','最新屬決標案件','已知預算件數','已公開預算合計','已知決標金額件數','已公開決標金額合計'])
+      header.append(E('th','',v));
+    tbl.append(header);
+    for(const y of years){
+      const tr=E('tr','');
+      for(const value of [
+        y.year,Number(y.case_count||0).toLocaleString('zh-TW'),
+        Number(y.award_case_count||0).toLocaleString('zh-TW'),
+        Number(y.budget_amount_count||0).toLocaleString('zh-TW'),
+        Number(y.budget_amount_count||0)?formatMoney(y.budget_amount_sum):'尚無可確認資料',
+        Number(y.award_amount_count||0).toLocaleString('zh-TW'),
+        Number(y.award_amount_count||0)?formatMoney(y.award_amount_sum):'尚無可確認資料'
+      ])tr.append(E('td','',value));
+      tbl.append(tr);
+    }
+    out.append(E('h3','','依已入庫原文核對的年度統計'),tbl);
+    out.append(E('h3','','已確認得標廠商（依不同案號去重）'));
+    const winners=Array.isArray(confirmed?.winners)?confirmed.winners:[];
+    if(!winners.length){
+      out.append(E('p','minor','目前沒有已入庫且可確認得標廠商角色的公告，不代表此機關沒有得標者。'));
+    }else{
+      const table=E('table','analysis-list'),head=E('tr','');
+      for(const label of ['得標廠商（點擊查相關公告）','可確認得標案數','已入庫得標公告版本數'])head.append(E('th','',label));
+      table.append(head);
+      for(const w of winners){
+        const tr=E('tr',''),cell=E('td','');
+        cell.append(btn(w.company_name,'case-title',()=>{
+          $('vendorMode').value='name';$('vendorQuery').value=w.company_name;
+          showView('vendors');void loadVendors('name',w.company_name);
+        }));
+        child(tr,cell,E('td','',Number(w.award_cases||0).toLocaleString('zh-TW')+' 件'),E('td','',Number(w.award_notice_versions||0).toLocaleString('zh-TW')+' 版'));
+        table.append(tr);
+      }
+      out.append(table);
+    }
+    return;
+  }catch(databaseError){
+    if($('agencyId').value!==id)return;
+    out.replaceChildren(E('div','empty','已入庫機關統計暫時無法讀取，嘗試公開來源備援：'+readableError(databaseError)));
+  }
   try{
     const d=await api('/unitstat',{unit_id:id,top:20},35000);
     out.replaceChildren(E('h2','',d.unit_name||id));
