@@ -141,8 +141,13 @@ async function firstAdvancedId(){
    assert.equal(await firstAdvancedId(),first);
  });
  await check('Keyword search and its next page return different cases',async()=>{
+   let indexedRequests=0;
+   const watch=req=>{if(req.url().includes('/rpc/ti_archive_search_simple'))indexedRequests++};
+   page.on('request',watch);
    await page.locator('#advQuery').fill('資訊');
    await search();
+   page.off('request',watch);
+   assert.ok(indexedRequests>=1,'Simple keyword did not use indexed RPC');
    const first=await firstAdvancedId();
    assert.equal(await page.locator('#advNext').isDisabled(),false);
    await page.locator('#advNext').click();
@@ -186,12 +191,17 @@ async function firstAdvancedId(){
    assert.ok(status.includes('最高公開預算不可小於最低公開預算'),status);
  });
  await check('No-result query is shown as empty rather than fabricated rows',async()=>{
+   let fast=0;
+   const watcher=req=>{if(req.url().includes('/rpc/ti_archive_search_simple'))fast++};
+   page.on('request',watcher);
    await page.locator('#advAgency').fill('');
    await page.locator('#advMin').fill('');
    await page.locator('#advMax').fill('');
    await page.locator('#advQuery').fill('不可能出現的不存在案件識別字ZZ987654321');
    await search();
    assert.equal(await page.locator('#advResults .case-card').count(),0);
+   page.off('request',watcher);
+   assert.ok(fast>0,'No-result simple keyword did not use indexed search');
  });
  await check('Verified decision-method filter excludes missing decision method',async()=>{
    await page.locator('[data-view="advanced"]').first().click();
