@@ -168,6 +168,24 @@ label{font-size:12px;color:#56677b;font-weight:650}
 @media(max-width:760px){.app{display:block}.sidebar{position:fixed;left:0;top:0;width:252px;height:100vh;transform:translateX(-100%);transition:transform .2s;box-shadow:10px 0 30px #0002}.sidebar.mobile-open{transform:translateX(0)}.mobile-menu{display:inline-block;padding:5px 9px;border:1px solid var(--border);background:white;border-radius:7px}.topbar{height:57px;padding:0 14px;gap:6px}.topbar-right .external-link{display:none}.connection-tag{max-width:145px}.main{padding:18px 14px 70px}.hero{padding:25px 22px;min-height:unset}.hero h1{font-size:24px}.hero-emblem{display:none}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric{padding:13px}.metric strong{font-size:23px}.panel{padding:16px}.search-form{flex-wrap:wrap}.search-form select{flex-basis:125px}.search-form input{flex:1 1 calc(100% - 145px)}.search-form .primary-btn{width:100%}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.section-heading{align-items:flex-start;flex-wrap:wrap}.heading-actions{justify-content:flex-start}.case-card{padding:15px;grid-template-columns:1fr}.case-right{justify-content:space-between;text-align:left}.case-title{font-size:15px}.page-heading h1{font-size:23px}.inline-form{flex-wrap:wrap}.inline-form input{flex:1 1 calc(100% - 165px)}.inline-form .primary-btn{width:100%}.setting-form{grid-template-columns:1fr}.setting-form .wide,.setting-form .form-actions{grid-column:1}.tracking-grid{grid-template-columns:1fr}.stat-row{grid-template-columns:1fr 1fr}.detail-grid{grid-template-columns:1fr}.drawer-body{padding:20px 17px}}
 @media(max-width:390px){.filters,.stat-row{grid-template-columns:1fr}.topbar-sub,.topbar-sep{display:none}.search-form input{flex-basis:100%}}
 
+/* Compact narrow-screen toolbar without hiding either login route.
+   Keep the status visible as a colored indicator; its full text remains in
+   title / aria-label for assistive technology and desktop view. */
+@media(max-width:760px){
+ .topbar-left{min-width:0;flex:0 1 auto;gap:7px}
+ .topbar-right{min-width:0;flex:1 1 0;justify-content:flex-end;gap:5px}
+ #accountDemoQuick,#accountButton{
+  box-sizing:border-box;flex:0 0 42px;width:42px;min-width:42px;height:35px;
+  padding:6px 3px;font-size:0;line-height:1;
+ }
+ #accountDemoQuick::before{content:"測試";font-size:12px}
+ #accountButton::before{content:"帳戶";font-size:12px}
+ .topbar-right .connection-tag{
+  box-sizing:border-box;flex:0 0 14px;min-width:14px;width:14px;
+  max-width:14px;height:14px;min-height:0;padding:0;border-radius:50%;
+  font-size:0;line-height:0;overflow:hidden;white-space:nowrap;
+ }
+}
 /* Subscription and billing; responsive without device-specific navigation. */
 .billing-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:18px}
 .billing-plan {display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-width:0}
