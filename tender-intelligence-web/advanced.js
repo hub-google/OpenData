@@ -177,7 +177,7 @@ async function copyUrl(){
 }
 function exportCsv(){
  if(!latest||!latest.rows.length){status('請先查詢到有資料的結果。',true);return;}
- const headings=['案名','機關','案號','公告類型','公告日期','預算','決標金額','公告履約地','公告招標方式','政府原公告','OpenFun API'];
+ const headings=['案名','機關','案號','公告類型','公告日期','預算','決標金額','公告履約地','公告招標方式','公告決標方式','政府原公告','OpenFun API'];
  const data=latest.rows.map(r=>[
   r.title,r.agency,r.job_number,r.latest_notice_type,r.latest_notice_date,
   r.budget_amount,r.award_amount,r.verified_location,r.verified_tender_method,r.verified_decision_method,
