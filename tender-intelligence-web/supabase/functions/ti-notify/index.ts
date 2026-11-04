@@ -22,8 +22,9 @@ async function rest(path){
   return r.json();
 }
 function link(r){
-  const p=new URLSearchParams({mode:"title",q:r.subject});
-  return TENDER+"?"+p.toString();
+  const [unit,...job]=String(r.case_id||"").split("::");
+  if(unit&&job.length)return TENDER+"?"+new URLSearchParams({case_unit:unit,case_no:job.join("::")});
+  return TENDER;
 }
 async function deterministicKey(prefix,value){
  const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(prefix+value)));
@@ -36,7 +37,7 @@ async function lineRetryUuid(notificationId){
  const h=Array.from(b).map(v=>v.toString(16).padStart(2,'0')).join('');
  return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
 }
-async function sendEmail(recipient,events,digest,userId){
+async function sendEmail(recipient,events,digest,userId,batchId=''){
   const token=await rpc("ti_issue_unsubscribe_token",{target_user:userId});
   if(!/^[0-9a-f]{64}$/.test(token||""))throw Error("unsubscribe token unavailable");
   const unsubscribeURL=URL+"/functions/v1/ti-unsubscribe?token="+token;
@@ -47,7 +48,7 @@ async function sendEmail(recipient,events,digest,userId){
     '政府標案更新｜'+events.length+' 筆新公告';
   const r=await fetch("https://api.resend.com/emails",{
     method:"POST",headers:{"Authorization":"Bearer "+RESEND,"Content-Type":"application/json",
-      "Idempotency-Key":"ti-email-"+await deterministicKey(userId,events.map(r=>String(r.notification_id)).sort().join(','))},
+      "Idempotency-Key":"ti-email-"+await deterministicKey(userId,batchId||events.map(r=>String(r.notification_id)).sort().join(','))},
     body:JSON.stringify({
        from:EMAIL_FROM,to:[recipient],subject,
        headers:{"List-Unsubscribe":"<"+unsubscribeURL+">","List-Unsubscribe-Post":"List-Unsubscribe=One-Click"},
@@ -79,6 +80,22 @@ async function sendLine(to,r){
   if(!res.ok)throw Error("LINE Messaging API HTTP "+res.status);
   return res.headers.get("x-line-request-id")||"accepted";
 }
+async function sendLineDigest(to,events,batchId){
+  const blocks=events.slice(0,20).map((r,i)=>(i+1)+'. '+scrub(r.subject).slice(0,80)+
+    '｜'+scrub(r.reason).slice(0,70)+'\n'+link(r));
+  const message=('【政府標案每日摘要】'+events.length+' 筆公告更新\n\n'+blocks.join('\n\n')+
+    '\n\n請至標案情報中心管理訂閱。').slice(0,4900);
+  const res=await fetch("https://api.line.me/v2/bot/message/push",{
+    method:"POST",headers:{"Authorization":"Bearer "+LINE_ACCESS,"Content-Type":"application/json",
+      "X-Line-Retry-Key":await lineRetryUuid('daily:'+batchId)},
+    body:JSON.stringify({to,messages:[{type:"text",text:message}]}),
+    signal:AbortSignal.timeout(18000)
+  });
+  if(res.status===409&&res.headers.get("x-line-accepted-request-id"))
+    return res.headers.get("x-line-accepted-request-id");
+  if(!res.ok)throw Error("LINE digest HTTP "+res.status);
+  return res.headers.get("x-line-request-id")||"accepted";
+}
 Deno.serve(async req=>{
   if(req.method!=="POST")return Response.json({error:"POST only"},{status:405});
   if(!URL||!ROLE)return Response.json({error:"server configuration missing"},{status:503});
@@ -106,11 +123,8 @@ Deno.serve(async req=>{
   for(const [user,events] of groupedEmail){
     if(!configured.email){skipped+=events.length;continue;}
     try{
-      const prefs=await rest("ti_delivery_settings?select=daily_digest&user_id=eq."+encodeURIComponent(user)+"&limit=1");
-      const digest=prefs?.[0]?.daily_digest!==false;
-      if(digest&&taipeiHour!==8){skipped+=events.length;continue;}
       const first=events[0];
-      const deliveryId=await sendEmail(first.recipient,events,digest,user);
+      const deliveryId=await sendEmail(first.recipient,events,false,user);
       for(const r of events){
         await rpc("ti_record_delivery",{
           p_notification:r.notification_id,p_user:r.user_id,p_channel:"email",p_status:"sent",
@@ -144,6 +158,34 @@ Deno.serve(async req=>{
     }
   }
   else skipped+=line.length;
+  // User-selected daily digests are persistently snapshotted. Each cohort and retry
+  // always uses the same provider idempotency key, even across cron restarts.
+  let daily=[];
+  try{daily=await rpc("ti_claim_digest_batches",{
+    p_email_ready:configured.email,p_line_ready:configured.line,p_limit:12
+  });}
+  catch(e){return Response.json({error:"daily digest queue: "+scrub(e),configured,
+    immediate:{sent,failed,skipped}},{status:502});}
+  let digestSent=0,digestFailed=0;
+  for(const batch of daily||[]){
+    const events=Array.isArray(batch.notifications)?batch.notifications:[];
+    if(!events.length){digestFailed++;continue;}
+    try{
+      const provider=batch.channel==="email"
+        ?await sendEmail(batch.recipient,events,true,batch.user_id,batch.batch_id)
+        :await sendLineDigest(batch.recipient,events,batch.batch_id);
+      await rpc("ti_finish_digest_batch",{
+        p_batch:batch.batch_id,p_status:"sent",p_provider:provider,p_error:""
+      });
+      digestSent++;
+    }catch(e){
+      digestFailed++;
+      try{await rpc("ti_finish_digest_batch",{
+        p_batch:batch.batch_id,p_status:"failed",p_provider:"",p_error:scrub(e)
+      });}catch{}
+    }
+  }
   return Response.json({ok:true,configured,pending:(candidates||[]).length,sent,failed,skipped,
-    note:"sent counts only confirmed provider responses; no simulated delivery"},{headers:{"Cache-Control":"no-store"}});
+    daily_batches:(daily||[]).length,digestSent,digestFailed,
+    note:"sent counts only accepted provider responses; no simulated delivery"},{headers:{"Cache-Control":"no-store"}});
 });
