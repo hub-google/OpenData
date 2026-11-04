@@ -4,7 +4,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -586,7 +586,41 @@ async function loadAgency(id){
     }
     out.append(winnerTable);
     out.append(E('p','minor','官方公告數和採購案件數口徑不同。統計計算時間：'+asText(d.computed_at||'未提供')+'。資料為 OpenFun API 返回的公開統計。'));
-  }catch(err){out.replaceChildren(E('div','empty','機關統計失敗：'+readableError(err)));}
+  }catch(sourceError){
+    try{
+      const saved=await fetchAgencyArchivedAnnual(id);
+      if($('agencyId').value!==id)return;
+      out.replaceChildren(
+        E('h2','','機關已入庫年度統計：'+(saved?.agency||id)),
+        E('p','notice warning','OpenFun 機關年度 API 無法讀取。以下僅統計本站已成功入庫案件，依各案「最近公告的年度」歸類，不等於官方全年採購總量，也不提供推估得標廠商排行。')
+      );
+      const years=Array.isArray(saved?.years)?saved.years:[];
+      if(!years.length){
+        out.append(E('div','empty','此機關目前無已入庫案件，不能推定官方沒有採購。'));return;
+      }
+      const tb=E('table','analysis-list'),header=E('tr','');
+      for(const x of ['最新公告年度','案件數','最新公告屬決標的案件','已公開預算件數','已公開預算合計','已公開決標金額件數','已公開決標金額合計'])
+        header.append(E('th','',x));
+      tb.append(header);
+      for(const y of years){
+        const tr=E('tr','');
+        const values=[
+          y.year,Number(y.case_count||0).toLocaleString('zh-TW'),
+          Number(y.award_case_count||0).toLocaleString('zh-TW'),
+          Number(y.budget_amount_count||0).toLocaleString('zh-TW'),
+          Number(y.budget_amount_count||0)>0?formatMoney(y.budget_amount_sum):'尚無可確認資料',
+          Number(y.award_amount_count||0).toLocaleString('zh-TW'),
+          Number(y.award_amount_count||0)>0?formatMoney(y.award_amount_sum):'尚無可確認資料'
+        ];
+        for(const v of values)tr.append(E('td','',v));
+        tb.append(tr);
+      }
+      out.append(tb,E('p','minor','資料庫收錄案件：'+Number(saved.total_cases||0).toLocaleString('zh-TW')+' 件。缺漏公告日期不包含在統計內。'));
+    }catch(dbError){
+      if($('agencyId').value!==id)return;
+      out.replaceChildren(E('div','empty','機關統計即時來源失敗：'+readableError(sourceError)+'；資料庫備援也失敗：'+readableError(dbError)));
+    }
+  }
 }
 async function loadVendors(mode,q){
   const out=$('vendorOutput');out.replaceChildren(E('div','empty','正在查詢與此廠商有關的公告…'));
