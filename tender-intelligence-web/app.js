@@ -242,7 +242,7 @@ function buildDetailCell(label,value){
 }
 async function loadCaseHistory(unit,job){
   try{
-    const data=await loadCaseHistory(unit,job);
+    const data=await api('/tender',{unit_id:unit,job_number:job},35000);
     if(!Array.isArray(data.records)||!data.records.length)
       throw Error('即時來源未回傳此案歷史');
     return data;
@@ -272,7 +272,7 @@ async function openCaseFromUrl(){
  if(!unit||!job)return;
  if(unit.length>80||job.length>100||/[<>]/.test(unit+job))return;
  try{
-  const data=await api('/tender',{unit_id:unit,job_number:job},35000);
+  const data=await loadCaseHistory(unit,job);
   const rows=Array.isArray(data.records)?dedupe(data.records):[];
   const chosen=rows.find(r=>r.unit_id===unit&&r.job_number===job);
   if(!chosen)throw Error('來源未回傳這個機關與案號');
