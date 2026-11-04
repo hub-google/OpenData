@@ -4,7 +4,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -240,17 +240,29 @@ function toggleSaved(row){
 function buildDetailCell(label,value){
   const box=E('div','');child(box,E('small','',label),E('strong','',value===null||value===undefined||value===''?'未公開':value));return box;
 }
+async function loadCaseHistory(unit,job){
+  try{
+    const data=await loadCaseHistory(unit,job);
+    if(!Array.isArray(data.records)||!data.records.length)
+      throw Error('即時來源未回傳此案歷史');
+    return data;
+  }catch(sourceError){
+    // Source CORS and intermittent network failures must not break exact-case
+    // links; the backup is restricted to same unit ID + job number.
+    return fetchArchivedCaseDetail(unit,job);
+  }
+}
 async function openDetail(row){
   state.selected=row;$('backdrop').hidden=false;$('detailDrawer').hidden=false;
   document.body.style.overflow='hidden';$('detailContent').replaceChildren(E('div','empty','正在讀取此案全部公告歷史及官方來源…'));
   try{
-    const data=state.details.has(row.id)?state.details.get(row.id):await api('/tender',{unit_id:row.unit_id,job_number:row.job_number},35000);
+    const data=state.details.has(row.id)?state.details.get(row.id):await loadCaseHistory(row.unit_id,row.job_number);
     if(state.selected!==row)return;
     if(!Array.isArray(data.records))throw new Error('此案未回傳公告紀錄');
     state.details.set(row.id,data);
     renderDetail(row,data);renderAnalytics();void loadRelatedCases(row);if(store.saved[row.id])void setSavedRead(row.id,true,true);
   }catch(err){
-    $('detailContent').replaceChildren(E('div','empty','案件詳情載入失敗：'+readableError(err)));
+    if(state.selected===row)$('detailContent').replaceChildren(E('div','empty','案件詳情載入失敗：'+readableError(err)));
   }
 }
 // F10: exact-case share links, never a broad title-search substitution.
@@ -341,6 +353,11 @@ function renderDetail(row,data){
     child(tags,E('span','case-tag'+(remaining!==null&&remaining<0?' failed':''),remaining!==null&&remaining>=0?'距截止約 '+remaining+' 天':'已過公告截止時間'));
   }
   page.append(tags);
+  if(data.source==='ingested_archive'){
+    page.append(E('p','notice warning','即時來源無法直接讀取，以下為本站已成功入庫的真實公告紀錄；未擷取到的標書細節一律顯示未公開，請以官方原文確認。'+
+      (data.partial_history?'本頁歷史上限 500 筆；請核對完整原始紀錄。':'')+
+      (data.summary_only?'此案目前只有資料庫摘要，尚未收錄各版本公告內容。':'')));
+  }
   const actions=E('div','detail-actions');
   child(actions,btn(store.saved[row.id]?'移除追蹤':'加入投標追蹤','primary-btn',()=>{
     toggleSaved(row);const b=actions.firstChild;b.textContent=store.saved[row.id]?'移除追蹤':'加入投標追蹤';
@@ -575,9 +592,15 @@ async function loadVendors(mode,q){
   const out=$('vendorOutput');out.replaceChildren(E('div','empty','正在查詢與此廠商有關的公告…'));
   $('vendorSummary').textContent='載入中';
   try{
-    const data=await api(mode==='id'?'/searchbycompanyid':'/searchbycompanyname',{query:q,page:1},35000);
+    let data,cached=false;
+    try{
+      data=await api(mode==='id'?'/searchbycompanyid':'/searchbycompanyname',{query:q,page:1},35000);
+    }catch(sourceError){
+      data=await fetchBasicArchiveSearch({mode:mode==='id'?'companyId':'vendor',query:q,page:1});
+      cached=true;
+    }
     state.vendorRows=dedupe(data.records||[]);
-    $('vendorSummary').textContent='來源返回 '+asText(data.total_records??state.vendorRows.length)+' 筆公告；本次載入去重 '+state.vendorRows.length+' 件（第一頁）';
+    $('vendorSummary').textContent=(cached?'已入庫來源資料':'即時來源返回')+' '+asText(data.total_records??state.vendorRows.length)+' 筆公告；本次載入去重 '+state.vendorRows.length+' 件（第一頁）';
     renderVendorRows();
   }catch(err){state.vendorRows=[];out.replaceChildren(E('div','empty','廠商資料查詢失敗：'+readableError(err)));$('vendorSummary').textContent='查詢失敗';}
 }
@@ -786,7 +809,9 @@ async function checkWatches(){
   try{
     for(const rule of store.watches){
       try{
-        const d=await api('/searchbytitle',{query:rule.term,page:1},25000);
+        let d;
+        try{d=await api('/searchbytitle',{query:rule.term,page:1},25000);}
+        catch(sourceError){d=await fetchBasicArchiveSearch({mode:'title',query:rule.term,page:1});}
         const items=Array.isArray(d.records)?d.records.map(normalize).filter(Boolean):[];
         const keys=items.map(r=>r.id+':'+r.date+':'+r.filename);
         const old=new Set(Array.isArray(rule.seen)?rule.seen:[]);
