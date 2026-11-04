@@ -169,7 +169,11 @@ Deno.serve(async req=>{
   let digestSent=0,digestFailed=0;
   for(const batch of daily||[]){
     const events=Array.isArray(batch.notifications)?batch.notifications:[];
-    if(!events.length){digestFailed++;continue;}
+    if(!events.length){
+      try{await rpc("ti_cancel_stale_digest_batch",{p_batch:batch.batch_id});}
+      catch(e){console.warn("stale digest cancellation failed",scrub(e));digestFailed++;}
+      continue;
+    }
     try{
       const provider=batch.channel==="email"
         ?await sendEmail(batch.recipient,events,true,batch.user_id,batch.batch_id)
