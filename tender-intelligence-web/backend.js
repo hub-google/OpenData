@@ -21,7 +21,7 @@ export async function getSession(){
 export async function fetchArchive({page=1,search=""}={}){
   const client=await getClient();
   const from=(page-1)*100,to=from+99;
-  let q=client.from("ti_cases").select("id,unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,source_fetched_at",{count:"exact"}).order("latest_notice_date",{ascending:false}).range(from,to);
+  let q=client.from("ti_cases").select("id,unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,source_fetched_at",{count:"exact"}).order("latest_notice_date",{ascending:false}).order("id",{ascending:true}).range(from,to);
   if(search)q=q.ilike("title","%"+search.replace(/[%_]/g,"\\$&").slice(0,80)+"%");
   const {data,count,error}=await q;
   if(error)throw error;
@@ -81,13 +81,16 @@ export async function fetchLatestCachedNotices(){
   const date=Number(head?.[0]?.source_date);
   if(!/^\d{8}$/.test(String(date)))throw Error('資料庫尚無有效公告日期');
   const records=[],perPage=1000;
+  let cursor=null;
   for(let page=0;page<100;page++){
-    const from=page*perPage;
-    const {data,error}=await client.from("ti_notices")
-      .select("case_id,source_date,filename,notice_type,title,category,budget_amount,award_amount,raw_brief,ti_cases!inner(unit_id,job_number,agency,title,category,budget_amount,award_amount)")
+    // Keyset traversal avoids duplicating/skipping announcements if the
+    // hourly importer writes during a multi-page public read.
+    let q=client.from("ti_notices")
+      .select("id,case_id,source_date,filename,notice_type,title,category,budget_amount,award_amount,raw_brief,ti_cases!inner(unit_id,job_number,agency,title,category,budget_amount,award_amount)")
       .eq("source_date",date)
-      .order("id",{ascending:true})
-      .range(from,from+perPage-1);
+      .order("id",{ascending:true}).limit(perPage);
+    if(cursor)q=q.gt("id",cursor);
+    const {data,error}=await q;
     if(error)throw error;
     for(const n of data||[]){
       const info=n.ti_cases;
@@ -107,6 +110,8 @@ export async function fetchLatestCachedNotices(){
     }
     if((data||[]).length<perPage)
       return {records,date:String(date),source:'database_notices'};
+    cursor=data[data.length-1]?.id;
+    if(!cursor)throw Error('公告游標無效，請重新載入');
   }
   throw Error('最近一日公告超過已設定的讀取上限，請透過跨日期進階搜尋');
 }
