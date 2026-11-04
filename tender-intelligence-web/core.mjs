@@ -65,6 +65,17 @@ export function normalize(row) {
     award:safeNumber(row.award_amount), posted:parseDate(row.date)
   };
 }
+// Keep the exact public API announcement, but fill missing amounts only from
+// the same institution/case ID in the independently ingested source records.
+export function mergeCaseAmounts(rows,amounts){
+  return (rows||[]).map(row=>{
+    const extra=amounts?.get(keyOf(row));
+    if(!extra)return row;
+    return {...row,
+      budget_amount:safeNumber(row.budget_amount)??safeNumber(extra.budget_amount),
+      award_amount:safeNumber(row.award_amount)??safeNumber(extra.award_amount)};
+  });
+}
 export function dedupe(rows) {
   const seen=new Map();
   for(const raw of rows||[]) {
