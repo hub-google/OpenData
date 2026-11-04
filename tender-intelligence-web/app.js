@@ -4,7 +4,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchLatestAmounts,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,fetchLatestAmounts,fetchLatestCachedNotices,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -94,20 +94,29 @@ async function search(mode,query='',sourcePage=1){
   setStatus('正在連線公開 API');
   try{
     let data;
+    let cachedLatest=false;
     if(mode==='archive'){
       data=await fetchArchive({page:sourcePage,search:query});
       state.totalPages=Math.max(1,Number(data.total_pages||1));
       state.lastSearch='Supabase 已收錄資料庫'+(query?'：'+query:'');
     }else if(mode==='latest'){
-      if(!state.date) {
-        const info=await api('/getinfo');
-        const raw=asText(info['最新資料時間']);
-        if(!/^\d{4}-\d{2}-\d{2}/.test(raw))throw new Error('來源未提供最新公告日期');
-        state.date=raw.slice(0,10).replaceAll('-','');
+      try{
+        if(!state.date) {
+          const info=await api('/getinfo');
+          const raw=asText(info['最新資料時間']);
+          if(!/^\d{4}-\d{2}-\d{2}/.test(raw))throw new Error('來源未提供最新公告日期');
+          state.date=raw.slice(0,10).replaceAll('-','');
+        }
+        data=await api('/listbydate',{date:state.date},35000);
+        state.lastSearch='最新公告 '+dateLabel(state.date);
+      }catch(sourceError){
+        if(token!==state.running)return;
+        data=await fetchLatestCachedNotices();
+        state.date=data.date;
+        cachedLatest=true;
+        state.lastSearch='已入庫最新公告 '+dateLabel(state.date)+'｜即時來源無法連線，顯示上次成功同步資料';
       }
-      data=await api('/listbydate',{date:state.date},35000);
       state.totalPages=1;
-      state.lastSearch='最新公告 '+dateLabel(state.date);
     }else if(mode==='agency'){
       // listbyunit only accepts an actual unit_id, never a free-text unit_name.
       const response=await api('/unit',{},35000);
@@ -129,7 +138,7 @@ async function search(mode,query='',sourcePage=1){
     }
     if(token!==state.running)return;
     let records=Array.isArray(data.records)?data.records:[];
-    if(mode==='latest'){
+    if(mode==='latest'&&!cachedLatest){
       try{
         const amounts=await fetchLatestAmounts(state.date);
         if(token!==state.running)return;
@@ -142,7 +151,7 @@ async function search(mode,query='',sourcePage=1){
     }
     state.rows=records.map(normalize).filter(Boolean);
     renderSearch();
-    setStatus('來源連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),'success');
+    setStatus((cachedLatest?'資料庫備援正常':'來源連線正常')+' · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),'success');
   }catch(err){
     if(token!==state.running)return;
     state.rows=[];state.searchRows=[];state.totalPages=1;
@@ -168,7 +177,7 @@ function renderSearch(){
   $('trackingCount').textContent=Object.keys(store.saved).length;
   const localPages=Math.max(1,Math.ceil(rows.length/20));
   state.clientPage=Math.min(state.clientPage,localPages);
-  $('resultInfo').textContent=state.lastSearch+'｜本次 API '+state.rows.length+' 筆公告，去重並篩選後 '+rows.length+' 件（頁內篩選，不代表全國總數）';
+  $('resultInfo').textContent=state.lastSearch+'｜本次 '+(state.mode==='archive'||state.mode==='latest'&&state.lastSearch.startsWith('已入庫')?'資料庫':'API')+' '+state.rows.length+' 筆公告，去重並篩選後 '+rows.length+' 件（頁內篩選，不代表全國總數）';
   const subset=rows.slice((state.clientPage-1)*20,state.clientPage*20);
   $('resultList').replaceChildren(...(subset.length?subset.map(r=>caseCard(r)): [E('div','empty',state.rows.length?'沒有符合本頁篩選條件的案件，請放寬篩選。':'此查詢無資料，或資料來源暫時無法回傳。')]));
   $('pageInfo').textContent='來源第 '+state.sourcePage+'/'+state.totalPages+' 頁 · 這批第 '+state.clientPage+'/'+localPages+' 頁';
