@@ -122,23 +122,22 @@ Deno.serve(async req=>{
   let sent=0,failed=0,skipped=0;
   for(const [user,events] of groupedEmail){
     if(!configured.email){skipped+=events.length;continue;}
-    try{
-      const first=events[0];
-      const deliveryId=await sendEmail(first.recipient,events,false,user);
-      for(const r of events){
+    // Immediate mode: one stable provider key per notification; a partial DB failure
+    // cannot change the key for the remaining notifications and resend the same email.
+    for(const r of events){
+      try{
+        const provider=await sendEmail(r.recipient,[r],false,user,String(r.notification_id));
         await rpc("ti_record_delivery",{
           p_notification:r.notification_id,p_user:r.user_id,p_channel:"email",p_status:"sent",
-          p_provider_id:deliveryId,p_error:""
+          p_provider_id:provider,p_error:""
         });
         sent++;
-      }
-    }catch(e){
-      for(const r of events){
+      }catch(e){
+        failed++;
         try{await rpc("ti_record_delivery",{
           p_notification:r.notification_id,p_user:r.user_id,p_channel:"email",p_status:"failed",
           p_provider_id:"",p_error:scrub(e)
         });}catch{}
-        failed++;
       }
     }
   }
