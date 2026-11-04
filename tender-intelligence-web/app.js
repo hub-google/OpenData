@@ -1477,15 +1477,16 @@ async function renderWorkspace(){
  if(!cloud.user||!id){box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
  box.replaceChildren(E('div','empty','正在讀取團隊案件及任務…'));
  try{
-  const [members,cases,tasks,comments,activity,watches]=await Promise.all([
+  const [members,cases,tasks,comments,activity,watches,documents]=await Promise.all([
    cloud.client.from('ti_workspace_members').select('user_id,role,joined_at').eq('workspace_id',id),
    cloud.client.from('ti_workspace_cases').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
    cloud.client.from('ti_workspace_tasks').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
    cloud.client.from('ti_workspace_task_comments').select('id,task_id,author_id,body,created_at').eq('workspace_id',id).order('created_at',{ascending:false}).limit(200),
    cloud.client.from('ti_workspace_activity').select('id,actor_id,entity_kind,entity_id,action,summary,changed_at').eq('workspace_id',id).order('changed_at',{ascending:false}).limit(40),
-   cloud.client.from('ti_workspace_watch_rules').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}).limit(100)
+   cloud.client.from('ti_workspace_watch_rules').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}).limit(100),
+   cloud.client.from('ti_workspace_documents').select('id,case_id,task_id,uploader_id,storage_path,filename,bytes,created_at').eq('workspace_id',id).order('created_at',{ascending:false}).limit(100)
   ]);
-  for(const result of [members,cases,tasks,comments,activity,watches])if(result.error)throw result.error;
+  for(const result of [members,cases,tasks,comments,activity,watches,documents])if(result.error)throw result.error;
   const me=members.data.find(m=>m.user_id===cloud.user.id);
   const canEdit=!!me&&me.role!=='viewer';
   const canReview=!!me&&['owner','admin'].includes(me.role);
@@ -1524,6 +1525,19 @@ async function renderWorkspace(){
     const selected=$('workspaceSelect').selectedOptions?.[0]?.textContent||'';
     const typed=prompt('此操作會永久刪除所有成員共享的案件、任務及邀請。請輸入完整工作區名稱「'+selected+'」確認：');
     if(typed!==selected)return toast('工作區名稱未吻合，未刪除。');
+    // Storage bytes must be deleted before metadata is cascaded, so no orphaned private files remain.
+    try{
+     for(let offset=0;;offset+=100){
+      const {data:files,error:scan}=await cloud.client.from('ti_workspace_documents')
+       .select('storage_path').eq('workspace_id',id).order('created_at').range(offset,offset+99);
+      if(scan)throw scan;
+      if(!files?.length)break;
+      const paths=files.map(x=>x.storage_path);
+      const {error:clean}=await cloud.client.storage.from('ti-workspace-documents').remove(paths);
+      if(clean)throw clean;
+      if(files.length<100)break;
+     }
+    }catch(e){return toast('無法完整清理團隊附件，已停止刪除工作區：'+readableError(e));}
     const {error}=await cloud.client.from('ti_workspaces').delete().eq('id',id).eq('owner_id',cloud.user.id);
     if(error)return toast('刪除失敗：'+readableError(error));
     selectedWorkspace='';toast('工作區及其共享內容已刪除。');void refreshWorkspaces();
@@ -1688,6 +1702,84 @@ async function renderWorkspace(){
     child(form,input,send);wrap.append(form);
    }
    box.append(wrap);
+  }
+  child(box,E('h3','','團隊共用附件'));
+  box.append(E('p','minor','使用獨立私有儲存區，只有本工作區成員可查看；編輯者可上傳，只有上傳者或管理員可刪除。單檔上限 15 MB。'));
+  if(canEdit){
+   const form=E('form','inline-form'),file=E('input','');
+   file.type='file';file.required=true;file.accept='.pdf,.docx,.txt,.md';
+   file.setAttribute('aria-label','選擇團隊附件');
+   const casePick=E('select','');casePick.title='附件關聯的共用案件';
+   const caseDefault=E('option','','不關聯案件');caseDefault.value='';casePick.append(caseDefault);
+   for(const item of cases.data||[]){
+    const opt=E('option','',item.title||item.case_id);opt.value=item.case_id;casePick.append(opt);
+   }
+   const taskPick=E('select','');taskPick.title='附件關聯的團隊任務';
+   const taskDefault=E('option','','不關聯任務');taskDefault.value='';taskPick.append(taskDefault);
+   for(const item of tasks.data||[]){
+    const opt=E('option','',item.title||item.id);opt.value=item.id;taskPick.append(opt);
+   }
+   const send=E('button','primary-btn','上傳團隊附件');send.type='submit';
+   form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const f=file.files?.[0];if(!f)return toast('請選擇真實附件。');
+    if(f.size<=0||f.size>15728640)return toast('附件容量必須介於 1 B 至 15 MB。');
+    const extension=f.name.split('.').pop()?.toLowerCase()||'';
+    const formats={pdf:'application/pdf',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',txt:'text/plain',md:'text/markdown'};
+    const mime=formats[extension];
+    if(!mime)return toast('團隊附件只支援 PDF、DOCX、TXT、MD。');
+    const name=f.name.replace(/[\\/\x00-\x1f]/g,'_').slice(0,160);
+    const path=id+'/'+crypto.randomUUID()+'-'+name;
+    send.disabled=true;
+    try{
+     const {error:uploaded}=await cloud.client.storage.from('ti-workspace-documents')
+      .upload(path,f,{contentType:mime,upsert:false});
+     if(uploaded)throw uploaded;
+     const {error:inserted}=await cloud.client.from('ti_workspace_documents').insert({
+      workspace_id:id,case_id:casePick.value||null,task_id:taskPick.value||null,
+      uploader_id:cloud.user.id,storage_path:path,filename:name,mime_type:mime,bytes:f.size
+     });
+     if(inserted){
+      await cloud.client.storage.from('ti-workspace-documents').remove([path]);
+      throw inserted;
+     }
+     toast('團隊附件已存入私有工作區。');void renderWorkspace();
+    }catch(ex){toast('上傳團隊附件失敗：'+readableError(ex));}
+    finally{send.disabled=false;}
+   });
+   child(form,file,casePick,taskPick,send);box.append(form);
+  }
+  if(!documents.data?.length)box.append(E('p','minor','目前尚無共用附件。'));
+  for(const doc of documents.data||[]){
+   const card=E('div','watch-item'),head=E('header','');
+   head.append(E('strong','',doc.filename+'（'+Math.ceil(Number(doc.bytes)/1024).toLocaleString('zh-TW')+' KB）'));
+   const open=btn('下載附件','ghost-btn',async()=>{
+    const {data,error}=await cloud.client.storage.from('ti-workspace-documents')
+     .createSignedUrl(doc.storage_path,60);
+    if(error||!data?.signedUrl)return toast('無法取得團隊附件授權連結：'+readableError(error));
+    window.open(data.signedUrl,'_blank','noopener,noreferrer');
+   });
+   head.append(open);
+   if(doc.uploader_id===cloud.user.id||canReview){
+    const remove=btn('刪除','ghost-btn',async()=>{
+     if(!confirm('確定刪除團隊附件「'+doc.filename+'」？'))return;
+     const {error:storageError}=await cloud.client.storage.from('ti-workspace-documents')
+      .remove([doc.storage_path]);
+     if(storageError)return toast('檔案刪除失敗：'+readableError(storageError));
+     const {error}=await cloud.client.from('ti_workspace_documents')
+      .delete().eq('id',doc.id).eq('workspace_id',id);
+     if(error)return toast('檔案已刪除，但資料紀錄尚未清除：'+readableError(error));
+     toast('團隊附件已刪除。');void renderWorkspace();
+    });
+    head.append(remove);
+   }
+   card.append(head);
+   const linked=[
+    doc.case_id?(cases.data||[]).find(x=>x.case_id===doc.case_id)?.title||doc.case_id:null,
+    doc.task_id?(tasks.data||[]).find(x=>x.id===doc.task_id)?.title||doc.task_id:null
+   ].filter(Boolean).join('｜');
+   card.append(E('p','minor',(linked||'未關聯案件／任務')+'｜'+new Date(doc.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})));
+   box.append(card);
   }
   child(box,E('h3','','團隊共用監控規則'));
   box.append(E('p','minor','所有成員共用關鍵字監控；只由團隊 Owner／Admin 建立或修改。命中公告時每位成員都只會收到一則同版本通知。'));
