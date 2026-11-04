@@ -73,32 +73,42 @@ export async function fetchLatestAmounts(yyyymmdd){
 // This is clearly labelled cached data, never claimed to be a live API response.
 export async function fetchLatestCachedNotices(){
   const client=await getClient();
-  const {data:head,error:headError}=await client.from("ti_cases")
-    .select("latest_notice_date").order("latest_notice_date",{ascending:false})
-    .limit(1);
+  // The last publication day comes from the NOTICE ledger, not the case index.
+  // Cases only retain their most recent version and would drop genuine announcements.
+  const {data:head,error:headError}=await client.from("ti_notices")
+    .select("source_date").order("source_date",{ascending:false}).limit(1);
   if(headError)throw headError;
-  const date=Number(head?.[0]?.latest_notice_date);
+  const date=Number(head?.[0]?.source_date);
   if(!/^\d{8}$/.test(String(date)))throw Error('資料庫尚無有效公告日期');
   const records=[],perPage=1000;
   for(let page=0;page<100;page++){
     const from=page*perPage;
-    const {data,error}=await client.from("ti_cases")
-      .select("unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount")
-      .eq("latest_notice_date",date)
+    const {data,error}=await client.from("ti_notices")
+      .select("case_id,source_date,filename,notice_type,title,category,budget_amount,award_amount,raw_brief,ti_cases!inner(unit_id,job_number,agency,title,category,budget_amount,award_amount)")
+      .eq("source_date",date)
       .order("id",{ascending:true})
       .range(from,from+perPage-1);
     if(error)throw error;
-    for(const r of data||[]){
+    for(const n of data||[]){
+      const info=n.ti_cases;
+      if(!info?.unit_id||!info?.job_number)continue;
+      const brief=n.raw_brief&&typeof n.raw_brief==='object'&&!Array.isArray(n.raw_brief)
+        ?{...n.raw_brief,title:n.title||n.raw_brief.title||info.title,
+            type:n.notice_type||n.raw_brief.type,
+            category:n.category||n.raw_brief.category||info.category}
+        :{title:n.title||info.title,type:n.notice_type,category:n.category||info.category};
       records.push({
-        unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
-        date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
-        budget_amount:r.budget_amount,award_amount:r.award_amount,
-        brief:{title:r.title,type:r.latest_notice_type,category:r.category}
+        unit_id:info.unit_id,job_number:info.job_number,unit_name:info.agency,
+        date:n.source_date,filename:n.filename||'db-cached',
+        budget_amount:n.budget_amount??info.budget_amount,
+        award_amount:n.award_amount??info.award_amount,
+        brief
       });
     }
-    if((data||[]).length<perPage) return {records,date:String(date),source:'database'};
+    if((data||[]).length<perPage)
+      return {records,date:String(date),source:'database_notices'};
   }
-  throw Error('最近一日公告筆數超過資料庫單次核對上限');
+  throw Error('最近一日公告超過已設定的讀取上限，請透過跨日期進階搜尋');
 }
 // Exact-case history fallback for browsers blocked by upstream CORS.
 // Return only source-backed records already ingested in Supabase. Detail fields
