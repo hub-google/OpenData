@@ -1,0 +1,127 @@
+// Real-browser smoke tests for Taiwan procurement search (public, no user login).
+// Runs in GitHub Actions using Playwright. No mock tender records are used.
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {chromium}=require('/tmp/tender-browser/node_modules/playwright');
+const base='https://hub-google.github.io/OpenData/tender-intelligence-web/';
+const out='/tmp/tender-browser-artifacts';
+fs.mkdirSync(out,{recursive:true});
+let browser,page;
+const check=async(name,action)=>{
+ const t=Date.now();
+ try {await action();console.log('PASS '+name+' ('+(Date.now()-t)+' ms)');}
+ catch(e) {console.error('FAIL '+name+': '+String(e));throw e;}
+};
+async function waitPage(n,timeout=45000){
+ await page.waitForFunction(value=>{
+   const text=document.getElementById('advPageInfo')?.textContent||'';
+   return text.startsWith('第 '+value+'／');
+ },n,{timeout});
+}
+async function search(){
+ await page.locator('#advSubmit').click();
+ await waitPage(1);
+ assert.ok((await page.locator('#advStatus').innerText()).includes('實際已入庫資料符合條件'));
+}
+async function firstAdvancedId(){
+ return await page.locator('#advResults .case-card a.case-title').first().getAttribute('href');
+}
+(async()=>{
+ browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ page=await browser.newPage({locale:'zh-TW',viewport:{width:1440,height:900}});
+ page.on('pageerror',e=>console.error('BROWSER_PAGE_ERROR '+e.message));
+ page.on('console',m=>{if(m.type()==='error')console.error('BROWSER_CONSOLE '+m.text());});
+ await check('Open public website',async()=>{
+   const res=await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
+   assert.ok(res?.ok(),String(res?.status()));
+   await page.locator('#resultList .case-card').first().waitFor({timeout:60000});
+ });
+ await check('Latest page contains verified monetary values, not all unknown',async()=>{
+   const values=await page.locator('#resultList .case-right strong').allTextContents();
+   assert.ok(values.length>0,'No latest cards');
+   assert.ok(values.some(v=>v.startsWith('NT$')),'All latest budget values appear unknown');
+ });
+ await check('Latest page next button changes the visible page',async()=>{
+   const original=await page.locator('#pageInfo').innerText();
+   const title=await page.locator('#resultList .case-title').first().innerText();
+   assert.equal(await page.locator('#nextPage').isDisabled(),false);
+   await page.locator('#nextPage').click();
+   await page.waitForFunction(v=>document.getElementById('pageInfo')?.textContent!==v,original);
+   const after=await page.locator('#resultList .case-title').first().innerText();
+   assert.notEqual(after,title);
+ });
+ await check('Advanced search default page 1 loads',async()=>{
+   await page.locator('[data-view="advanced"]').first().click();
+   await waitPage(1,60000);
+   assert.ok((await page.locator('#advResults .case-card').count())>0);
+ });
+ await check('Advanced next page and previous page both change results',async()=>{
+   const first=await firstAdvancedId();
+   await page.locator('#advNext').click();
+   await waitPage(2,60000);
+   const second=await firstAdvancedId();
+   assert.notEqual(first,second);
+   await page.locator('#advPrev').click();
+   await waitPage(1,60000);
+   assert.equal(await firstAdvancedId(),first);
+ });
+ await check('Keyword search and its next page return different cases',async()=>{
+   await page.locator('#advQuery').fill('資訊');
+   await search();
+   const first=await firstAdvancedId();
+   assert.equal(await page.locator('#advNext').isDisabled(),false);
+   await page.locator('#advNext').click();
+   await waitPage(2,60000);
+   assert.notEqual(await firstAdvancedId(),first);
+ });
+ await check('Boolean expression search returns real records',async()=>{
+   await page.locator('#advQuery').fill('(資訊 OR 設備) AND NOT 租賃');
+   await search();
+   assert.ok((await page.locator('#advResults .case-card').count())>0);
+ });
+ await check('Amount + category filters return eligible budgets only',async()=>{
+   await page.locator('#advQuery').fill('');
+   await page.locator('#advGroup').selectOption('財物');
+   await page.locator('#advMin').fill('3000000');
+   await search();
+   const budgets=await page.locator('#advResults .case-right strong').allTextContents();
+   assert.ok(budgets.length>0);
+   for(const s of budgets){
+     const amount=Number(s.replace(/[^\d]/g,''));
+     assert.ok(amount>=3000000,'Budget under filter: '+s);
+   }
+ });
+ await check('Agency + date range returns matching records',async()=>{
+   await page.locator('#advGroup').selectOption('');
+   await page.locator('#advMin').fill('');
+   await page.locator('#advAgency').fill('國防部');
+   await page.locator('#advStart').fill('2026-11-01');
+   await page.locator('#advEnd').fill('2026-11-04');
+   await search();
+   const agencies=await page.locator('#advResults .case-meta').first().innerText();
+   assert.ok(agencies.includes('國防部'),agencies);
+ });
+ await check('Invalid budget interval is rejected by UI',async()=>{
+   await page.locator('#advStart').fill('');
+   await page.locator('#advEnd').fill('');
+   await page.locator('#advMin').fill('5000000');
+   await page.locator('#advMax').fill('1000000');
+   await page.locator('#advSubmit').click();
+   const status=await page.locator('#advStatus').innerText();
+   assert.ok(status.includes('最高公開預算不可小於最低公開預算'),status);
+ });
+ await check('No-result query is shown as empty rather than fabricated rows',async()=>{
+   await page.locator('#advAgency').fill('');
+   await page.locator('#advMin').fill('');
+   await page.locator('#advMax').fill('');
+   await page.locator('#advQuery').fill('不可能出現的不存在案件識別字ZZ987654321');
+   await search();
+   assert.equal(await page.locator('#advResults .case-card').count(),0);
+ });
+ console.log('ALL PUBLIC SEARCH BROWSER SMOKE TESTS PASSED');
+})().catch(async(e)=>{
+ if(page)await page.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});
+ console.error(e.stack||e);
+ process.exitCode=1;
+}).finally(async()=>{if(browser)await browser.close();});
