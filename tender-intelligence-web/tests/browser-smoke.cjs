@@ -49,7 +49,7 @@ async function firstAdvancedId(){
    const info=await page.locator('#resultInfo').innerText();
    assert.ok(announcements>=cases&&announcements>0,'Latest notice count smaller than case count');
    assert.ok(info.includes('已入庫')&&info.includes('公告'),'Unknown source provenance');
-   assert.ok((await page.locator('#resultList .case-meta').first().innerText()).includes('公告編號'));
+   assert.ok((await page.locator('#resultList .case-card').first().innerText()).includes('公告編號'));
  });
  await check('Latest page next button changes the visible page',async()=>{
    const original=await page.locator('#pageInfo').innerText();
@@ -221,7 +221,7 @@ async function firstAdvancedId(){
    await page.locator('[data-view="agencies"]').first().click();
    await page.locator('#agencyId').fill('3.13.50');
    await page.locator('#agencyForm button[type="submit"]').click();
-   await page.locator('#agencyOutput table').waitFor({timeout:60000});
+   await page.locator('#agencyOutput table').first().waitFor({timeout:60000});
    assert.ok((await page.locator('#agencyOutput').innerText()).includes('已確認得標廠商'));
    await page.locator('#agencyMonthlyOutput table').waitFor({timeout:60000});
    assert.ok((await page.locator('#agencyMonthlyOutput tr').count())>1);
