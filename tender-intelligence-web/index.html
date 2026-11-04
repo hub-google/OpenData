@@ -209,6 +209,20 @@
         <div class="page-heading"><div class="eyebrow">BUYER INTELLIGENCE</div><h1>機關採購情報</h1><p>查詢機關年度發包件數、決標金額、主要得標廠商。依 API 官方統計回應顯示。</p></div>
         <div class="panel"><form id="agencyForm" class="inline-form"><label class="sr-only" for="agencyId">機關代碼</label><input id="agencyId" placeholder="輸入機關代碼，例如 A.15.2" required><button class="primary-btn" type="submit">查詢機關統計</button></form><p class="hint">在標案詳情中點選「查看此機關統計」可自動帶入正確代碼。</p></div>
         <div id="agencyOutput" class="panel analysis-panel"><div class="empty">先輸入機關代碼或從案件詳情開啟。</div></div>
+        <div class="panel analysis-panel">
+          <div class="section-heading"><h2>每月採購紀錄（自有公告資料庫）</h2></div>
+          <form id="agencyMonthlyForm" class="inline-form">
+            <label>公告年度 <input id="agencyMonthlyYear" type="number" min="1999" max="2100" required></label>
+            <button type="submit" class="ghost-btn">按月查詢已入庫資料</button>
+          </form>
+          <p class="hint">只統計本平台已成功收錄的公告；每月按案號去重計算金額，沒有資料的月份不能直接視為零採購。</p>
+          <div id="agencyMonthlyOutput" class="watch-list" aria-live="polite">請先查詢機關。</div>
+        </div>
+        <div class="panel analysis-panel">
+          <h2>同機關相似名稱的歷史採購（可能重購證據）</h2>
+          <p class="hint">僅列同機關、相同正規化案名、不同正式案號的候選紀錄與公告日期；契約期限有公告原文才顯示，不會推估下次採購時間。</p>
+          <div id="agencyRepeatOutput" class="watch-list" aria-live="polite">請先查詢機關。</div>
+        </div>
       </section>
 
       <section id="view-vendors" class="view" hidden>
@@ -533,6 +547,10 @@
         <div class="panel prose">
           <h2>真實資料庫與同步狀態</h2>
           <div id="sourceStatus" class="notice">正在查詢自有 Supabase 資料庫的最新同步資訊…</div>
+          <h2>每日來源資料品質核對</h2>
+          <div id="qualityCheckStatus" role="status" class="notice">正在讀取上次自動核對紀錄…</div>
+          <h2>資料來源與授權登記</h2>
+          <div id="qualitySources" class="watch-list" role="region" aria-label="資料來源與授權狀態">尚未載入。</div>
           <h2>資料來源</h2>
           <p>本網站從第三方公開的 <a href="https://pcc-api.openfun.app/" target="_blank" rel="noopener noreferrer">OpenFun 政府採購公告 API</a> 即時取得資料。該 API 蒐集政府電子採購網公開公告。官方紀錄請以 <a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer">政府電子採購網</a> 為準。機關年度統計使用 OpenFun /api/unitstat。</p>
           <p>API 無 Token 可能有流量限制或延遲；出錯時不會使用模擬資料。公開可讀不等於可無限制商業再利用，正式商用仍須釐清來源授權。</p>
@@ -559,6 +577,8 @@
   <script type="module" src="./issues.js"></script>
   <script type="module" src="./developer-api.js"></script>
   <script type="module" src="./evidence.js"></script>
+  <script type="module" src="./quality.js"></script>
+  <script type="module" src="./agency-deep.js"></script>
 <script type="module" src="./operations.js"></script>
 <script type="module" src="./proposal.js"></script>
 <script type="module" src="./account-privacy.js"></script>
