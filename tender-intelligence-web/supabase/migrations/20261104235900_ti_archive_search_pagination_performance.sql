@@ -2,6 +2,7 @@
 -- company aggregation took ~5s for an unfiltered page; anon SQL timeout is 3s.
 -- Aggregate notice company tokens once when search keywords are present,
 -- and skip that expensive step for plain/filter-only pagination.
+-- Allow 10000 source pages; 1000 was insufficient for 2000+ pages of cases.
 -- Preserve v3/v4 argument contracts, filters, sort ordering and the
 -- source-verified decision-method filter introduced in v4.
 
@@ -20,7 +21,7 @@ begin
      or length(coalesce(p_agency,''))>100
      or length(coalesce(p_location,''))>80
      or length(coalesce(p_method,''))>80
-     or p_limit not between 1 and 50 or p_page not between 1 and 1000
+     or p_limit not between 1 and 50 or p_page not between 1 and 10000
      or p_sort not in ('date','relevance','deadline','budget','award','title')
      or (p_min_budget is not null and p_min_budget<0)
      or (p_max_budget is not null and p_max_budget<0)
@@ -155,7 +156,7 @@ begin
      or length(coalesce(p_location,''))>80
      or length(coalesce(p_method,''))>80
      or length(coalesce(p_decision_method,''))>80
-     or p_limit not between 1 and 50 or p_page not between 1 and 1000
+     or p_limit not between 1 and 50 or p_page not between 1 and 10000
      or p_sort not in ('date','relevance','deadline','budget','award','title')
      or (p_min_budget is not null and p_min_budget<0)
      or (p_max_budget is not null and p_max_budget<0)
