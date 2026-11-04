@@ -193,14 +193,11 @@ function buildDetailCell(label,value){
 }
 async function loadCaseHistory(unit,job){
   try{
-    const data=await api('/tender',{unit_id:unit,job_number:job},35000);
-    if(!Array.isArray(data.records)||!data.records.length)
-      throw Error('即時來源未回傳此案歷史');
+    return await fetchArchivedCaseDetail(unit,job);
+  }catch(archiveError){
+    const data=await api('/tender',{unit_id:unit,job_number:job},12000);
+    if(!Array.isArray(data.records)||!data.records.length)throw archiveError;
     return data;
-  }catch(sourceError){
-    // Source CORS and intermittent network failures must not break exact-case
-    // links; the backup is restricted to same unit ID + job number.
-    return fetchArchivedCaseDetail(unit,job);
   }
 }
 async function openDetail(row){
@@ -640,12 +637,12 @@ async function loadVendors(mode,q){
   const out=$('vendorOutput');out.replaceChildren(E('div','empty','正在查詢與此廠商有關的公告…'));
   $('vendorSummary').textContent='載入中';
   try{
-    let data,cached=false;
+    let data,cached=true;
     try{
-      data=await api(mode==='id'?'/searchbycompanyid':'/searchbycompanyname',{query:q,page:1},35000);
-    }catch(sourceError){
       data=await fetchBasicArchiveSearch({mode:mode==='id'?'companyId':'vendor',query:q,page:1});
-      cached=true;
+    }catch(archiveError){
+      data=await api(mode==='id'?'/searchbycompanyid':'/searchbycompanyname',{query:q,page:1},12000);
+      cached=false;
     }
     state.vendorRows=dedupe(data.records||[]);
     $('vendorSummary').textContent=(cached?'已入庫來源資料':'即時來源返回')+' '+asText(data.total_records??state.vendorRows.length)+' 筆公告；本次載入去重 '+state.vendorRows.length+' 件（第一頁）';
@@ -858,8 +855,8 @@ async function checkWatches(){
     for(const rule of store.watches){
       try{
         let d;
-        try{d=await api('/searchbytitle',{query:rule.term,page:1},25000);}
-        catch(sourceError){d=await fetchBasicArchiveSearch({mode:'title',query:rule.term,page:1});}
+        try{d=await fetchBasicArchiveSearch({mode:'title',query:rule.term,page:1});}
+        catch(archiveError){d=await api('/searchbytitle',{query:rule.term,page:1},12000);}
         const items=Array.isArray(d.records)?d.records.map(normalize).filter(Boolean):[];
         const keys=items.map(r=>r.id+':'+r.date+':'+r.filename);
         const old=new Set(Array.isArray(rule.seen)?rule.seen:[]);
