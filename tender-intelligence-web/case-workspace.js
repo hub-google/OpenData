@@ -1,5 +1,6 @@
 // Single case workspace: all panels keep the same official case id and reuse existing ti_* tables.
 import {getClient} from './backend.js';
+import {saveCloudDocument} from './app.js';
 const el=(tag,text='',className='')=>{const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;return node;};
 const control=(tag,attrs={})=>{const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs))node.setAttribute(k,v);return node;};
 const field=(name,node)=>{const label=el('label',name);label.append(node);return label;};
@@ -13,6 +14,11 @@ function status(p,text){let n=p.querySelector('.ti-case-status');if(!n){n=el('p'
 function openOldView(view){
  const caseId=window.__tiActiveCaseId;
  $('closeDetail')?.click();const button=document.querySelector('[data-view="'+view+'"]');button?.click();
+ if(view==='documents' && caseId && $('documentCaseId')){
+   const chooser=$('documentCaseId');
+   if(![...chooser.options].some(o=>o.value===caseId))chooser.append(new Option(window.__tiActiveCaseTitle||caseId,caseId));
+   chooser.value=caseId;
+ }
  const field=view==='documents'?'documentCaseId':view==='decisions'?'decisionCase':view==='contracts'?'contractCase':null;
  if(field&&caseId&&$(field)&&[...$(field).options].some(o=>o.value===caseId))$(field).value=caseId;
 }
@@ -84,8 +90,21 @@ function makeDocuments(panel,caseId){
  for(const [label,view] of [['標書差異與 AI 健檢','proposal'],['標書條款解析／私人文件庫','documents']]){
   const b=el('button',label,'ghost-btn');b.type='button';b.onclick=()=>openOldView(view);buttons.append(b);
  }
- const list=el('div','','ti-case-list');panel.append(explain,buttons,list);
- void (async()=>{
+ const uploadRow=el('div','','ti-case-editor');
+ const input=control('input',{type:'file',accept:'.pdf,.docx,.txt,.md','aria-label':'上傳此案的私人標書'});
+ const upload=el('button','上傳至此案文件庫','primary-btn');upload.type='button';
+ uploadRow.append(field('選擇本案文件（PDF、DOCX、TXT、MD，15MB 以內）',input),upload);
+ const list=el('div','','ti-case-list');panel.append(explain,buttons,uploadRow,list);
+ upload.addEventListener('click',async()=>{
+  const file=input.files?.[0];if(!file)return status(panel,'請先選擇要儲存到此案的文件。');
+  upload.disabled=true;
+  try{
+   const success=await saveCloudDocument(file,caseId);
+   if(success){input.value='';await refreshFiles();}
+   else status(panel,'文件尚未儲存成功，請確認登入狀態與格式。');
+  }finally{upload.disabled=false;}
+ });
+ async function refreshFiles(){
   const {db,user}=await owner();if(!user){status(panel,'登入後才能查看自己的私有文件。');return;}
   const {data,error}=await db.from('ti_documents').select('id,filename,extraction_status,created_at').eq('user_id',user.id).eq('case_id',caseId).order('created_at',{ascending:false}).limit(30);
   if(error){status(panel,'讀取文件失敗：'+err(error));return;}
@@ -105,7 +124,8 @@ function makeDocuments(panel,caseId){
    row.append(el('strong',item.document_name),el('span',entries.length+' 項條款／'+confirmed+' 項由本人核對符合｜'+(item.created_at||'').slice(0,10),'minor'));
    history.append(row);
   }
- })();
+ }
+ void refreshFiles();
 }
 function makeHistory(panel,caseInfo,overview){
  panel.append(el('h3','行情及相似歷史案件'));
@@ -152,6 +172,7 @@ function makeContracts(panel,caseId){
 }
 function mount(caseInfo){
  window.__tiActiveCaseId=caseInfo?.caseId||null;
+ window.__tiActiveCaseTitle=caseInfo?.title||'';
  const root=$('detailContent');if(!root||!caseInfo?.caseId||root.querySelector('.ti-case-tabs'))return;
  const grid=root.querySelector('.detail-grid');if(!grid)return;
  const children=Array.from(root.children),idx=children.indexOf(grid);
