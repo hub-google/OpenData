@@ -32,7 +32,8 @@ async function run(){
   await nav('company');await page.locator('#tiCompanyName').fill(prefix+'模擬資安服務公司');
   await page.locator('#tiCompanyServices').fill('資安、資訊系統、設備維護');
   await page.locator('#tiCompanyIntro').fill('系統測試資料，非真實公司');
-  await page.locator('#tiCompanySave').click();await page.waitForTimeout(1600);
+  await page.locator('#tiCompanySave').click();
+  await page.waitForFunction(prefix=>document.querySelector('#tiCompanyStatus')?.textContent?.includes('已儲存'),prefix,{timeout:10000});
   return {status:short(await page.locator('#tiCompanyStatus').innerText()),screen:await shot('12-company-save')};
  });
  await step('新增公司實績並查回清單',async()=>{
@@ -40,7 +41,8 @@ async function run(){
   await page.locator('#tiAssetTitle').fill(prefix+'模擬維護實績');
   await page.locator('#tiAssetIssuer').fill('測試來源（非真實）');
   await page.locator('#tiAssetDetails').fill('這筆資料僅驗證表單與資料庫寫入，不表示真實資格。');
-  await page.locator('#tiAssetSave').click();await page.waitForTimeout(1600);
+  await page.locator('#tiAssetSave').click();
+  await page.waitForFunction(value=>document.querySelector('#tiCompanyAssets')?.textContent?.includes(value),prefix+'模擬維護實績',{timeout:10000});
   return {status:short(await page.locator('#tiCompanyStatus').innerText()),visible:await page.locator('#tiCompanyAssets').innerText(),screen:await shot('13-company-asset')};
  });
  await step('從真實標案詳情加入私人追蹤',async()=>{
@@ -71,6 +73,7 @@ async function run(){
   await p.locator('input[type=file]').first().setInputFiles(file);
   await p.getByRole('button',{name:'上傳至此案文件庫'}).click();await page.waitForTimeout(1800);
   const content=short(await p.innerText(),420),toast=short(await page.locator('#toast').innerText(),300);
+  if(!content.includes('tender-audit-check.txt'))throw Error('文件清單沒有新檔案：'+toast);
   if(content.includes('文件尚未儲存成功'))throw Error('私有文件上傳失敗：'+toast+'；'+content);
   return {content,toast,screen:await shot('17-document')};
  });
@@ -85,23 +88,30 @@ async function run(){
  });
  await step('監控：新增測試用競品條件',async()=>{
   await nav('alerts');
+  await page.getByRole('tab',{name:'競品追蹤'}).click();
   await page.locator('[name="competitorName"]').fill(prefix+'不存在廠商');
   await page.locator('.ti-tracker-module button[type="submit"]').click();await page.waitForTimeout(1300);
   const status=short(await page.locator('[data-watch-status]').innerText()),url=page.url();
-  if(!status.includes('已保存')&&!status.includes('已載入'))throw Error('競品新增未完成：'+status+'；當前網址：'+url+'；頁面錯誤：'+pageErrors.slice(-1));
+  if(!status.includes('已保存 1 個指定廠商')&&!status.includes('已載入 1 個指定廠商'))throw Error('競品新增未完成：'+status+'；當前網址：'+url+'；頁面錯誤：'+pageErrors.slice(-1));
   return {status,url,screen:await shot('19-competitor')};
  });
  await step('報表：建立每日測試排程',async()=>{
-  await nav('alerts');await page.waitForTimeout(800);
+  await nav('alerts');await page.getByRole('tab',{name:'自動報表'}).click();
   const input=page.locator('[name="reportTitle"]');
   if(!await input.isVisible())throw Error('報表表單不可見：'+JSON.stringify(await input.evaluate(e=>({hiddenAncestors:[...function*(n){for(let x=n;x;x=x.parentElement)if(x.hidden||getComputedStyle(x).display==='none')yield x.id||x.className||x.tagName}(e)],view:document.querySelector('#currentViewLabel')?.textContent}))));
   await input.fill(prefix+'投標追蹤');
   await page.locator('[name="reportType"]').selectOption('my_pipeline');
   await page.locator('[name="reportFrequency"]').selectOption('daily');
   await page.locator('.ti-report-form button[type="submit"]').click();await page.waitForTimeout(1300);
-  const status=short(await page.locator('[data-report-status]').innerText());
-  if(!status.includes('個排程'))throw Error('排程未確認保存：'+status);
-  return {status,jobs:short(await page.locator('[data-report-results]').innerText(),200),screen:await shot('20-report')};
+  const schedules=page.locator('[data-report-schedules]');
+  await page.waitForFunction(()=>document.querySelector('[data-report-schedules]')?.textContent?.includes('立即產生一次'),{timeout:10000});
+  await schedules.getByRole('button',{name:'立即產生一次'}).first().click();
+  await page.waitForFunction(()=>document.querySelector('[data-report-results]')?.textContent?.includes('預覽內容'),{timeout:12000});
+  await page.locator('[data-report-results]').getByRole('button',{name:'預覽內容'}).first().click();
+  const status=short(await page.locator('[data-report-status]').innerText()),
+    preview=short(await page.locator('.ti-report-preview:not([hidden])').first().innerText(),280);
+  if(!status.includes('已立即產生報表'))throw Error('立即產生報表未成功：'+status);
+  return {status,preview,screen:await shot('20-report')};
  });
  await step('返回頁面：確認私人公司資料跨頁保存',async()=>{
   await nav('company');await page.locator('#tiCompanyRefresh').click();await page.waitForTimeout(1200);
