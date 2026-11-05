@@ -148,3 +148,10 @@ LINE 開發者後台需要設定 callback `https://unapiwajmgqqtdkixaab.supabase
 - 民間採購、共同供應契約、評選委員、商工董監事／股東關係圖、完整價格／重購模型等**新的合法資料來源**；既有收錄與歷史回補不能冒稱全國全量。
 - SMS 發送供應商、Email／LINE 真寄達、排程報表寄送、正式多人工作區與手機操作的完整端到端驗收、PWA／原生 App；目前已做站內競品通知及伺服器報表生成。
 - 資料再利用授權及任何商業上線前的資安／資料品質驗收。現階段所有已實作功能保持免費，不新增支付處理。
+
+
+### 2026-11-05 後續補強：案件文件上傳及市場趨勢
+
+- 單案「文件與標書」分頁已直接共用 `app.js` 的 `saveCloudDocument(file,caseId)` 私有上傳流程；不需離開當前標案，仍沿用原 `ti_documents` 與私人 Storage。按鈕「標書條款解析／私人文件庫」亦會攜帶當前案號。
+- 新增 `market-trends.js` 及 RPC `ti_market_trends_v1`，顯示本平台實際已入庫的逐月案件數、公開預算／決標金額有效樣本數、金額合計、採購類別分布，可按月份、機關及採購類別篩選並匯出 CSV。RPC 已用 SQL 查詢驗證，並非全台完整或已可證明的季節性。
+- 同步比對 `main` 與 `gh-pages` 的 `index.html`、`app.js`、`case-workspace.js`、`qualification-check.js`、`market-trends.js`、`styles.css`：相同檔案 blob SHA，表示 GitHub Pages 發布分支已收到本次程式；**不等於曾以真實瀏覽器逐操作驗收**。
