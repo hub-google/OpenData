@@ -70,7 +70,9 @@ async function run(){
   const p=page.locator('#detailContent .ti-case-panel:not([hidden])');
   await p.locator('input[type=file]').first().setInputFiles(file);
   await p.getByRole('button',{name:'上傳至此案文件庫'}).click();await page.waitForTimeout(1800);
-  return {content:short(await p.innerText(),420),screen:await shot('17-document')};
+  const content=short(await p.innerText(),420),toast=short(await page.locator('#toast').innerText(),300);
+  if(content.includes('文件尚未儲存成功'))throw Error('私有文件上傳失敗：'+toast+'；'+content);
+  return {content,toast,screen:await shot('17-document')};
  });
  await step('標書條款：公司實績候選比對並保存',async()=>{
   await page.locator('#closeDetail').click();await nav('documents');
@@ -85,14 +87,21 @@ async function run(){
   await nav('alerts');
   await page.locator('[name="competitorName"]').fill(prefix+'不存在廠商');
   await page.locator('.ti-tracker-module button[type="submit"]').click();await page.waitForTimeout(1300);
-  return {status:short(await page.locator('[data-watch-status]').innerText()),screen:await shot('19-competitor')};
+  const status=short(await page.locator('[data-watch-status]').innerText()),url=page.url();
+  if(!status.includes('已保存')&&!status.includes('已載入'))throw Error('競品新增未完成：'+status+'；當前網址：'+url+'；頁面錯誤：'+pageErrors.slice(-1));
+  return {status,url,screen:await shot('19-competitor')};
  });
  await step('報表：建立每日測試排程',async()=>{
-  await page.locator('[name="reportTitle"]').fill(prefix+'投標追蹤');
+  await nav('alerts');await page.waitForTimeout(800);
+  const input=page.locator('[name="reportTitle"]');
+  if(!await input.isVisible())throw Error('報表表單不可見：'+JSON.stringify(await input.evaluate(e=>({hiddenAncestors:[...function*(n){for(let x=n;x;x=x.parentElement)if(x.hidden||getComputedStyle(x).display==='none')yield x.id||x.className||x.tagName}(e)],view:document.querySelector('#currentViewLabel')?.textContent}))));
+  await input.fill(prefix+'投標追蹤');
   await page.locator('[name="reportType"]').selectOption('my_pipeline');
   await page.locator('[name="reportFrequency"]').selectOption('daily');
   await page.locator('.ti-report-form button[type="submit"]').click();await page.waitForTimeout(1300);
-  return {status:short(await page.locator('[data-report-status]').innerText()),jobs:short(await page.locator('[data-report-results]').innerText(),200),screen:await shot('20-report')};
+  const status=short(await page.locator('[data-report-status]').innerText());
+  if(!status.includes('個排程'))throw Error('排程未確認保存：'+status);
+  return {status,jobs:short(await page.locator('[data-report-results]').innerText(),200),screen:await shot('20-report')};
  });
  await step('返回頁面：確認私人公司資料跨頁保存',async()=>{
   await nav('company');await page.locator('#tiCompanyRefresh').click();await page.waitForTimeout(1200);
