@@ -32,7 +32,7 @@ async function main(){
   await nav('search');await page.locator('#searchMode').selectOption('title');
   await page.locator('#searchQuery').fill('資訊系統');await page.locator('#searchForm button[type="submit"]').click();await page.waitForTimeout(4500);
   const info=short(await page.locator('#resultInfo').innerText());
-  if(!info.includes('資料庫符合')||info.includes('資料庫符合 100 件'))throw Error('首頁仍把 100 筆當全部命中：'+info);
+  if(!info.includes('資料庫符合')||info.includes('資料庫符合 100 件'))throw Error('首頁跨日搜尋沒有完整結果：'+info+'；'+short(await page.locator('#dataError').innerText(),260));
   return {info,cards:await page.locator('#resultList article').count(),sample:short(await page.locator('#resultList').innerText(),280),screenshot:await shot('02-search')};
  });
  await step('進階搜尋：資安維護最低一百萬',async()=>{
@@ -73,6 +73,16 @@ async function main(){
   const brief=short(await page.locator('#detailContent .ti-decision-brief').innerText(),360);
   if(!brief.includes('資料完整度')||tabs.length!==6)throw Error('案件整合摘要未載入：'+brief);
   return {http:res?.status(),drawer:await page.locator('#detailDrawer').isVisible(),tabs,history,brief,screenshot:await shot('09-case')};
+ });
+ await step('監控與通知四分頁操作',async()=>{
+  await nav('alerts');
+  const names=await page.locator('.ti-monitor-tab').allTextContents();
+  for(const text of ['競品追蹤','自動報表','通知設定','標案監控']){
+    await page.getByRole('tab',{name:text}).click();
+    const selected=await page.locator('.ti-monitor-tab.selected').innerText();
+    if(selected!==text)throw Error('tab 未切換：'+text+' → '+selected);
+  }
+  return {tabs:names,screenshot:await shot('11-monitor-tabs')};
  });
  await step('手機側欄與商機雷達',async()=>{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:40000});
