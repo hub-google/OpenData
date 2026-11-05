@@ -31,7 +31,9 @@ async function main(){
  await step('標案搜尋：資訊系統',async()=>{
   await nav('search');await page.locator('#searchMode').selectOption('title');
   await page.locator('#searchQuery').fill('資訊系統');await page.locator('#searchForm button[type="submit"]').click();await page.waitForTimeout(4500);
-  return {info:short(await page.locator('#resultInfo').innerText()),cards:await page.locator('#resultList article').count(),sample:short(await page.locator('#resultList').innerText(),280),screenshot:await shot('02-search')};
+  const info=short(await page.locator('#resultInfo').innerText());
+  if(!info.includes('資料庫符合')||info.includes('資料庫符合 100 件'))throw Error('首頁仍把 100 筆當全部命中：'+info);
+  return {info,cards:await page.locator('#resultList article').count(),sample:short(await page.locator('#resultList').innerText(),280),screenshot:await shot('02-search')};
  });
  await step('進階搜尋：資安維護最低一百萬',async()=>{
   await nav('advanced');await page.locator('#advQuery').fill('資安 AND 維護');
@@ -68,7 +70,9 @@ async function main(){
   await page.waitForTimeout(6000);
   const tabs=await page.locator('.ti-case-tab').allTextContents();
   let history='';if(tabs.length){await page.getByRole('tab',{name:'歷史行情'}).click();history=short(await page.locator('.ti-case-panel:not([hidden])').innerText(),230);}
-  return {http:res?.status(),drawer:await page.locator('#detailDrawer').isVisible(),tabs,history,screenshot:await shot('09-case')};
+  const brief=short(await page.locator('#detailContent .ti-decision-brief').innerText(),360);
+  if(!brief.includes('資料完整度')||tabs.length!==6)throw Error('案件整合摘要未載入：'+brief);
+  return {http:res?.status(),drawer:await page.locator('#detailDrawer').isVisible(),tabs,history,brief,screenshot:await shot('09-case')};
  });
  await step('手機側欄與商機雷達',async()=>{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:40000});
