@@ -5,10 +5,26 @@ const SRC="https://pcc-api.openfun.app/api", DB_URL=Deno.env.get("SUPABASE_URL")
  KEY=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const text=v=>v==null?"":String(v);
 const num=v=>{if(v===null||v===undefined||v==="")return null;const n=Number(text(v).replace(/[,元NT$新臺幣\s]/g,""));return Number.isFinite(n)&&n>=0?n:null};
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function json(url,ms=35000){
- const r=await fetch(url,{signal:AbortSignal.timeout(ms),headers:{Accept:"application/json"}});
- if(!r.ok)throw Error("upstream "+r.status+" "+new URL(url).pathname);
- const d=await r.json();if(!d||typeof d!=="object")throw Error("invalid upstream response");return d;
+ let failure;
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const r=await fetch(url,{signal:AbortSignal.timeout(ms),headers:{Accept:"application/json"}});
+   if(r.ok){
+    const d=await r.json();if(!d||typeof d!=="object")throw Error("invalid upstream response");
+    return d;
+   }
+   const e=Error("upstream "+r.status+" "+new URL(url).pathname);
+   if(![408,429,500,502,503,504].includes(r.status))throw e;
+   failure=e;
+  }catch(e){
+   failure=e;
+   if(attempt===2||!/(upstream (408|429|50[0-4])|network|timed out|timeout|fetch failed)/i.test(String(e)))throw e;
+  }
+  if(attempt<2)await delay(650*Math.pow(2,attempt));
+ }
+ throw failure||Error("source request failed");
 }
 async function db(route,method="GET",body=null,prefer=""){
  const h={apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"};
@@ -17,19 +33,35 @@ async function db(route,method="GET",body=null,prefer=""){
  const s=await r.text();if(!r.ok)throw Error("database "+r.status+" "+route.split("?")[0]+" "+s.slice(0,220));
  try{return s?JSON.parse(s):null}catch{return s}
 }
-async function batches(table,rows,ignore=false){
- let inserted=0;
- for(let n=0;n<rows.length;n+=125){
-  const r=await db(table+"?on_conflict=id"+(ignore?"&select=id":""),"POST",rows.slice(n,n+125),
-   ignore?"resolution=ignore-duplicates,return=representation":"resolution=merge-duplicates,return=minimal");
-  if(ignore&&Array.isArray(r))inserted+=r.length;
+// Source data writes are idempotent. Split chunks on transient database
+// statement timeouts instead of treating a successfully fetched date as absent.
+const transientWrite=e=>/(57014|statement timeout|database (429|50[0-4])|timeout|fetch failed)/i.test(String(e));
+async function adaptiveWrite(rows,write,size=24){
+ let total=0;
+ async function writeChunk(chunk){
+  try{return await write(chunk);}
+  catch(e){
+   if(chunk.length<2||!transientWrite(e))throw e;
+   const pivot=Math.ceil(chunk.length/2);
+   return (await writeChunk(chunk.slice(0,pivot)))+
+     (await writeChunk(chunk.slice(pivot)));
+  }
  }
- return inserted;
+ for(let i=0;i<rows.length;i+=size)total+=await writeChunk(rows.slice(i,i+size));
+ return total;
+}
+async function batches(table,rows,ignore=false){
+ return adaptiveWrite(rows,async chunk=>{
+  const r=await db(table+"?on_conflict=id"+(ignore?"&select=id":""),"POST",chunk,
+   ignore?"resolution=ignore-duplicates,return=representation":"resolution=merge-duplicates,return=minimal");
+  return ignore&&Array.isArray(r)?r.length:0;
+ });
 }
 async function upsertCasesWithoutRegression(rows){
-  for(let i=0;i<rows.length;i+=125){
-    await db("rpc/ti_upsert_case_briefs","POST",{p_cases:rows.slice(i,i+125)});
-  }
+ await adaptiveWrite(rows,async chunk=>{
+  await db("rpc/ti_upsert_case_briefs","POST",{p_cases:chunk});
+  return 0;
+ });
 }
 function norm(r,stamp){
  const unit=text(r?.unit_id),job=text(r?.job_number),fn=text(r?.filename),dt=Number(r?.date);
@@ -188,12 +220,9 @@ async function ingest(mode){
   found=notices.size;if(found===0 && list.records.length>0)throw Error("source had no valid notices");
   await upsertCasesWithoutRegression([...cases.values()]);
   added=await batches("ti_notices",[...notices.values()],true);
-  // Keep the searchable case/vendor terms in sync with REAL source announcements.
-  // Each batch is capped at 125 IDs, including old backfills and corrected notices.
-  for(const keys of Array.from({length:Math.ceil(cases.size/125)},(_,i)=>
-    [...cases.keys()].slice(i*125,(i+1)*125))){
-    await db("rpc/ti_refresh_case_search","POST",{p_case_ids:keys});
-  }
+  // New case/notice ingestion now maintains the source-based search index
+  // using database triggers. A 5-minute reconciliation handles rare gaps.
+  // Avoid redundant expensive refresh RPCs after successful writes.
   // Backfill runs have a tighter detail quota to keep old-year imports cheap.
   const cached=await db("ti_case_details?select=case_id&limit=10000");
   const known=new Set((cached||[]).map(x=>x.case_id));
