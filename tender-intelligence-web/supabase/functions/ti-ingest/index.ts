@@ -188,6 +188,12 @@ async function ingest(mode){
   found=notices.size;if(found===0 && list.records.length>0)throw Error("source had no valid notices");
   await upsertCasesWithoutRegression([...cases.values()]);
   added=await batches("ti_notices",[...notices.values()],true);
+  // Keep the searchable case/vendor terms in sync with REAL source announcements.
+  // Each batch is capped at 125 IDs, including old backfills and corrected notices.
+  for(const keys of Array.from({length:Math.ceil(cases.size/125)},(_,i)=>
+    [...cases.keys()].slice(i*125,(i+1)*125))){
+    await db("rpc/ti_refresh_case_search","POST",{p_case_ids:keys});
+  }
   // Backfill runs have a tighter detail quota to keep old-year imports cheap.
   const cached=await db("ti_case_details?select=case_id&limit=10000");
   const known=new Set((cached||[]).map(x=>x.case_id));
