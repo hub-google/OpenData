@@ -11,6 +11,8 @@ on:
       - "tender-intelligence-web/nav-groups.js"
       - "tender-intelligence-web/company-workspace.js"
       - "tender-intelligence-web/case-workspace.js"
+      - "tender-intelligence-web/case-decision-brief.js"
+      - "tender-intelligence-web/monitor-tabs.js"
       - "tender-intelligence-web/competitor-tracker.js"
       - "tender-intelligence-web/ocr-client.js"
       - "tender-intelligence-web/report-dashboard.js"
@@ -55,6 +57,8 @@ jobs:
           node --check tender-intelligence-web/nav-groups.js
           node --check tender-intelligence-web/company-workspace.js
           node --check tender-intelligence-web/case-workspace.js
+          node --check tender-intelligence-web/case-decision-brief.js
+          node --check tender-intelligence-web/monitor-tabs.js
           node --check tender-intelligence-web/competitor-tracker.js
           node --check tender-intelligence-web/ocr-client.js
           node --check tender-intelligence-web/report-dashboard.js
@@ -93,7 +97,7 @@ jobs:
           root=Path("tender-intelligence-web")
           html=(root/"index.html").read_text(encoding="utf-8")
           assert '<script type="module" src="./app.js"></script>' in html
-          for f in ("nav-groups.js","company-workspace.js","case-workspace.js","competitor-tracker.js","ocr-client.js","report-dashboard.js","qualification-check.js","market-trends.js"):
+          for f in ("nav-groups.js","company-workspace.js","case-workspace.js","case-decision-brief.js","monitor-tabs.js","competitor-tracker.js","ocr-client.js","report-dashboard.js","qualification-check.js","market-trends.js"):
               assert f'src="./{f}"' in html and (root/f).is_file(),f
           assert 'id="view-company"' in html
           assert 'id="tiOcrButton"' in html
