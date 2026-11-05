@@ -11,6 +11,9 @@ on:
       - "tender-intelligence-web/backend.js"
       - "tender-intelligence-web/core.mjs"
       - "tender-intelligence-web/advanced.js"
+      - "tender-intelligence-web/evidence.js"
+      - "tender-intelligence-web/agency-deep.js"
+      - "tender-intelligence-web/quality.js"
 
 permissions:
   contents: read
