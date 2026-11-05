@@ -92,6 +92,19 @@ function makeDocuments(panel,caseId){
   if(!panel.isConnected)return;list.replaceChildren();
   if(!data?.length)list.append(el('p','尚無關聯此案的雲端文件；可到文件庫選擇案件上傳。','minor'));
   for(const doc of data||[])list.append(el('div',doc.filename+'｜'+doc.extraction_status,'ti-case-listrow'));
+  const history=el('div','','ti-case-list');
+  panel.append(el('h3','此案已保存的資格核對'),history);
+  const {data:checks,error:checkError}=await db.from('ti_qualification_checks')
+   .select('id,document_name,page_count,checks,created_at').eq('user_id',user.id)
+   .eq('case_id',caseId).order('created_at',{ascending:false}).limit(10);
+  if(checkError){history.append(el('p','取得資格核對紀錄失敗：'+err(checkError),'minor'));return;}
+  if(!checks?.length)history.append(el('p','尚未保存此案的資格核對。可在「標書條款整理」與公司資料比對並保存。','minor'));
+  for(const item of checks||[]){
+   const entries=Array.isArray(item.checks)?item.checks:[],confirmed=entries.filter(x=>x.review==='本人核對符合').length;
+   const row=el('div','','ti-case-listrow');
+   row.append(el('strong',item.document_name),el('span',entries.length+' 項條款／'+confirmed+' 項由本人核對符合｜'+(item.created_at||'').slice(0,10),'minor'));
+   history.append(row);
+  }
  })();
 }
 function makeHistory(panel,caseInfo,overview){
