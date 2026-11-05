@@ -253,3 +253,8 @@ label{font-size:12px;color:#56677b;font-weight:650}
 .ti-report-item{flex:1;min-width:0;overflow-wrap:anywhere}
 .ti-report-item p{margin:4px 0 0}
 @media(max-width:760px){.ti-report-form{grid-template-columns:1fr}.ti-report-form>button{width:100%}}
+
+.ti-qualify-row{padding:14px;margin:10px 0;border:1px solid #dae5f3;border-radius:11px;background:#f9fbfe;display:flex;flex-direction:column;gap:7px}
+.ti-qualify-row strong{color:#2b517e}
+.ti-qualify-row p{margin:0;overflow-wrap:anywhere}
+.ti-qualify-row select{max-width:260px}
