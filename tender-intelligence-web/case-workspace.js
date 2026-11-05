@@ -11,7 +11,10 @@ async function owner(){
 }
 function status(p,text){let n=p.querySelector('.ti-case-status');if(!n){n=el('p','','minor ti-case-status');p.prepend(n);}n.textContent=text;}
 function openOldView(view){
+ const caseId=window.__tiActiveCaseId;
  $('closeDetail')?.click();const button=document.querySelector('[data-view="'+view+'"]');button?.click();
+ const field=view==='documents'?'documentCaseId':view==='decisions'?'decisionCase':view==='contracts'?'contractCase':null;
+ if(field&&caseId&&$(field)&&[...$(field).options].some(o=>o.value===caseId))$(field).value=caseId;
 }
 function makeDecision(panel,caseId){
  panel.append(el('h3','案件投標決策'));
@@ -135,6 +138,7 @@ function makeContracts(panel,caseId){
  void reload();
 }
 function mount(caseInfo){
+ window.__tiActiveCaseId=caseInfo?.caseId||null;
  const root=$('detailContent');if(!root||!caseInfo?.caseId||root.querySelector('.ti-case-tabs'))return;
  const grid=root.querySelector('.detail-grid');if(!grid)return;
  const children=Array.from(root.children),idx=children.indexOf(grid);
