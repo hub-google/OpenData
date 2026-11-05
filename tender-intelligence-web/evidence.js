@@ -110,7 +110,7 @@ $('vendorCoMentionsButton').addEventListener('click',()=>void coMentions());
 
 async function vendorRoles(){
  const tax=$('vendorEvidenceTaxId').value.trim(),box=$('vendorRolesOutput');
- if(!/^\\d{8}$/.test(tax)){
+ if(!/^\d{8}$/.test(tax)){
   box.replaceChildren(element('p','請先在上方輸入完整八碼統編。','minor'));return;
  }
  box.replaceChildren(element('p','正在核對正式公告中有標明的公司角色…','minor'));
