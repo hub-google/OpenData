@@ -1,0 +1,163 @@
+// Single case workspace: all panels keep the same official case id and reuse existing ti_* tables.
+import {getClient} from './backend.js';
+const el=(tag,text='',className='')=>{const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;return node;};
+const control=(tag,attrs={})=>{const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs))node.setAttribute(k,v);return node;};
+const field=(name,node)=>{const label=el('label',name);label.append(node);return label;};
+const $=id=>document.getElementById(id);
+const err=e=>String(e?.message||e||'未知錯誤').slice(0,180);
+async function owner(){
+ const db=await getClient(),{data,error}=await db.auth.getUser();
+ return error||!data?.user?{db,user:null}:{db,user:data.user};
+}
+function status(p,text){let n=p.querySelector('.ti-case-status');if(!n){n=el('p','','minor ti-case-status');p.prepend(n);}n.textContent=text;}
+function openOldView(view){
+ $('closeDetail')?.click();const button=document.querySelector('[data-view="'+view+'"]');button?.click();
+}
+function makeDecision(panel,caseId){
+ panel.append(el('h3','案件投標決策'));
+ const form=el('form','','ti-case-editor');
+ const decision=control('select',{required:''});
+ for(const v of ['評估中','建議追蹤','準備投標','不投']){const option=el('option',v);option.value=v;decision.append(option);}
+ const notes=control('textarea',{rows:'4',maxlength:'5000',placeholder:'填入確認過的資格、證照、實績與決策理由；未知處請註明待確認'});
+ const save=el('button','儲存案件決策','primary-btn');save.type='submit';
+ const advanced=el('button','完整六項證據評估','ghost-btn');advanced.type='button';
+ advanced.onclick=()=>openOldView('decisions');
+ form.append(field('決策狀態',decision),field('決策依據／待確認事項',notes),save,advanced);panel.append(form);
+ let criteria={};
+ async function read(){
+  const {db,user}=await owner();if(!user){status(panel,'請先登入才能同步案件決策。');return;}
+  const {data,error}=await db.from('ti_bid_decisions').select('decision,evidence_notes,criteria').eq('user_id',user.id).eq('case_id',caseId).maybeSingle();
+  if(error){status(panel,'讀取決策失敗：'+err(error));return;}
+  if(!panel.isConnected)return;
+  decision.value=data?.decision||'評估中';notes.value=data?.evidence_notes||'';criteria=data?.criteria||{};
+  status(panel,'這裡與原本的「投標決策評估」共用同一筆紀錄，不會清除六項評估證據。');
+ }
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();save.disabled=true;
+  try{
+   const {db,user}=await owner();if(!user)throw Error('請先登入');
+   const {error}=await db.from('ti_bid_decisions').upsert({
+    user_id:user.id,case_id:caseId,decision:decision.value,criteria,
+    evidence_notes:notes.value.trim().slice(0,5000),updated_at:new Date().toISOString()
+   },{onConflict:'user_id,case_id'});if(error)throw error;
+   status(panel,'決策已保存到此案件，其他頁面可繼續編輯。');
+  }catch(x){status(panel,'儲存失敗：'+err(x));}finally{save.disabled=false;}
+ });
+ void read();
+}
+function makeTasks(panel,caseId){
+ panel.append(el('h3','案件待辦與任務'));
+ const list=el('div','','ti-case-list'),form=el('form','','ti-case-editor');
+ const title=control('input',{required:'',maxlength:'300',placeholder:'例如：準備公司合格證照'}),date=control('input',{type:'date'});
+ const add=el('button','新增任務','primary-btn');add.type='submit';
+ form.append(field('任務名稱',title),field('截止日期',date),add);panel.append(form,list);
+ async function reload(){
+  const {db,user}=await owner();if(!user){status(panel,'登入後可儲存任務，並與投標工作台同步。');return;}
+  const {data,error}=await db.from('ti_tasks').select('id,title,done,due_at').eq('user_id',user.id).eq('case_id',caseId).order('created_at',{ascending:false}).limit(100);
+  if(error){status(panel,'讀取任務失敗：'+err(error));return;}
+  if(!panel.isConnected)return;
+  list.replaceChildren();if(!data?.length)list.append(el('p','這個案件還沒有待辦。','minor'));
+  for(const t of data||[]){
+   const row=el('div','','ti-case-listrow'),label=el('label',''),check=control('input',{type:'checkbox'});
+   check.checked=Boolean(t.done);label.append(check,document.createTextNode(t.title));
+   row.append(label,el('span',t.due_at?t.due_at.slice(0,10):'未設定期限','minor'));
+   check.addEventListener('change',async()=>{check.disabled=true;const {error:e}=await db.from('ti_tasks').update({done:check.checked}).eq('id',t.id).eq('user_id',user.id);if(e)status(panel,err(e));await reload();});
+   list.append(row);
+  }
+ }
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();add.disabled=true;
+  try{const {db,user}=await owner();if(!user)throw Error('請先登入');
+   const {error}=await db.from('ti_tasks').insert({user_id:user.id,case_id:caseId,title:title.value.trim(),due_at:date.value?date.value+'T23:59:00+08:00':null});if(error)throw error;
+   title.value='';date.value='';await reload();
+  }catch(x){status(panel,'任務新增失敗：'+err(x));}finally{add.disabled=false;}
+ });
+ void reload();
+}
+function makeDocuments(panel,caseId){
+ panel.append(el('h3','此案的私有標書與 AI 文件'));
+ const explain=el('p','可繼續使用原本的標書解析與兩版原文比較；已有雲端文件會依案件編號顯示。AI 需要正式可用的模型服務。','minor');
+ const buttons=el('div','','detail-actions');
+ for(const [label,view] of [['標書差異與 AI 健檢','proposal'],['標書條款解析／私人文件庫','documents']]){
+  const b=el('button',label,'ghost-btn');b.type='button';b.onclick=()=>openOldView(view);buttons.append(b);
+ }
+ const list=el('div','','ti-case-list');panel.append(explain,buttons,list);
+ void (async()=>{
+  const {db,user}=await owner();if(!user){status(panel,'登入後才能查看自己的私有文件。');return;}
+  const {data,error}=await db.from('ti_documents').select('id,filename,extraction_status,created_at').eq('user_id',user.id).eq('case_id',caseId).order('created_at',{ascending:false}).limit(30);
+  if(error){status(panel,'讀取文件失敗：'+err(error));return;}
+  if(!panel.isConnected)return;list.replaceChildren();
+  if(!data?.length)list.append(el('p','尚無關聯此案的雲端文件；可到文件庫選擇案件上傳。','minor'));
+  for(const doc of data||[])list.append(el('div',doc.filename+'｜'+doc.extraction_status,'ti-case-listrow'));
+ })();
+}
+function makeHistory(panel,caseInfo,overview){
+ panel.append(el('h3','行情及相似歷史案件'));
+ const stats=el('div','','ti-case-kpis');
+ for(const [name,value] of [['此案已公開預算',caseInfo.budget==null?'未取得':Number(caseInfo.budget).toLocaleString('zh-TW')+' 元'],['此案已公開決標金額',caseInfo.award==null?'未取得':Number(caseInfo.award).toLocaleString('zh-TW')+' 元']]){
+  const cell=el('div','','metric');cell.append(el('span',name),el('strong',value));stats.append(cell);
+ }
+ panel.append(stats,el('p','此處僅顯示官方原文已確認的金額，無樣本時不生成報價建議。','minor'));
+ const related=overview.querySelector('#relatedCases');
+ if(related){
+  const header=related.previousElementSibling;if(header?.tagName==='H3')panel.append(header);
+  panel.append(related);
+ }
+ const b=el('button','查看全站決標行情','ghost-btn');b.type='button';b.onclick=()=>openOldView('analytics');panel.append(b);
+}
+function makeContracts(panel,caseId){
+ panel.append(el('h3','合約、保證金與履約期限'));
+ const form=el('form','','ti-case-editor'),subject=control('input',{required:'',maxlength:'250',placeholder:'例如：履約保證金返還'}),due=control('input',{type:'date',required:''}),type=control('select');
+ for(const t of ['押標金','履約保證金','保固保證金','履約里程碑','驗收','請款','合約到期']){
+  const option=el('option',t);option.value=t;type.append(option);
+ }
+ const save=el('button','新增履約項目','primary-btn');save.type='submit';
+ form.append(field('類別',type),field('項目名稱',subject),field('到期日',due),save);
+ const list=el('div','','ti-case-list');panel.append(form,list);
+ async function reload(){
+  const {db,user}=await owner();if(!user){status(panel,'登入後可管理自己的履約台帳。');return;}
+  const {data,error}=await db.from('ti_contract_obligations').select('id,subject,obligation_type,due_date,status').eq('user_id',user.id).eq('case_id',caseId).order('due_date',{ascending:true}).limit(100);
+  if(error){status(panel,'讀取履約項目失敗：'+err(error));return;}
+  if(!panel.isConnected)return;list.replaceChildren();
+  if(!data?.length)list.append(el('p','這個案件沒有履約管理項目。','minor'));
+  for(const r of data||[]){
+   const row=el('div','','ti-case-listrow');
+   row.append(el('span',r.obligation_type+'｜'+r.subject),el('span',r.due_date+' · '+r.status,'minor'));list.append(row);
+  }
+ }
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();save.disabled=true;
+  try{const {db,user}=await owner();if(!user)throw Error('請先登入');
+   const {error}=await db.from('ti_contract_obligations').insert({user_id:user.id,case_id:caseId,subject:subject.value.trim(),due_date:due.value,obligation_type:type.value});
+   if(error)throw error;subject.value='';due.value='';await reload();
+  }catch(x){status(panel,'新增失敗：'+err(x));}finally{save.disabled=false;}
+ });
+ void reload();
+}
+function mount(caseInfo){
+ const root=$('detailContent');if(!root||!caseInfo?.caseId||root.querySelector('.ti-case-tabs'))return;
+ const grid=root.querySelector('.detail-grid');if(!grid)return;
+ const children=Array.from(root.children),idx=children.indexOf(grid);
+ if(idx<0)return;
+ const overview=el('section','','ti-case-panel');
+ for(const node of children.slice(idx))overview.append(node);
+ const tabs=el('div','','ti-case-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','案件工作區');
+ const container=el('div','','ti-case-panels');
+ const labels=['案件概況','投標評估','文件與標書','任務協作','歷史行情','合約履約'];
+ const panels=labels.map((name,i)=>{const p=i===0?overview:el('section','','ti-case-panel');p.hidden=i!==0;container.append(p);return p;});
+ labels.forEach((name,i)=>{
+  const b=el('button',name,'ti-case-tab');b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',i===0?'true':'false');
+  if(i===0)b.classList.add('selected');
+  b.addEventListener('click',()=>{
+   for(const [j,p] of panels.entries())p.hidden=j!==i;
+   for(const [j,t] of [...tabs.children].entries()){t.classList.toggle('selected',j===i);t.setAttribute('aria-selected',j===i?'true':'false');}
+  });tabs.append(b);
+ });
+ root.append(tabs,container);
+ makeDecision(panels[1],caseInfo.caseId);
+ makeDocuments(panels[2],caseInfo.caseId);
+ makeTasks(panels[3],caseInfo.caseId);
+ makeHistory(panels[4],caseInfo,overview);
+ makeContracts(panels[5],caseInfo.caseId);
+}
+document.addEventListener('ti:case-opened',e=>mount(e.detail));
