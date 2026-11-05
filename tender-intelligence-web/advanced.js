@@ -141,7 +141,7 @@ async function search(p=1){
   for(let attempt=0;attempt<2;attempt++){
    const response=fast
     ?await client.rpc('ti_archive_search_simple',{p_term:t,p_page:opts.p_page,p_limit:opts.p_limit})
-    :await client.rpc('ti_archive_search_v4',opts);
+    :await client.rpc('ti_archive_search_v5',opts);
    data=response.data;error=response.error;
    if(!error)break;
    if(!/statement timeout|canceling statement/i.test(String(error.message||''))||attempt===1)break;
@@ -334,7 +334,7 @@ async function previewAdvancedRule(){
   params.p_date_from=Math.max(params.p_date_from||0,start);
   params.p_limit=1;
   const client=await getClient();
-  const {data,error}=await client.rpc('ti_archive_search_v4',params);
+  const {data,error}=await client.rpc('ti_archive_search_v5',params);
   if(error)throw error;
   ruleStatus('「'+rule.name+'」在近 30 天「實際已成功入庫」日期中匹配 '+Number(data?.total||0).toLocaleString('zh-TW')+
     ' 件；尚未回填的日期不包含在預覽，不代表全國所有標案。');
