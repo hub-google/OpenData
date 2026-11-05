@@ -36,12 +36,14 @@ async function firstAdvancedId(){
 (async()=>{
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  page=await browser.newPage({locale:'zh-TW',viewport:{width:1440,height:900}});
- page.on('pageerror',e=>console.error('BROWSER_PAGE_ERROR '+e.message));
+ const browserPageErrors=[];
+ page.on('pageerror',e=>{browserPageErrors.push(e.message);console.error('BROWSER_PAGE_ERROR '+e.message);});
  page.on('console',m=>{if(m.type()==='error')console.error('BROWSER_CONSOLE '+m.text());});
  await check('Open public website',async()=>{
    const res=await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
    assert.ok(res?.ok(),String(res?.status()));
    await page.locator('#resultList .case-card').first().waitFor({timeout:60000});
+   assert.equal(browserPageErrors.length,0,'Page module syntax/runtime errors: '+browserPageErrors.join(' | '));
  });
  await check('Latest page contains verified monetary values, not all unknown',async()=>{
    const values=await page.locator('#resultList .case-right strong').allTextContents();
