@@ -30,7 +30,7 @@ async function reload(){
  if(!box||!(await session()))return;
  const [{data:schedules,error:a},{data:jobs,error:b}]=await Promise.all([
   db.from('ti_report_schedules').select('id,title,report_type,frequency,keyword,agency,enabled,last_report_on').eq('user_id',user.id).order('created_at',{ascending:false}).limit(80),
-  db.from('ti_report_jobs').select('id,title,report_type,created_at,finished_at,status,result_data').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50)
+  db.from('ti_report_jobs').select('id,title,report_type,schedule_id,filters,created_at,finished_at,status,result_data,error_summary').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50)
  ]);
  if(a||b){note('讀取報表失敗：'+(a||b).message);return;}
  const list=box.querySelector('[data-report-schedules]'),out=box.querySelector('[data-report-results]');
@@ -38,8 +38,21 @@ async function reload(){
  if(!schedules?.length)list.append(el('p','尚未建立自動報表排程。','minor'));
  for(const sch of schedules||[]){
   const row=el('div','','ti-case-listrow'),left=el('div','','ti-report-item'),name=el('strong',sch.title||kinds[sch.report_type]);
+  const lastSuccess=(jobs||[]).find(j=>(j.schedule_id===sch.id||j.filters?.schedule_id===sch.id)&&j.status==='completed');
   left.append(name,el('p',kinds[sch.report_type]+'｜'+freqs[sch.frequency]+(sch.keyword?'｜關鍵字：'+sch.keyword:'')+
-   (sch.agency?'｜機關：'+sch.agency:'')+'｜上次產生：'+(sch.last_report_on||'尚未'),'minor'));
+   (sch.agency?'｜機關：'+sch.agency:'')+'｜最近完成：'+(lastSuccess?.finished_at?new Date(lastSuccess.finished_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}):(sch.last_report_on||'尚未')),'minor'));
+  const generate=el('button','立即產生一次','ghost-btn');generate.type='button';
+  generate.addEventListener('click',async()=>{
+   if(!(await session()))return;
+   generate.disabled=true;generate.textContent='產生中…';
+   try{
+    const {data,error}=await db.rpc('ti_generate_report_now',{p_schedule_id:sch.id});
+    if(error)throw error;
+    await reload();
+    note('已立即產生報表，可在下方預覽與下載 CSV。');
+   }catch(error){note('報表產生失敗：'+error.message);}
+   finally{generate.disabled=false;generate.textContent='立即產生一次';}
+  });
   const toggle=el('button',sch.enabled?'暫停':'啟用','ghost-btn');toggle.type='button';
   toggle.addEventListener('click',async()=>{
    toggle.disabled=true;const {error}=await db.from('ti_report_schedules').update({enabled:!sch.enabled}).eq('user_id',user.id).eq('id',sch.id);
@@ -50,16 +63,37 @@ async function reload(){
    if(!window.confirm('確定刪除此報表排程？先前已產出的報表仍會保存。'))return;
    remove.disabled=true;const {error}=await db.from('ti_report_schedules').delete().eq('id',sch.id).eq('user_id',user.id);
    if(error)note('刪除失敗：'+error.message);await reload();
-  });row.append(left,toggle,remove);list.append(row);
+  });row.append(left,generate,toggle,remove);list.append(row);
  }
  if(!jobs?.length)out.append(el('p','排程會在符合日期的早上產生報表，完成後可以下載。','minor'));
  for(const job of jobs||[]){
   const row=el('div','','ti-case-listrow'),detail=el('div','','ti-report-item');
   const count=Array.isArray(job.result_data?.rows)?job.result_data.rows.length:0;
   detail.append(el('strong',job.title||kinds[job.report_type]),el('p',(job.created_at||'').slice(0,16).replace('T',' ')+'｜'+
-    (job.status==='completed'?'已完成':'狀態：'+job.status)+'｜'+count+' 筆／組｜'+(job.result_data?.description||''),'minor'));
+    (job.status==='completed'?'已完成':'狀態：'+job.status)+'｜'+count+' 筆／組｜'+(job.error_summary||job.result_data?.description||''),'minor'));
   const button=el('button','下載 CSV','ghost-btn');button.type='button';button.disabled=job.status!=='completed';
-  button.addEventListener('click',()=>downloadReport(job));row.append(detail,button);out.append(row);
+  button.addEventListener('click',()=>downloadReport(job));
+  const previewButton=el('button','預覽內容','ghost-btn');previewButton.type='button';previewButton.disabled=job.status!=='completed';
+  const preview=el('div','','ti-report-preview');preview.hidden=true;
+  previewButton.addEventListener('click',()=>{
+   preview.hidden=!preview.hidden;previewButton.textContent=preview.hidden?'預覽內容':'收起預覽';
+   if(preview.hidden||preview.childElementCount)return;
+   const columns=Array.isArray(job.result_data?.columns)?job.result_data.columns:[],
+    entries=Array.isArray(job.result_data?.rows)?job.result_data.rows:[],
+    limited=columns.slice(0,7),table=document.createElement('table');
+   const head=document.createElement('tr');
+   for(const key of limited){const th=el('th',key);head.append(th);}
+   table.append(head);
+   for(const item of entries.slice(0,8)){
+    const tr=document.createElement('tr');
+    for(const key of limited)tr.append(el('td',String(item?.[key]??'尚無資料').slice(0,160)));
+    table.append(tr);
+   }
+   preview.append(table,el('p','僅預覽前 '+Math.min(entries.length,8)+' 筆；匯出時保留這份報表全部 '+entries.length+' 筆／組。','minor'));
+   if(!entries.length)preview.prepend(el('p','這個條件在目前入庫範圍內沒有資料。','notice'));
+  });
+  row.append(detail,previewButton,button);
+  const wrap=el('div','','ti-report-result');wrap.append(row,preview);out.append(wrap);
  }
  note('已載入 '+(schedules?.length||0)+' 個排程與 '+(jobs?.length||0)+' 份報表。資料按實際已入庫案件生成。');
 }
