@@ -214,6 +214,7 @@
           <div class="section-heading"><h2>每月採購紀錄（自有公告資料庫）</h2></div>
           <form id="agencyMonthlyForm" class="inline-form">
             <label>公告年度 <input id="agencyMonthlyYear" type="number" min="1999" max="2100" required></label>
+            <label>採購類別 <select id="agencyMonthlyGroup"><option value="">全部</option><option value="工程">工程</option><option value="財物">財物</option><option value="勞務">勞務</option><option value="未分類">未分類</option></select></label>
             <button type="submit" class="ghost-btn">按月查詢已入庫資料</button>
           </form>
           <p class="hint">只統計本平台已成功收錄的公告；每月按案號去重計算金額，沒有資料的月份不能直接視為零採購。</p>
