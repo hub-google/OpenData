@@ -503,9 +503,14 @@ async function loadAgency(id){
   $('agencyId').value=id;
   const out=$('agencyOutput');out.replaceChildren(E('div','empty','正在讀取機關已入庫統計…'));
   try{
-    const [annual,confirmed]=await Promise.all([
-      fetchAgencyArchivedAnnual(id),fetchAgencyConfirmedWinners(id)
-    ]);
+    // A slow winners ranking must not make the independently verified
+    // annual totals disappear or send the user to the broken browser API.
+    const annual=await fetchAgencyArchivedAnnual(id);
+    if($('agencyId').value!==id)return;
+    let confirmed=null, winnerError=null;
+    try{confirmed=await fetchAgencyConfirmedWinners(id);}
+    catch(e){winnerError=e;}
+
     if($('agencyId').value!==id)return;
     const years=Array.isArray(annual?.years)?annual.years:[];
     out.replaceChildren(E('h2','','機關統計：'+(annual?.agency||id)),
@@ -543,9 +548,12 @@ async function loadAgency(id){
     out.append(E('h3','','依已入庫原文核對的年度統計'),tbl);
     out.append(E('h3','','已確認得標廠商（依不同案號去重）'));
     const winners=Array.isArray(confirmed?.winners)?confirmed.winners:[];
-    if(!winners.length){
+    if(winnerError){
+      out.append(E('p','notice warning','得標廠商排行暫時無法讀取：'+readableError(winnerError)+'。年度統計仍為真實已入庫資料，可稍後重新查詢。'));
+    }
+    if(!winners.length&&!winnerError){
       out.append(E('p','minor','目前沒有已入庫且可確認得標廠商角色的公告，不代表此機關沒有得標者。'));
-    }else{
+    }else if(winners.length){
       const table=E('table','analysis-list'),head=E('tr','');
       for(const label of ['得標廠商（點擊查相關公告）','可確認得標案數','已入庫得標公告版本數'])head.append(E('th','',label));
       table.append(head);
