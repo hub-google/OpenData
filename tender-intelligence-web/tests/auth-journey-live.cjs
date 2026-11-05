@@ -71,20 +71,31 @@ async function run(){
   await page.getByRole('tab',{name:'文件與標書'}).click();
   const p=page.locator('#detailContent .ti-case-panel:not([hidden])');
   await p.locator('input[type=file]').first().setInputFiles(file);
-  await p.getByRole('button',{name:'上傳至此案文件庫'}).click();await page.waitForTimeout(1800);
-  const content=short(await p.innerText(),420),toast=short(await page.locator('#toast').innerText(),300);
-  if(!content.includes('tender-audit-check.txt'))throw Error('文件清單沒有新檔案：'+toast);
+  await p.getByRole('button',{name:'上傳至此案文件庫'}).click();
+  const saved=await page.waitForFunction(()=>document.querySelector('#detailContent .ti-case-panel:not([hidden])')?.textContent?.includes('tender-audit-check.txt'),null,{timeout:12000}).then(()=>true).catch(()=>false);
+  const content=short(await p.innerText(),480),toast=short(await page.locator('#toast').innerText(),300);
+  if(!saved){
+   const rows=await page.evaluate(async()=>{
+    const {getClient}=await import('./backend.js'),db=await getClient(),{data:{user}}=await db.auth.getUser();
+    const {data,error}=await db.from('ti_documents').select('filename,case_id,storage_path').eq('user_id',user.id).order('created_at',{ascending:false}).limit(5);
+    return {data,error:error?.message};
+   });
+   throw Error('文件已存但案件清單未更新：'+toast+'；'+JSON.stringify(rows).slice(0,380));
+  }
   if(content.includes('文件尚未儲存成功'))throw Error('私有文件上傳失敗：'+toast+'；'+content);
   return {content,toast,screen:await shot('17-document')};
  });
  await step('標書條款：公司實績候選比對並保存',async()=>{
   await page.locator('#closeDetail').click();await nav('documents');
   await page.locator('#documentFile').setInputFiles(file);
+  await page.locator('#documentCaseId').selectOption('3.1.1::UT-11601');
   await page.locator('#tiCompareCompany').click();await page.waitForTimeout(1700);
   const checkCount=await page.locator('#tiCompareResults .ti-qualify-row').count();
   if(checkCount)await page.locator('#tiCompareResults button').last().click();
   await page.waitForTimeout(900);
-  return {check_count:checkCount,status:short(await page.locator('#tiCompareStatus').innerText()),screen:await shot('18-qualification')};
+  const status=short(await page.locator('#tiCompareStatus').innerText());
+  if(!status.includes('已保存')||!status.includes('此標案'))throw Error('資格記錄未關聯案件：'+status);
+  return {check_count:checkCount,status,screen:await shot('18-qualification')};
  });
  await step('監控：新增測試用競品條件',async()=>{
   await nav('alerts');
@@ -112,6 +123,30 @@ async function run(){
     preview=short(await page.locator('.ti-report-preview:not([hidden])').first().innerText(),280);
   if(!status.includes('已立即產生報表'))throw Error('立即產生報表未成功：'+status);
   return {status,preview,screen:await shot('20-report')};
+ });
+ await step('私人資料跨帳號隔離測試',async()=>{
+  const other=await browser.newContext({locale:'zh-TW',timezoneId:'Asia/Taipei'});
+  const p2=await other.newPage();
+  try{
+   await p2.goto(BASE,{waitUntil:'domcontentloaded',timeout:35000});
+   await p2.locator('#accountDemoQuick').click();
+   await p2.waitForFunction(()=>document.querySelector('#accountButton')?.textContent?.includes('測試帳號已登入'),null,{timeout:20000});
+   const rows=await p2.evaluate(async()=>{
+    const {getClient}=await import('./backend.js'),db=await getClient();
+    const [docs,assets,cases,reports]=await Promise.all([
+     db.from('ti_documents').select('id').limit(20),
+     db.from('ti_company_assets').select('id').limit(20),
+     db.from('ti_saved_cases').select('case_id').limit(20),
+     db.from('ti_report_jobs').select('id').limit(20)
+    ]);
+    return {docs:docs.data?.length,assets:assets.data?.length,cases:cases.data?.length,
+      reports:reports.data?.length,errors:[docs.error,assets.error,cases.error,reports.error].map(x=>x?.message).filter(Boolean)};
+   });
+   if(rows.errors.length||rows.docs||rows.assets||rows.cases||rows.reports)
+     throw Error('新測試帳號看到了別人的資料或存取失敗：'+JSON.stringify(rows));
+   await p2.evaluate(async()=>{const {getClient}=await import('./backend.js');(await getClient()).auth.signOut()});
+   return rows;
+  }finally{await other.close();}
  });
  await step('返回頁面：確認私人公司資料跨頁保存',async()=>{
   await nav('company');await page.locator('#tiCompanyRefresh').click();await page.waitForTimeout(1200);
