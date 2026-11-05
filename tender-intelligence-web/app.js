@@ -1455,9 +1455,9 @@ async function renderCloudTasks(){
   }
  }catch(err){box.replaceChildren(E('div','empty','讀取待辦失敗：'+readableError(err)));}
 }
-async function saveCloudDocument(){
- if(!cloud.user)return toast('請先登入才能儲存私有雲端文件。');
- const file=$('documentFile').files?.[0];
+export async function saveCloudDocument(fileOverride=null,caseIdOverride=null){
+ if(!cloud.user){toast('請先登入才能儲存私有雲端文件。');return false;}
+ const file=fileOverride||$('documentFile').files?.[0];
  if(!file)return toast('請先選擇文件。');
  if(file.size>15*1024*1024)return toast('超過 15 MB 限制。');
  const allowed=['.pdf','.docx','.txt','.md'];
@@ -1472,7 +1472,7 @@ async function saveCloudDocument(){
   });
   if(uploadError)throw uploadError;
   const {error:dbError}=await cloud.client.from('ti_documents').insert({
-    user_id:cloud.user.id,case_id:$('documentCaseId')?.value||null,filename:file.name,storage_path:path,mime_type:file.type||null,bytes:file.size
+    user_id:cloud.user.id,case_id:caseIdOverride||$('documentCaseId')?.value||null,filename:file.name,storage_path:path,mime_type:file.type||null,bytes:file.size
   });
   if(dbError){
     await cloud.client.storage.from('ti-private-documents').remove([path]);
@@ -1480,7 +1480,8 @@ async function saveCloudDocument(){
   }
   toast('已保存私有文件至 Supabase Storage。');
   await renderCloudDocuments();
- }catch(err){toast('文件儲存失敗：'+readableError(err));}
+  return true;
+ }catch(err){toast('文件儲存失敗：'+readableError(err));return false;}
  finally{button.disabled=false;}
 }
 async function renderCloudDocuments(){
