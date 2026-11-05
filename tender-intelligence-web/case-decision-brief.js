@@ -63,6 +63,37 @@ async function render(info){
   (detailRow?.fetched_at?'｜詳情更新：'+dateTime(detailRow.fetched_at):'｜尚未補齊案件詳情')+
   (caseRow.source_fetched_at?'｜摘要同步：'+dateTime(caseRow.source_fetched_at):'');
  actions.append(action('核對資格與標書',()=>jump(2)),action('評估是否投標',()=>jump(1)),action('建立待辦',()=>jump(3)));
+ if(evidence<6){
+  const {data:session}=await db.auth.getUser();
+  if(now!==token||!brief.isConnected)return;
+  const person=session?.user;
+  if(person){
+   const {data:prior}=await db.from('ti_detail_requests')
+    .select('status,requested_at,completed_at,error_summary').eq('user_id',person.id)
+    .eq('case_id',info.caseId).maybeSingle();
+   if(now!==token||!brief.isConnected)return;
+   if(prior){
+    const infoText=prior.status==='fulfilled'?'已從來源補抓，仍缺欄位代表來源未提供':'已排入來源資料補抓佇列';
+    brief.append(node('p',infoText+(prior.error_summary?'｜上次處理：'+prior.error_summary.slice(0,120):''),'minor'));
+   }else{
+    const request=action('補抓這件標案的官方詳情',async()=>{
+     request.disabled=true;request.textContent='送出中…';
+     try{
+      const {error}=await db.from('ti_detail_requests').insert({user_id:person.id,case_id:info.caseId});
+      if(error)throw error;
+      request.textContent='已加入補抓佇列';
+      summary.textContent='已送入定時官方資料補抓佇列。請稍後重新打開案件檢查；仍無資料時會顯示來源缺值。';
+     }catch(error){
+      request.disabled=false;request.textContent='補抓這件標案的官方詳情';
+      summary.textContent='提出補抓失敗：'+String(error?.message||error).slice(0,180);
+     }
+    });
+    actions.append(request);
+   }
+  }else{
+   brief.append(node('p','登入後可要求優先補抓缺漏的官方公告詳情（每 24 小時最多 10 件）。','minor'));
+  }
+ }
  if(official){
   const a=node('a','開啟官方公告','ghost-btn');a.href=official;a.target='_blank';a.rel='noopener noreferrer';actions.append(a);
  }else{
