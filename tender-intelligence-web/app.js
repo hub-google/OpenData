@@ -4,7 +4,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -86,7 +86,7 @@ function makeQuery(){
 }
 async function search(mode,query='',sourcePage=1){
   const token=++state.running;
-  state.mode=mode;state.query=query;state.sourcePage=sourcePage;state.clientPage=1;
+  state.mode=mode;state.query=query;state.sourcePage=sourcePage;state.clientPage=1;state.totalRecords=null;
   $('searchMode').value=mode;$('searchQuery').value=query;
   $('resultList').replaceChildren(E('div','empty','正在讀取已同步的真實標案…'));
   $('dataError').hidden=true;
@@ -99,6 +99,10 @@ async function search(mode,query='',sourcePage=1){
       data=await fetchArchive({page:sourcePage,search:query});
       state.totalPages=Math.max(1,Number(data.total_pages||1));
       state.lastSearch='已入庫歷史資料'+(query?'：'+query:'');
+    }else if(mode==='title'){
+      data=await fetchUnifiedTitleSearch(query,sourcePage);
+      state.totalPages=Math.max(1,Number(data.total_pages||1));
+      state.lastSearch='跨日全文搜尋：'+query+'｜完整資料庫分頁';
     }else if(mode==='latest'){
       // Direct browser requests to OpenFun are frequently rejected by CORS.
       // Prefer the indexed notices that were already imported server-side.
@@ -112,6 +116,7 @@ async function search(mode,query='',sourcePage=1){
       state.lastSearch='已入庫'+(listModes[mode]||'搜尋')+'：'+query+'｜依最後成功同步結果顯示';
     }
     if(token!==state.running)return;
+    state.totalRecords=Number.isFinite(Number(data.total_records))?Number(data.total_records):null;
     state.rows=(Array.isArray(data.records)?data.records:[]).map(normalize).filter(Boolean);
     renderSearch();
     setStatus('資料庫連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),'success');
@@ -142,7 +147,8 @@ function renderSearch(){
   $('trackingCount').textContent=Object.keys(store.saved).length;
   const localPages=Math.max(1,Math.ceil(rows.length/20));
   state.clientPage=Math.min(state.clientPage,localPages);
-  $('resultInfo').textContent=state.lastSearch+'｜已入庫 '+state.rows.length+' 筆'+(state.mode==='latest'?'公告、'+dedupe(state.rows).length+' 件不同案件':'案件')+'；篩選後 '+rows.length+' 筆（只代表已同步範圍，不代表全國總數）';
+  const total=state.totalRecords!==null&&state.mode!=='latest'?'｜資料庫符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件':'';
+  $('resultInfo').textContent=state.lastSearch+total+'｜當批載入 '+state.rows.length+' 筆'+(state.mode==='latest'?'公告、'+dedupe(state.rows).length+' 件不同案件':'案件')+'；當批篩選後 '+rows.length+' 筆（不是全國總量）';
   const subset=rows.slice((state.clientPage-1)*20,state.clientPage*20);
   $('resultList').replaceChildren(...(subset.length?subset.map(r=>caseCard(r)): [E('div','empty',state.rows.length?'沒有符合本頁篩選條件的案件，請放寬篩選。':'此查詢無資料，或資料來源暫時無法回傳。')]));
   $('pageInfo').textContent='來源第 '+state.sourcePage+'/'+state.totalPages+' 頁 · 這批第 '+state.clientPage+'/'+localPages+' 頁';
