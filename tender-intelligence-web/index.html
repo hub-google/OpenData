@@ -447,8 +447,9 @@
       <section id="view-documents" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">DOCUMENT CHECKLIST</div><h1>標書條款整理</h1><p>從你合法取得的招標文件整理資格、截標、履約、評選與押標金關鍵段落，保留原始出處與頁碼。</p></div>
         <div class="notice warning"><strong>兩種分析方式：</strong>本機規則整理不需登入，文件不會上傳；AI 標單解析需要登入，僅傳送解析後的文件文字至已部署的後端與 AI 服務。若尚未配置 AI 金鑰，會明確顯示無法提供服務，不會產生假分析。掃描型 PDF／圖片可使用本機 OCR（先擷取再核對），OCR 結果可供條款整理及已設定的 AI 解析。</div>
-        <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX、XLSX、PNG、JPG（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="tiOcrButton" class="ghost-btn" type="button">掃描檔 OCR</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><button id="documentAI" class="ghost-btn" type="button">AI 解析資格／期限／評選條款</button><span id="documentFileName" class="minor"></span></div></div>
+        <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX、XLSX、PNG、JPG（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="tiOcrButton" class="ghost-btn" type="button">掃描檔 OCR</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><button id="documentAI" class="ghost-btn" type="button">AI 解析資格／期限／評選條款</button><button id="tiCompareCompany" class="ghost-btn" type="button">與公司證照／實績比對</button><span id="documentFileName" class="minor"></span></div></div>
         <div class="panel analysis-panel"><h2>掃描檔 OCR 辨識</h2><p class="hint">限本人合法取得文件。本機使用繁體中文／英文辨識，PDF 最多處理前 8 頁。結果帶入條款整理，可能有錯字，請人工核對。</p><div id="tiOcrStatus" class="minor" role="status">請先選擇 PDF 或圖片，再點選「掃描檔 OCR」。</div><div id="tiOcrOutput"></div></div>
+        <div class="panel analysis-panel"><h2>標案資格與公司實績比對</h2><p class="hint">依已取得的標書原文找出資格條款，與私人公司資料交叉比對。相似內容僅表示可能相關；每項結果仍需人工確認。</p><div id="tiCompareStatus" class="minor" role="status">請先選擇招標文件並登入，必要時先執行掃描 OCR。</div><div id="tiCompareResults"></div></div>
         <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div><div class="panel analysis-panel" id="documentAiOutput" aria-live="polite"><h2>AI 標單分析</h2><p class="minor">請登入並選擇合法取得的文件後使用。AI 僅整理原文，資格判斷仍需人工核對。</p></div>
         <div class="panel analysis-panel">
           <div class="section-heading"><h2>我的 AI 使用額度與歷程</h2><button id="aiUsageRefresh" type="button" class="ghost-btn">刷新紀錄</button></div>
@@ -646,5 +647,6 @@
 <script type="module" src="./competitor-tracker.js"></script>
 <script type="module" src="./ocr-client.js"></script>
 <script type="module" src="./report-dashboard.js"></script>
+<script type="module" src="./qualification-check.js"></script>
 </body>
 </html>
