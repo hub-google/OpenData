@@ -729,6 +729,13 @@ function renderTracking(){
   const out=$('trackingOutput');out.replaceChildren();
   const items=Object.values(store.saved);
   $('trackingCount').textContent=items.length;$('metricSaved').textContent=items.length;renderTaskSelector();
+  const documentCase=$('documentCaseId');
+  if(documentCase){
+    const selected=documentCase.value;
+    documentCase.replaceChildren(new Option('不關聯案件',''));
+    for(const saved of items)documentCase.append(new Option((saved.title||saved.id).slice(0,110),saved.id));
+    if(items.some(item=>item.id===selected))documentCase.value=selected;
+  }
   if(!items.length){out.append(E('div','empty','目前沒有追蹤案件。到「標案搜尋」點星號，即可加入工作台。'));return;}
   for(const item of items.sort((a,b)=>asText(b.added_at).localeCompare(asText(a.added_at)))){
     const card=E('section','track-card');
@@ -1465,7 +1472,7 @@ async function saveCloudDocument(){
   });
   if(uploadError)throw uploadError;
   const {error:dbError}=await cloud.client.from('ti_documents').insert({
-    user_id:cloud.user.id,filename:file.name,storage_path:path,mime_type:file.type||null,bytes:file.size
+    user_id:cloud.user.id,case_id:$('documentCaseId')?.value||null,filename:file.name,storage_path:path,mime_type:file.type||null,bytes:file.size
   });
   if(dbError){
     await cloud.client.storage.from('ti-private-documents').remove([path]);
