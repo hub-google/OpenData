@@ -92,7 +92,16 @@ async function reload(){
    preview.append(table,el('p','僅預覽前 '+Math.min(entries.length,8)+' 筆；匯出時保留這份報表全部 '+entries.length+' 筆／組。','minor'));
    if(!entries.length)preview.prepend(el('p','這個條件在目前入庫範圍內沒有資料。','notice'));
   });
-  row.append(detail,previewButton,button);
+  const removeJob=el('button','刪除報表','ghost-btn');removeJob.type='button';
+  removeJob.addEventListener('click',async()=>{
+   if(!window.confirm('刪除此份已產生的私人報表？不影響排程。'))return;
+   removeJob.disabled=true;
+   const {error}=await db.from('ti_report_jobs').delete().eq('user_id',user.id).eq('id',job.id);
+   if(error){note('刪除報表失敗：'+error.message);removeJob.disabled=false;return;}
+   await reload();
+   note('已刪除選取的報表紀錄。');
+  });
+  row.append(detail,previewButton,button,removeJob);
   const wrap=el('div','','ti-report-result');wrap.append(row,preview);out.append(wrap);
  }
  note('已載入 '+(schedules?.length||0)+' 個排程與 '+(jobs?.length||0)+' 份報表。資料按實際已入庫案件生成。');
