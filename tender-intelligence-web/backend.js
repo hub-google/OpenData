@@ -223,7 +223,7 @@ export async function fetchUnifiedTitleSearch(query,page=1){
   p_agency:'',p_kind:'',p_group:'',p_location:'',p_method:'',p_decision_method:'',
   p_min_budget:null,p_max_budget:null,p_date_from:null,p_date_to:null,
   p_deadline_only:false,p_deadline_start:null,p_deadline_end:null,
-  p_sort:'date',p_page:page,p_limit:100
+  p_sort:'date',p_page:page,p_limit:30
  });
  if(error)throw error;
  const rows=Array.isArray(data?.rows)?data.rows:[];
@@ -237,6 +237,6 @@ export async function fetchUnifiedTitleSearch(query,page=1){
    detail:r.official_url?{url:r.official_url}:{}
   })),
   total_records:Number.isFinite(total)?total:0,
-  total_pages:Math.max(1,Math.ceil((Number.isFinite(total)?total:0)/100))
+  total_pages:Math.max(1,Math.ceil((Number.isFinite(total)?total:0)/30))
  };
 }
