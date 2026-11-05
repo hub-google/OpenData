@@ -15,8 +15,8 @@ async function monthly(id,year){
  output.replaceChildren(el('p','正在讀取真實已入庫公告…','minor'));
  const token=++monthlyRequest;
  try{
-  const c=await getClient(),{data,error}=await c.rpc('ti_agency_monthly_report',{
-   p_unit_id:id,p_year:year
+  const c=await getClient(),{data,error}=await c.rpc('ti_agency_monthly_report_v2',{
+   p_unit_id:id,p_year:year,p_group:$('agencyMonthlyGroup').value
   });
   if(error)throw error;if(token!==monthlyRequest)return;
   output.replaceChildren();
@@ -24,15 +24,17 @@ async function monthly(id,year){
   if(!rows.length){output.append(el('p','此機關在該年度沒有已入庫的公告。不能推定官方沒有採購。','empty'));return;}
   const table=el('table','','analysis-list');
   const head=el('tr');
-  for(const title of ['月份','公告筆數','案件數','決標類案件數','有預算金額樣本','公開預算合計','有決標金額樣本','公開決標合計']){
+  for(const title of ['月份','公告筆數','案件數','決標類案件數','有預算金額樣本','公開預算合計','有決標金額樣本','公開決標合計','已知決標平均','已知決標中位數']){
    head.append(el('th',title));
   }
   table.append(head);
   for(const row of rows){
    const tr=el('tr');
    for(const value of [String(row.month).padStart(2,'0')+' 月',n(row.notice_count),
-    n(row.case_count),n(row.case_award_notice_count),n(row.budget_sample_count),
-    'NT$ '+n(row.known_budget_sum),n(row.award_sample_count),'NT$ '+n(row.known_award_sum)]){
+    n(row.case_count),n(row.award_notice_count),n(row.budget_sample_count),
+    'NT$ '+n(row.known_budget_sum),n(row.award_sample_count),'NT$ '+n(row.known_award_sum),
+    row.known_award_mean==null?'未公開':'NT$ '+n(Math.round(row.known_award_mean)),
+    row.known_award_median==null?'未公開':'NT$ '+n(Math.round(row.known_award_median))]){
     tr.append(el('td',value));
    }
    table.append(tr);
