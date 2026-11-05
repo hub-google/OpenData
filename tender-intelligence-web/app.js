@@ -9,7 +9,7 @@ import {getClient,fetchArchive,fetchBasicArchiveSearch,fetchLatestAmounts,fetchL
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
 const listModes={latest:'最新公告',archive:'自有資料庫已收錄案件',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
-const viewNames={debarred:'拒絕往來公告',proposal:'標書差異與健檢',decisions:'投標決策評估',contracts:'合約與保證金',directory:'供應商名錄',developer:'我的 API／MCP',guide:'採購新手指南',advanced:'進階搜尋',search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',issues:'無法決標與快截止',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',billing:'方案與帳務',about:'資料說明'};
+const viewNames={company:'我的公司資料',debarred:'拒絕往來公告',proposal:'標書差異與健檢',decisions:'投標決策評估',contracts:'合約與保證金',directory:'供應商名錄',developer:'我的 API／MCP',guide:'採購新手指南',advanced:'進階搜尋',search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',issues:'無法決標與快截止',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',billing:'方案與帳務',about:'資料說明'};
 const states=['評估中','準備投標','已投標','待決標','已得標','未得標','不投'];
 const readableError = err => {
   const s=asText(err?.message||err);
@@ -54,6 +54,7 @@ function showView(name){
   document.querySelectorAll('[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view===name));
   $('currentViewLabel').textContent=viewNames[name];
   document.querySelector('.sidebar').classList.remove('mobile-open');
+  document.dispatchEvent(new CustomEvent('ti:view-changed',{detail:{view:name}}));
   window.scrollTo({top:0,behavior:'instant'});
   if(name==='radar')renderRadar();
   if(name==='tracking')renderTracking();
@@ -389,6 +390,7 @@ function renderDetail(row,data){
   }
   page.append(table);
   page.append(E('p','detail-source','資料來源：OpenFun 政府採購公告 API；官方公告網址以每一筆公告的 detail.url 為準。缺漏欄位不做推測。'));
+  document.dispatchEvent(new CustomEvent('ti:case-opened',{detail:{caseId:row.id,unitId:row.unit_id,jobNumber:row.job_number,title:row.title,agency:row.agency,budget,award}}));
 }
 function closeDetail(){
   state.selected=null;$('detailDrawer').hidden=true;$('backdrop').hidden=true;document.body.style.overflow='';
@@ -424,9 +426,12 @@ async function searchFullRadar(p=1){
   const max=store.profile.max===''||store.profile.max==null?null:safeNumber(store.profile.max);
   const location=asText(store.profile.area).trim().slice(0,80);
   if(min!==null&&max!==null&&min>max)throw Error('最低預算不能大於最高預算');
-  const {data,error}=await client.rpc('ti_archive_search_v3',{
-   p_terms:keywords,p_exclude:excludes,p_any:true,p_kind:'招標',
-   p_min_budget:min,p_max_budget:max,p_location:location,
+  // The radar and advanced search share the same v5 cross-date archive engine.
+  const {data,error}=await client.rpc('ti_archive_search_v5',{
+   p_terms:keywords,p_exclude:excludes,p_any:true,p_expression:null,
+   p_agency:'',p_kind:'招標',p_group:'',p_location:location,p_method:'',p_decision_method:'',
+   p_min_budget:min,p_max_budget:max,p_date_from:null,p_date_to:null,
+   p_deadline_only:false,p_deadline_start:null,p_deadline_end:null,
    p_sort:'relevance',p_page:p,p_limit:30
   });
   if(error)throw error;
