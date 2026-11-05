@@ -270,3 +270,43 @@ label{font-size:12px;color:#56677b;font-weight:650}
 .ti-market .ti-market-row+p{margin:0 0 8px;font-size:11px}
 .ti-market h3{margin:20px 0 8px}
 @media(max-width:760px){.ti-market-form{display:grid;grid-template-columns:1fr 1fr}.ti-market-form label:last-of-type{grid-column:1/-1}.ti-market-form input{min-width:0}.ti-market-form button{white-space:normal}}
+
+
+/* Evidence-first case brief and compact monitoring tabs */
+.ti-decision-brief{background:#f8fbff;border:1px solid #dce8f8;border-radius:12px;padding:16px;margin:18px 0}
+.ti-decision-brief h3{margin:0 0 13px;font-size:17px}
+.ti-brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ti-brief-cell{background:white;border:1px solid #e3ebf5;border-radius:10px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:3px;overflow-wrap:anywhere}
+.ti-brief-cell small{color:#697f9b;font-size:11px;font-weight:650}
+.ti-brief-cell strong{font-size:13px;color:#193b65}
+.ti-brief-cell .minor{font-size:11px}
+.ti-brief-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ti-brief-actions .ghost-btn{white-space:normal;min-height:41px}
+.ti-monitor-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;border-bottom:1px solid #dce5f1;margin:18px 0;padding:0 0 9px}
+.ti-monitor-tab{border:1px solid #dce6f4;background:#fff;color:#496683;flex:0 0 auto;padding:11px 14px;border-radius:9px;font-weight:700;min-height:44px}
+.ti-monitor-tab.selected{background:#eaf2ff;border-color:#b4ccef;color:#1d56a4}
+.ti-monitor-tab:focus-visible{outline:2px solid #356cc6}
+.ti-monitor-panel{min-width:0}
+.ti-monitor-panel>div:not(.page-heading),.ti-monitor-panel>section{max-width:100%}
+.ti-report-result{border-radius:9px}
+.ti-report-result>.ti-case-listrow{flex-wrap:wrap}
+.ti-report-preview{max-width:100%;overflow-x:auto;border:1px solid #dce6f3;border-radius:9px;background:#fcfdff;padding:10px}
+.ti-report-preview table{border-collapse:collapse;font-size:11px;width:100%}
+.ti-report-preview th,.ti-report-preview td{padding:7px 8px;border-bottom:1px solid #e5eaf2;text-align:left;white-space:nowrap}
+.ti-report-preview p{margin:9px 0 0}
+@media(max-width:760px){
+ html,body{overflow-x:clip}
+ .app,.workspace,.main{min-width:0;max-width:100%}
+ .topbar-left,.topbar-right{min-width:0}
+ .topbar-left{overflow:hidden;text-overflow:ellipsis}
+ .topbar-right{gap:5px}
+ .topbar .connection-tag{max-width:110px}
+ .ti-brief-grid{grid-template-columns:1fr}
+ .ti-decision-brief{padding:12px}
+ .ti-monitor-tab{font-size:12px;padding:10px 11px}
+ .ti-brief-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ti-brief-actions .ghost-btn{width:100%;padding:10px 6px}
+ .ti-report-result .ti-case-listrow{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center}
+ .ti-report-result .ti-report-item{flex:1 1 100%}
+ .ti-report-form{max-width:100%}
+}
