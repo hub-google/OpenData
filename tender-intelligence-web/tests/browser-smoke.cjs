@@ -240,6 +240,11 @@ async function firstAdvancedId(){
    assert.ok((await page.locator('#agencyOutput').innerText()).includes('已確認得標廠商'));
    await page.locator('#agencyMonthlyOutput table').waitFor({timeout:60000});
    assert.ok((await page.locator('#agencyMonthlyOutput tr').count())>1);
+   assert.ok((await page.locator('#agencyMonthlyOutput').innerText()).includes('決標中位數'));
+   await page.locator('#agencyMonthlyGroup').selectOption('財物');
+   await page.locator('#agencyMonthlyForm button[type="submit"]').click();
+   await page.waitForFunction(()=>document.getElementById('agencyMonthlyOutput')?.textContent?.includes('決標中位數'),null,{timeout:60000});
+   assert.equal(await page.locator('#agencyMonthlyGroup').inputValue(),'財物');
    await page.locator('#agencyRepeatOutput .watch-item').first().waitFor({timeout:60000});
  });
  await check('Daily source-quality report exposes completeness and licensing',async()=>{
