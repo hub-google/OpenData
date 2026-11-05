@@ -155,3 +155,19 @@ LINE 開發者後台需要設定 callback `https://unapiwajmgqqtdkixaab.supabase
 - 單案「文件與標書」分頁已直接共用 `app.js` 的 `saveCloudDocument(file,caseId)` 私有上傳流程；不需離開當前標案，仍沿用原 `ti_documents` 與私人 Storage。按鈕「標書條款解析／私人文件庫」亦會攜帶當前案號。
 - 新增 `market-trends.js` 及 RPC `ti_market_trends_v1`，顯示本平台實際已入庫的逐月案件數、公開預算／決標金額有效樣本數、金額合計、採購類別分布，可按月份、機關及採購類別篩選並匯出 CSV。RPC 已用 SQL 查詢驗證，並非全台完整或已可證明的季節性。
 - 同步比對 `main` 與 `gh-pages` 的 `index.html`、`app.js`、`case-workspace.js`、`qualification-check.js`、`market-trends.js`、`styles.css`：相同檔案 blob SHA，表示 GitHub Pages 發布分支已收到本次程式；**不等於曾以真實瀏覽器逐操作驗收**。
+
+### 2026-11-05 使用者實測缺口修正／實際線上驗收
+
+本節取代本頁稍早「尚未操作」的**現況**敘述；舊段落保留作歷史。所有改動均在原 GitHub Pages 網站與 Supabase 專案，不另建展示版。
+
+- **P0 私有標書實際上傳**：用 `CASE WHEN bucket_id='wm-private-evidence' THEN wm_private.can_access_evidence(...) ELSE false END` 修改共用 Storage 中其他專案的政策，防止不同 bucket 的 RLS 過早評估不可執行函式而阻斷本系統上傳；不擴權 `wm_private`。原有 `ti-private-documents` 私有 bucket 與本人路徑政策不變。單案可上傳、同案清單查回；公司實績與文件亦支援私有儲存。匿名測試帳號的 E2E 已**確實成功**，且測試了另一帳號看不到本人文件、實績、收藏與報表。
+- **P0 競品監控**：`competitor-tracker.js` 修正 `save is not a function` 的變數遮蔽及表單非預期重導。Playwright 已成功新增監控廠商；未假稱實際外送 Email／LINE 已寄達。
+- **P0 官方詳情**：`ti-ingest` Supabase Edge Function **第 46 版**已上線；既有 10 分鐘細節補抓從 6 筆增到 8 筆，優先處理尚可投標案件。新增私人 `ti_detail_requests`，本人可在案件詳情按「補抓這件標案的官方詳情」，每天最多 10 件；後台記錄成功／失敗，絕不補填原始公告不存在的欄位。真實 E2E 已證實可成功排入佇列，**資料補齊仍取決於上游取得情況**。
+- **P1 採購類別修復**：只以官方 `ti_notices.category` 明確的「工程類／財物類／勞務類」修復 `ti_cases.group_name`，本次來源證據可補正約 **27,630** 件，未分類案件降至約 30,091 件（會隨同步變動），並以 trigger＋pg_cron 增量持續校正。沒有官方類別證據的仍維持未知。
+- **P1 搜尋一致性**：首頁「跨日全文搜尋」基於與進階搜尋單詞快查共用的 `ti_case_search_index`，由新 `ti_fast_archive_filtered` 支援全庫的公告類型、類別、最低預算、排序和真正 30 件分頁、總筆數。查「資訊系統」實際 **229 件**，不再把首批 100 件誤認全數；後端直接 SQL 和線上瀏覽器已查核，新的回歸測試仍持續。
+- **P1 案件決策入口**：`case-decision-brief.js` 於原六分頁前新增「還能投嗎、資格有證據嗎、預算押標金、文件、下一步任務」與資料完整度、來源更新時間、快捷操作、官方鏈結／補抓請求；不產生無證據的合格判斷。
+- **P1 報表**：`ti_generate_report_now(uuid)` 是只依 `auth.uid()` 取得自己的排程與資料的資料庫 RPC，限制每天 12 份。現在提供「立即產生一次／預覽／CSV／最近成功時間／刪除已完成報表」，同時保留原定時排程；真實測試帳號已產生並預覽 1 筆私人案件。
+- **P2 監控與手機**：長頁面改四分頁（標案監控／競品追蹤／自動報表／通知設定），原按鈕事件不複製。Chromium 手機 390px 檢查 `scrollWidth=390`，沒有水平超出；公開流程操作可切換四個分頁。
+- **測試**：登入操作 E2E 最新完整執行 **14/14 通過，0 個頁面腳本例外**，包含私人文件上傳查回、競品新增、私人報表預覽、人工資格核對及跨帳號 RLS；公開版 E2E 已驗證首頁全文總量、條件篩選、商機、廠商、行情、手機與監控四分頁。網站稽核資料在分支 `tender-ui-audit-results-20261105` 和 `tender-auth-audit-results-20261105`，含每步操作截圖、JSON 和 Markdown。
+
+目前仍未完備的**外部條件**：多數歷史案件的官方截標時間、官方公告與完整資格欄位需持續合法補抓，不能憑既有摘要猜測；上游日期缺漏／歷史涵蓋期間不足；真實 AI 模型金鑰、LINE／Email 實際送達、SMS、評選委員與民間採購合法來源，以及正式多人工作區跨組織完整驗收。**這些不能視為已完成**。
