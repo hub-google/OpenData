@@ -258,3 +258,15 @@ label{font-size:12px;color:#56677b;font-weight:650}
 .ti-qualify-row strong{color:#2b517e}
 .ti-qualify-row p{margin:0;overflow-wrap:anywhere}
 .ti-qualify-row select{max-width:260px}
+
+.ti-market-form{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:16px 0}
+.ti-market-form label{display:flex;flex-direction:column;gap:5px}
+.ti-market-form input{min-width:175px}
+.ti-market-graph{display:flex;flex-direction:column;gap:4px;margin:12px 0 22px}
+.ti-market-row{margin-top:5px}
+.ti-market-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}
+.ti-market-track{height:11px;background:#edf2fa;border-radius:6px;overflow:hidden;margin-top:6px}
+.ti-market-fill{height:100%;background:#356bb5;border-radius:6px;transition:width .15s}
+.ti-market .ti-market-row+p{margin:0 0 8px;font-size:11px}
+.ti-market h3{margin:20px 0 8px}
+@media(max-width:760px){.ti-market-form{display:grid;grid-template-columns:1fr 1fr}.ti-market-form label:last-of-type{grid-column:1/-1}.ti-market-form input{min-width:0}.ti-market-form button{white-space:normal}}
