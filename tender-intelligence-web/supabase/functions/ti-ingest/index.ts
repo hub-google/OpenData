@@ -175,6 +175,13 @@ async function enrichMissingDetails(){
       last_error:ok?null:reason||"detail enrichment incomplete"
     }],"resolution=merge-duplicates,return=minimal");
    }catch(e){console.error("detail queue save failed",text(e).slice(0,150));reason+="; queue-save error"}
+   try{
+    await db("ti_detail_requests?case_id=eq."+id+"&status=eq.queued","PATCH",{
+     status:ok?"fulfilled":"queued",
+     completed_at:ok?new Date().toISOString():null,
+     error_summary:ok?null:text(reason).slice(0,200)
+    },"return=minimal");
+   }catch(e){console.error("detail request status failed",text(e).slice(0,160))}
    if(ok)success++;else {failed++;problems.push({case_id:c.case_id,error:reason})}
   }));
  }
