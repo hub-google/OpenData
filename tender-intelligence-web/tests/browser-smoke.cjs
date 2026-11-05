@@ -259,7 +259,13 @@ async function firstAdvancedId(){
    await page.locator('[data-view="vendors"]').first().click();
    await page.locator('#vendorEvidenceTaxId').fill('24935439');
    await page.locator('#vendorCoMentionsButton').click();
-   await page.locator('#vendorCoMentionsOutput .watch-item').first().waitFor({timeout:45000});
+   await page.waitForFunction(()=>{
+    const output=document.getElementById('vendorCoMentionsOutput');
+    return !!output&&(output.querySelector('.watch-item')||/失敗|沒有同公告/.test(output.textContent||''));
+   },null,{timeout:30000});
+   const coSummary=await page.locator('#vendorCoMentionsOutput').innerText();
+   assert.ok((await page.locator('#vendorCoMentionsOutput .watch-item').count())>0,
+     '真實同公告廠商搜尋沒有結果：'+coSummary.slice(0,320));
    const text=await page.locator('#vendorCoMentionsOutput').innerText();
    assert.ok(text.includes('同份公告')||text.includes('同公告'));
    await page.locator('#vendorRolesButton').click();
