@@ -27,6 +27,7 @@ async function search(){
  },null,{timeout:45000});
  await waitPage(1);
  const message=await page.locator('#advStatus').innerText();
+ console.log('ADVANCED_SEARCH_RESPONSE '+message.slice(0,220));
  assert.ok(message.includes('實際已入庫資料符合條件'),'進階搜尋未完成：'+message);
 }
 async function firstAdvancedId(){
