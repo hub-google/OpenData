@@ -11,6 +11,7 @@ async function step(name,fn){
  catch(e){results.push({name,status:'FAIL',error:short(e.message)});console.error('FAIL',name,short(e.message))}
 }
 async function nav(view){
+ if(await page.locator('#detailDrawer').isVisible())await page.locator('#closeDetail').click();
  const b=page.locator('[data-view="'+view+'"]').first();
  const d=b.locator('xpath=ancestor::details[1]');
  if(await d.count() && (await d.getAttribute('open'))===null)await d.locator('summary').click();
@@ -34,6 +35,19 @@ async function main(){
   const info=short(await page.locator('#resultInfo').innerText());
   if(!info.includes('資料庫符合')||info.includes('資料庫符合 100 件'))throw Error('首頁跨日搜尋沒有完整結果：'+info+'；'+short(await page.locator('#dataError').innerText(),260));
   return {info,cards:await page.locator('#resultList article').count(),sample:short(await page.locator('#resultList').innerText(),280),screenshot:await shot('02-search')};
+ });
+ await step('首頁全文搜尋的全庫類別與預算篩選',async()=>{
+  await nav('search');
+  await page.locator('#searchMode').selectOption('title');
+  await page.locator('#searchQuery').fill('資安');
+  await page.locator('#groupFilter').selectOption('勞務');
+  await page.locator('#statusFilter').selectOption('招標');
+  await page.locator('#budgetFilter').fill('1000000');
+  await page.locator('#searchForm button[type="submit"]').click();
+  await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('資料庫符合'),null,{timeout:18000});
+  const info=short(await page.locator('#resultInfo').innerText(),400);
+  if(await page.locator('#dataError').isVisible())throw Error(await page.locator('#dataError').innerText());
+  return {info,cards:await page.locator('#resultList article').count(),screenshot:await shot('02b-filtered')};
  });
  await step('進階搜尋：資安維護最低一百萬',async()=>{
   await nav('advanced');await page.locator('#advQuery').fill('資安 AND 維護');
