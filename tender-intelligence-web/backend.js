@@ -211,3 +211,32 @@ export async function cloudNotifications(client,user){
   if(error)throw error;
   return data||[];
 }
+
+
+// Same source-backed v5 engine as advanced search and opportunity radar.
+// Return the total number of matching cases, not only one capped 100-row batch.
+export async function fetchUnifiedTitleSearch(query,page=1){
+ const term=String(query||'').trim().slice(0,80);
+ const client=await getClient();
+ const {data,error}=await client.rpc('ti_archive_search_v5',{
+  p_terms:term?[term]:[],p_exclude:[],p_any:false,p_expression:null,
+  p_agency:'',p_kind:'',p_group:'',p_location:'',p_method:'',p_decision_method:'',
+  p_min_budget:null,p_max_budget:null,p_date_from:null,p_date_to:null,
+  p_deadline_only:false,p_deadline_start:null,p_deadline_end:null,
+  p_sort:'date',p_page:page,p_limit:100
+ });
+ if(error)throw error;
+ const rows=Array.isArray(data?.rows)?data.rows:[];
+ const total=Number(data?.total??0);
+ return {
+  records:rows.map(r=>({
+   unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
+   date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
+   budget_amount:r.budget_amount,award_amount:r.award_amount,
+   brief:{title:r.title,type:r.latest_notice_type,category:r.category||r.group_name},
+   detail:r.official_url?{url:r.official_url}:{}
+  })),
+  total_records:Number.isFinite(total)?total:0,
+  total_pages:Math.max(1,Math.ceil((Number.isFinite(total)?total:0)/100))
+ };
+}
