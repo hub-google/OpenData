@@ -108,6 +108,7 @@ async function firstAdvancedId(){
    await searchBasic('agency','國防部');
    assert.ok((await page.locator('#resultList .case-card').first().innerText()).includes('國防部'));
  });
+ // Verify the dedicated indexed vendor path against the deployed production database.
  await check('Basic vendor name search uses real notice company records',async()=>{
    await searchBasic('vendor','台灣糖業股份有限公司');
  });
