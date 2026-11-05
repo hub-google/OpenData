@@ -215,15 +215,20 @@ export async function cloudNotifications(client,user){
 
 // Same source-backed v5 engine as advanced search and opportunity radar.
 // Return the total number of matching cases, not only one capped 100-row batch.
-export async function fetchUnifiedTitleSearch(query,page=1){
+export async function fetchUnifiedTitleSearch(query,page=1,filters={}){
  const term=String(query||'').trim().slice(0,80);
  const client=await getClient();
+ const status=String(filters.status||''),group=String(filters.group||'');
+ const kind=status==='財物標售'?'財物變賣':status==='全部'?'':status;
+ const min=filters.minBudget===''||filters.minBudget==null?null:Number(filters.minBudget);
+ const sort=['date','budget','title'].includes(filters.sort)?filters.sort:'date';
+ if(min!==null&&(!Number.isFinite(min)||min<0))throw Error('最低公開預算格式錯誤');
  const {data,error}=await client.rpc('ti_archive_search_v5',{
   p_terms:term?[term]:[],p_exclude:[],p_any:false,p_expression:null,
-  p_agency:'',p_kind:'',p_group:'',p_location:'',p_method:'',p_decision_method:'',
-  p_min_budget:null,p_max_budget:null,p_date_from:null,p_date_to:null,
+  p_agency:'',p_kind:kind,p_group:group==='全部'?'':group,p_location:'',p_method:'',p_decision_method:'',
+  p_min_budget:min,p_max_budget:null,p_date_from:null,p_date_to:null,
   p_deadline_only:false,p_deadline_start:null,p_deadline_end:null,
-  p_sort:'date',p_page:page,p_limit:30
+  p_sort:sort,p_page:page,p_limit:30
  });
  if(error)throw error;
  const rows=Array.isArray(data?.rows)?data.rows:[];
