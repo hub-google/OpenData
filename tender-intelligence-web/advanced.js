@@ -135,9 +135,20 @@ async function search(p=1){
    opts.p_min_budget===null&&opts.p_max_budget===null&&
    opts.p_date_from===null&&opts.p_date_to===null&&
    !opts.p_deadline_start&&!opts.p_deadline_end&&!opts.p_deadline_only;
-  const {data,error}=fast
-   ?await client.rpc('ti_archive_search_simple',{p_term:t,p_page:opts.p_page,p_limit:opts.p_limit})
-   :await client.rpc('ti_archive_search_v4',opts);
+  let data,error;
+  // Under heavy background ingestion PostgreSQL may cancel a slow read at its
+  // statement timeout. Retry just this transient case once; never mutate filters.
+  for(let attempt=0;attempt<2;attempt++){
+   const response=fast
+    ?await client.rpc('ti_archive_search_simple',{p_term:t,p_page:opts.p_page,p_limit:opts.p_limit})
+    :await client.rpc('ti_archive_search_v4',opts);
+   data=response.data;error=response.error;
+   if(!error)break;
+   if(!/statement timeout|canceling statement/i.test(String(error.message||''))||attempt===1)break;
+   if(n!==request)return;
+   status('資料庫正忙於同步公告，正在重新查詢同一組條件…');
+   await new Promise(resolve=>setTimeout(resolve,300));
+  }
   if(error)throw error;
   if(n!==request)return;
   if(!data||!Array.isArray(data.rows))throw Error('資料庫沒有傳回有效的分頁結果');
