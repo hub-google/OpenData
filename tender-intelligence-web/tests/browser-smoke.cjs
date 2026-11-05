@@ -259,6 +259,10 @@ async function firstAdvancedId(){
    await page.locator('#vendorCoMentionsOutput .watch-item').first().waitFor({timeout:45000});
    const text=await page.locator('#vendorCoMentionsOutput').innerText();
    assert.ok(text.includes('同份公告')||text.includes('同公告'));
+   await page.locator('#vendorRolesButton').click();
+   await page.locator('#vendorRolesOutput .analysis-list tr').nth(1).waitFor({timeout:60000});
+   const roles=await page.locator('#vendorRolesOutput').innerText();
+   assert.ok(roles.includes('明示得標公告')&&roles.includes('明示投標公告'),roles.slice(0,180));
  });
  await check('Mobile viewport: latest notices, menu, detail drawer without horizontal overflow',async()=>{
    const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'zh-TW'});
