@@ -1030,7 +1030,20 @@ function hook(){
   $('documentAnalyze').addEventListener('click',analyzeDocument);
   $('documentAI').addEventListener('click',()=>void analyzeDocumentAI());
   $('documentCsv').addEventListener('click',exportDoc);
-  $('documentFile').addEventListener('change',()=>{$('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';});
+  $('documentFile').addEventListener('change',()=>{$('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';window.__tiOcrCache=null;});
+  document.addEventListener('ti:ocr-complete',event=>{
+    const pages=Array.isArray(event.detail?.pages)?event.detail.pages:[];
+    if(!pages.length)return;
+    state.docPages=pages;
+    const hits=[];
+    for(const page of pages){
+      const parts=asText(page.text).replace(/\\r/g,'\\n').split(/[\\n。；;]+/).map(x=>x.trim().replace(/\\s+/g,' ')).filter(x=>x.length>=8);
+      for(const part of parts)for(const [group,regex] of terms){
+        if(regex.test(part)&&hits.filter(x=>x.group===group).length<12)hits.push({group,source:page.source,text:part.slice(0,650)});
+      }
+    }
+    state.docRows=hits;showDocumentRows();toast('OCR 文字已帶入檢核清單，請核對辨識結果。');
+  });
 }
 hook();
 initCloudUI();
@@ -2018,10 +2031,18 @@ async function analyzeDocumentAI(){
   const button=$('documentAI');button.disabled=true;
   target.replaceChildren(E('h2','','AI 標單分析'),E('p','minor','正在擷取文件文字；AI 不會補填原文未揭露的數字或資格。'));
   try{
-    // OCR is deliberately not simulated. Human-review is required for image-only scans.
-    const pages=await parseDocument(file);
+    // Reuse user-initiated local OCR for image-only files and blank PDF pages.
+    const cached=window.__tiOcrCache;
+    const matching=cached?.name===file.name && cached?.size===file.size && cached?.lastModified===file.lastModified;
+    const imageOnly=/\\.(png|jpg|jpeg|webp)$/i.test(file.name);
+    if(imageOnly&&!matching)throw Error('圖片文件請先執行本機 OCR，再使用 AI 分析。');
+    let pages=imageOnly?[]:await parseDocument(file);
+    if(matching){
+      const ocrBySource=new Map(cached.pages.map(p=>[p.source,p]));
+      pages=pages.length?pages.map(p=>asText(p.text).trim()?p:(ocrBySource.get(p.source)||p)):cached.pages;
+    }
     const actual=pages.filter(p=>asText(p.text).trim());
-    if(!actual.length)throw Error('這份文件沒有可讀文字層；掃描型 PDF 需要 OCR，本站不會虛構資格。');
+    if(!actual.length)throw Error('文件沒有可讀文字；請先執行 OCR，並人工核對掃描品質。');
     const {data:{session},error:sessionError}=await cloud.client.auth.getSession();
     if(sessionError)throw sessionError;
     if(!session?.access_token)throw Error('驗證已失效，請重新登入。');
