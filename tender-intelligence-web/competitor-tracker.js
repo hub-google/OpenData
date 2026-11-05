@@ -51,7 +51,7 @@ async function exportPipeline(){
  try{
   const {data,error}=await db.from('ti_saved_cases').select('case_id,title,agency,stage,internal_deadline,added_at,notes').eq('user_id',user.id).order('added_at',{ascending:false}).limit(1500);
   if(error)throw error;
-  const escape=v=>{const s=String(v??'').replace(/^[=+@\-]/,'\'$&');return '"'+s.replace(/"/g,'""')+'"';};
+  const escape=v=>{const s=String(v??'').replace(/^[=+@-]/,m=>"'"+m);return '"'+s.replace(/"/g,'""')+'"';};
   const lines=[['案件ID','案件名稱','機關','階段','內部期限','加入追蹤時間','備註'],...(data||[]).map(r=>[r.case_id,r.title,r.agency,r.stage,r.internal_deadline,r.added_at,r.notes])];
   const csv='\uFEFF'+lines.map(r=>r.map(escape).join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob);
