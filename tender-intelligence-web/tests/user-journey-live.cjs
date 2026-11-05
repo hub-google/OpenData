@@ -73,7 +73,13 @@ async function main(){
  await step('手機側欄與商機雷達',async()=>{
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:40000});
   await page.setViewportSize({width:390,height:800});await page.locator('#mobileMenu').click();await nav('radar');
-  return {radar:await page.locator('#view-radar').isVisible(),horizontal_overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),screenshot:await shot('10-mobile')};
+  return {radar:await page.locator('#view-radar').isVisible(),horizontal_overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),
+   scroll_width:await page.evaluate(()=>document.documentElement.scrollWidth),
+   overflowing:await page.evaluate(()=>[...document.querySelectorAll('*')].filter(el=>{
+    const r=el.getBoundingClientRect(),st=getComputedStyle(el);
+    return r.width>0&&r.right>innerWidth+2&&r.left>=0&&st.display!=='none'&&st.visibility!=='hidden';
+   }).slice(0,20).map(el=>({tag:el.tagName,id:el.id,cls:String(el.className||'').slice(0,80),width:Math.round(el.getBoundingClientRect().width),right:Math.round(el.getBoundingClientRect().right)}))),
+   screenshot:await shot('10-mobile')};
  });
 }
 function save(){
