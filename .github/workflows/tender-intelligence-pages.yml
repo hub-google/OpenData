@@ -32,7 +32,7 @@ jobs:
       - name: 語法及規則測試
         run: |
           node --check tender-intelligence-web/app.js
-          for file in nav-groups.js company-workspace.js case-workspace.js competitor-tracker.js ocr-client.js report-dashboard.js qualification-check.js market-trends.js; do
+          for file in nav-groups.js company-workspace.js case-workspace.js case-decision-brief.js monitor-tabs.js competitor-tracker.js ocr-client.js report-dashboard.js qualification-check.js market-trends.js; do
             node --check "tender-intelligence-web/$file"
           done
           node --check tender-intelligence-web/core.mjs
@@ -41,7 +41,7 @@ jobs:
           from pathlib import Path
           root=Path("tender-intelligence-web")
           html=(root/"index.html").read_text(encoding="utf-8")
-          for file in ("nav-groups.js","company-workspace.js","case-workspace.js","competitor-tracker.js","ocr-client.js","report-dashboard.js","qualification-check.js","market-trends.js"):
+          for file in ("nav-groups.js","company-workspace.js","case-workspace.js","case-decision-brief.js","monitor-tabs.js","competitor-tracker.js","ocr-client.js","report-dashboard.js","qualification-check.js","market-trends.js"):
               assert (root/file).is_file() and f'src="./{file}"' in html,file
           assert 'id="view-company"' in html
           PY
