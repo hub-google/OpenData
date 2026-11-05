@@ -84,6 +84,7 @@ async function main(){
   await page.waitForTimeout(6000);
   const tabs=await page.locator('.ti-case-tab').allTextContents();
   let history='';if(tabs.length){await page.getByRole('tab',{name:'歷史行情'}).click();history=short(await page.locator('.ti-case-panel:not([hidden])').innerText(),230);}
+  await page.waitForFunction(()=>document.querySelector('#detailContent .ti-decision-brief')?.textContent?.includes('資料完整度'),null,{timeout:14000});
   const brief=short(await page.locator('#detailContent .ti-decision-brief').innerText(),360);
   if(!brief.includes('資料完整度')||tabs.length!==6)throw Error('案件整合摘要未載入：'+brief);
   return {http:res?.status(),drawer:await page.locator('#detailDrawer').isVisible(),tabs,history,brief,screenshot:await shot('09-case')};
