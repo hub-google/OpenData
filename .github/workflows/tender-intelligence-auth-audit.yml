@@ -1,0 +1,47 @@
+name: 標案網站測試帳號操作稽核
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/tender-intelligence-auth-audit.yml"
+      - "tender-intelligence-web/tests/auth-journey-live.cjs"
+
+permissions:
+  contents: write
+
+jobs:
+  auth-click-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 安裝瀏覽器
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: 以匿名測試帳號實際操作並儲存證據
+        run: node tender-intelligence-web/tests/auth-journey-live.cjs
+      - name: 發布獨立驗收結果分支
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/auth-tender-audit
+          cp tender-intelligence-web/audits/2026-11-05-auth-click-audit.* /tmp/auth-tender-audit/ 2>/dev/null || true
+          if [ ! -f /tmp/auth-tender-audit/2026-11-05-auth-click-audit.json ]; then
+            echo '{"error":"Browser tests could not start; inspect GitHub Actions logs."}' > /tmp/auth-tender-audit/2026-11-05-auth-click-audit.json
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan tender-auth-audit-results-20261105
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          mkdir -p tender-intelligence-web/audits
+          cp /tmp/auth-tender-audit/* tender-intelligence-web/audits/
+          git add tender-intelligence-web/audits/
+          git commit -m "Report demo-account tender user journey audit"
+          git push -f origin HEAD:refs/heads/tender-auth-audit-results-20261105
