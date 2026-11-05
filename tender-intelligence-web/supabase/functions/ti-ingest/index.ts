@@ -3,6 +3,7 @@
 // The cron token is stored in Supabase Vault; no browser or GitHub secret is required.
 const SRC="https://pcc-api.openfun.app/api", DB_URL=Deno.env.get("SUPABASE_URL")||"",
  KEY=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
+const OPENFUN_TOKEN=Deno.env.get("TI_OPENFUN_API_TOKEN")||"";
 const text=v=>v==null?"":String(v);
 const num=v=>{if(v===null||v===undefined||v==="")return null;const n=Number(text(v).replace(/[,元NT$新臺幣\s]/g,""));return Number.isFinite(n)&&n>=0?n:null};
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -10,7 +11,7 @@ async function json(url,ms=35000){
  let failure;
  for(let attempt=0;attempt<3;attempt++){
   try{
-   const r=await fetch(url,{signal:AbortSignal.timeout(ms),headers:{Accept:"application/json"}});
+   const r=await fetch(url,{signal:AbortSignal.timeout(ms),headers:{Accept:"application/json",...(OPENFUN_TOKEN?{Authorization:"Bearer "+OPENFUN_TOKEN}:{})}});
    if(r.ok){
     const d=await r.json();if(!d||typeof d!=="object")throw Error("invalid upstream response");
     return d;
