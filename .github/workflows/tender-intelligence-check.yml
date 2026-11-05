@@ -12,6 +12,7 @@ on:
       - "tender-intelligence-web/company-workspace.js"
       - "tender-intelligence-web/case-workspace.js"
       - "tender-intelligence-web/competitor-tracker.js"
+      - "tender-intelligence-web/ocr-client.js"
       - "tender-intelligence-web/backend.js"
       - "tender-intelligence-web/delivery.js"
       - "tender-intelligence-web/advanced.js"
@@ -52,6 +53,7 @@ jobs:
           node --check tender-intelligence-web/company-workspace.js
           node --check tender-intelligence-web/case-workspace.js
           node --check tender-intelligence-web/competitor-tracker.js
+          node --check tender-intelligence-web/ocr-client.js
           node --check tender-intelligence-web/core.mjs
           node --check tender-intelligence-web/search-expression.mjs
           node --check tender-intelligence-web/backend.js
@@ -85,9 +87,10 @@ jobs:
           root=Path("tender-intelligence-web")
           html=(root/"index.html").read_text(encoding="utf-8")
           assert '<script type="module" src="./app.js"></script>' in html
-          for f in ("nav-groups.js","company-workspace.js","case-workspace.js","competitor-tracker.js"):
+          for f in ("nav-groups.js","company-workspace.js","case-workspace.js","competitor-tracker.js","ocr-client.js"):
               assert f'src="./{f}"' in html and (root/f).is_file(),f
           assert 'id="view-company"' in html
+          assert 'id="tiOcrButton"' in html
           assert '<link rel="stylesheet" href="./styles.css">' in html
           assert '<script type="module" src="./delivery.js"></script>' in html
           assert '<script type="module" src="./advanced.js"></script>' in html
