@@ -73,12 +73,48 @@ async function repeats(id){
   }
  }catch(e){if(token===repeatRequest)output.replaceChildren(el('p','歷史候選查詢失敗：'+String(e.message||e),'minor'));}
 }
+async function winners(id,year){
+ const output=$('agencyWinnerOutput');
+ output.replaceChildren(el('p','正在比對真實決標公告明列的得標廠商…','minor'));
+ try{
+  const c=await getClient();
+  const {data,error}=await c.rpc('ti_agency_winner_evidence',{
+   p_unit_id:id,p_year:year,p_limit:12
+  });
+  if(error)throw error;
+  if(selected!==id)return;
+  output.replaceChildren();
+  output.append(el('p','已辨識得標廠商的案件 '+n(data.unique_awarded_cases)+
+   ' 件；得標者與案件的組合 '+n(data.winner_case_appearances)+
+   ' 筆；前五名占可辨識得標紀錄 '+(data.top5_evidence_share==null?'樣本不足':
+    (Number(data.top5_evidence_share)*100).toFixed(1)+'%')+
+   '。這是公告樣本集中度，不是全市場占有率。','minor'));
+  if(!data.winners?.length){
+   output.append(el('p','此年度沒有可識別得標者的公告來源證據。','empty'));return;
+  }
+  const table=el('table','','analysis-list'),head=el('tr');
+  for(const h of ['排名','得標廠商（公告名稱）','公告統編','可辨識案件數','最早公告','最近公告'])head.append(el('th',h));
+  table.append(head);
+  for(const w of data.winners){
+   const row=el('tr');
+   for(const value of [w.rank,w.company_name,w.company_id||'來源未提供',n(w.awarded_case_count),
+     date(w.first_date),date(w.last_date)])row.append(el('td',value));
+   table.append(row);
+  }
+  output.append(table);
+ }catch(e){if(selected===id)output.replaceChildren(el('p','得標商來源證據查詢失敗：'+
+   String(e.message||e),'minor'));}
+}
 export async function loadAgencyEvidence(id){
  selected=String(id||'').trim();if(!selected)return;
  const year=Number($('agencyMonthlyYear').value)||new Date().getFullYear();
- await Promise.allSettled([monthly(selected,year),repeats(selected)]);
+ await Promise.allSettled([monthly(selected,year),repeats(selected),winners(selected,year)]);
 }
 $('agencyMonthlyYear').value=String(new Date().getFullYear());
 $('agencyMonthlyForm').addEventListener('submit',e=>{
- e.preventDefault();if(selected)void monthly(selected,Number($('agencyMonthlyYear').value));
+ e.preventDefault();
+ if(selected){
+  const year=Number($('agencyMonthlyYear').value);
+  void Promise.allSettled([monthly(selected,year),winners(selected,year)]);
+ }
 });
