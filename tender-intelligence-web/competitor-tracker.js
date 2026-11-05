@@ -32,7 +32,7 @@ async function load(){
  }
  msg('已保存 '+(data?.length||0)+' 個指定廠商。可直接查詢其真實公告；自動異動推播仍需來源事件與通知服務驗收。');
 }
-async function save(ev){
+async function saveWatch(ev){
  ev.preventDefault();
  if(!(await auth()))return;
  const name=root.querySelector('[name="competitorName"]').value.trim(),
@@ -40,10 +40,13 @@ async function save(ev){
  button=root.querySelector('button[type="submit"]');
  if(name.length<2||(tax&&!/^\d{8}$/.test(tax))){msg('請輸入至少 2 字的廠商名稱；統編若填入須為 8 碼。');return;}
  button.disabled=true;
- const {error}=await db.from('ti_competitor_watches').insert({user_id:user.id,company_name:name,tax_id:tax||null});
- button.disabled=false;
- if(error){msg('新增失敗：'+(error.code==='23505'?'此廠商已追蹤':error.message));return;}
- root.querySelector('form').reset();await load();
+ try{
+  const {error}=await db.from('ti_competitor_watches').insert({user_id:user.id,company_name:name,tax_id:tax||null});
+  if(error)throw error;
+  root.querySelector('form').reset();
+  await load();
+ }catch(error){msg('新增失敗：'+(error.code==='23505'?'此廠商已追蹤':error.message));}
+ finally{button.disabled=false;}
 }
 async function exportPipeline(){
  if(!(await auth()))return;
@@ -67,13 +70,13 @@ function init(){
  const form=document.createElement('form');form.className='inline-form';
  const name=document.createElement('input');name.name='competitorName';name.required=true;name.maxLength=180;name.placeholder='廠商名稱';
  const tax=document.createElement('input');tax.name='competitorTaxId';tax.maxLength=8;tax.placeholder='統編（選填）';tax.inputMode='numeric';
- const save=e('button','新增監控','primary-btn');save.type='submit';form.append(name,tax,save);
+ const submitButton=e('button','新增監控','primary-btn');submitButton.type='submit';form.append(name,tax,submitButton);
  const list=e('div','','ti-case-list');list.dataset.watchList='1';
  const exportButton=e('button','匯出我的投標紀錄 CSV','ghost-btn');exportButton.type='button';exportButton.dataset.exportPipeline='1';
  const status=e('p','登入後可以使用。','minor');status.dataset.watchStatus='1';
  root.append(title,help,form,list,exportButton,status);
  const anchor=section.querySelector('.page-heading');anchor?.insertAdjacentElement('afterend',root);
- form.addEventListener('submit',ev=>void save(ev));exportButton.addEventListener('click',()=>void exportPipeline());
+ form.addEventListener('submit',ev=>void saveWatch(ev).catch(error=>msg('新增監控失敗：'+String(error?.message||error))));exportButton.addEventListener('click',()=>void exportPipeline());
  document.addEventListener('ti:view-changed',event=>{if(event.detail?.view==='alerts')void load();});
  getClient().then(client=>client.auth.onAuthStateChange(()=>{if(!section.hidden)void load();})).catch(()=>{});
 }
