@@ -123,7 +123,7 @@
             <label>最低公開預算（元）<input id="budgetFilter" type="number" min="0" step="10000" placeholder="不限"></label>
             <label>結果排序<select id="sortFilter"><option value="date">最新公告</option><option value="budget">公開預算高至低</option><option value="title">標案名稱</option></select></label>
           </div>
-          <p class="hint">篩選作用於本次 API 回傳的公告；跨日全文查詢與進階搜尋使用同一搜尋引擎，顯示真實總命中數；每批載入至多 100 筆，篩選條件作用於當批。最新公告的預算會以已入庫的同機關同案號來源資料交叉核對；仍無金額者標示「尚無可確認資料」，不代表政府完全未公開。截標時間需進入詳情核對。</p>
+          <p class="hint">跨日全文搜尋依整個已入庫資料庫套用條件、顯示總命中數，每頁最多 30 件；最新公告等其他模式依各自資料來源呈現。最新公告的預算會以已入庫的同機關同案號來源資料交叉核對；仍無金額者標示「尚無可確認資料」，不代表政府完全未公開。截標時間需進入詳情核對。</p>
         </div>
         <div id="dataError" class="notice danger" role="alert" hidden></div>
         <div class="section-heading"><div><h2 id="resultsHeading">最新公告</h2><p id="resultInfo">正在讀取真實公告…</p></div><div class="heading-actions"><button id="exportCsv" type="button" class="ghost-btn">↓ CSV</button><button id="exportRss" type="button" class="ghost-btn">↓ RSS 檔案</button><a href="https://unapiwajmgqqtdkixaab.supabase.co/functions/v1/ti-rss" target="_blank" rel="noopener noreferrer" class="ghost-btn" type="application/rss+xml">訂閱自動更新 RSS</a><button id="reloadBtn" type="button" class="ghost-btn">重新整理</button></div></div>
