@@ -37,6 +37,7 @@
       <p class="side-label">其他</p>
       <button type="button" class="nav-item" data-view="billing" hidden><span>▣</span> 方案與帳務</button>
       <button type="button" class="nav-item" data-view="directory"><span>♧</span> 供應商名錄</button>
+      <button type="button" class="nav-item" data-view="company"><span>▧</span> 我的公司資料</button>
       <button type="button" class="nav-item" data-view="developer"><span>﹛﹜</span> 我的 API／MCP</button>
         <button type="button" class="nav-item" data-view="guide"><span>ⓘ</span> 採購新手指南</button>
       <button type="button" class="nav-item" data-view="about"><span>ⓘ</span> 資料說明</button>
@@ -560,6 +561,40 @@
         </div>
       </section>
 
+
+      <section id="view-company" class="view" hidden>
+        <div class="page-heading">
+          <div class="eyebrow">PRIVATE COMPANY CAPABILITIES</div>
+          <h1>我的公司資料</h1>
+          <p>維護私人服務項目、證照、履約實績與型錄。這些內容只有登入帳戶能看見，不會自動公開成供應商名錄，也不會被視為已取得官方查證。</p>
+        </div>
+        <div class="panel">
+          <h2>公司與服務輪廓</h2>
+          <form id="tiCompanyForm" class="setting-form">
+            <label>公司名稱<input id="tiCompanyName" maxlength="150" placeholder="例如：某某資訊股份有限公司"></label>
+            <label>公司統編（可不填）<input id="tiCompanyTaxId" maxlength="8" inputmode="numeric" placeholder="8 位數字"></label>
+            <label class="wide">產品與服務項目<textarea id="tiCompanyServices" rows="3" maxlength="4000" placeholder="例如：網路設備、醫療資訊系統、資訊安全維運"></textarea></label>
+            <label class="wide">公司簡介<textarea id="tiCompanyIntro" rows="3" maxlength="5000" placeholder="介紹公司專長、實際服務範圍"></textarea></label>
+            <div class="form-actions"><button id="tiCompanySave" class="primary-btn" type="submit">儲存公司資料</button><button id="tiCompanyToRadar" class="ghost-btn" type="button">帶入商機雷達</button><button id="tiCompanyRefresh" class="ghost-btn" type="button">重新載入</button></div>
+          </form>
+        </div>
+        <div class="panel analysis-panel">
+          <h2>證照、履約實績與產品資料</h2>
+          <p class="hint">個別紀錄由你自行填寫。資格是否符合特定標案須以原文件與實際證明人工核對。</p>
+          <form id="tiAssetForm" class="setting-form">
+            <label>資料類別<select id="tiAssetType"><option value="certificate">證照／資格</option><option value="project">履約實績</option><option value="catalogue">商品型錄</option><option value="reference">過往投標資料</option><option value="service">產品／服務</option></select></label>
+            <label>名稱<input id="tiAssetTitle" required maxlength="250" placeholder="例：ISO 27001 證書或完成專案名稱"></label>
+            <label>核發單位／客戶<input id="tiAssetIssuer" maxlength="200" placeholder="填寫實際證明來源"></label>
+            <label>證照／案件編號<input id="tiAssetNumber" maxlength="150" placeholder="選填"></label>
+            <label>核發／專案日期<input id="tiAssetIssued" type="date"></label>
+            <label>有效期限<input id="tiAssetExpires" type="date"></label>
+            <label class="wide">內容與證據備註<textarea id="tiAssetDetails" rows="3" maxlength="5000" placeholder="來源、可查核的條件、履約內容；勿填沒有實際取得的證照"></textarea></label>
+            <div class="form-actions"><button id="tiAssetSave" class="primary-btn" type="submit">新增資料</button></div>
+          </form>
+          <div id="tiCompanyStatus" class="notice" role="status">登入後可保存私人公司資料。</div>
+          <div id="tiCompanyAssets" class="ti-asset-list"></div>
+        </div>
+      </section>
       <section id="view-about" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">DATA & TRUST</div><h1>資料來源與使用說明</h1><p>清楚說明哪些資料是真實來源、哪些只是本機計算，以及還沒完成的後端功能。</p></div>
         <div class="panel prose">
@@ -602,5 +637,8 @@
 <script type="module" src="./account-privacy.js"></script>
 <script type="module" src="./support.js"></script>
 <script type="module" src="./debarred.js"></script>
+<script type="module" src="./nav-groups.js"></script>
+<script type="module" src="./company-workspace.js"></script>
+<script type="module" src="./case-workspace.js"></script>
 </body>
 </html>
