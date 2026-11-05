@@ -152,7 +152,7 @@ async function enrich(c){
 // Background completeness pass: fetch REAL details for archived cases without
 // hallucinating budget, deadline, official link or contract terms.
 async function enrichMissingDetails(){
- const candidates=await db("rpc/ti_pick_details_enrichment","POST",{p_limit:6});
+ const candidates=await db("rpc/ti_pick_details_enrichment","POST",{p_limit:8});
  if(!Array.isArray(candidates))throw Error("detail enrichment queue unavailable");
  let success=0,failed=0;
  const problems=[];
