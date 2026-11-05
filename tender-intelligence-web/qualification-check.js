@@ -62,7 +62,7 @@ async function run(){
   if(!checks.length){out.replaceChildren(el('p','未擷取到可核對的資格條款。可能是掃描品質或內容格式問題，請人工閱讀原文。','notice warning'));status('沒有可用的資格條款，不會自動判定符合。');return;}
   for(const c of checks)c.suggestions=candidates(c.requirement,assets||[]).map(a=>({id:a.id,title:a.title,expires_on:a.expires_on||null}));
   out.replaceChildren();
-  const header=el('p','下方是原文候選資格條款，右側公司資料僅供人工對照。**未經本人確認，均維持「待確認」**。','notice');
+  const header=el('p','下方是原文候選資格條款，右側公司資料僅供人工對照。未經本人確認，均維持「待確認」。','notice');
   out.append(header);
   const cards=[];
   for(const [i,c] of checks.entries()){
