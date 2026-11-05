@@ -1037,7 +1037,7 @@ function hook(){
     state.docPages=pages;
     const hits=[];
     for(const page of pages){
-      const parts=asText(page.text).replace(/\\r/g,'\\n').split(/[\\n。；;]+/).map(x=>x.trim().replace(/\\s+/g,' ')).filter(x=>x.length>=8);
+      const parts=asText(page.text).replace(/\r/g,'\n').split(/[\n。；;]+/).map(x=>x.trim().replace(/\s+/g,' ')).filter(x=>x.length>=8);
       for(const part of parts)for(const [group,regex] of terms){
         if(regex.test(part)&&hits.filter(x=>x.group===group).length<12)hits.push({group,source:page.source,text:part.slice(0,650)});
       }
@@ -2034,7 +2034,7 @@ async function analyzeDocumentAI(){
     // Reuse user-initiated local OCR for image-only files and blank PDF pages.
     const cached=window.__tiOcrCache;
     const matching=cached?.name===file.name && cached?.size===file.size && cached?.lastModified===file.lastModified;
-    const imageOnly=/\\.(png|jpg|jpeg|webp)$/i.test(file.name);
+    const imageOnly=/\.(png|jpg|jpeg|webp)$/i.test(file.name);
     if(imageOnly&&!matching)throw Error('圖片文件請先執行本機 OCR，再使用 AI 分析。');
     let pages=imageOnly?[]:await parseDocument(file);
     if(matching){
