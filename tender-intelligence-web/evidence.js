@@ -107,6 +107,55 @@ async function coMentions(){
 }
 $('vendorEvidenceForm').addEventListener('submit',e=>void vendor(e));
 $('vendorCoMentionsButton').addEventListener('click',()=>void coMentions());
+async function vendorRoles(){
+ const tax=$('vendorEvidenceTaxId').value.trim(),box=$('vendorRolesOutput');
+ if(!/^\d{8}$/.test(tax)){box.replaceChildren(element('p','請先在上方輸入完整八碼統編。','minor'));return;}
+ box.replaceChildren(element('p','正在核對正式公告中有標明的公司角色…','minor'));
+ try{
+  const c=await getClient(),{data,error}=await c.rpc('ti_vendor_role_evidence',{p_tax_id:tax});
+  if(error)throw error;
+  box.replaceChildren();
+  box.append(element('p','該統編出現在 '+n(data.notice_mentions)+
+    ' 份已入庫公告。沒有公開完整投標名單的案件不計算得標勝率。','minor'));
+  const years=element('table','','analysis-list'),head=element('tr');
+  for(const title of ['年度','公告出現','不同案件','明示投標公告','明示得標公告','明示未得標公告','唯一得標且金額可用樣本','對應公告金額合計'])head.append(element('th',title));
+  years.append(head);
+  for(const y of data.years||[]){
+   const row=element('tr');
+   for(const item of [y.year,n(y.notice_mentions),n(y.case_mentions),
+    n(y.explicit_bidder_notices),n(y.explicit_winner_notices),
+    n(y.explicit_nonwinner_notices),n(y.single_winner_money_samples),
+    Number(y.single_winner_money_samples)>0?'NT$ '+n(y.single_winner_amount_samples):'無可歸屬樣本'])row.append(element('td',item));
+   years.append(row);
+  }
+  box.append(years);
+  const agencies=data.agencies||[];
+  box.append(element('h3','公告中出現的主要機關'));
+  for(const a of agencies.slice(0,10)){
+   box.append(element('p',(a.agency||a.unit_id)+'｜公告 '+n(a.notice_mentions)+
+     ' 筆｜明示得標 '+n(a.confirmed_award_notices)+' 筆','minor'));
+  }
+  box.append(element('h3','最近有角色證據的公告'));
+  for(const x of (data.recent||[]).slice(0,15)){
+   const row=element('div','','timeline-item');
+   row.append(link(x.unit_id,x.job_number,d(x.source_date)+'｜'+x.title));
+   const role=x.confirmed_winner?'公告明示得標':x.confirmed_nonwinner?'公告明示未得標':
+     x.confirmed_bidder?'公告明示投標':'公告僅列公司';
+   row.append(element('p',role+'｜'+(x.agency||'機關未公開')+
+    (x.whole_case_award_amount_single_winner!=null?'｜唯一得標廠商案件金額 NT
+$('awardSampleForm').addEventListener('submit',e=>void award(e));
+document.querySelector('[data-view="analytics"]').addEventListener('click',()=>{
+ if($('awardSampleOutput').textContent==='尚未查詢。')void award({preventDefault(){}});
+});
++
+     n(x.whole_case_award_amount_single_winner):''),'minor'));
+   box.append(row);
+  }
+  if(!data.recent?.length)box.append(element('p','已入庫公告尚無可查的來源明細。','minor'));
+ }catch(e){box.replaceChildren(element('p','廠商公告角色統計失敗：'+String(e.message||e),'notice warning'));}
+}
+
+$('vendorRolesButton').addEventListener('click',()=>void vendorRoles());
 $('awardSampleForm').addEventListener('submit',e=>void award(e));
 document.querySelector('[data-view="analytics"]').addEventListener('click',()=>{
  if($('awardSampleOutput').textContent==='尚未查詢。')void award({preventDefault(){}});
