@@ -21,6 +21,10 @@ async function waitPage(n,timeout=45000){
 }
 async function search(){
  await page.locator('#advSubmit').click();
+ await page.waitForFunction(()=>{
+   const text=document.getElementById('advStatus')?.textContent||'';
+   return text.includes('實際已入庫資料符合條件')||text.includes('資料庫進階搜尋失敗');
+ },null,{timeout:45000});
  await waitPage(1);
  const message=await page.locator('#advStatus').innerText();
  assert.ok(message.includes('實際已入庫資料符合條件'),'進階搜尋未完成：'+message);
