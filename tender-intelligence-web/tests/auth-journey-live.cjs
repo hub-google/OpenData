@@ -52,6 +52,13 @@ async function run(){
   await page.waitForTimeout(1200);
   return {button:short(await page.locator('#detailContent .detail-actions').first().innerText(),150),screen:await shot('14-save-case')};
  });
+ await step('官方資料缺漏補抓請求',async()=>{
+  await page.waitForFunction(()=>document.querySelector('.ti-decision-brief')?.textContent?.includes('資料完整度'),null,{timeout:12000});
+  const brief=page.locator('.ti-decision-brief');
+  await brief.getByRole('button',{name:'補抓這件標案的官方詳情'}).click();
+  await page.waitForFunction(()=>document.querySelector('.ti-decision-brief')?.textContent?.includes('已加入補抓佇列'),null,{timeout:8500});
+  return {status:short(await brief.innerText(),290)};
+ });
  await step('案件詳情：儲存投標評估',async()=>{
   await page.getByRole('tab',{name:'投標評估'}).click();
   const p=page.locator('#detailContent .ti-case-panel:not([hidden])');
@@ -158,7 +165,7 @@ async function run(){
    if(!user?.is_anonymous)throw Error('refuse cleanup of non-anonymous user');
    const removed={};
    const {data:docs}=await db.from('ti_documents').select('id,storage_path').eq('user_id',user.id);
-   for(const table of ['ti_qualification_checks','ti_report_schedules','ti_competitor_watches','ti_company_assets','ti_company_profiles','ti_bid_decisions','ti_tasks','ti_contract_obligations','ti_saved_cases','ti_watch_rules']){
+   for(const table of ['ti_detail_requests','ti_qualification_checks','ti_report_jobs','ti_report_schedules','ti_competitor_watches','ti_company_assets','ti_company_profiles','ti_bid_decisions','ti_tasks','ti_contract_obligations','ti_saved_cases','ti_watch_rules']){
     const {error}=await db.from(table).delete().eq('user_id',user.id);
     removed[table]=error?.message||'delete requested';
    }
