@@ -100,7 +100,7 @@ async function search(mode,query='',sourcePage=1){
       state.totalPages=Math.max(1,Number(data.total_pages||1));
       state.lastSearch='已入庫歷史資料'+(query?'：'+query:'');
     }else if(mode==='title'){
-      data=await fetchUnifiedTitleSearch(query,sourcePage);
+      data=await fetchUnifiedTitleSearch(query,sourcePage,{status:$('statusFilter').value,group:$('groupFilter').value,minBudget:$('budgetFilter').value,sort:$('sortFilter').value});
       state.totalPages=Math.max(1,Number(data.total_pages||1));
       state.lastSearch='跨日全文搜尋：'+query+'｜完整資料庫分頁';
     }else if(mode==='latest'){
@@ -1001,8 +1001,13 @@ function hook(){
     else{$('searchMode').value='title';$('searchQuery').value=x;search('title',x);}
     showView('search');
   }));
+  let filterDebounce=null;
   for(const id of ['statusFilter','groupFilter','budgetFilter','sortFilter']){
-    $(id).addEventListener(id==='budgetFilter'?'input':'change',()=>{state.clientPage=1;renderSearch();});
+    $(id).addEventListener(id==='budgetFilter'?'input':'change',()=>{
+      if(state.mode!=='title'){state.clientPage=1;renderSearch();return;}
+      clearTimeout(filterDebounce);
+      filterDebounce=setTimeout(()=>void search('title',state.query,1),id==='budgetFilter'?420:0);
+    });
   }
   $('prevPage').addEventListener('click',()=>nextPage(-1));
   $('nextPage').addEventListener('click',()=>nextPage(1));
