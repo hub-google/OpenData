@@ -1485,7 +1485,8 @@ export async function saveCloudDocument(fileOverride=null,caseIdOverride=null){
     throw dbError;
   }
   toast('已保存私有文件至 Supabase Storage。');
-  await renderCloudDocuments();
+  void renderCloudDocuments().catch(error=>console.warn("Cloud file list refresh:",readableError(error)));
+  document.dispatchEvent(new CustomEvent("ti:private-document-saved",{detail:{caseId:caseIdOverride||null,filename:file.name}}));
   return true;
  }catch(err){toast('文件儲存失敗：'+readableError(err));return false;}
  finally{button.disabled=false;}
