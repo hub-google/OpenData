@@ -2,15 +2,20 @@
 // Automated outbound alerts are not claimed until the event processor is configured.
 import {getClient} from './backend.js';
 const e=(tag,text='',cls='')=>{const x=document.createElement(tag);x.textContent=text;if(cls)x.className=cls;return x;};
-let root=null,db=null,user=null;
+let root=null,db=null,user=null,loadGeneration=0;
 const msg=t=>{const box=root?.querySelector('[data-watch-status]');if(box)box.textContent=t;};
 async function auth(){
  db=await getClient();const {data,error}=await db.auth.getUser();user=error?null:data?.user;
  if(!user){msg('請先登入後再新增監控廠商。');return false;}return true;
 }
 async function load(){
+ const generation=++loadGeneration;
  if(!root||!(await auth()))return;
- const {data,error}=await db.from('ti_competitor_watches').select('id,company_name,tax_id,created_at').eq('user_id',user.id).eq('active',true).order('created_at',{ascending:false});
+ const userId=user.id;
+ const {data,error}=await db.from('ti_competitor_watches').select('id,company_name,tax_id,created_at').eq('user_id',userId).eq('active',true).order('created_at',{ascending:false});
+ // Delayed reads from a previous navigation or auth event must not overwrite a
+ // newer successful save. The most recently started read owns the UI.
+ if(generation!==loadGeneration||user?.id!==userId)return;
  if(error){msg('讀取失敗：'+error.message);return;}
  const list=root.querySelector('[data-watch-list]');list.replaceChildren();
  if(!data?.length)list.append(e('p','還沒有指定監控廠商。','minor'));
@@ -34,15 +39,18 @@ async function load(){
 }
 async function saveWatch(ev){
  ev.preventDefault();
+ ++loadGeneration; // invalidate reads started before this write
  if(!(await auth()))return;
  const name=root.querySelector('[name="competitorName"]').value.trim(),
  tax=root.querySelector('[name="competitorTaxId"]').value.trim(),
  button=root.querySelector('button[type="submit"]');
  if(name.length<2||(tax&&!/^\d{8}$/.test(tax))){msg('請輸入至少 2 字的廠商名稱；統編若填入須為 8 碼。');return;}
- button.disabled=true;
+ button.disabled=true;msg('正在儲存指定廠商…');
  try{
-  const {error}=await db.from('ti_competitor_watches').insert({user_id:user.id,company_name:name,tax_id:tax||null});
-  if(error)throw error;
+  const {data:inserted,error}=await db.from('ti_competitor_watches')
+   .insert({user_id:user.id,company_name:name,tax_id:tax||null})
+   .select('id').single();
+  if(error||!inserted?.id)throw error||Error('資料庫未確認新增成功');
   root.querySelector('form').reset();
   await load();
  }catch(error){msg('新增失敗：'+(error.code==='23505'?'此廠商已追蹤':error.message));}
