@@ -238,10 +238,17 @@ export async function fetchUnifiedTitleSearch(query,page=1,filters={}){
  const min=filters.minBudget===''||filters.minBudget==null?null:Number(filters.minBudget);
  const sort=['date','budget','title'].includes(filters.sort)?filters.sort:'date';
  if(min!==null&&(!Number.isFinite(min)||min<0))throw Error('最低公開預算格式錯誤');
- const {data,error}=await client.rpc('ti_fast_archive_filtered',{
-  p_term:term,p_kind:kind,p_group:group==='全部'?'':group,
-  p_min_budget:min,p_sort:sort,p_page:page,p_limit:30
- });
+ const args={p_term:term,p_kind:kind,p_group:group==='全部'?'':group,
+  p_min_budget:min,p_sort:sort,p_page:page,p_limit:30};
+ let data,error;
+ // SQL statement timeouts can happen while thousands of notices are ingested.
+ // Retry the exact same source-backed query; never drop user filters or fabricate rows.
+ for(let attempt=0;attempt<3;attempt++){
+  const response=await client.rpc('ti_fast_archive_filtered',args);
+  data=response.data;error=response.error;
+  if(!error||!/statement timeout|canceling statement|code.*57014/i.test(String(error.message||error)))break;
+  if(attempt<2)await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
+ }
  if(error)throw error;
  const rows=Array.isArray(data?.rows)?data.rows:[];
  const total=Number(data?.total??0);
