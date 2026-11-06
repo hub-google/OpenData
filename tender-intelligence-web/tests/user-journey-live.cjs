@@ -68,17 +68,17 @@ async function main(){
   await page.locator('#statusFilter').selectOption('招標');
   await page.locator('#budgetFilter').fill('1000000');
   await page.locator('#searchForm button[type="submit"]').click();
-  const loaded=await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資安')&&document.querySelector('#resultInfo')?.textContent?.includes('條件已套用全庫'),null,{timeout:18000}).then(()=>true).catch(()=>false);
-  if(!loaded)throw Error('篩選後結果未更新；輸入框='+await page.locator('#searchQuery').inputValue()+'；結果='+short(await page.locator('#resultInfo').innerText(),380)+'；錯誤='+short(await page.locator('#dataError').innerText(),180));
+  const ready=await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資安')&&document.querySelector('#resultInfo')?.textContent?.includes('條件已套用全庫'),null,{timeout:18000}).then(()=>true).catch(()=>false);
+  if(!ready)throw Error('篩選後結果未更新；輸入框='+await page.locator('#searchQuery').inputValue()+'；結果='+short(await page.locator('#resultInfo').innerText(),380)+'；錯誤='+short(await page.locator('#dataError').innerText(),180));
   const info=short(await page.locator('#resultInfo').innerText(),400);
   if(await page.locator('#dataError').isVisible())throw Error(await page.locator('#dataError').innerText());
   const matched=info.match(/資料庫符合\s*([\d,]+)\s*件.*當批載入\s*([\d,]+)\s*筆/);
   if(!matched)throw Error('沒有可靠的全庫符合與當批載入統計：'+info);
-  const total=Number(matched[1].replaceAll(',','')),loaded=Number(matched[2].replaceAll(',',''));
-  if(total<1||loaded!==Math.min(total,30))throw Error('全庫篩選與畫面筆數不一致：'+info);
+  const total=Number(matched[1].replaceAll(',','')),loadedCount=Number(matched[2].replaceAll(',',''));
+  if(total<1||loadedCount!==Math.min(total,30))throw Error('全庫篩選與畫面筆數不一致：'+info);
   const cards=await page.locator('#resultList article').count();
-  if(cards!==Math.min(loaded,20))throw Error('篩選結果卡片筆數錯誤：'+cards);
-  return {info,cards,total,loaded,screenshot:await shot('02b-filtered')};
+  if(cards!==Math.min(loadedCount,20))throw Error('篩選結果卡片筆數錯誤：'+cards);
+  return {info,cards,total,loaded:loadedCount,screenshot:await shot('02b-filtered')};
  });
  await step('進階搜尋：資安維護最低一百萬',async()=>{
   await nav('advanced');await page.locator('#advQuery').fill('資安 AND 維護');
