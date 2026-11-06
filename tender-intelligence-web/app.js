@@ -104,12 +104,14 @@ async function search(mode,query='',sourcePage=1){
       state.totalPages=Math.max(1,Number(data.total_pages||1));
       state.lastSearch='跨日全文搜尋：'+query+'｜完整資料庫分頁';
     }else if(mode==='latest'){
-      // Direct browser requests to OpenFun are frequently rejected by CORS.
-      // Prefer the indexed notices that were already imported server-side.
-      data=await fetchLatestCachedNotices();
+      // Never fetch an entire 3,000+ notice day on the first page. Freeze the
+      // selected source date across pages to avoid page drift during ingestion.
+      data=await fetchLatestCachedNotices({page:sourcePage,date:sourcePage>1?state.date:null});
       state.date=data.date;
-      state.totalPages=1;
-      state.lastSearch='已入庫最新公告 '+dateLabel(state.date)+'｜依最後成功同步結果顯示（非即時 API）';
+      state.totalPages=Math.max(1,Number(data.total_pages||1));
+      state.lastSearch=data.source==='case_fallback'
+       ?'公告明細目前無法讀取，改顯示真實已入庫案件（每案一筆，非當日公告全量）'
+       :'已入庫最新公告 '+dateLabel(state.date)+'｜依最後成功同步結果顯示（非即時 API）';
     }else{
       data=await fetchBasicArchiveSearch({mode,query,page:sourcePage});
       state.totalPages=Math.max(1,Number(data.total_pages||1));
@@ -117,9 +119,12 @@ async function search(mode,query='',sourcePage=1){
     }
     if(token!==state.running)return;
     state.totalRecords=Number.isFinite(Number(data.total_records))?Number(data.total_records):null;
+    state.latestSource=mode==='latest'?data.source:null;
     state.rows=(Array.isArray(data.records)?data.records:[]).map(normalize).filter(Boolean);
     renderSearch();
-    setStatus('資料庫連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),'success');
+    setStatus(data.source==='case_fallback'?'公告明細暫時不穩定，已切換真實案件備援'
+      :'資料庫連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),
+      data.source==='case_fallback'?'failure':'success');
   }catch(err){
     if(token!==state.running)return;
     state.rows=[];state.searchRows=[];state.totalPages=1;
@@ -154,8 +159,11 @@ function renderSearch(){
   $('trackingCount').textContent=Object.keys(store.saved).length;
   const localPages=Math.max(1,Math.ceil(rows.length/20));
   state.clientPage=Math.min(state.clientPage,localPages);
-  const total=state.totalRecords!==null&&state.mode!=='latest'?'｜資料庫符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件':'';
-  $('resultInfo').textContent=state.lastSearch+total+'｜當批載入 '+state.rows.length+' 筆'+(state.mode==='latest'?'公告、'+dedupe(state.rows).length+' 件不同案件':'案件')+(state.mode==='title'?'；條件已套用全庫':'；當批篩選後 '+rows.length+' 筆')+'（非全國完整資料）';
+  const isNotice=state.mode==='latest'&&state.latestSource==='database_notices';
+  const total=state.totalRecords===null?'':state.mode==='latest'
+    ?'｜已入庫合計 '+state.totalRecords.toLocaleString('zh-TW')+(isNotice?' 筆當日公告':' 件案件')
+    :'｜資料庫符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件';
+  $('resultInfo').textContent=state.lastSearch+total+'｜當批載入 '+state.rows.length+' 筆'+(isNotice?'公告、'+dedupe(state.rows).length+' 件不同案件':'案件')+(state.mode==='title'?'；條件已套用全庫':'；當批篩選後 '+rows.length+' 筆')+'（非全國完整資料）';
   const subset=rows.slice((state.clientPage-1)*20,state.clientPage*20);
   $('resultList').replaceChildren(...(subset.length?subset.map(r=>caseCard(r)): [E('div','empty',state.rows.length?'沒有符合本頁篩選條件的案件，請放寬篩選。':'此查詢無資料，或資料來源暫時無法回傳。')]));
   $('pageInfo').textContent='來源第 '+state.sourcePage+'/'+state.totalPages+' 頁 · 這批第 '+state.clientPage+'/'+localPages+' 頁';
@@ -166,11 +174,11 @@ function nextPage(direction){
   const localPages=Math.max(1,Math.ceil(state.searchRows.length/20));
   if(direction>0){
     if(state.clientPage<localPages){state.clientPage++;renderSearch();return;}
-    if(state.mode==='latest'||state.sourcePage>=state.totalPages)return;
+    if(state.sourcePage>=state.totalPages)return;
     search(state.mode,state.query,state.sourcePage+1);
   }else{
     if(state.clientPage>1){state.clientPage--;renderSearch();return;}
-    if(state.mode!=='latest'&&state.sourcePage>1)search(state.mode,state.query,state.sourcePage-1).then(()=>{state.clientPage=Math.max(1,Math.ceil(state.searchRows.length/20));renderSearch();});
+    if(state.sourcePage>1)search(state.mode,state.query,state.sourcePage-1).then(()=>{state.clientPage=Math.max(1,Math.ceil(state.searchRows.length/20));renderSearch();});
   }
 }
 function caseCard(row,{radarScore=null}={}){
