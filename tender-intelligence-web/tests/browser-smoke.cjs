@@ -19,6 +19,13 @@ async function waitPage(n,timeout=45000){
    return text.startsWith('第 '+value+'／');
  },n,{timeout});
 }
+async function navigate(view){
+ if(await page.locator('#detailDrawer').isVisible())await page.locator('#closeDetail').click();
+ const button=page.locator('[data-view="'+view+'"]').first();
+ const group=button.locator('xpath=ancestor::details[1]');
+ if(await group.count() && (await group.getAttribute('open'))===null)await group.locator('summary').click();
+ await button.click();
+}
 async function search(){
  await page.locator('#advSubmit').click();
  await page.waitForFunction(()=>{
@@ -118,7 +125,7 @@ async function firstAdvancedId(){
    await searchBasic('companyId','03794905');
  });
  await check('Vendor intelligence list works through archived actual notices',async()=>{
-   await page.locator('[data-view="vendors"]').first().click();
+   await navigate('vendors');
    await page.locator('#vendorMode').selectOption('id');
    await page.locator('#vendorQuery').fill('03794905');
    await page.locator('#vendorForm button[type="submit"]').click();
@@ -126,7 +133,7 @@ async function firstAdvancedId(){
    assert.ok((await page.locator('#vendorSummary').innerText()).includes('已入庫來源資料'));
  });
  await check('Manual keyword watch checks data without upstream CORS',async()=>{
-   await page.locator('[data-view="alerts"]').first().click();
+   await navigate('alerts');
    await page.locator('#watchTerm').fill('醫療');
    await page.locator('#watchForm button[type="submit"]').click();
    await page.locator('#watchOutput .watch-item').first().waitFor({timeout:10000});
@@ -136,7 +143,7 @@ async function firstAdvancedId(){
    assert.ok((await page.locator('#watchOutput').innerText()).includes('上次檢查'));
  });
  await check('Advanced search default page 1 loads',async()=>{
-   await page.locator('[data-view="advanced"]').first().click();
+   await navigate('advanced');
    await waitPage(1,60000);
    assert.ok((await page.locator('#advResults .case-card').count())>0);
  });
@@ -214,7 +221,7 @@ async function firstAdvancedId(){
    assert.ok(fast>0,'No-result simple keyword did not use indexed search');
  });
  await check('Verified decision-method filter excludes missing decision method',async()=>{
-   await page.locator('[data-view="advanced"]').first().click();
+   await navigate('advanced');
    await page.locator('#advQuery').fill('');
    await page.locator('#advAgency').fill('');
    await page.locator('#advDecisionMethod').fill('最低標');
@@ -224,12 +231,12 @@ async function firstAdvancedId(){
    assert.ok(lines.every(s=>s.includes('決標方式：最低標')),'Unknown decision method was included');
  });
  await check('Source-only failed-bid explorer loads actual notices',async()=>{
-   await page.locator('[data-view="issues"]').first().click();
+   await navigate('issues');
    await page.waitForFunction(()=>document.getElementById('issueStatus')?.textContent?.includes('找到'),null,{timeout:60000});
    assert.ok((await page.locator('#issueResults .case-card').count())>0);
  });
  await check('Archive award-price strata by decision method and budget',async()=>{
-   await page.locator('[data-view="analytics"]').first().click();
+   await navigate('analytics');
    await page.locator('#awardMethod').fill('最低標');
    await page.locator('#awardMinBudget').fill('100000');
    await page.locator('#awardMaxBudget').fill('5000000');
@@ -238,7 +245,7 @@ async function firstAdvancedId(){
    assert.ok((await page.locator('#awardSampleOutput .timeline-item').count())>0,'No evidence-priced cases');
  });
  await check('Actual agency monthly and repeated-name archive evidence',async()=>{
-   await page.locator('[data-view="agencies"]').first().click();
+   await navigate('agencies');
    await page.locator('#agencyId').fill('3.13.50');
    await page.locator('#agencyForm button[type="submit"]').click();
    await page.locator('#agencyOutput table').first().waitFor({timeout:60000});
@@ -253,12 +260,12 @@ async function firstAdvancedId(){
    await page.locator('#agencyRepeatOutput .watch-item').first().waitFor({timeout:60000});
  });
  await check('Daily source-quality report exposes completeness and licensing',async()=>{
-   await page.locator('[data-view="about"]').first().click();
+   await navigate('about');
    await page.waitForFunction(()=>document.getElementById('qualityCheckStatus')?.textContent?.includes('案件'),null,{timeout:45000});
    assert.ok((await page.locator('#qualitySources .timeline-item').count())>0);
  });
  await check('Public vendor co-mentions show actual cross-referenced notices',async()=>{
-   await page.locator('[data-view="vendors"]').first().click();
+   await navigate('vendors');
    await page.locator('#vendorEvidenceTaxId').fill('24935439');
    await page.locator('#vendorCoMentionsButton').click();
    await page.waitForFunction(()=>{
