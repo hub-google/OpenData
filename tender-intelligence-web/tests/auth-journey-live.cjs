@@ -92,6 +92,16 @@ async function run(){
   if(content.includes('文件尚未儲存成功'))throw Error('私有文件上傳失敗：'+toast+'；'+content);
   return {content,toast,screen:await shot('17-document')};
  });
+ await step('下載單案私有文件並確認原始位元內容',async()=>{
+  const panel=page.locator('#detailContent .ti-case-panel:not([hidden])');
+  const [download]=await Promise.all([
+   page.waitForEvent('download',{timeout:15000}),
+   panel.getByRole('button',{name:'下載文件'}).first().click()
+  ]);
+  const bytes=fs.readFileSync(await download.path());
+  if(!bytes.equals(file.buffer))throw Error('下載位元內容與上傳檔案不一致');
+  return {filename:download.suggestedFilename(),bytes:bytes.length};
+ });
  await step('標書條款：公司實績候選比對並保存',async()=>{
   await page.locator('#closeDetail').click();await nav('documents');
   await page.locator('#documentFile').setInputFiles(file);
@@ -129,7 +139,13 @@ async function run(){
   const status=short(await page.locator('[data-report-status]').innerText()),
     preview=short(await page.locator('.ti-report-preview:not([hidden])').first().innerText(),280);
   if(!status.includes('已立即產生報表'))throw Error('立即產生報表未成功：'+status);
-  return {status,preview,screen:await shot('20-report')};
+  const [download]=await Promise.all([
+   page.waitForEvent('download',{timeout:15000}),
+   page.locator('[data-report-results]').getByRole('button',{name:'下載 CSV'}).first().click()
+  ]);
+  const csv=fs.readFileSync(await download.path(),'utf8');
+  if(!csv.includes('UT-11601')||!csv.includes('case_id'))throw Error('CSV 缺少儲存的投標案例');
+  return {status,preview,download:download.suggestedFilename(),bytes:Buffer.byteLength(csv),screen:await shot('20-report')};
  });
  await step('私人資料跨帳號隔離測試',async()=>{
   const other=await browser.newContext({locale:'zh-TW',timezoneId:'Asia/Taipei'});
@@ -158,6 +174,22 @@ async function run(){
  await step('返回頁面：確認私人公司資料跨頁保存',async()=>{
   await nav('company');await page.locator('#tiCompanyRefresh').click();await page.waitForTimeout(1200);
   return {company:await page.locator('#tiCompanyName').inputValue(),asset:short(await page.locator('#tiCompanyAssets').innerText(),240),screen:await shot('21-readback')};
+ });
+ await step('刪除單案私人文件並確認已從資料庫移除',async()=>{
+  await page.goto(BASE+'?case_unit=3.1.1&case_no=UT-11601',{waitUntil:'domcontentloaded',timeout:35000});
+  await page.getByRole('tab',{name:'文件與標書'}).click();
+  const panel=page.locator('#detailContent .ti-case-panel:not([hidden])');
+  await panel.getByRole('button',{name:'刪除文件'}).first().waitFor({timeout:12000});
+  page.once('dialog',dialog=>dialog.accept());
+  await panel.getByRole('button',{name:'刪除文件'}).first().click();
+  await page.waitForFunction(()=>!document.querySelector('#detailContent .ti-case-panel:not([hidden])')?.textContent?.includes('tender-audit-check.txt'),null,{timeout:12000});
+  const result=await page.evaluate(async()=>{
+   const {getClient}=await import('./backend.js'),db=await getClient(),{data:{user}}=await db.auth.getUser();
+   const {data,error}=await db.from('ti_documents').select('id').eq('user_id',user.id).eq('case_id','3.1.1::UT-11601');
+   return {remaining:data?.length,error:error?.message};
+  });
+  if(result.error||result.remaining!==0)throw Error('文件刪除後資料庫仍有紀錄：'+JSON.stringify(result));
+  return result;
  });
  await step('清理本次測試帳號下的私人測試資料',async()=>{
   const result=await page.evaluate(async()=>{
