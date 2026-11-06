@@ -46,7 +46,7 @@ async function main(){
   await page.locator('#searchQuery').fill('資訊系統');
   await page.locator('#searchForm button[type="submit"]').click();
   await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('資料庫符合')&&document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資訊系統'),null,{timeout:18000});
-  const ids=async()=>page.locator('#resultList article').evaluateAll(cards=>cards.map(card=>card.textContent.match(/案號\\s*([^\\s]+)/)?.[1]||card.textContent.slice(0,100)));
+  const ids=async()=>page.locator('#resultList article').evaluateAll(cards=>cards.map(card=>card.textContent.match(/案號\s*([^\s]+)/)?.[1]||card.textContent.slice(0,100)));
   const first=await ids();
   if(first.length!==20)throw Error('首批第一頁應有 20 筆，實際 '+first.length);
   await page.locator('#nextPage').click();
@@ -71,7 +71,7 @@ async function main(){
   await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資安')&&document.querySelector('#resultInfo')?.textContent?.includes('條件已套用全庫'),null,{timeout:18000});
   const info=short(await page.locator('#resultInfo').innerText(),400);
   if(await page.locator('#dataError').isVisible())throw Error(await page.locator('#dataError').innerText());
-  const matched=info.match(/資料庫符合\\s*([\\d,]+)\\s*件.*當批載入\\s*([\\d,]+)\\s*筆/);
+  const matched=info.match(/資料庫符合\s*([\d,]+)\s*件.*當批載入\s*([\d,]+)\s*筆/);
   if(!matched)throw Error('沒有可靠的全庫符合與當批載入統計：'+info);
   const total=Number(matched[1].replaceAll(',','')),loaded=Number(matched[2].replaceAll(',',''));
   if(total<1||loaded!==Math.min(total,30))throw Error('全庫篩選與畫面筆數不一致：'+info);
