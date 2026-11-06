@@ -68,7 +68,8 @@ async function main(){
   await page.locator('#statusFilter').selectOption('招標');
   await page.locator('#budgetFilter').fill('1000000');
   await page.locator('#searchForm button[type="submit"]').click();
-  await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資安')&&document.querySelector('#resultInfo')?.textContent?.includes('條件已套用全庫'),null,{timeout:18000});
+  const loaded=await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資安')&&document.querySelector('#resultInfo')?.textContent?.includes('條件已套用全庫'),null,{timeout:18000}).then(()=>true).catch(()=>false);
+  if(!loaded)throw Error('篩選後結果未更新；輸入框='+await page.locator('#searchQuery').inputValue()+'；結果='+short(await page.locator('#resultInfo').innerText(),380)+'；錯誤='+short(await page.locator('#dataError').innerText(),180));
   const info=short(await page.locator('#resultInfo').innerText(),400);
   if(await page.locator('#dataError').isVisible())throw Error(await page.locator('#dataError').innerText());
   const matched=info.match(/資料庫符合\s*([\d,]+)\s*件.*當批載入\s*([\d,]+)\s*筆/);
