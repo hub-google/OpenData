@@ -106,11 +106,43 @@ function makeDocuments(panel,caseId){
  });
  async function refreshFiles(){
   const {db,user}=await owner();if(!user){status(panel,'登入後才能查看自己的私有文件。');return;}
-  const {data,error}=await db.from('ti_documents').select('id,filename,extraction_status,created_at').eq('user_id',user.id).eq('case_id',caseId).order('created_at',{ascending:false}).limit(30);
+  const {data,error}=await db.from('ti_documents').select('id,filename,storage_path,extraction_status,created_at').eq('user_id',user.id).eq('case_id',caseId).order('created_at',{ascending:false}).limit(30);
   if(error){status(panel,'讀取文件失敗：'+err(error));return;}
   if(!panel.isConnected)return;list.replaceChildren();
   if(!data?.length)list.append(el('p','尚無關聯此案的雲端文件；可到文件庫選擇案件上傳。','minor'));
-  for(const doc of data||[])list.append(el('div',doc.filename+'｜'+doc.extraction_status,'ti-case-listrow'));
+  for(const doc of data||[]){
+   const row=el('div','','ti-case-listrow'),
+      name=el('span',doc.filename+'｜'+(doc.extraction_status||'已儲存')),
+      download=el('button','下載文件','ghost-btn'),
+      remove=el('button','刪除文件','ghost-btn');
+   download.type='button';remove.type='button';
+   download.addEventListener('click',async()=>{
+    download.disabled=true;status(panel,'正在驗證權限並下載自己的私人文件…');
+    try{
+     const {data:blob,error:loadError}=await db.storage.from('ti-private-documents').download(doc.storage_path);
+     if(loadError||!blob)throw loadError||Error('下載未取得文件');
+     const url=URL.createObjectURL(blob),a=document.createElement('a');
+     a.href=url;a.download=doc.filename;a.style.display='none';
+     document.body.append(a);a.click();a.remove();
+     setTimeout(()=>URL.revokeObjectURL(url),10000);
+     status(panel,'已開始下載 '+doc.filename+'。');
+    }catch(error){status(panel,'私人文件下載失敗：'+err(error));}
+    finally{download.disabled=false;}
+   });
+   remove.addEventListener('click',async()=>{
+    if(!window.confirm('確定永久刪除本案文件「'+doc.filename+'」？'))return;
+    remove.disabled=true;
+    try{
+     const {error:storageError}=await db.storage.from('ti-private-documents').remove([doc.storage_path]);
+     if(storageError)throw storageError;
+     const {error:rowError}=await db.from('ti_documents').delete().eq('id',doc.id).eq('user_id',user.id).eq('case_id',caseId);
+     if(rowError)throw rowError;
+     await refreshFiles();
+     status(panel,'已刪除本案件的私人文件。');
+    }catch(error){status(panel,'刪除文件失敗：'+err(error));remove.disabled=false;}
+   });
+   row.append(name,download,remove);list.append(row);
+  }
   if(data?.length)status(panel,'已同步 '+data.length+' 份本案件私人文件。');
   let history=panel.querySelector('.ti-qualification-history');
   if(!history){history=el('div','','ti-case-list ti-qualification-history');panel.append(el('h3','此案已保存的資格核對'),history);}
