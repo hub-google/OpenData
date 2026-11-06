@@ -112,9 +112,20 @@ export async function fetchLatestCachedNotices({page=1,date:requestedDate=null}=
     award_amount:n.award_amount??info.award_amount,brief
    });
   }
-  const total=Number(response.count||0);
+  // The embedded !inner join can suppress PostgREST count in some responses.
+  // Count lightweight notice IDs separately so the user can page all notices
+  // without re-downloading their full source JSON.
+  let count=response.count;
+  if(count===null||count===undefined||Number(count)<records.length){
+   const lookup=await client.from('ti_notices').select('id',{count:'exact',head:true}).eq('source_date',day);
+   if(!lookup.error)count=lookup.count;
+  }
+  const total=Number(count);
+  const totalKnown=Number.isFinite(total)&&total>=records.length;
+  const pages=totalKnown?Math.max(1,Math.ceil(total/perPage))
+    :currentPage+(response.data?.length===perPage?1:0);
   return {records,date:String(day),source:'database_notices',
-   total_records:total,total_pages:Math.max(1,Math.ceil(total/perPage))};
+   total_records:totalKnown?total:null,total_pages:pages};
  }
  try{return await readPage();}
  catch(error){
