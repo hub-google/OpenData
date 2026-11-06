@@ -1008,7 +1008,10 @@ function hook(){
     const submitted=makeQuery();
     if(submitted)void search(submitted.mode,submitted.query,1);
   });
+  $('searchQuery').addEventListener('input',()=>clearTimeout(filterDebounce));
+  $('searchMode').addEventListener('change',()=>clearTimeout(filterDebounce));
   document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+    clearTimeout(filterDebounce);
     const x=b.dataset.preset;
     if(x==='latest'){$('searchMode').value='latest';$('searchQuery').value='';search('latest');}
     else{$('searchMode').value='title';$('searchQuery').value=x;search('title',x);}
@@ -1018,7 +1021,12 @@ function hook(){
     $(id).addEventListener(id==='budgetFilter'?'input':'change',()=>{
       if(state.mode!=='title'){state.clientPage=1;renderSearch();return;}
       clearTimeout(filterDebounce);
-      filterDebounce=setTimeout(()=>void search('title',state.query,1),id==='budgetFilter'?420:0);
+      // Never overwrite a query the user has typed but not submitted.
+      // An old in-flight filter refresh used to reset the input to state.query.
+      if($('searchQuery').value.trim()!==state.query)return;
+      filterDebounce=setTimeout(()=>{
+        if($('searchQuery').value.trim()===state.query)void search('title',state.query,1);
+      },id==='budgetFilter'?420:0);
     });
   }
   $('prevPage').addEventListener('click',()=>nextPage(-1));
