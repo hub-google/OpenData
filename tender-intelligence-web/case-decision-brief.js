@@ -1,5 +1,6 @@
 // Evidence-first tender briefing displayed before the six case tabs.
 import {getClient} from './backend.js';
+import {safeOfficial} from './core.mjs';
 const node=(tag,text='',cls='')=>{const el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;return el;};
 const sourceUrl='https://web.pcc.gov.tw/';
 let token=0;
@@ -40,7 +41,7 @@ async function render(info){
   return;
  }
  const details=detailRow?.details||{},deadline=caseRow.deadline_at||details.deadline_at,
- official=caseRow.official_url||details.official_page,
+ official=safeOfficial(caseRow.official_url||details.official_page),
  classification=caseRow.group_name&&caseRow.group_name!=='未分類',
  qualification=String(details.qualification||'').trim(),
  deposit=String(details.deposit||'').trim(),
@@ -98,6 +99,12 @@ async function render(info){
   const a=node('a','開啟官方公告','ghost-btn');a.href=official;a.target='_blank';a.rel='noopener noreferrer';actions.append(a);
  }else{
   const a=node('a','到政府採購網查原文','ghost-btn');a.href=sourceUrl;a.target='_blank';a.rel='noopener noreferrer';actions.append(a);
+  const archived=new URL('https://pcc-api.openfun.app/api/tender');
+  archived.searchParams.set('unit_id',caseRow.unit_id);
+  archived.searchParams.set('job_number',caseRow.job_number);
+  const source=node('a','查看第三方公告資料（非官方）','ghost-btn');
+  source.href=archived.href;source.target='_blank';source.rel='noopener noreferrer';
+  actions.append(source);
   actions.append(action('複製機關與案號',()=>{
    const id=(caseRow.agency||caseRow.unit_id||'')+'　案號 '+(caseRow.job_number||'');
    navigator.clipboard.writeText(id).then(()=>{summary.textContent='已複製「'+id+'」，請到政府採購網依機關與案號查詢。';}).catch(()=>{summary.textContent='無法使用剪貼簿。機關：'+caseRow.agency+'；案號：'+caseRow.job_number;});
