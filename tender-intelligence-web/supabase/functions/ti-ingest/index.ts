@@ -193,8 +193,9 @@ async function ingest(mode){
  try{
   let date;
   if(mode==="retry"){
+    // Rotate unresolved source dates: one repeatedly failing upstream 500 must not starve other dates.
     const due=await db("ti_backfill_gaps?select=source_date&resolved_at=is.null&next_retry_at=lte."+
-      encodeURIComponent(new Date().toISOString())+"&order=source_date.asc&limit=1");
+      encodeURIComponent(new Date().toISOString())+"&order=last_attempt_at.asc.nullsfirst,source_date.desc&limit=1");
     if(!due?.length)return {ok:true,mode:"retry",status:"paused",reason:"no source gaps currently eligible"};
     date=due[0].source_date;backfillDate=date;
   }else if(mode==="backfill"){
