@@ -29,6 +29,21 @@ async function main(){
   await page.locator('#searchForm').waitFor();await page.waitForTimeout(3500);
   return {http:response?.status(),title:await page.title(),groups:await page.locator('.ti-nav-summary').allTextContents(),kpi:short(await page.locator('#verifiedMetricsNote').innerText()),screenshot:await shot('01-home')};
  });
+ await step('首頁最新公告分頁與真實資料備援',async()=>{
+  await nav('search');
+  await page.waitForFunction(()=>{
+    const info=document.querySelector('#resultInfo')?.textContent||'';
+    return info.includes('當批載入')||!document.querySelector('#dataError')?.hidden;
+  },null,{timeout:32000});
+  if(await page.locator('#dataError').isVisible())
+   throw Error('首頁最新公告連備援都無法讀取：'+short(await page.locator('#dataError').innerText(),320));
+  const info=short(await page.locator('#resultInfo').innerText(),450),fallback=info.includes('公告明細目前無法讀取');
+  const cards=await page.locator('#resultList .case-card').count();
+  if(cards<1)throw Error('首頁沒有可閱讀的真實公告／案件資料：'+info);
+  if(fallback&&!info.includes('每案一筆'))throw Error('備援資料沒有清楚標示差異：'+info);
+  if(!fallback&&!info.includes('已入庫最新公告'))throw Error('公告資料來源未明確：'+info);
+  return {info,fallback,cards,source_page:await page.locator('#pageInfo').innerText(),screenshot:await shot('01b-latest')};
+ });
  await step('標案搜尋：資訊系統',async()=>{
   await nav('search');await page.locator('#searchMode').selectOption('title');
   await page.locator('#searchQuery').fill('資訊系統');await page.locator('#searchForm button[type="submit"]').click();await page.waitForTimeout(4500);
