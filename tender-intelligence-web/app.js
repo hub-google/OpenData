@@ -131,7 +131,14 @@ async function search(mode,query='',sourcePage=1){
   }
 }
 function searchLocally(){
-  // The latest feed is a list of notices, not a list of distinct cases.
+  // Full-database title search has already applied ALL user filters and sorting
+  // in ti_fast_archive_filtered. Filtering this 30-row slice a second time with
+  // different client-side status rules silently hides real matches.
+  if(state.mode==='title'){
+    state.searchRows=state.rows;
+    return;
+  }
+  // Latest is a notice feed, while other modes return distinct indexed cases.
   state.searchRows=filtered(state.mode==='latest'?state.rows:dedupe(state.rows),{
     group:$('groupFilter').value,status:$('statusFilter').value,
     minBudget:$('budgetFilter').value,sort:$('sortFilter').value
@@ -148,7 +155,7 @@ function renderSearch(){
   const localPages=Math.max(1,Math.ceil(rows.length/20));
   state.clientPage=Math.min(state.clientPage,localPages);
   const total=state.totalRecords!==null&&state.mode!=='latest'?'｜資料庫符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件':'';
-  $('resultInfo').textContent=state.lastSearch+total+'｜當批載入 '+state.rows.length+' 筆'+(state.mode==='latest'?'公告、'+dedupe(state.rows).length+' 件不同案件':'案件')+'；當批篩選後 '+rows.length+' 筆（不是全國總量）';
+  $('resultInfo').textContent=state.lastSearch+total+'｜當批載入 '+state.rows.length+' 筆'+(state.mode==='latest'?'公告、'+dedupe(state.rows).length+' 件不同案件':'案件')+(state.mode==='title'?'；條件已套用全庫':'；當批篩選後 '+rows.length+' 筆')+'（非全國完整資料）';
   const subset=rows.slice((state.clientPage-1)*20,state.clientPage*20);
   $('resultList').replaceChildren(...(subset.length?subset.map(r=>caseCard(r)): [E('div','empty',state.rows.length?'沒有符合本頁篩選條件的案件，請放寬篩選。':'此查詢無資料，或資料來源暫時無法回傳。')]));
   $('pageInfo').textContent='來源第 '+state.sourcePage+'/'+state.totalPages+' 頁 · 這批第 '+state.clientPage+'/'+localPages+' 頁';
