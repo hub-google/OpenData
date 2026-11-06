@@ -118,8 +118,11 @@ async function run(){
   await nav('alerts');
   await page.getByRole('tab',{name:'競品追蹤'}).click();
   await page.locator('[name="competitorName"]').fill(prefix+'不存在廠商');
-  await page.locator('.ti-tracker-module button[type="submit"]').click();await page.waitForTimeout(1300);
+  await page.locator('.ti-tracker-module button[type="submit"]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-watch-status]')?.textContent?.includes('已保存 1 個指定廠商'),null,{timeout:15000});
   const status=short(await page.locator('[data-watch-status]').innerText()),url=page.url();
+  if(!await page.locator('[data-watch-list]').innerText().then(t=>t.includes(prefix+'不存在廠商')))
+   throw Error('監控清單沒有新增的指定廠商');
   if(!status.includes('已保存 1 個指定廠商')&&!status.includes('已載入 1 個指定廠商'))throw Error('競品新增未完成：'+status+'；當前網址：'+url+'；頁面錯誤：'+pageErrors.slice(-1));
   return {status,url,screen:await shot('19-competitor')};
  });
