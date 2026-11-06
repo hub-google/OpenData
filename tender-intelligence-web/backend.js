@@ -115,11 +115,13 @@ export async function fetchLatestCachedNotices({page=1,date:requestedDate=null}=
   // The embedded !inner join can suppress PostgREST count in some responses.
   // Count lightweight notice IDs separately so the user can page all notices
   // without re-downloading their full source JSON.
-  let count=response.count;
-  if(count===null||count===undefined||Number(count)<records.length){
-   const lookup=await client.from('ti_notices').select('id',{count:'exact',head:true}).eq('source_date',day);
-   if(!lookup.error)count=lookup.count;
-  }
+  let count=null;
+  // Always count the unjoined notice ledger: a joined row count can be
+  // truncated to 100 while the source date actually has thousands of records.
+  const lookup=await client.from('ti_notices').select('id',{count:'exact',head:true}).eq('source_date',day);
+  if(!lookup.error&&lookup.count!==null&&lookup.count!==undefined)count=lookup.count;
+  else if(response.count!==null&&response.count!==undefined&&Number(response.count)>perPage)
+   count=response.count;
   const total=Number(count);
   const totalKnown=Number.isFinite(total)&&total>=records.length;
   const pages=totalKnown?Math.max(1,Math.ceil(total/perPage))
