@@ -118,7 +118,7 @@ async function search(mode,query='',sourcePage=1){
       state.lastSearch='已入庫'+(listModes[mode]||'搜尋')+'：'+query+'｜依最後成功同步結果顯示';
     }
     if(token!==state.running)return;
-    state.totalRecords=Number.isFinite(Number(data.total_records))?Number(data.total_records):null;
+    state.totalRecords=data.total_records!==null&&data.total_records!==undefined&&Number.isFinite(Number(data.total_records))?Number(data.total_records):null;
     state.latestSource=mode==='latest'?data.source:null;
     state.rows=(Array.isArray(data.records)?data.records:[]).map(normalize).filter(Boolean);
     renderSearch();
