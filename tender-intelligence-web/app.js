@@ -999,16 +999,21 @@ function exportDoc(){
   download('\uFEFF'+rows.map(r=>r.map(csvEscape).join(',')).join('\r\n'),'標單條款檢核清單.csv','text/csv;charset=utf-8');
 }
 function hook(){
+  let filterDebounce=null;
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
   $('mobileMenu').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('mobile-open'));
-  $('searchForm').addEventListener('submit',e=>{e.preventDefault();const s=makeQuery();if(s)search(s.mode,s.query,1);});
+  $('searchForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    clearTimeout(filterDebounce);
+    const submitted=makeQuery();
+    if(submitted)void search(submitted.mode,submitted.query,1);
+  });
   document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
     const x=b.dataset.preset;
     if(x==='latest'){$('searchMode').value='latest';$('searchQuery').value='';search('latest');}
     else{$('searchMode').value='title';$('searchQuery').value=x;search('title',x);}
     showView('search');
   }));
-  let filterDebounce=null;
   for(const id of ['statusFilter','groupFilter','budgetFilter','sortFilter']){
     $(id).addEventListener(id==='budgetFilter'?'input':'change',()=>{
       if(state.mode!=='title'){state.clientPage=1;renderSearch();return;}
