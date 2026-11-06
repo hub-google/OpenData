@@ -36,6 +36,30 @@ async function main(){
   if(!info.includes('資料庫符合')||info.includes('資料庫符合 100 件'))throw Error('首頁跨日搜尋沒有完整結果：'+info+'；'+short(await page.locator('#dataError').innerText(),260));
   return {info,cards:await page.locator('#resultList article').count(),sample:short(await page.locator('#resultList').innerText(),280),screenshot:await shot('02-search')};
  });
+ await step('跨頁搜尋不漏案也不重複來源頁',async()=>{
+  await nav('search');
+  await page.locator('#statusFilter').selectOption('全部');
+  await page.locator('#groupFilter').selectOption('全部');
+  await page.locator('#budgetFilter').fill('');
+  await page.locator('#sortFilter').selectOption('date');
+  await page.locator('#searchMode').selectOption('title');
+  await page.locator('#searchQuery').fill('資訊系統');
+  await page.locator('#searchForm button[type="submit"]').click();
+  await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('資料庫符合')&&document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資訊系統'),null,{timeout:18000});
+  const ids=async()=>page.locator('#resultList article').evaluateAll(cards=>cards.map(card=>card.textContent.match(/案號\\s*([^\\s]+)/)?.[1]||card.textContent.slice(0,100)));
+  const first=await ids();
+  if(first.length!==20)throw Error('首批第一頁應有 20 筆，實際 '+first.length);
+  await page.locator('#nextPage').click();
+  const second=await ids();
+  if(second.length!==10)throw Error('首批第二頁應有 10 筆，實際 '+second.length);
+  await page.locator('#nextPage').click();
+  await page.waitForFunction(()=>document.querySelector('#pageInfo')?.textContent?.includes('來源第 2/'),null,{timeout:17000});
+  const third=await ids();
+  if(third.length!==20)throw Error('第二批第一頁應有 20 筆，實際 '+third.length);
+  const duplicates=third.filter(x=>first.includes(x)||second.includes(x));
+  if(duplicates.length)throw Error('跨來源頁重複案號：'+duplicates.slice(0,5).join(','));
+  return {first:first.length,second:second.length,third:third.length,duplicates:0,info:await page.locator('#pageInfo').innerText()};
+ });
  await step('首頁全文搜尋的全庫類別與預算篩選',async()=>{
   await nav('search');
   await page.locator('#searchMode').selectOption('title');
@@ -44,10 +68,16 @@ async function main(){
   await page.locator('#statusFilter').selectOption('招標');
   await page.locator('#budgetFilter').fill('1000000');
   await page.locator('#searchForm button[type="submit"]').click();
-  await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('資料庫符合'),null,{timeout:18000});
+  await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資安')&&document.querySelector('#resultInfo')?.textContent?.includes('條件已套用全庫'),null,{timeout:18000});
   const info=short(await page.locator('#resultInfo').innerText(),400);
   if(await page.locator('#dataError').isVisible())throw Error(await page.locator('#dataError').innerText());
-  return {info,cards:await page.locator('#resultList article').count(),screenshot:await shot('02b-filtered')};
+  const matched=info.match(/資料庫符合\\s*([\\d,]+)\\s*件.*當批載入\\s*([\\d,]+)\\s*筆/);
+  if(!matched)throw Error('沒有可靠的全庫符合與當批載入統計：'+info);
+  const total=Number(matched[1].replaceAll(',','')),loaded=Number(matched[2].replaceAll(',',''));
+  if(total<1||loaded!==Math.min(total,30))throw Error('全庫篩選與畫面筆數不一致：'+info);
+  const cards=await page.locator('#resultList article').count();
+  if(cards!==Math.min(loaded,20))throw Error('篩選結果卡片筆數錯誤：'+cards);
+  return {info,cards,total,loaded,screenshot:await shot('02b-filtered')};
  });
  await step('進階搜尋：資安維護最低一百萬',async()=>{
   await nav('advanced');await page.locator('#advQuery').fill('資安 AND 維護');
