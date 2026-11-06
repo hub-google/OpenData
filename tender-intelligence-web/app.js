@@ -192,6 +192,7 @@ function caseCard(row,{radarScore=null}={}){
   const second=E('div','case-meta');
   child(second,E('span','','公告 '+dateLabel(row.date)),E('span','','· '+(row.noticeType||'類型未公開')));
   if(state.mode==='latest'&&row.filename&&row.filename!=='db-cached')child(second,E('span','','· 公告編號 '+row.filename));
+  if(state.mode==='title'&&row.match_field)child(second,E('span','case-tag','命中：'+row.match_field));
   if(radarScore!==null)child(second,E('span','case-tag','關鍵字匹配 '+radarScore+' 項'));
   child(left,m,second);
   const amount=E('div','');

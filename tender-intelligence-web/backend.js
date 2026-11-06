@@ -250,6 +250,7 @@ export async function fetchUnifiedTitleSearch(query,page=1,filters={}){
    unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
    date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
    budget_amount:r.budget_amount,award_amount:r.award_amount,
+   match_field:r.match_field||null,
    brief:{title:r.title,type:r.latest_notice_type,category:r.category||r.group_name},
    detail:r.official_url?{url:r.official_url}:{}
   })),
