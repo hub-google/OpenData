@@ -42,7 +42,16 @@ async function main(){
   if(cards<1)throw Error('首頁沒有可閱讀的真實公告／案件資料：'+info);
   if(fallback&&!info.includes('每案一筆'))throw Error('備援資料沒有清楚標示差異：'+info);
   if(!fallback&&!info.includes('已入庫最新公告'))throw Error('公告資料來源未明確：'+info);
-  return {info,fallback,cards,source_page:await page.locator('#pageInfo').innerText(),screenshot:await shot('01b-latest')};
+  const pageText=await page.locator('#pageInfo').innerText();
+  if(!fallback){
+   const match=info.match(/已入庫合計\s*([\d,]+)\s*筆當日公告/);
+   if(!match)throw Error('最新公告沒有可驗證的全日數量：'+info);
+   const count=Number(match[1].replaceAll(',',''));
+   const expectedPages=Math.ceil(count/100);
+   if(count>100&&(!pageText.includes('來源第 1/'+expectedPages+' 頁')))
+    throw Error('真實當日 '+count+' 筆公告卻不能前往來源第 2 頁：'+pageText);
+  }
+  return {info,fallback,cards,source_page:pageText,screenshot:await shot('01b-latest')};
  });
  await step('標案搜尋：資訊系統',async()=>{
   await nav('search');await page.locator('#searchMode').selectOption('title');
