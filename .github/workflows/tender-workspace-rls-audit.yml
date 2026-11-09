@@ -1,0 +1,32 @@
+name: 標案工作區三帳號權限驗收
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/tender-workspace-rls-audit.yml"
+      - "tender-intelligence-web/app.js"
+      - "tender-intelligence-web/tests/workspace-rls-live.cjs"
+permissions:
+  contents: read
+jobs:
+  three-account-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Real three-account workspace and role permissions audit
+        run: node tender-intelligence-web/tests/workspace-rls-live.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tender-team-rls-evidence
+          path: tender-intelligence-web/audits/workspace/
+          if-no-files-found: warn
