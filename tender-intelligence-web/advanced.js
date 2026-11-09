@@ -1,7 +1,7 @@
 // PRD F02-F05: real archive search via Postgres, never a browser-only 100-row filter.
 // This module has no service-role secrets and uses public, RLS-protected Supabase RPC.
 import {getClient} from './backend.js';
-import {csvEscape,formatMoney,dateLabel,safeOfficial} from './core.mjs';
+import {csvEscape,formatMoney,dateLabel,safeOfficial,stateOf,opportunityOf,deadlineLabel} from './core.mjs';
 import {parseSearchExpression} from './search-expression.mjs';
 
 const $=id=>document.getElementById(id);
@@ -90,11 +90,15 @@ function makeCard(r){
  title.href='./?case_unit='+encodeURIComponent(r.unit_id)+'&case_no='+encodeURIComponent(r.job_number);
  title.title='開啟這個機關代碼與案號所對應的確切案件';left.append(title);
  const meta=node('div','case-meta');
- for(const content of [r.latest_notice_type||'公告類型未提供',r.agency||'機關未公開',r.group_name||'未分類','案號 '+r.job_number])
+ const stage=stateOf({brief:{type:r.latest_notice_type}});
+ const opportunity=opportunityOf({status:stage,deadline_at:r.deadline_at});
+ for(const content of [opportunity.label,r.agency||'機關未公開',r.group_name||'未分類','案號 '+r.job_number])
   meta.append(node('span','',content));
  const line=node('div','case-meta');
- line.append(node('span','','公告 '+dateLabel(String(r.latest_notice_date))));
- if(r.deadline_at)line.append(node('span','','截標 '+date(r.deadline_at)));
+ line.append(node('span','','最近公告 '+dateLabel(String(r.latest_notice_date))),
+   node('span','','公告類型：'+(r.latest_notice_type||'來源未提供')));
+ if(stage==='招標'||stage==='更正')
+   line.append(node('span','',r.deadline_at?'官方截止 '+deadlineLabel(r.deadline_at):'官方截止日待確認'));
  if(r.verified_location)line.append(node('span','','履約地（公告）：'+r.verified_location));
  if(r.verified_tender_method)line.append(node('span','','招標方式：'+r.verified_tender_method));
  if(r.verified_decision_method)line.append(node('span','','決標方式：'+r.verified_decision_method));
