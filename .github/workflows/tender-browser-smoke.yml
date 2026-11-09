@@ -30,10 +30,11 @@ jobs:
           /tmp/tender-browser/node_modules/.bin/playwright install --with-deps chromium
       - name: 以真實瀏覽器操作公開搜尋與進階分頁
         run: node tender-intelligence-web/tests/browser-smoke.cjs
-      - name: 保留失敗截圖
-        if: failure()
+      - name: 保留真實瀏覽器操作證據與失敗截圖
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tender-browser-smoke-failure
+          name: tender-browser-acceptance-evidence
           path: /tmp/tender-browser-artifacts/
           if-no-files-found: ignore
+          retention-days: 14
