@@ -13,11 +13,11 @@ function script(src,globalName){
  });
 }
 async function run(){
- const f=$('documentFile').files?.[0],button=$('tiOcrButton'),output=$('tiOcrOutput');
+ const f=$('documentFile').files?.[0],button=$('tiOcrButton'),next=$('tiOcrNextBatch'),output=$('tiOcrOutput');
  if(!f){status('請先選擇掃描型 PDF 或 JPG/PNG 圖片。');return;}
  if(!/\.(pdf|png|jpg|jpeg|webp)$/i.test(f.name)){status('OCR 僅支援 PDF、PNG、JPG、WEBP；文字文件請直接用整理條款。');return;}
  if(f.size>15*1024*1024){status('文件上限 15MB。');return;}
- button.disabled=true;output.replaceChildren();let worker;
+ button.disabled=true;next.disabled=true;output.replaceChildren();let worker,totalPdfPages=0,lastBatchEnd=0;
  try{
   status('正在載入本機 OCR 元件與繁體中文／英文辨識模型…');
   const Tesseract=await script('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js','Tesseract');
@@ -29,8 +29,13 @@ async function run(){
    const pdfjs=await script('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','pdfjsLib');
    pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
    const pdf=await pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;
-   const max=Math.min(pdf.numPages,8);
-   for(let p=1;p<=max;p++){
+   totalPdfPages=pdf.numPages;
+   const pageStart=Number($('tiOcrStartPage').value);
+   if(!Number.isInteger(pageStart)||pageStart<1||pageStart>Math.min(150,pdf.numPages))
+     throw Error('起始頁必須在 1–'+Math.min(150,pdf.numPages)+' 頁之間。更長文件請先拆分 PDF。');
+   const max=Math.min(pdf.numPages,150,pageStart+7);
+   lastBatchEnd=max;
+   for(let p=pageStart;p<=max;p++){
     status('正在檢查第 '+p+'／'+max+' 頁的文字層…');
     const page=await pdf.getPage(p),txt=await page.getTextContent();
     const existing=txt.items.map(x=>String(x.str||'')).join(' ').trim();
@@ -55,22 +60,57 @@ async function run(){
    pages.push({source:'圖片 OCR',text:String(result?.data?.text||'').trim(),
      confidence:Number.isFinite(result?.data?.confidence)?result.data.confidence:null,method:'OCR'});
   }
-  const actual=pages.filter(p=>p.text.trim());
+  const prior=window.__tiOcrCache;
+  const same=prior&&prior.name===f.name&&prior.size===f.size&&prior.lastModified===f.lastModified;
+  const merged=new Map(same?prior.pages.map(x=>[x.source,x]):[]);
+  for(const item of pages)merged.set(item.source,item);
+  const allPages=[...merged.values()].sort((a,b)=>{
+   const page=x=>Number(x.source.match(/第 (\d+) 頁/)?.[1]||0);
+   return page(a)-page(b);
+  });
+  const actual=allPages.filter(p=>p.text.trim());
   if(!actual.length)throw Error('辨識結果沒有可用文字，請人工核對圖片畫質與文件原文。');
   if($('documentFile').files?.[0]!==f)throw Error('辨識期間已換檔；舊檔結果不會覆蓋新文件。');
-  window.__tiOcrCache={name:f.name,size:f.size,lastModified:f.lastModified,pages};
-  document.dispatchEvent(new CustomEvent('ti:ocr-complete',{detail:{pages}}));
-  const pre=document.createElement('pre');pre.className='ti-ocr-preview';pre.textContent=pages.map(p=>'【'+p.source+'｜'+p.method+'】\n'+(p.text||'未辨識')).join('\n\n').slice(0,125000);
+  window.__tiOcrCache={name:f.name,size:f.size,lastModified:f.lastModified,pages:allPages,
+   totalPages:totalPdfPages||1,lastBatchEnd:lastBatchEnd||1};
+  document.dispatchEvent(new CustomEvent('ti:ocr-complete',{detail:{pages:allPages}}));
+  const pre=document.createElement('pre');pre.className='ti-ocr-preview';
+  pre.textContent=allPages.map(p=>'【'+p.source+'｜'+p.method+'】\n'+(p.text||'未辨識')).join('\n\n').slice(0,125000);
   output.append(pre);
-  const missing=pages.filter(p=>!p.text.trim()),low=pages.filter(p=>p.method==='OCR'&&
+  const missing=allPages.filter(p=>!p.text.trim()),low=allPages.filter(p=>p.method==='OCR'&&
      p.confidence!==null&&p.confidence<55);
+  const remaining=totalPdfPages?Math.max(0,Math.min(150,totalPdfPages)-allPages.length):0;
   status('已取得 '+actual.length+' 頁／區段'+
    (missing.length?'；'+missing.length+' 頁辨識失敗或空白':'')+
-   (unprocessed?'；另有 '+unprocessed+' 頁超出本次 8 頁上限':'')+
+   (remaining?'；前 '+Math.min(150,totalPdfPages)+' 頁尚有 '+remaining+' 頁待辨識':'')+
+   (totalPdfPages>150?'；第 151 頁起需拆檔辨識':'')+
    (low.length?'；'+low.length+' 頁信心分數較低':'')+
-   '。結果已帶入條款整理。請逐頁核對，沒有自動上傳。');
+   '。結果已累計帶入條款整理。請逐頁核對，沒有自動上傳。');
  }catch(error){status('OCR 未完成：'+String(error?.message||error).slice(0,220));}
- finally{try{await worker?.terminate()}catch{}button.disabled=false;}
+ finally{
+  try{await worker?.terminate()}catch{}
+  button.disabled=false;
+  const cache=window.__tiOcrCache;
+  const same=cache&&f&&cache.name===f.name&&cache.size===f.size&&cache.lastModified===f.lastModified;
+  next.disabled=!same||cache.lastBatchEnd>=Math.min(150,cache.totalPages||1)||!/\.pdf$/i.test(f.name);
+ }
 }
-function init(){const button=$('tiOcrButton');if(button)button.addEventListener('click',()=>void run());}
+function init(){
+ const button=$('tiOcrButton'),next=$('tiOcrNextBatch'),start=$('tiOcrStartPage');
+ if(!button)return;
+ next.disabled=true;
+ button.addEventListener('click',()=>void run());
+ next.addEventListener('click',()=>{
+  const f=$('documentFile').files?.[0],cache=window.__tiOcrCache;
+  if(!f||!cache||cache.name!==f.name||cache.size!==f.size||cache.lastModified!==f.lastModified)return;
+  const following=cache.lastBatchEnd+1;
+  if(following>Math.min(150,cache.totalPages||1))return;
+  start.value=String(following);void run();
+ });
+ $('documentFile').addEventListener('change',()=>{
+  start.value='1';next.disabled=true;
+  $('tiOcrOutput').replaceChildren();
+  status('已更換文件，請執行 OCR。舊檔文字不會沿用。');
+ });
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
