@@ -154,7 +154,7 @@ export function fieldsOf(detail) {
   };
 }
 export function summaryOf(records) {
-  const notices=[...(records||[])].sort((a,b)=>Number(b.date||0)-Number(a.date||0));
+  const notices=[...(records||[])].sort((a,b)=>Number(b.date||0)-Number(a.date||0)||asText(b.filename).localeCompare(asText(a.filename),'zh-TW'));
   const latest=notices[0]||null;
   // Deadline is a bid announcement property, not a decision notice property.
   const tenderNotice=notices.find(r=> /招標|徵求|閱覽/.test(typeOf(r)))||null;
