@@ -1,5 +1,6 @@
 // Single case workspace: all panels keep the same official case id and reuse existing ti_* tables.
 import {getClient} from './backend.js';
+import {assessCompanyFit,normalize} from './core.mjs';
 import {saveCloudDocument} from './app.js';
 const el=(tag,text='',className='')=>{const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;return node;};
 const control=(tag,attrs={})=>{const node=document.createElement(tag);for(const [k,v] of Object.entries(attrs))node.setAttribute(k,v);return node;};
@@ -21,6 +22,62 @@ function openOldView(view){
  }
  const field=view==='documents'?'documentCaseId':view==='decisions'?'decisionCase':view==='contracts'?'contractCase':null;
  if(field&&caseId&&$(field)&&[...$(field).options].some(o=>o.value===caseId))$(field).value=caseId;
+}
+async function makeCompanyAssessment(panel,caseId){
+ const section=el('section','','ti-company-fit');
+ section.append(el('h3','公司承接適配檢查'));
+ const summary=el('p','正在核對公司資料與已入庫標案欄位…','minor');
+ const values=el('div','','ti-company-fit-body');
+ const buttons=el('div','','detail-actions');
+ const refresh=el('button','重新評估','ghost-btn');refresh.type='button';
+ const setup=el('button','更新公司服務與證照資料','ghost-btn');setup.type='button';
+ setup.addEventListener('click',()=>openOldView('company'));
+ buttons.append(refresh,setup);
+ section.append(summary,values,buttons);
+ panel.prepend(section);
+ let active=0;
+ async function read(){
+  const token=++active;
+  values.replaceChildren();
+  const {db,user}=await owner();
+  if(!section.isConnected||token!==active)return;
+  if(!user){summary.textContent='尚未登入。登入並填寫公司服務、實績與證照後，即可比對此案；未登入不會猜測公司資格。';refresh.disabled=true;return;}
+  refresh.disabled=true;
+  try{
+   const [caseRes,companyRes,profileRes,assetsRes]=await Promise.all([
+    db.from('ti_cases').select('unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,budget_amount,deadline_at').eq('id',caseId).maybeSingle(),
+    db.from('ti_company_profiles').select('services,company_intro').eq('user_id',user.id).maybeSingle(),
+    db.from('ti_profiles').select('keywords,min_budget,max_budget,preferred_area').eq('user_id',user.id).maybeSingle(),
+    db.from('ti_company_assets').select('id,title,asset_type,expires_on').eq('user_id',user.id).limit(100)
+   ]);
+   if(token!==active||!section.isConnected)return;
+   for(const result of [caseRes,companyRes,profileRes,assetsRes])if(result.error)throw result.error;
+   if(!caseRes.data)throw Error('已入庫案件不存在，無法核對');
+   const data=caseRes.data;
+   const record=normalize({unit_id:data.unit_id,job_number:data.job_number,unit_name:data.agency,
+    date:data.latest_notice_date,deadline_at:data.deadline_at,budget_amount:data.budget_amount,
+    brief:{type:data.latest_notice_type,title:data.title,category:data.category}});
+   if(!record)throw Error('案件識別資料不完整');
+   const profile=profileRes.data||{};
+   const company=companyRes.data||{};
+   const assets=assetsRes.data||[];
+   const result=assessCompanyFit(record,company,profile,assets);
+   summary.textContent='初步適配：'+result.label+'。此結果不是投標資格合格證明，也不是得標機率。';
+   const group=el('div','','ti-company-fit-groups');
+   const positives=el('div','','ti-company-fit-column'),unknowns=el('div','','ti-company-fit-column');
+   positives.append(el('h4','已知條件及依據'));
+   unknowns.append(el('h4','必須再核對'));
+   if(!result.reasons.length)positives.append(el('p','目前缺乏足夠的正向匹配證據。','minor'));
+   for(const reason of result.reasons)positives.append(el('p','• '+reason));
+   for(const unknown of result.unknowns)unknowns.append(el('p','• '+unknown));
+   group.append(positives,unknowns);
+   values.append(group);
+   values.append(el('p','資料取自你自行登錄的公司檔案、已收錄的公開案件及證照清單。官方資格要求仍需人工核對原文。','minor'));
+  }catch(e){summary.textContent='適配資料讀取失敗：'+err(e)+'。請勿據此判定能否投標。';}
+  finally{if(token===active&&section.isConnected)refresh.disabled=false;}
+ }
+ refresh.addEventListener('click',()=>void read());
+ void read();
 }
 function makeDecision(panel,caseId){
  panel.append(el('h3','案件投標決策'));
@@ -266,6 +323,7 @@ function mount(caseInfo){
  }
  preparation.append(prepTabs,...prepPanels);
  makeDecision(prepPanels[0],caseInfo.caseId);
+ void makeCompanyAssessment(prepPanels[0],caseInfo.caseId);
  makeDocuments(prepPanels[1],caseInfo.caseId);
  makeTasks(prepPanels[2],caseInfo.caseId);
  makeContracts(prepPanels[3],caseInfo.caseId);
