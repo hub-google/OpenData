@@ -1681,7 +1681,7 @@ let selectedWorkspace='',workspaceListVersion=0,workspaceRenderVersion=0;
 async function refreshWorkspaces(){
  const version=++workspaceListVersion;
  const panel=$('workspaceOutput'),choose=$('workspaceSelect'),userId=cloud.user?.id;
- if(!userId){++workspaceRenderVersion;panel.replaceChildren(E('div','empty','請先登入，才能讀取團隊工作區。'));return;}
+ if(!userId){++workspaceRenderVersion;$('workspaceTaskComposer').hidden=true;panel.replaceChildren(E('div','empty','請先登入，才能讀取團隊工作區。'));return;}
  try{
   const {data,error}=await cloud.client.from('ti_workspaces').select('id,name,owner_id,created_at').order('created_at',{ascending:false});
   if(error)throw error;
@@ -1690,7 +1690,7 @@ async function refreshWorkspaces(){
   const old=selectedWorkspace||choose.value;choose.replaceChildren();
   if(!data?.length){
    const o=E('option','','尚無工作區');o.value='';choose.append(o);
-   selectedWorkspace='';panel.replaceChildren(E('div','empty','尚未建立或加入團隊。'));
+   selectedWorkspace='';$('workspaceTaskComposer').hidden=true;panel.replaceChildren(E('div','empty','尚未建立或加入團隊。'));
    return;
   }
   for(const w of data){const o=E('option','',w.name);o.value=w.id;choose.append(o);}
@@ -1702,7 +1702,7 @@ async function refreshWorkspaces(){
 async function renderWorkspace(){
  const version=++workspaceRenderVersion;
  const id=selectedWorkspace,box=$('workspaceOutput'),userId=cloud.user?.id;
- if(!userId||!id){box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
+ if(!userId||!id){$('workspaceTaskComposer').hidden=true;box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
  box.replaceChildren(E('div','empty','正在讀取團隊案件及任務…'));
  try{
   const [members,cases,tasks,comments,activity,watches,documents]=await Promise.all([
@@ -1874,27 +1874,30 @@ async function renderWorkspace(){
    });
    child(line,stage,notes,owner);wrap.append(line);box.append(wrap);
   }
-  child(box,E('h3','','共用待辦'));
-  if(canEdit){
-   const form=E('form','inline-form');form.style.marginBottom='16px';
-   const name=E('input','');name.required=true;name.maxLength=300;name.placeholder='例如：準備報價附件';
-   const due=E('input','');due.type='date';
-   const assignee=memberSelect();assignee.title='指定任務負責人';
-   const caseRef=E('select','');caseRef.title='關聯團隊案件';
-   const defaultCase=E('option','','不關聯案件');defaultCase.value='';caseRef.append(defaultCase);
-   for(const record of cases.data||[]){const opt=E('option','',record.title);opt.value=record.case_id;caseRef.append(opt);}
-   const submit=E('button','primary-btn','建立團隊待辦');submit.type='submit';
-   form.addEventListener('submit',async e=>{
-    e.preventDefault();
-    const {error}=await cloud.client.from('ti_workspace_tasks').insert({
-     workspace_id:id,title:name.value.trim(),due_at:due.value?due.value+'T23:59:00+08:00':null,
-     assigned_to:assignee.value||null,case_id:caseRef.value||null,created_by:cloud.user.id
-    });
-    if(error)toast('新增待辦失敗：'+readableError(error));
-    else void renderWorkspace();
-   });
-   child(form,name,due,assignee,caseRef,submit);box.append(form);
+  // This form is persistent outside #workspaceOutput so concurrent fetches
+  // cannot detach its submit button or clear a draft while the user types.
+  const composer=$('workspaceTaskComposer');
+  if(composer){
+   composer.hidden=!canEdit;
+   if(canEdit){
+    const assignee=$('workspaceTaskOwner'),oldAssigned=assignee.value;
+    assignee.replaceChildren();
+    const nobody=E('option','','未指派');nobody.value='';assignee.append(nobody);
+    for(const m of members.data||[]){
+     const option=E('option','',m.user_id===userId?'我本人（'+m.role+'）':m.user_id.slice(0,8)+'…（'+m.role+'）');
+     option.value=m.user_id;assignee.append(option);
+    }
+    if([...assignee.options].some(o=>o.value===oldAssigned))assignee.value=oldAssigned;
+    const caseRef=$('workspaceTaskCase'),oldCase=caseRef.value;
+    caseRef.replaceChildren();
+    const noCase=E('option','','不關聯案件');noCase.value='';caseRef.append(noCase);
+    for(const record of cases.data||[]){
+     const option=E('option','',record.title);option.value=record.case_id;caseRef.append(option);
+    }
+    if([...caseRef.options].some(o=>o.value===oldCase))caseRef.value=oldCase;
+   }
   }
+  child(box,E('h3','','共用待辦'));
   if(!tasks.data?.length)box.append(E('p','minor','尚未建立團隊待辦。'));
   for(const task of tasks.data||[]){
    const wrap=E('div','watch-item'),head=E('header',''),check=E('input','');
@@ -2136,6 +2139,29 @@ async function acceptWorkspaceInvitation(token){
  }catch(err){toast('加入團隊失敗：'+readableError(err));}
 }
 function initTeamUI(){
+ $('workspaceTaskForm').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const form=$('workspaceTaskForm'),button=$('workspaceTaskSubmit'),status=$('workspaceTaskStatus');
+  const workspaceId=selectedWorkspace,userId=cloud.user?.id;
+  const title=$('workspaceTaskTitle').value.trim();
+  if(!workspaceId||!userId)return toast('請先登入並選擇工作區。');
+  if(!title||title.length>300)return toast('請輸入 1–300 字的待辦名稱。');
+  if(button.disabled)return;
+  button.disabled=true;status.textContent='正在保存團隊待辦…';
+  const due=$('workspaceTaskDue').value,assignee=$('workspaceTaskOwner').value,caseId=$('workspaceTaskCase').value;
+  try{
+   const {data,error}=await cloud.client.from('ti_workspace_tasks').insert({
+    workspace_id:workspaceId,title,due_at:due?due+'T23:59:00+08:00':null,
+    assigned_to:assignee||null,case_id:caseId||null,created_by:userId
+   }).select('id').single();
+   if(error||!data?.id)throw error||Error('資料庫沒有回傳已建立的任務');
+   if(selectedWorkspace===workspaceId&&cloud.user?.id===userId){
+    form.reset();status.textContent='已新增「'+title+'」並儲存到團隊資料庫。';
+    await renderWorkspace();
+   }
+  }catch(error){status.textContent='儲存失敗：'+readableError(error);}
+  finally{button.disabled=false;}
+ });
  $('workspaceCreateForm').addEventListener('submit',async e=>{
   e.preventDefault();if(!cloud.user)return toast('請先登入。');
   const name=$('workspaceName').value.trim();if(!name)return;
