@@ -382,3 +382,16 @@ label{font-size:12px;color:#56677b;font-weight:650}
 .ti-prep-panel{min-width:0}
 .ti-case-tabs{scroll-margin-top:80px}
 @media(max-width:760px){.ti-prep-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}.ti-prep-tab{white-space:normal;padding:10px 7px}}
+
+/* Evidence-based comparison and source-only notice changes. */
+.ti-history-warning{font-size:12px;color:#9b5a1b;background:#fffaf0;border-left:2px solid #e8b76d;padding:6px 9px;margin:8px 0}
+.ti-notice-change{font-size:12px;color:#304d70;border-radius:6px;padding:5px 8px;margin-top:5px;background:#edf4ff;overflow-wrap:anywhere}
+.ti-history-supplement{margin-top:14px;padding:10px;background:#f8fafc;border-radius:9px}
+.ti-history-supplement>summary{cursor:pointer;font-weight:700}
+.ti-company-fit{background:#f9fbfe;border:1px solid #dbe8f8;padding:13px;margin:12px 0 24px;border-radius:12px}
+.ti-company-fit h3{margin:0 0 6px;border:0}
+.ti-company-fit-groups{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.ti-company-fit-column{background:#fff;border:1px solid #e2eaf3;padding:10px 12px;border-radius:10px;min-width:0}
+.ti-company-fit-column h4{margin:0 0 8px;font-size:13px}
+.ti-company-fit-column p{font-size:12px;margin:6px 0;line-height:1.7;overflow-wrap:anywhere}
+@media(max-width:760px){.ti-company-fit-groups{grid-template-columns:1fr}}
