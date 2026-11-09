@@ -2,7 +2,7 @@ import {loadAgencyEvidence} from './agency-deep.js';
 import {
   API_ROOT,asText,keyOf,safeNumber,formatMoney,parseDate,dateLabel,typeOf,
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
-  compareDeadline,opportunityOf,deadlineLabel,csvEscape,safeOfficial
+  compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,csvEscape,safeOfficial
 } from './core.mjs';
 import {getClient,fetchArchive,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
@@ -290,31 +290,66 @@ async function loadVerifiedHomepageKpis(){
  }
 }
 async function loadRelatedCases(row){
- const box=$('relatedCases');
- if(!box)return;
+ const box=$('relatedCases');if(!box)return;
+ box.replaceChildren(E('p','minor','正在比對同機關不同案號的可能相關標案與歷史採購…'));
  try{
-  const client=await getClient();
-  const {data,error}=await client.rpc('ti_related_cases',{p_case_id:row.id});
-  if(error)throw error;
-  if(state.selected!==row)return;
-  const related=Array.isArray(data)?data:[];
-  box.replaceChildren();
-  if(!related.length){box.append(E('p','minor','目前已收錄資料中無同機關且同採購大類的其他案件。'));return;}
-  for(const item of related){
-   const rec=normalize({
-    unit_id:item.unit_id,job_number:item.job_number,date:item.latest_notice_date,
-    unit_name:item.agency,budget_amount:item.budget_amount,award_amount:item.award_amount,
-    brief:{title:item.title,type:item.latest_notice_type,category:item.group_name}
-   });
-   if(!rec)continue;
-   const line=E('div','timeline-item');
-   child(line,btn(item.title,'case-title',()=>openDetail(rec)),
-    E('div','minor',dateLabel(item.latest_notice_date)+'｜案號 '+item.job_number+
-    '｜'+(item.latest_notice_type||'公告類型未提供')));
-   box.append(line);
-  }
+   const client=await getClient();
+   const [history,nearby]=await Promise.all([
+     client.rpc('ti_related_cases',{p_case_id:row.id}),
+     client.from('ti_cases')
+       .select('unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,deadline_at,budget_amount,award_amount,official_url')
+       .eq('unit_id',row.unit_id).neq('job_number',row.job_number)
+       .order('latest_notice_date',{ascending:false}).limit(250)
+   ]);
+   if(state.selected!==row)return;
+   box.replaceChildren();
+   if(nearby.error)throw nearby.error;
+   const clues=(nearby.data||[]).flatMap(item=>{
+     const match=possibleRelatedCase(row,item);
+     return match?[{item,match}]:[];
+   }).sort((a,b)=>b.match.score-a.match.score).slice(0,15);
+   const heading=E('h4','','可能相關的不同案號（非官方重招認定）');
+   box.append(heading);
+   if(!clues.length)box.append(E('p','minor','同機關近期已收錄案件中，尚無案名高度相似的其他案號。'));
+   for(const {item,match} of clues){
+     const caseRow=normalize({
+       unit_id:item.unit_id,job_number:item.job_number,unit_name:item.agency,
+       date:item.latest_notice_date,deadline_at:item.deadline_at,
+       budget_amount:item.budget_amount,award_amount:item.award_amount,
+       brief:{title:item.title,type:item.latest_notice_type,category:item.category},
+       detail:item.official_url?{url:item.official_url}:{}
+     });
+     if(!caseRow)continue;
+     const node=E('div','timeline-item');
+     node.append(btn(item.title,'case-title',()=>openDetail(caseRow)));
+     node.append(E('div','minor','案號 '+item.job_number+'｜'+dateLabel(item.latest_notice_date)+'｜'+(item.latest_notice_type||'狀態未提供')));
+     node.append(E('div','ti-history-warning',match.reason));
+     if(item.official_url&&safeOfficial(item.official_url))node.append(link('核對官方來源 ↗',safeOfficial(item.official_url)));
+     box.append(node);
+   }
+   if((nearby.data||[]).length>=250)box.append(E('p','minor','同機關只比對最新 250 件已入庫案件，這不是完整重招搜尋。'));
+   const related=Array.isArray(history.data)?history.data:[];
+   const supplement=E('details','ti-history-supplement');
+   const trigger=E('summary','','同機關、同採購大類的其他歷史案件');
+   supplement.append(trigger);
+   if(history.error)supplement.append(E('p','minor','其他歷史案件查詢失敗：'+readableError(history.error)));
+   else if(!related.length)supplement.append(E('p','minor','沒有已收錄的其他歷史案件。'));
+   for(const item of related){
+     const rec=normalize({
+       unit_id:item.unit_id,job_number:item.job_number,date:item.latest_notice_date,
+       unit_name:item.agency,budget_amount:item.budget_amount,award_amount:item.award_amount,
+       brief:{title:item.title,type:item.latest_notice_type,category:item.group_name}
+     });
+     if(!rec)continue;
+     const line=E('div','timeline-item');
+     child(line,btn(item.title,'case-title',()=>openDetail(rec)),
+       E('div','minor',dateLabel(item.latest_notice_date)+'｜案號 '+item.job_number+
+       '｜'+(item.latest_notice_type||'公告類型未提供')));
+     supplement.append(line);
+   }
+   box.append(supplement);
  }catch(e){
-  if(state.selected===row)box.replaceChildren(E('p','minor','關聯案查詢失敗：'+readableError(e)));
+   if(state.selected===row)box.replaceChildren(E('p','minor','相關案查詢失敗：'+readableError(e)));
  }
 }
 function renderDetail(row,data){
@@ -376,11 +411,23 @@ function renderDetail(row,data){
   }
   child(page,E('h3','','公告歷程與官方來源'));
   const timeline=E('div','detail-timeline');
-  for(const rec of sum.notices){
+  for(const [i,rec] of sum.notices.entries()){
     const item=E('div','timeline-item');
-    child(item,E('strong','',dateLabel(rec.date)+' · '+typeOf(rec)),E('span','minor',asText(rec.filename||'')));
+    child(item,E('strong','',dateLabel(rec.date)+' · '+typeOf(rec)),E('span','minor','公告版本：'+asText(rec.filename||'未提供')));
+    const older=sum.notices[i+1];
+    if(older){
+      const difference=noticeChangeSummary(rec,older);
+      if(difference.sameDay)item.append(E('p','ti-history-warning','這兩則公告同日公布，原始來源未提供可驗證的先後時間；請勿單憑排序推定為重招。'));
+      for(const change of difference.changes){
+        const text=change.field==='公開預算'
+          ?change.field+'：'+formatMoney(change.from)+' → '+formatMoney(change.to)
+          :change.field+'：'+change.from+' → '+change.to;
+        item.append(E('div','ti-notice-change',text));
+      }
+      if(!difference.changes.length)item.append(E('span','minor','已收錄的可比較欄位沒有可確認變化；不代表標書內容沒有修改。'));
+    }
     const url=safeOfficial(rec.detail?.url);
-    if(url)child(item,E('div','', ''),link('開啟官方公告 ↗',url));
+    if(url)item.append(link('開啟官方公告 ↗',url));
     timeline.append(item);
   }
   page.append(timeline);
