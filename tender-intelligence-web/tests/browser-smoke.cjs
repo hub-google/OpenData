@@ -58,8 +58,8 @@ async function firstAdvancedId(){
    assert.ok(values.some(v=>v.startsWith('NT$')),'All latest budget values appear unknown');
  });
  await check('Latest search displays unique case records',async()=>{
-   const loaded=Number((await page.locator('#metricLoaded').innerText()).replace(/,/g,''));
-   const total=Number((await page.locator('#metricCases').innerText()).replace(/,/g,''));
+   const loaded=await page.locator('#resultList .case-card').count();
+   const total=Number((await page.locator('#metricCases').textContent()).replace(/,/g,''));
    const info=await page.locator('#resultInfo').innerText();
    assert.ok(loaded>0&&total>=loaded,'Case count must reflect unique opportunities');
    assert.ok(info.includes('每個案件僅顯示一筆'),'Case-level result explanation missing');
@@ -71,12 +71,26 @@ async function firstAdvancedId(){
  });
  await check('Latest page next button changes the visible page',async()=>{
    const original=await page.locator('#pageInfo').innerText();
-   const title=await page.locator('#resultList .case-title').first().innerText();
+   const first=await page.locator('#resultList .case-card').first().innerText();
    assert.equal(await page.locator('#nextPage').isDisabled(),false);
    await page.locator('#nextPage').click();
    await page.waitForFunction(v=>document.getElementById('pageInfo')?.textContent!==v,original);
-   const after=await page.locator('#resultList .case-title').first().innerText();
-   assert.notEqual(after,title);
+   const after=await page.locator('#resultList .case-card').first().innerText();
+   assert.notEqual(after,first);
+ });
+ await check('Case status scenarios do not advertise failed cases as open',async()=>{
+   await page.locator('[data-scenario="failed"]').click();
+   await page.waitForFunction(()=> (document.getElementById('resultInfo')?.textContent||'').includes('無法決標'),null,{timeout:45000});
+   await page.locator('#resultList .case-card').first().waitFor({timeout:45000});
+   const cards=await page.locator('#resultList .case-card .case-tag').allTextContents();
+   assert.ok(cards.length>0&&cards.every(t=>t.includes('無法決標')),'Failed opportunity state mismatch');
+   await page.locator('[data-scenario="all"]').click();
+   await page.waitForFunction(()=> (document.getElementById('resultInfo')?.textContent||'').includes('最新已收錄案件'),null,{timeout:45000});
+   await page.locator('#resultList .case-card').first().waitFor({timeout:45000});
+ });
+ await check('Home screenshot and page metadata are grounded',async()=>{
+   assert.ok((await page.locator('#resultInfo').innerText()).includes('資料庫'));
+   await page.screenshot({path:out+'/tender-homepage.png',fullPage:true});
  });
  await check('Source-backed case detail opens despite upstream API CORS',async()=>{
    const title=await page.locator('#resultList .case-title').first().innerText();
@@ -86,6 +100,7 @@ async function firstAdvancedId(){
    assert.ok(content.includes(title),'Detail shows a different case');
    assert.ok(content.includes('已成功入庫')||content.includes('公告歷程'),'Source evidence unavailable');
    assert.ok(!content.includes('案件詳情載入失敗'),content);
+   await page.screenshot({path:out+'/tender-case-detail.png',fullPage:true});
  });
  await check('Four case tasks retain notice history, intelligence and bid tools',async()=>{
    const tabNames=await page.locator('#detailContent .ti-case-tab').allTextContents();
