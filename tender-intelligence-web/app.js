@@ -1677,13 +1677,16 @@ async function searchPrivateKnowledge(e){
 }
 
 // PRD: secure multi-member workspace / invitation / shared cases and tasks.
-let selectedWorkspace='';
+let selectedWorkspace='',workspaceListVersion=0,workspaceRenderVersion=0;
 async function refreshWorkspaces(){
- const panel=$('workspaceOutput'),choose=$('workspaceSelect');
- if(!cloud.user){panel.replaceChildren(E('div','empty','請先登入，才能讀取團隊工作區。'));return;}
+ const version=++workspaceListVersion;
+ const panel=$('workspaceOutput'),choose=$('workspaceSelect'),userId=cloud.user?.id;
+ if(!userId){++workspaceRenderVersion;panel.replaceChildren(E('div','empty','請先登入，才能讀取團隊工作區。'));return;}
  try{
   const {data,error}=await cloud.client.from('ti_workspaces').select('id,name,owner_id,created_at').order('created_at',{ascending:false});
   if(error)throw error;
+  // A slower earlier read may not override a newer selection or login.
+  if(version!==workspaceListVersion||cloud.user?.id!==userId)return;
   const old=selectedWorkspace||choose.value;choose.replaceChildren();
   if(!data?.length){
    const o=E('option','','尚無工作區');o.value='';choose.append(o);
@@ -1697,8 +1700,9 @@ async function refreshWorkspaces(){
  }catch(err){panel.replaceChildren(E('div','empty','團隊資料無法讀取：'+readableError(err)));}
 }
 async function renderWorkspace(){
- const id=selectedWorkspace,box=$('workspaceOutput');
- if(!cloud.user||!id){box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
+ const version=++workspaceRenderVersion;
+ const id=selectedWorkspace,box=$('workspaceOutput'),userId=cloud.user?.id;
+ if(!userId||!id){box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
  box.replaceChildren(E('div','empty','正在讀取團隊案件及任務…'));
  try{
   const [members,cases,tasks,comments,activity,watches,documents]=await Promise.all([
@@ -1711,7 +1715,8 @@ async function renderWorkspace(){
    cloud.client.from('ti_workspace_documents').select('id,case_id,task_id,uploader_id,storage_path,filename,bytes,created_at').eq('workspace_id',id).order('created_at',{ascending:false}).limit(100)
   ]);
   for(const result of [members,cases,tasks,comments,activity,watches,documents])if(result.error)throw result.error;
-  const me=members.data.find(m=>m.user_id===cloud.user.id);
+  if(version!==workspaceRenderVersion||selectedWorkspace!==id||cloud.user?.id!==userId)return;
+  const me=(members.data||[]).find(m=>m.user_id===userId);
   const canEdit=!!me&&me.role!=='viewer';
   const canReview=!!me&&['owner','admin'].includes(me.role);
   const memberSelect=(current='',includeEmpty=true)=>{
