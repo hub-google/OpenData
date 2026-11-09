@@ -14,6 +14,9 @@ async function login(p){
  await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:45000});
  await p.locator('#accountDemoQuick').click();
  await p.waitForFunction(()=>document.querySelector('#accountButton')?.textContent?.includes('測試帳號已登入'),null,{timeout:30000});
+ await p.waitForTimeout(250);
+ if(!await p.locator('#tiSupportPanel').isHidden())
+  throw Error('登入後客服視窗自行展開，遮住工作區操作按鈕');
 }
 async function navigate(p,view){
  const b=p.locator('[data-view="'+view+'"]').first(),g=b.locator('xpath=ancestor::details[1]');
