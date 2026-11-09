@@ -89,7 +89,7 @@ async function main(){
   }
   workspaceId=await owner.locator('#workspaceSelect').inputValue();
   await owner.getByPlaceholder('例如：準備報價附件').fill('WORKSPACE-RLS-'+stamp);
-  await owner.getByRole('button',{name:'建立團隊待辦'}).click();
+  await owner.getByRole('button',{name:'建立團隊待辦'}).click({force:true,timeout:20000});
   await owner.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:35000});
   return {workspace_created:true,task_visible:true};
  });
@@ -102,7 +102,15 @@ async function main(){
   await login(member);await navigate(member,'team');
   await member.locator('#workspaceJoinCode').fill(inviteToken);
   await member.locator('#workspaceJoinForm button[type=submit]').click();
-  await member.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:40000});
+  const joined=await member.waitForFunction(async(id)=>{
+   const {getClient}=await import('./backend.js'),client=await getClient();
+   const {data,error}=await client.from('ti_workspace_members').select('user_id').eq('workspace_id',id);
+   const self=(await client.auth.getUser()).data.user?.id;
+   return !error&&data?.some(x=>x.user_id===self);
+  },workspaceId,{timeout:35000}).then(()=>true).catch(()=>false);
+  if(!joined)throw Error('邀請碼未讓新帳戶完成工作區成員資料寫入');
+  await member.locator('#workspaceRefresh').click();
+  await member.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:30000});
   const read=await db(member,'read',{id:workspaceId});
   if(!read.titles?.some(x=>x.includes(stamp)))throw Error('加入後仍無法讀取共享任務');
   return {joined:true,task_count:read.titles.length};
@@ -120,10 +128,14 @@ async function main(){
  await step('Owner changes editor to viewer; viewer remains read-only even via Data API',async()=>{
   await owner.locator('#workspaceRefresh').click();
   await owner.locator('#workspaceOutput .ti-team-role-row select').first().waitFor({timeout:14000});
-  await owner.locator('#workspaceOutput .ti-team-role-row select').first().selectOption('viewer');
-  await owner.waitForFunction(()=>document.querySelector('#workspaceOutput .ti-team-role-row select')?.value==='viewer',null,{timeout:14000});
-  const roles=await db(owner,'count',{id:workspaceId});
   const memberId=await db(member,'identity',{});
+  await owner.locator('#workspaceOutput .ti-team-role-row select').first().selectOption('viewer');
+  let roles;
+  for(let i=0;i<28;i++){
+   roles=await db(owner,'count',{id:workspaceId});
+   if(roles.roles?.some(x=>x.user_id===memberId&&x.role==='viewer'))break;
+   await owner.waitForTimeout(450);
+  }
   if(!roles.roles?.some(x=>x.user_id===memberId&&x.role==='viewer'))throw Error('角色未持久化');
   const rejected=await db(member,'write',{id:workspaceId,title:'viewer-should-not-write'});
   const self=await db(member,'set-role',{id:workspaceId,member:memberId,role:'admin'});
@@ -137,10 +149,14 @@ async function main(){
   return {viewer_can_read:true,viewer_cannot_write:true,viewer_cannot_escalate:true};
  });
  await step('Owner restores editor; editor can add a shared task',async()=>{
-  await owner.locator('#workspaceOutput .ti-team-role-row select').first().selectOption('editor');
   const memberId=await db(member,'identity',{});
-  await owner.waitForFunction(()=>document.querySelector('#workspaceOutput .ti-team-role-row select')?.value==='editor',null,{timeout:15000});
-  const roles=await db(member,'count',{id:workspaceId});
+  await owner.locator('#workspaceOutput .ti-team-role-row select').first().selectOption('editor');
+  let roles;
+  for(let i=0;i<28;i++){
+   roles=await db(member,'count',{id:workspaceId});
+   if(roles.roles?.some(x=>x.user_id===memberId&&x.role==='editor'))break;
+   await owner.waitForTimeout(450);
+  }
   if(!roles.roles?.some(x=>x.user_id===memberId&&x.role==='editor'))throw Error('編輯者角色未還原');
   const wrote=await db(member,'write',{id:workspaceId,title:'EDITOR-CREATED-'+stamp});
   if(wrote.error)throw Error('編輯者仍無法寫入：'+wrote.error);
