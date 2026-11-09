@@ -202,6 +202,69 @@ export function scoreCase(row, profile={}) {
   // An interpretable *match count*, deliberately not an invented win probability.
   return {matched:hits.length,reasons,warnings,excluded:blocks.length>0,qualifies:!blocks.length&&!budgetExcluded&&hits.length>0};
 }
+// User-facing notice timeline: change detection is limited to fields present
+// in BOTH official source records, not invented missing-field differences.
+export function noticeChangeSummary(current,previous){
+ const sameDay=asText(current?.date)===asText(previous?.date);
+ const changes=[];
+ for(const [name,read] of [
+   ['公告類型',typeOf],['案名',titleOf],['採購類別',categoryOf],
+   ['公開預算',r=>safeNumber(r?.budget_amount)]
+ ]){
+   const a=read(current),b=read(previous);
+   if(a!==''&&a!==null&&a!==undefined&&b!==''&&b!==null&&b!==undefined&&a!==b)
+     changes.push({field:name,from:asText(b),to:asText(a)});
+ }
+ const before=fieldsOf(previous?.detail),after=fieldsOf(current?.detail);
+ for(const [name,key] of [['截止投標','deadline'],['招標方式','tenderMethod'],['履約地點','location']]){
+   if(before[key]&&after[key]&&before[key]!==after[key])
+     changes.push({field:name,from:asText(before[key]),to:asText(after[key])});
+ }
+ return {changes,sameDay,orderVerified:!sameDay,hasComparable:changes.length>0};
+}
+// Similarity yields a *lead*, never a legal assertion that a new case is
+// an official re-tender. Different agency IDs do not qualify automatically.
+export function possibleRelatedCase(reference,candidate){
+ if(!reference?.unit_id||reference.unit_id!==candidate?.unit_id ||
+    !reference.job_number||reference.job_number===candidate.job_number)return null;
+ const compact=s=>asText(s).toLocaleLowerCase('zh-TW')
+   .replace(/(?:民國)?(?:1[01-9]\\d|20\\d\\d)(?:\\s*[-–～~至]\\s*(?:1[01-9]\\d|20\\d\\d))?年度?/g,'')
+   .replace(/[\\s\\p{P}\\p{S}]/gu,'');
+ const a=compact(reference.title||titleOf(reference)),b=compact(candidate.title||titleOf(candidate));
+ if(a.length<5||b.length<5)return null;
+ const common=a===b?1:(()=>{
+   const grams=s=>new Set([...s].slice(0,-1).map((x,i)=>x+[...s][i+1]));
+   const x=grams(a),y=grams(b),hits=[...x].filter(z=>y.has(z)).length;
+   return (2*hits)/(x.size+y.size||1);
+ })();
+ return common>=.78?{score:Math.round(common*100),reason:'同機關、不同案號，案名高度相似；是否重招須以官方公告核對'}:null;
+}
+// Explainable supplier-side evidence. Unknown qualification documents and
+// missing dates are never silently converted into a positive eligibility call.
+export function assessCompanyFit(row,company={},profile={},assets=[]){
+ const info=opportunityOf(row),reasons=[],unknowns=[];
+ const services=asText(company.services).split(/[，,、;；\\n]+/).map(x=>x.trim()).filter(x=>x.length>=2);
+ const hay=(asText(row.title)+' '+asText(row.category)).toLocaleLowerCase('zh-TW');
+ const hits=services.filter(x=>hay.includes(x.toLocaleLowerCase('zh-TW'))).slice(0,8);
+ if(hits.length)reasons.push('公司登錄服務與案名／採購分類命中：'+hits.join('、'));
+ else unknowns.push(services.length?'公司登錄服務未直接命中案名，請核對標書需求':'尚未填寫公司服務範圍');
+ const budget=safeNumber(row.budget??row.budget_amount),min=safeNumber(profile.min_budget??profile.min),max=safeNumber(profile.max_budget??profile.max);
+ let budgetMismatch=false;
+ if(budget===null)unknowns.push('採購預算未取得');
+ else if((min!==null&&budget<min)||(max!==null&&budget>max)){budgetMismatch=true;reasons.push('公開預算不在自訂承接範圍');}
+ else if(min!==null||max!==null)reasons.push('公開預算落在公司自訂範圍內');
+ if(info.kind==='failed'||info.kind==='awarded'||info.kind==='closed')reasons.push('案件目前非確認可投標狀態：'+info.label);
+ else if(info.kind!=='open')unknowns.push('官方截標時間或更正狀態尚待確認');
+ const list=Array.isArray(assets)?assets:[];
+ if(!list.length)unknowns.push('尚未登錄可供核對的公司證照或實績');
+ else reasons.push('已登錄 '+list.length+' 筆公司證照／實績，是否符合本案要求仍需人工核對');
+ unknowns.push('標書資格、履約地及必要證明須逐項核對官方原文');
+ const unavailable=['failed','awarded','closed'].includes(info.kind);
+ return {label:unavailable?'目前非投標商機':budgetMismatch?'預算不符自訂條件':hits.length&&info.kind==='open'?'值得進一步評估':'待確認',
+   level:unavailable||budgetMismatch?'not-recommended':hits.length&&info.kind==='open'?'review':'unknown',
+   reasons,unknowns,eligibleConfirmed:false,matchedServices:hits};
+}
+
 export function compareDeadline(s) {
   const d=parseDate(s);
   if(!d)return null;
