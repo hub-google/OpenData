@@ -747,9 +747,45 @@ async function setSavedRead(caseId,isRead,automatic=false){
  }
  if(!automatic)toast(isRead?'已標記已讀':'已標記未讀');
 }
+// W08: self-reported private outcome metrics. Never infer bidding success
+// from public award notices; no outcome means no win-rate denominator.
+function renderTrackingPerformance(items){
+  const box=$('trackingPerformance');if(!box)return;
+  const countByStage=Object.fromEntries(states.map(stage=>[stage,0]));
+  for(const item of items){
+    if(Object.hasOwn(countByStage,item.stage))countByStage[item.stage]++;
+  }
+  const won=countByStage['已得標']||0,lost=countByStage['未得標']||0,
+    completed=won+lost,participated=(countByStage['已投標']||0)+(countByStage['待決標']||0)+completed;
+  const grid=E('div','ti-performance-grid');
+  for(const [label,value,foot] of [
+    ['累計追蹤',String(items.length),'我的私人追蹤案件'],
+    ['曾投標／等待結果',String(participated),'根據自己設定的階段'],
+    ['自行記錄已得標',String(won),'非官方得標名單'],
+    ['已記錄結果勝率',completed?(100*won/completed).toFixed(1)+'%':'—','只計已得標＋未得標 '+completed+' 件']
+  ]){
+    child(grid,E('div','ti-performance-metric'));
+    const metric=grid.lastElementChild;
+    child(metric,E('span','minor',label),E('strong','',value),E('small','minor',foot));
+  }
+  const heading=E('h2','','我的投標成果'),
+    note=E('p','minor','統計僅依你自行填寫的投標階段；不代表政府公告、真實投標參與證明或未來得標機率。沒有已結案結果時，勝率維持「—」。');
+  const breakdown=E('div','ti-performance-breakdown');
+  const h=E('h3','','案件階段分布');breakdown.append(h);
+  for(const stage of states){
+    const count=countByStage[stage]||0;
+    const row=E('div','ti-performance-stage');
+    const label=E('span','',stage),total=E('strong','',String(count));
+    const track=E('span','ti-performance-track'),bar=E('span','ti-performance-fill');
+    bar.style.width=(items.length?Math.min(100,100*count/items.length):0)+'%';
+    track.append(bar);row.append(label,track,total);breakdown.append(row);
+  }
+  box.replaceChildren(heading,note,grid,breakdown);
+}
 function renderTracking(){
   const out=$('trackingOutput');out.replaceChildren();
   const items=Object.values(store.saved);
+  renderTrackingPerformance(items);
   $('trackingCount').textContent=items.length;$('metricSaved').textContent=items.length;renderTaskSelector();
   const documentCase=$('documentCaseId');
   if(documentCase){
@@ -768,7 +804,7 @@ function renderTracking(){
     const stageL=E('label','','投標階段'),select=E('select','');
     for(const stage of states){const opt=E('option','',stage);opt.value=stage;select.append(opt);}
     select.value=item.stage||'評估中';
-    select.addEventListener('change',()=>{item.stage=select.value;persist();if(cloud.user)void cloudSaveSingle(item,true);toast('已保存投標階段');});
+    select.addEventListener('change',()=>{item.stage=select.value;persist();renderTrackingPerformance(Object.values(store.saved));if(cloud.user)void cloudSaveSingle(item,true);toast('已保存投標階段');});
     stageL.append(select);
     const dateL=E('label','','我的內部截止日'),input=E('input','');input.type='date';input.value=item.due||'';
     input.addEventListener('change',()=>{item.due=input.value;persist();if(cloud.user)void cloudSaveSingle(item,true);});
