@@ -1745,6 +1745,43 @@ async function renderWorkspace(){
    });
    transfer.disabled=!choose.value;
    child(ownerRow,choose,transfer);
+   const rolePanel=E('div','ti-team-roles');
+   rolePanel.append(E('h3','','成員角色與權限'));
+   rolePanel.append(E('p','minor','擁有者可指派管理員、編輯者或唯讀成員；唯讀成員無法修改案件、任務或上傳附件。'));
+   for(const member of members.data.filter(x=>x.user_id!==cloud.user.id)){
+    const row=E('div','ti-team-role-row');
+    const identity=E('span','',member.user_id.slice(0,8)+'…');
+    identity.title='團隊成員：'+member.user_id;
+    const level=E('select','');level.setAttribute('aria-label','成員 '+member.user_id.slice(0,8)+' 的角色');
+    for(const role of ['admin','editor','viewer']){
+     const name={admin:'管理員',editor:'編輯者',viewer:'唯讀'}[role];
+     const option=E('option','',name);option.value=role;level.append(option);
+    }
+    level.value=member.role;
+    level.addEventListener('change',async()=>{
+     const before=member.role,desired=level.value;level.disabled=true;
+     try{
+      const {data,error}=await cloud.client.rpc('ti_set_workspace_member_role',{
+       p_workspace:id,p_member:member.user_id,p_role:desired
+      });
+      if(error||data!==desired)throw error||Error('沒有收到後端確認的角色');
+      toast('成員權限已更新為 '+{admin:'管理員',editor:'編輯者',viewer:'唯讀'}[desired]+'。');
+      await renderWorkspace();
+     }catch(error){
+      level.value=before;toast('角色更新失敗：'+readableError(error));level.disabled=false;
+     }
+    });
+    const remove=btn('移除成員','ghost-btn',async()=>{
+     if(!confirm('將此成員移出團隊？對方將立即失去共用案件與文件存取權。'))return;
+     remove.disabled=true;
+     const {error}=await cloud.client.from('ti_workspace_members').delete()
+       .eq('workspace_id',id).eq('user_id',member.user_id);
+     if(error){toast('移除失敗：'+readableError(error));remove.disabled=false;}
+     else{toast('已移除成員，私人共用權限立即收回。');void renderWorkspace();}
+    });
+    row.append(identity,level,remove);rolePanel.append(row);
+   }
+   if(!rolePanel.querySelector('.ti-team-role-row'))rolePanel.append(E('p','minor','尚無其他成員；先產生邀請連結。'));
    const deleteButton=btn('永久刪除整個工作區','ghost-btn',async()=>{
     const selected=$('workspaceSelect').selectedOptions?.[0]?.textContent||'';
     const typed=prompt('此操作會永久刪除所有成員共享的案件、任務及邀請。請輸入完整工作區名稱「'+selected+'」確認：');
@@ -1766,7 +1803,7 @@ async function renderWorkspace(){
     if(error)return toast('刪除失敗：'+readableError(error));
     selectedWorkspace='';toast('工作區及其共享內容已刪除。');void refreshWorkspaces();
    });
-   child(ownerTools,ownerRow,E('p','minor','轉移所有權需對方已是成員；刪除整個工作區會影響所有成員。'),deleteButton);
+   child(ownerTools,ownerRow,rolePanel,E('p','minor','轉移所有權需對方已是成員；刪除整個工作區會影響所有成員。'),deleteButton);
    box.append(ownerTools);
   }else if(me){
    const leave=btn('退出此工作區','ghost-btn',async()=>{
