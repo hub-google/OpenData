@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/tender-workspace-rls-audit.yml"
       - "tender-intelligence-web/app.js"
+      - "tender-intelligence-web/support.js"
       - "tender-intelligence-web/tests/workspace-rls-live.cjs"
 permissions:
   contents: read
