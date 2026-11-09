@@ -44,7 +44,7 @@
     </nav>
     <div class="sidebar-footer">
       <span class="status-dot"></span> 公開測試版本
-      <p>沒有付費限制。標案由公開資料 API 即時讀取；未登入追蹤存在本機；登入後可同步到自己的 Supabase 帳戶。</p>
+      <p>資料依最後成功取得的公開採購公告更新，部分欄位仍待補齊。投標前請以官方公告為準。</p>
     </div>
   </aside>
   <div class="workspace">
@@ -86,25 +86,16 @@
       </section>
       <section id="view-search" class="view">
         <div class="hero">
-          <div><div class="eyebrow">PUBLIC PROCUREMENT INTELLIGENCE</div><h1>找到值得投入的政府標案</h1><p>搜尋真實公告、追蹤更正與決標，連接機關及廠商歷史。所有資料均可回到原始來源查核。</p></div>
+          <div><div class="eyebrow">台灣政府採購商機</div><h1>找標案、看懂現況、開始投標</h1><p>先找適合的案件，確認公告歷程與官方期限，再決定是否投入。每件案件都能連回來源查證。</p></div>
           <div class="hero-emblem" aria-hidden="true">⌕</div>
         </div>
-        <div class="metrics" id="metrics">
-          <div class="metric"><span>本批載入案件</span><strong id="metricLoaded">—</strong><small>非全國總數</small></div>
-          <div class="metric"><span>符合案件總數</span><strong id="metricCases">—</strong><small>依機關與案號計算</small></div>
-          <div class="metric"><span>招標中案件</span><strong id="metricOpen">—</strong><small>不等於尚未截標</small></div>
-          <div class="metric"><span>已收藏</span><strong id="metricSaved">0</strong><small>登入後可雲端同步</small></div>
-        </div>
-        <div class="metrics" id="verifiedMetrics" aria-label="自有資料庫已核對的標案概況">
-          <div class="metric"><span>最新收錄公告</span><strong id="verifiedLatest">—</strong><small id="verifiedLatestDate">以公告日期為準</small></div>
-          <div class="metric"><span>確認尚未截標</span><strong id="verifiedOpen">—</strong><small>僅含有官方截止時間者</small></div>
-          <div class="metric"><span>三日內截止</span><strong id="verifiedSoon">—</strong><small>僅已確認時間者</small></div>
-          <div class="metric"><span>目前無法決標公告</span><strong id="verifiedFailed">—</strong><small>依案件最新公告類型</small></div>
-          <div class="metric"><span>截止日待查</span><strong id="verifiedUnknown">—</strong><small>招標類但尚無明確截止資訊</small></div>
-        </div>
-        <p class="hint" id="verifiedMetricsNote" role="status">正在查詢實際入庫數據及欄位完整度；未知欄位不會當成 0。</p>
         <div class="panel search-panel">
+          <div class="ti-search-header"><h2>搜尋政府採購案件</h2><p>輸入案名、機關或廠商；不限今天公告。搜尋結果以案件為單位，不會把每次更正當成新商機。</p></div>
           <form id="searchForm" class="search-form">
+            <input id="searchQuery" type="search" placeholder="例如：資安、圖書採購、機關或廠商名稱" autocomplete="off" maxlength="120" aria-label="搜尋關鍵字">
+            <button class="primary-btn" type="submit">搜尋標案</button>
+            <details class="ti-search-scope"><summary>搜尋範圍</summary>
+              <label for="searchMode">搜尋方式</label>
             <label for="searchMode" class="sr-only">搜尋類型</label>
             <select id="searchMode" aria-label="搜尋類型">
               <option value="latest">最新標案</option>
@@ -113,21 +104,44 @@
               <option value="companyId">廠商統編</option>
               <option value="agency">機關名稱</option>
             </select>
-            <input id="searchQuery" type="search" placeholder="例如：資安、空調、清潔、統編、機關名稱" autocomplete="off" maxlength="120" aria-label="搜尋關鍵字">
-            <button class="primary-btn" type="submit">搜尋標案</button>
+            </details>
           </form>
-          <div class="preset-row"><span>快速搜尋</span><button type="button" data-preset="資訊">資訊</button><button type="button" data-preset="清潔">清潔</button><button type="button" data-preset="營造">營造</button><button type="button" data-preset="醫療">醫療</button><button type="button" data-preset="保全">保全</button><button type="button" data-preset="latest">今日公告</button></div>
+          <div class="ti-scenario-row" role="group" aria-label="按案件目前狀態快速尋找商機">
+            <span>快速找案</span>
+            <button type="button" data-scenario="all" aria-pressed="true">最新案件</button>
+            <button type="button" data-scenario="open" aria-pressed="false">確認截止未到</button>
+            <button type="button" data-scenario="soon" aria-pressed="false">三日內截止</button>
+            <button type="button" data-scenario="failed" aria-pressed="false">無法決標</button>
+            <button type="button" data-scenario="amended" aria-pressed="false">近期更正</button>
+            <button type="button" data-scenario="awarded" aria-pressed="false">歷史決標</button>
+          </div>
+          <details id="searchFilters" class="ti-more-filters"><summary>更多篩選條件（類別、金額、排序）</summary>
           <div class="filters">
-            <label>公告類型<select id="statusFilter"><option value="全部">全部公告</option><option value="招標">招標／公開取得</option><option value="決標">決標</option><option value="更正">更正</option><option value="無法決標">無法決標</option><option value="公開閱覽">公開閱覽</option><option value="公開徵求">公開徵求參考資料</option><option value="財物標售">財物標售</option></select></label>
+            <label>最新公告類型<select id="statusFilter"><option value="全部">全部公告</option><option value="招標">招標／公開取得</option><option value="決標">決標</option><option value="更正">更正</option><option value="無法決標">無法決標</option><option value="公開閱覽">公開閱覽</option><option value="公開徵求">公開徵求參考資料</option><option value="財物標售">財物標售</option></select></label>
             <label>採購標的<select id="groupFilter"><option value="全部">全部類別</option><option value="工程">工程</option><option value="財物">財物</option><option value="勞務">勞務</option><option value="未分類">未分類</option></select></label>
             <label>最低公開預算（元）<input id="budgetFilter" type="number" min="0" step="10000" placeholder="不限"></label>
             <label>結果排序<select id="sortFilter"><option value="date">最新公告</option><option value="budget">公開預算高至低</option><option value="title">標案名稱</option></select></label>
           </div>
-          <p class="hint">跨日全文搜尋依整個已入庫資料庫套用條件、顯示總命中數，每頁最多 30 件；最新公告等其他模式依各自資料來源呈現。最新標案依機關與案號每案只顯示一筆，歷次招標、無法決標及更正公告保留在案件詳情。公開預算取已入庫的同案件來源資料；未確認金額會標示「尚無可確認資料」。截標時間需進入詳情核對。</p>
+          </details>
+          <p class="hint">搜尋與篩選先在已入庫資料庫執行，再分頁顯示；沒有官方截止日的案件會明確標示「待確認」。「無法決標」只代表公告狀態，不能直接視為重新開放投標。</p>
         </div>
+        <div class="metrics" id="metrics" hidden>
+          <div class="metric"><span>本頁載入案件</span><strong id="metricLoaded">—</strong><small>非全國總數</small></div>
+          <div class="metric"><span>符合案件總數</span><strong id="metricCases">—</strong><small>依機關與案號計算</small></div>
+          <div class="metric"><span>本頁官方截止未到</span><strong id="metricOpen">—</strong><small>不等於尚未截標</small></div>
+          <div class="metric"><span>已收藏</span><strong id="metricSaved">0</strong><small>登入後可雲端同步</small></div>
+        </div>
+        <div class="metrics ti-business-metrics" id="verifiedMetrics" aria-label="自有資料庫已核對的標案概況">
+          <div class="metric" hidden><span>最新收錄公告</span><strong id="verifiedLatest">—</strong><small id="verifiedLatestDate">以公告日期為準</small></div>
+          <div class="metric"><span>確認尚未截標</span><strong id="verifiedOpen">—</strong><small>僅含有官方截止時間者</small></div>
+          <div class="metric"><span>三日內截止</span><strong id="verifiedSoon">—</strong><small>僅已確認時間者</small></div>
+          <div class="metric"><span>目前無法決標公告</span><strong id="verifiedFailed">—</strong><small>依案件最新公告類型</small></div>
+          <div class="metric"><span>截止日待查</span><strong id="verifiedUnknown">—</strong><small>招標類但尚無明確截止資訊</small></div>
+        </div>
+        <p class="hint" id="verifiedMetricsNote" role="status">正在查詢實際入庫數據及欄位完整度；未知欄位不會當成 0。</p>
         <div id="dataError" class="notice danger" role="alert" hidden></div>
         <div class="section-heading"><div><h2 id="resultsHeading">最新標案</h2><p id="resultInfo">正在讀取真實公告…</p></div><div class="heading-actions"><button id="exportCsv" type="button" class="ghost-btn">↓ CSV</button><button id="exportRss" type="button" class="ghost-btn">↓ RSS 檔案</button><a href="https://unapiwajmgqqtdkixaab.supabase.co/functions/v1/ti-rss" target="_blank" rel="noopener noreferrer" class="ghost-btn" type="application/rss+xml">訂閱自動更新 RSS</a><button id="reloadBtn" type="button" class="ghost-btn">重新整理</button></div></div>
-        <div id="resultList" class="result-list" aria-live="polite"><div class="empty">正在連線公開標案來源…</div></div>
+        <div id="resultList" class="result-list" aria-live="polite"><div class="empty">正在查詢已收錄的真實案件…</div></div>
         <div class="pagination"><button id="prevPage" type="button" class="ghost-btn">上一頁</button><span id="pageInfo">第 1 頁</span><button id="nextPage" type="button" class="ghost-btn">下一頁</button></div>
       </section>
 
