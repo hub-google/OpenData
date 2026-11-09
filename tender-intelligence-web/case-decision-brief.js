@@ -9,8 +9,17 @@ const dateTime=v=>{
  catch{return '尚未取得'}
 };
 function jump(tabIndex){
- const b=document.querySelectorAll('#detailContent .ti-case-tab')[tabIndex];
- b?.click();b?.scrollIntoView({block:'nearest',behavior:'smooth'});
+ // Legacy quick actions map to the reorganized case workspace.
+ // 1=decision, 2=documents, 3=tasks; 0=overview.
+ const root=document.getElementById('detailContent');
+ const tabs=[...(root?.querySelectorAll('.ti-case-tab')||[])];
+ const main=tabIndex===0?tabs[0]:tabs[3];
+ main?.click();
+ if(tabIndex>0){
+  const key={1:'decision',2:'documents',3:'tasks',4:'contracts'}[tabIndex];
+  root?.querySelector('[data-prep-tab="'+key+'"]')?.click();
+ }
+ main?.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 function action(text,onClick){
  const b=node('button',text,'ghost-btn');b.type='button';b.addEventListener('click',onClick);return b;
