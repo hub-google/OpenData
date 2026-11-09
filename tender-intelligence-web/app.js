@@ -77,6 +77,16 @@ async function api(path,params={},timeout=22000) {
     return data;
   }finally{clearTimeout(timer);}
 }
+function updateFilterSummary(){
+ const panel=$('searchFilters'),summary=panel?.querySelector('summary');
+ if(!summary)return;
+ const active=[];
+ if($('statusFilter').value!=='全部')active.push($('statusFilter').selectedOptions[0]?.textContent||'公告類型');
+ if($('groupFilter').value!=='全部')active.push($('groupFilter').value);
+ if($('budgetFilter').value!=='')active.push('預算下限');
+ if($('sortFilter').value!=='date')active.push('自訂排序');
+ summary.textContent=active.length?'更多篩選（已套用：'+active.join('、')+'）':'更多篩選條件（類別、金額、排序）';
+}
 function makeQuery(){
   const q=$('searchQuery').value.trim();
   const mode=$('searchMode').value;
@@ -1077,7 +1087,7 @@ function hook(){
     const submitted=makeQuery();
     if(submitted){
       state.scenario='all';
-      document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed','false'));
+      document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scenario==='all')));
       void search(submitted.mode,submitted.query,1);
     }
   });
@@ -1087,6 +1097,10 @@ function hook(){
     clearTimeout(filterDebounce);
     state.scenario=b.dataset.scenario||'all';
     $('statusFilter').value='全部';
+    $('groupFilter').value='全部';
+    $('budgetFilter').value='';
+    $('sortFilter').value='date';
+    updateFilterSummary();
     $('searchMode').value='latest';
     $('searchQuery').value='';
     document.querySelectorAll('[data-scenario]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
@@ -1103,6 +1117,11 @@ function hook(){
   for(const id of ['statusFilter','groupFilter','budgetFilter','sortFilter']){
     $(id).addEventListener(id==='budgetFilter'?'input':'change',()=>{
       clearTimeout(filterDebounce);
+      if(id==='statusFilter'&&state.scenario!=='all'){
+        state.scenario='all';
+        document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scenario==='all')));
+      }
+      updateFilterSummary();
       if(!['latest','archive','title'].includes(state.mode))return;
       // Don't replace a keyword the user has typed but not submitted.
       if($('searchQuery').value.trim()!==state.query)return;
@@ -1111,6 +1130,7 @@ function hook(){
       },id==='budgetFilter'?420:0);
     });
   }
+  updateFilterSummary();
   $('prevPage').addEventListener('click',()=>nextPage(-1));
   $('nextPage').addEventListener('click',()=>nextPage(1));
   $('exportCsv').addEventListener('click',exportSearchCsv);
