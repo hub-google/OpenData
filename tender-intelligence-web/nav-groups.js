@@ -1,10 +1,11 @@
 // Five compact sections; existing button nodes are moved, never cloned, preserving all handlers.
 const groups=[
- {name:'找標案',icon:'⌕',views:['search','advanced','radar','issues']},
+ {name:'找標案',icon:'⌕',views:['search','advanced']},
+ {name:'我的商機',icon:'◎',views:['radar','issues']},
  {name:'市場情報',icon:'▤',views:['agencies','vendors','analytics','debarred','directory']},
- {name:'投標工作台',icon:'▣',views:['tracking','decisions','proposal','documents','team','contracts']},
- {name:'監控與通知',icon:'♧',views:['alerts']},
- {name:'我的公司與設定',icon:'⚙',views:['company','developer','guide','about','billing']}
+ {name:'投標管理',icon:'▣',views:['tracking','decisions','team','contracts']},
+ {name:'文件與資格',icon:'▧',views:['proposal','documents','company']},
+ {name:'提醒與設定',icon:'⚙',views:['alerts','developer','guide','about','billing']}
 ];
 function build(){
  const nav=document.querySelector('.sidebar .nav');if(!nav||nav.dataset.grouped)return;
