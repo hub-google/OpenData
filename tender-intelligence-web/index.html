@@ -414,6 +414,17 @@
             <button class="ghost-btn" type="submit">加入工作區</button>
           </form>
         </div>
+        <div id="workspaceTaskComposer" class="panel" hidden>
+          <h2>建立團隊待辦</h2>
+          <form id="workspaceTaskForm" class="inline-form">
+            <input id="workspaceTaskTitle" maxlength="300" placeholder="例如：準備報價附件" aria-label="團隊待辦名稱" required>
+            <label>預定完成日 <input id="workspaceTaskDue" type="date"></label>
+            <label>指派給 <select id="workspaceTaskOwner" aria-label="指派任務負責人"><option value="">未指派</option></select></label>
+            <label>關聯案件 <select id="workspaceTaskCase" aria-label="關聯團隊標案"><option value="">不關聯案件</option></select></label>
+            <button id="workspaceTaskSubmit" type="submit" class="primary-btn">建立團隊待辦</button>
+          </form>
+          <p id="workspaceTaskStatus" class="minor" role="status">待辦只會建立在目前選擇的工作區。</p>
+        </div>
         <div id="workspaceOutput" class="panel analysis-panel"><div class="empty">登入並建立或加入工作區後，即可共用真實標案。</div></div>
       </section>
       <section id="view-alerts" class="view" hidden>
