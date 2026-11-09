@@ -238,7 +238,8 @@ async function openCaseFromUrl(){
  try{
   const data=await loadCaseHistory(unit,job);
   const rows=Array.isArray(data.records)?dedupe(data.records):[];
-  const chosen=rows.find(r=>r.unit_id===unit&&r.job_number===job);
+  const initial=rows.find(r=>r.unit_id===unit&&r.job_number===job);
+  const chosen=initial?normalize((await enrichCaseRecords([initial]))[0]):null;
   if(!chosen)throw Error('來源未回傳這個機關與案號');
   state.details.set(chosen.id,data);
   await openDetail(chosen);
@@ -338,7 +339,7 @@ function renderDetail(row,data){
     try{await navigator.clipboard.writeText(url.toString());toast('已複製此案專屬網址');}
     catch{toast('無法存取剪貼簿，請使用瀏覽器的分享功能。');}
   }));
-  child(actions,link('資料 API ↗',apiLink));if(sum.latestFields.url||info.url)child(actions,link('官方原始公告 ↗',sum.latestFields.url||info.url));
+  child(actions,link('資料 API ↗',apiLink));if(sum.latestFields.url||info.url||row.detail?.url)child(actions,link('官方原始公告 ↗',safeOfficial(sum.latestFields.url||info.url||row.detail?.url)));
   page.append(actions);
   const grid=E('div','detail-grid');
   const latest=sum.latest||row,latestInfo=fieldsOf(latest.detail);
@@ -349,7 +350,7 @@ function renderDetail(row,data){
   const items=[
     ['機關代碼',row.unit_id],['採購案號',row.job_number],
     ['預算',formatMoney(budget)],['決標金額',formatMoney(award)],
-    ['公告截止投標',sum.hasDeadline?dateLabel(sum.deadlineRaw):'未公開'],
+    ['公告截止投標',row.deadline_at||sum.deadlineRaw?deadlineLabel(row.deadline_at??sum.deadlineRaw):'截止日待確認'],
     ['開標時間',info.opening?dateLabel(info.opening):'未公開'],
     ['履約地點',info.location],['履約期限',info.period],
     ['招標方式',info.tenderMethod],['決標方式',info.decisionMethod||latestInfo.decisionMethod],
