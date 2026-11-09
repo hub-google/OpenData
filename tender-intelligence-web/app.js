@@ -2,7 +2,7 @@ import {loadAgencyEvidence} from './agency-deep.js';
 import {
   API_ROOT,asText,keyOf,safeNumber,formatMoney,parseDate,dateLabel,typeOf,
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
-  compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,csvEscape,safeOfficial
+  compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,csvEscape,safeOfficial
 } from './core.mjs';
 import {getClient,fetchArchive,fetchCaseSearch,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
@@ -492,6 +492,18 @@ async function searchFullRadar(p=1){
  button.disabled=true;status.textContent='正在自有資料庫跨日搜尋實際已入庫招標公告（不包含更正或決標），並排序關鍵字關聯性…';
  try{
   const client=await getClient();
+  // Read the user's own company profile once, not one query per candidate.
+  let companyInfo=null,companyPreferences={},companyAssets=[];
+  if(cloud.user){
+    const [companyResponse,preferenceResponse,assetsResponse]=await Promise.all([
+      client.from('ti_company_profiles').select('services,company_intro').eq('user_id',cloud.user.id).maybeSingle(),
+      client.from('ti_profiles').select('min_budget,max_budget,preferred_area').eq('user_id',cloud.user.id).maybeSingle(),
+      client.from('ti_company_assets').select('id,title,asset_type').eq('user_id',cloud.user.id).limit(100)
+    ]);
+    if(!companyResponse.error&&!preferenceResponse.error&&!assetsResponse.error){
+      companyInfo=companyResponse.data||{};companyPreferences=preferenceResponse.data||{};companyAssets=assetsResponse.data||[];
+    }
+  }
   const min=store.profile.min===''||store.profile.min==null?null:safeNumber(store.profile.min);
   const max=store.profile.max===''||store.profile.max==null?null:safeNumber(store.profile.max);
   const location=asText(store.profile.area).trim().slice(0,80);
@@ -534,7 +546,13 @@ async function searchFullRadar(p=1){
    }
    if(item.verified_location)explanations.push('公告履約地：'+item.verified_location);
    if(store.profile.area&&!item.verified_location)warnings.push('履約地未公開，未使用機關地址代替');
-   note.textContent='符合：'+explanations.join('；')+'｜待核對：'+warnings.join('；');
+   let fitText='';
+   if(companyInfo){
+     const fit=assessCompanyFit({...rec,deadline_at:item.deadline_at},companyInfo,companyPreferences,companyAssets);
+     fitText='｜公司適配：'+fit.label+'（'+
+       [...fit.reasons,...fit.unknowns].slice(0,4).join('；')+'；非資格合格證明）';
+   }
+   note.textContent='關鍵字依據：'+explanations.join('；')+'｜待核對：'+warnings.join('；')+fitText;
    note.style.padding='0 16px 9px';wrapper.append(note);
    const feedbackActions=E('div','detail-actions');
    child(feedbackActions,btn('符合我的業務','ghost-btn',()=>void saveRadarFeedback(rec,'relevant')),
