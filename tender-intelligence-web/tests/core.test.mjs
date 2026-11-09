@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parseDate,dateLabel,safeNumber,normalize,dedupe,mergeCaseAmounts,filtered,groupOf,stateOf,
-  fieldsOf,summaryOf,amountRatio,ratioStats,scoreCase,csvEscape,safeOfficial,keyOf
+  fieldsOf,summaryOf,deadlineDate,deadlineLabel,opportunityOf,amountRatio,ratioStats,scoreCase,csvEscape,safeOfficial,keyOf
 } from '../core.mjs';
 
 const base={unit_id:'A.15.2',job_number:'115157G',unit_name:'交通部中央氣象署',date:20261103,filename:'TIQ-1-71148889',
@@ -105,4 +105,40 @@ test('CSV formula content protected and URL hostname restricted',()=>{
   assert.ok(safeOfficial('https://web.pcc.gov.tw/tps/example'));
   assert.equal(safeOfficial('https://web.pcc.gov.tw.evil.net/'),'');
   assert.equal(safeOfficial('javascript:alert(1)'),'');
+});
+
+test('opportunity assessment separates notice event from bidding availability',()=>{
+  const now=Date.parse('2026-11-09T08:00:00Z');
+  const newTender=normalize({...base,deadline_at:'2026-11-12T09:00:00+08:00'});
+  assert.equal(opportunityOf(newTender,now).kind,'open');
+  assert.equal(opportunityOf(newTender,now).canConfirmOpen,true);
+  assert.equal(opportunityOf({...newTender,deadline_at:null},now).kind,'unknown');
+  assert.equal(opportunityOf({...newTender,deadline_at:'2026-11-08T18:00:00+08:00'},now).kind,'closed');
+  const correction=normalize({...base,deadline_at:'2026-11-12T09:00:00+08:00',
+    brief:{...base.brief,type:'公開招標更正公告'}});
+  assert.equal(opportunityOf(correction,now).kind,'amended');
+  assert.equal(opportunityOf(correction,now).canConfirmOpen,false);
+  const failed=normalize({...base,deadline_at:'2026-11-12T09:00:00+08:00',
+    brief:{...base.brief,type:'無法決標公告'}});
+  assert.equal(opportunityOf(failed,now).kind,'failed');
+  assert.equal(opportunityOf(failed,now).canConfirmOpen,false);
+  const correctedAward=normalize({...base,deadline_at:'2026-11-12T09:00:00+08:00',
+    brief:{...base.brief,type:'更正決標公告'}});
+  assert.equal(correctedAward.status,'決標');
+  assert.equal(opportunityOf(correctedAward,now).kind,'awarded');
+  const correctedReference=normalize({...base,deadline_at:null,
+    brief:{...base.brief,type:'公開徵求廠商提供參考資料更正公告'}});
+  assert.equal(correctedReference.status,'公開徵求');
+});
+test('ISO deadlines show Taiwan time and missing dates never become countdowns',()=>{
+  assert.equal(deadlineDate(null),null);
+  assert.equal(deadlineDate('2026-11-12T09:00:00+08:00').toISOString(),'2026-11-12T01:00:00.000Z');
+  assert.equal(deadlineDate('2026-11-12T01:00:00+00:00').toISOString(),'2026-11-12T01:00:00.000Z');
+  assert.notEqual(deadlineLabel('2026-11-12T09:00:00+08:00'),'截止日待確認');
+  assert.equal(deadlineLabel(null),'截止日待確認');
+});
+test('different procurement numbers remain separate cases even with the same title',()=>{
+  const rows=dedupe([base,{...base,job_number:'115157G-RESTART',filename:'TIQ-2'}]);
+  assert.equal(rows.length,2);
+  assert.notEqual(rows[0].id,rows[1].id);
 });
