@@ -95,6 +95,36 @@ export async function enrichCaseRecords(records){
     detail:{...(r.detail||{}),...(m.official_url?{url:m.official_url}:{})}}:r;
  });
 }
+// One canonical case search contract across homepage, title, archive, agency
+// and vendor searches. All filters, counts, ordering and paging run in SQL.
+export async function fetchCaseSearch({
+ mode='latest',query='',page=1,filters={},scenario='all'
+}={}){
+ const client=await getClient();
+ const amount=filters.minBudget===''||filters.minBudget==null?null:Number(filters.minBudget);
+ if(amount!==null&&(!Number.isFinite(amount)||amount<0))throw Error('最低公開預算格式不正確');
+ const m=mode==='archive'&&!String(query||'').trim()?'latest':mode;
+ const args={
+  p_mode:m,p_term:String(query||'').trim(),
+  p_kind:filters.status==='全部'?'':String(filters.status||''),
+  p_group:filters.group==='全部'?'':String(filters.group||''),
+  p_min_budget:amount,
+  p_sort:['date','budget','title'].includes(filters.sort)?filters.sort:'date',
+  p_scenario:mode==='latest'?scenario:'all',
+  p_page:Math.max(1,Math.trunc(Number(page)||1)),p_limit:30
+ };
+ // Preserve exact criteria on retry. Do not quietly drop filters when the RPC fails.
+ let data,error;
+ for(let i=0;i<2;i++){
+  const response=await client.rpc('ti_case_search_v2',args);
+  data=response.data;error=response.error;
+  if(!error||!/statement timeout|canceling statement|57014/i.test(String(error.message||error)))break;
+ }
+ if(error)throw error;
+ if(!data||!Array.isArray(data.records))throw Error('資料庫搜尋結果格式不正確');
+ return data;
+}
+
 // Exact-field backup searches when the upstream API blocks browser CORS.
 // All rows come from the already-ingested public government announcements.
 export async function fetchBasicArchiveSearch({mode,query,page=1}={}){
