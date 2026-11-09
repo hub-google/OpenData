@@ -4,7 +4,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,fetchCaseSearch,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -100,36 +100,29 @@ async function search(mode,query='',sourcePage=1){
   const token=++state.running;
   state.mode=mode;state.query=query;state.sourcePage=sourcePage;state.clientPage=1;state.totalRecords=null;
   $('searchMode').value=mode;$('searchQuery').value=query;
-  const filterPanel=$('searchFilters');if(filterPanel)filterPanel.hidden=['vendor','companyId','agency'].includes(mode);
+  const filterPanel=$('searchFilters');if(filterPanel)filterPanel.hidden=false;
   $('resultList').replaceChildren(E('div','empty','正在讀取已同步的真實標案…'));
   $('dataError').hidden=true;
   $('resultsHeading').textContent=listModes[mode]||'搜尋結果';
   $('resultInfo').textContent='從已同步的政府採購公告資料庫查詢，不使用模擬案件';
   setStatus('正在讀取公告資料庫');
   try{
-    let data;
-    if(mode==='archive'||mode==='latest'){
-      data=await fetchArchive({page:sourcePage,search:mode==='archive'?query:'',
-        filters:{status:$('statusFilter').value,group:$('groupFilter').value,
-          minBudget:$('budgetFilter').value,sort:$('sortFilter').value},
-        scenario:mode==='latest'?state.scenario:'all'});
-      state.totalPages=Math.max(1,Number(data.total_pages||1));
-      state.lastSearch=mode==='archive'
-        ?'已入庫歷史案件'+(query?'：'+query:'')
-        :(state.scenario==='open'?'公告截止日未到的案件':
-          state.scenario==='soon'?'三日內截止的案件':
-          state.scenario==='failed'?'目前無法決標的案件':
-          state.scenario==='amended'?'最近三十日更正的案件':
-          state.scenario==='awarded'?'已有決標公告的案件':'最新收錄案件');
-    }else if(mode==='title'){
-      data=await fetchUnifiedTitleSearch(query,sourcePage,{status:$('statusFilter').value,group:$('groupFilter').value,minBudget:$('budgetFilter').value,sort:$('sortFilter').value});
-      state.totalPages=Math.max(1,Number(data.total_pages||1));
-      state.lastSearch='跨日全文搜尋：'+query+'｜完整資料庫分頁';
-    }else{
-      data=await fetchBasicArchiveSearch({mode,query,page:sourcePage});
-      state.totalPages=Math.max(1,Number(data.total_pages||1));
-      state.lastSearch='已入庫'+(listModes[mode]||'搜尋')+'：'+query+'｜依最後成功同步結果顯示';
-    }
+    const filters={status:$('statusFilter').value,group:$('groupFilter').value,
+      minBudget:$('budgetFilter').value,sort:$('sortFilter').value};
+    const data=await fetchCaseSearch({
+      mode,query,page:sourcePage,filters,scenario:state.scenario
+    });
+    state.totalPages=Math.max(1,Number(data.total_pages||1));
+    const descriptions={
+      open:'官方截止日未到的招標案件',
+      soon:'三日內截止的招標案件',
+      failed:'最新狀態為無法決標的案件',
+      amended:'最近三十日有更正公告的案件',
+      awarded:'已有決標公告的案件',
+      all:'最新已收錄案件'
+    };
+    state.lastSearch=mode==='latest'?descriptions[state.scenario]||descriptions.all:
+      (listModes[mode]||'標案')+(query?'：'+query:'')+'｜全庫篩選';
     if(token!==state.running)return;
     state.totalRecords=data.total_records!==null&&data.total_records!==undefined&&Number.isFinite(Number(data.total_records))?Number(data.total_records):null;
     state.latestSource=mode==='latest'?data.source:null;
@@ -165,7 +158,7 @@ function renderSearch(){
   $('trackingCount').textContent=Object.keys(store.saved).length;
   const total=state.totalRecords===null?'':'｜符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件案件';
   $('resultInfo').textContent=state.lastSearch+total+'｜本頁 '+rows.length+' 件（每個案件僅顯示一筆，依機關與案號去重；非全國完整資料）'+
-    (['vendor','companyId','agency'].includes(state.mode)?'｜此類查詢依專屬索引，不適用進階篩選':'');
+    '｜全部篩選與排序先在資料庫完成';
   $('resultList').replaceChildren(...(rows.length?rows.map(r=>caseCard(r)):[
     E('div','empty','本頁沒有符合條件的案件，或資料尚未入庫。請調整條件，亦可查閱資料說明。')
   ]));
