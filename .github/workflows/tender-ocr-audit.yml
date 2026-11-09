@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/tender-ocr-audit.yml"
       - "tender-intelligence-web/app.js"
+      - "tender-intelligence-web/index.html"
       - "tender-intelligence-web/ocr-client.js"
       - "tender-intelligence-web/tests/ocr-live.cjs"
 permissions:
