@@ -57,13 +57,17 @@ async function firstAdvancedId(){
    assert.ok(values.length>0,'No latest cards');
    assert.ok(values.some(v=>v.startsWith('NT$')),'All latest budget values appear unknown');
  });
- await check('Latest list includes distinct source notice versions, not just case master rows',async()=>{
-   const announcements=Number((await page.locator('#metricLoaded').innerText()).replace(/,/g,''));
-   const cases=Number((await page.locator('#metricCases').innerText()).replace(/,/g,''));
+ await check('Latest search displays unique case records',async()=>{
+   const loaded=Number((await page.locator('#metricLoaded').innerText()).replace(/,/g,''));
+   const total=Number((await page.locator('#metricCases').innerText()).replace(/,/g,''));
    const info=await page.locator('#resultInfo').innerText();
-   assert.ok(announcements>=cases&&announcements>0,'Latest notice count smaller than case count');
-   assert.ok(info.includes('已入庫')&&info.includes('公告'),'Unknown source provenance');
-   assert.ok((await page.locator('#resultList .case-card').first().innerText()).includes('公告編號'));
+   assert.ok(loaded>0&&total>=loaded,'Case count must reflect unique opportunities');
+   assert.ok(info.includes('每個案件僅顯示一筆'),'Case-level result explanation missing');
+   const keys=await page.locator('#resultList .case-card').evaluateAll(cards=>cards.map(card=>{
+     const parts=Array.from(card.querySelectorAll('.case-meta span')).map(x=>x.textContent||'');
+     return (parts[1]||'')+'|'+(parts.find(x=>x.includes('案號 '))||'');
+   }));
+   assert.equal(new Set(keys).size,keys.length,'Duplicate procurement opportunity on the page');
  });
  await check('Latest page next button changes the visible page',async()=>{
    const original=await page.locator('#pageInfo').innerText();

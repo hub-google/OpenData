@@ -71,75 +71,50 @@ export async function fetchLatestAmounts(yyyymmdd){
 // When OpenFun rejects cross-origin fetches, read the latest successfully
 // ingested official announcements instead of rendering an empty homepage.
 // This is clearly labelled cached data, never claimed to be a live API response.
-// Source-backed most recent public notice date, with real server-side pagination.
-// The old implementation downloaded thousands of joined/raw JSON notices on each
-// homepage visit, frequently timing out and returning HTTP 500 under ingestion.
+// Homepage: a procurement case appears once. ti_notices preserves its timeline.
 export async function fetchLatestCachedNotices({page=1,date:requestedDate=null}={}){
  const client=await getClient(),perPage=100;
  const currentPage=Math.max(1,Math.trunc(Number(page)||1));
  let day=Number(requestedDate);
  async function readPage(){
   if(!/^\d{8}$/.test(String(day))){
-   const {data:head,error}=await client.from('ti_notices')
-    .select('source_date').order('source_date',{ascending:false}).limit(1);
+   const {data,error}=await client.from('ti_cases')
+    .select('latest_notice_date').not('latest_notice_date','is',null)
+    .order('latest_notice_date',{ascending:false}).limit(1);
    if(error)throw error;
-   day=Number(head?.[0]?.source_date);
+   day=Number(data?.[0]?.latest_notice_date);
   }
-  if(!/^\d{8}$/.test(String(day)))throw Error('資料庫尚無有效公告日期');
+  if(!/^\d{8}$/.test(String(day)))throw Error('資料庫尚無有效標案日期');
   const start=(currentPage-1)*perPage;
   let response;
-  for(let attempt=0;attempt<2;attempt++){
-   response=await client.from('ti_notices')
-    .select('id,case_id,source_date,filename,notice_type,title,category,budget_amount,award_amount,raw_brief,ti_cases!inner(unit_id,job_number,agency,title,category,budget_amount,award_amount)',{count:'exact'})
-    .eq('source_date',day).order('id',{ascending:true}).range(start,start+perPage-1);
-   if(!response.error)break;
-   if(attempt===1||!/statement timeout|canceling statement|500|server error/i.test(String(response.error.message||'')))break;
+  for(let i=0;i<2;i++){
+   response=await client.from('ti_cases')
+    .select('id,unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url',{count:'exact'})
+    .eq('latest_notice_date',day).order('id',{ascending:true}).range(start,start+perPage-1);
+   if(!response.error||i===1||!/statement timeout|canceling statement|500|server error/i.test(String(response.error.message||'')))break;
    await new Promise(resolve=>setTimeout(resolve,350));
   }
   if(response.error)throw response.error;
-  const records=[];
-  for(const n of response.data||[]){
-   const info=n.ti_cases;
-   if(!info?.unit_id||!info?.job_number)continue;
-   const brief=n.raw_brief&&typeof n.raw_brief==='object'&&!Array.isArray(n.raw_brief)
-    ?{...n.raw_brief,title:n.title||n.raw_brief.title||info.title,
-      type:n.notice_type||n.raw_brief.type,category:n.category||n.raw_brief.category||info.category}
-    :{title:n.title||info.title,type:n.notice_type,category:n.category||info.category};
-   records.push({
-    unit_id:info.unit_id,job_number:info.job_number,unit_name:info.agency,
-    date:n.source_date,filename:n.filename||'db-cached',
-    budget_amount:n.budget_amount??info.budget_amount,
-    award_amount:n.award_amount??info.award_amount,brief
-   });
-  }
-  // The embedded !inner join can suppress PostgREST count in some responses.
-  // Count lightweight notice IDs separately so the user can page all notices
-  // without re-downloading their full source JSON.
-  let count=null;
-  // Always count the unjoined notice ledger: a joined row count can be
-  // truncated to 100 while the source date actually has thousands of records.
-  const lookup=await client.from('ti_notices').select('id',{count:'exact',head:true}).eq('source_date',day);
-  if(!lookup.error&&lookup.count!==null&&lookup.count!==undefined)count=lookup.count;
-  else if(response.count!==null&&response.count!==undefined&&Number(response.count)>perPage)
-   count=response.count;
-  const total=Number(count);
-  const totalKnown=Number.isFinite(total)&&total>=records.length;
-  const pages=totalKnown?Math.max(1,Math.ceil(total/perPage))
-    :currentPage+(response.data?.length===perPage?1:0);
-  return {records,date:String(day),source:'database_notices',
-   total_records:totalKnown?total:null,total_pages:pages};
+  const records=(response.data||[]).filter(r=>r.unit_id&&r.job_number).map(r=>({
+   unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
+   date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
+   budget_amount:r.budget_amount,award_amount:r.award_amount,
+   brief:{title:r.title,type:r.latest_notice_type,category:r.category},
+   detail:r.official_url?{url:r.official_url}:{}
+  }));
+  const known=response.count!==null&&response.count!==undefined&&Number.isFinite(Number(response.count));
+  const total=known?Number(response.count):null;
+  return {records,date:String(day),source:'database_cases',total_records:total,
+   total_pages:known?Math.max(1,Math.ceil(total/perPage))
+    :currentPage+((response.data||[]).length===perPage?1:0)};
  }
  try{return await readPage();}
  catch(error){
-  // This still uses genuine ingested official-case rows, never fabricated
-  // announcements. Explicitly label the degraded source in the UI.
   try{
    const archive=await fetchArchive({page:currentPage});
    return {...archive,date:String(archive.records[0]?.date||''),
     source:'case_fallback',source_error:String(error?.message||error).slice(0,200)};
-  }catch(backup){
-   throw new Error('公告明細讀取失敗：'+String(error?.message||error)+'；已入庫案件備援亦無法讀取：'+String(backup?.message||backup));
-  }
+  }catch(backup){throw Error('最新標案與歷史備援都無法讀取：'+String(error?.message||error));}
  }
 }
 // Exact-case history fallback for browsers blocked by upstream CORS.
