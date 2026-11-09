@@ -117,6 +117,7 @@ async function search(mode,query='',sourcePage=1){
     const descriptions={
       open:'官方截止日未到的招標案件',
       soon:'三日內截止的招標案件',
+      small:'公開預算百萬元以下且官方截止日未到的招標案件',
       failed:'最新狀態為無法決標的案件',
       amended:'最近三十日有更正公告的案件',
       awarded:'已有決標公告的案件',
@@ -187,6 +188,7 @@ function caseCard(row,{radarScore=null}={}){
   if(row.status==='招標'||row.status==='更正')
     child(second,E('span','ti-deadline '+(opportunity.kind==='unknown'?'ti-unknown':''),
       '· '+(row.deadline_at?'官方截止 '+deadlineLabel(row.deadline_at):'官方截止日待確認')));
+  if(Number.isInteger(row.notice_count))child(second,E('span','','· 同案公告 '+row.notice_count+' 筆'));
   if(state.mode==='title'&&row.match_field)child(second,E('span','case-tag','命中：'+row.match_field));
   if(radarScore!==null)child(second,E('span','case-tag','關鍵字匹配 '+radarScore+' 項'));
   const actions=E('div','ti-case-card-actions');
