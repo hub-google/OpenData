@@ -91,6 +91,7 @@ function makeQuery(){
   const q=$('searchQuery').value.trim();
   const mode=$('searchMode').value;
   if(mode!=='latest'&&mode!=='archive'&&!q){$('searchQuery').focus();toast('請輸入關鍵字、公司或機關名稱。');return null;}
+  if((mode==='title'||(mode==='latest'&&q))&&q.length<2){$('searchQuery').focus();toast('全文搜尋請輸入至少兩個字。');return null;}
   if(mode==='companyId'&&!/^\d{8}$/.test(q)){toast('統編搜尋請輸入 8 碼數字。');return null;}
   // The default homepage is the latest feed. Typing a keyword must SEARCH,
   // rather than silently ignoring it because the scope is "latest".
@@ -1162,7 +1163,7 @@ function hook(){
         document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scenario==='all')));
       }
       updateFilterSummary();
-      if(!['latest','archive','title'].includes(state.mode))return;
+      if(!['latest','archive','title','agency','vendor','companyId'].includes(state.mode))return;
       // Don't replace a keyword the user has typed but not submitted.
       if($('searchQuery').value.trim()!==state.query)return;
       filterDebounce=setTimeout(()=>{
