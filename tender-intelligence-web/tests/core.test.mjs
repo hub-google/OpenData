@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parseDate,dateLabel,safeNumber,normalize,dedupe,mergeCaseAmounts,filtered,groupOf,stateOf,
-  fieldsOf,summaryOf,deadlineDate,deadlineLabel,opportunityOf,amountRatio,ratioStats,scoreCase,csvEscape,safeOfficial,keyOf
+  fieldsOf,summaryOf,deadlineDate,deadlineLabel,opportunityOf,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,amountRatio,ratioStats,scoreCase,csvEscape,safeOfficial,keyOf
 } from '../core.mjs';
 
 const base={unit_id:'A.15.2',job_number:'115157G',unit_name:'交通部中央氣象署',date:20261103,filename:'TIQ-1-71148889',
@@ -141,4 +141,29 @@ test('different procurement numbers remain separate cases even with the same tit
   const rows=dedupe([base,{...base,job_number:'115157G-RESTART',filename:'TIQ-2'}]);
   assert.equal(rows.length,2);
   assert.notEqual(rows[0].id,rows[1].id);
+});
+
+test('notice differences show only source-proven changes and same-day sequence ambiguity',()=>{
+ const prev={...base,date:20261108,brief:{...base.brief,type:'無法決標公告'},budget_amount:500000};
+ const next={...base,date:20261109,brief:{...base.brief,type:'公開招標公告'},budget_amount:null};
+ const diff=noticeChangeSummary(next,prev);
+ assert.equal(diff.orderVerified,true);
+ assert.ok(diff.changes.some(c=>c.field==='公告類型'));
+ assert.ok(!diff.changes.some(c=>c.field==='公開預算'),'Missing budget must not be a change');
+ assert.equal(noticeChangeSummary({...next,date:prev.date},prev).orderVerified,false);
+});
+test('rebid clues distinguish different numbers and refuse cross-agency auto-merge',()=>{
+ const same={...base,job_number:'115157G-2',brief:{...base.brief,title:'116年度氣象資訊設備採購'}};
+ assert.ok(possibleRelatedCase({unit_id:base.unit_id,job_number:base.job_number,title:'115年度氣象資訊設備採購'}, {...same,title:'116年度氣象資訊設備採購'}));
+ assert.equal(possibleRelatedCase({...base,title:'115年度氣象資訊設備採購'}, {...same,unit_id:'OTHER'}),null);
+ assert.equal(possibleRelatedCase({...base,title:'115年度氣象資訊設備採購'}, {...same,job_number:base.job_number}),null);
+ assert.equal(possibleRelatedCase({...base,title:'115年度氣象資訊設備採購'}, {...same,title:'116年度道路工程'}),null);
+});
+test('supplier fit never claims verified legal eligibility',()=>{
+ const row=normalize({...base,deadline_at:'2026-11-15T17:00:00+08:00'});
+ const fit=assessCompanyFit(row,{services:'氣象資訊,設備維修'},{min_budget:100000},[{title:'資訊專業證照'}]);
+ assert.equal(fit.eligibleConfirmed,false);
+ assert.ok(fit.unknowns.some(x=>x.includes('資格')));
+ const failed=assessCompanyFit({...row,status:'無法決標'}, {services:'氣象資訊'}, {},[]);
+ assert.equal(failed.label,'目前非投標商機');
 });
