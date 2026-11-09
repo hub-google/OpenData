@@ -92,6 +92,29 @@ async function run(){
   await page.screenshot({path:path.join(DIR,'ocr-scanned-pdf-two-batches.png')});
   return {first_batch:second.pages.length,total:merged.pages.length,source_pages:merged.pages.map(x=>x.source)};
  });
+ await test('Nine-page scanned PDF continues with next eight-page batch button',async()=>{
+  const batch=await PDFDocument.create(),graphic=await batch.embedPng(png);
+  for(let i=0;i<9;i++){
+   const page=batch.addPage([960,350]);page.drawImage(graphic,{x:0,y:40,width:960,height:260});
+  }
+  await page.locator('#documentFile').setInputFiles({
+   name:'nine-page-scan.pdf',mimeType:'application/pdf',buffer:Buffer.from(await batch.save())
+  });
+  const first=await recognize();
+  const firstRead=first.pages.filter(x=>x.characters>0&&x.method?.startsWith('OCR'));
+  if(firstRead.length!==8||!first.pages.some(x=>x.source==='第 9 頁'&&x.characters===0))
+   throw Error('第一批應辨識8頁，保留第9頁未辨識：'+JSON.stringify(first.pages));
+  const next=page.locator('#tiOcrNextBatch');
+  if(await next.isDisabled())throw Error('第9頁尚未完成，但下一批按鈕被禁用');
+  await next.click();
+  await page.waitForFunction(()=>document.querySelector('#tiOcrStatus')?.textContent?.includes('已取得 9 頁'),null,{timeout:120000});
+  const pages=await parsed();
+  const recognized=pages.filter(x=>x.text?.includes('ISO')&&x.method?.startsWith('OCR'));
+  if(recognized.length!==9)throw Error('下一批沒有累計保留9頁OCR原文：'+JSON.stringify(pages.map(x=>({source:x.source,method:x.method}))));
+  if(!await next.isDisabled())throw Error('已掃描全部9頁後下一批按鈕仍可操作');
+  await page.screenshot({path:path.join(DIR,'ocr-real-nine-page-batch.png')});
+  return {first_batch:firstRead.length,total_pages:recognized.length,next_disabled:true};
+ });
  await test('Image OCR feeds shared parser; changing files invalidates stale cache',async()=>{
   await page.locator('#documentFile').setInputFiles({name:'official-scan.png',mimeType:'image/png',buffer:png});
   const before=await page.evaluate(async()=>{
