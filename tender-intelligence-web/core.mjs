@@ -62,7 +62,7 @@ export function deadlineDate(value){
   if(value instanceof Date)return Number.isNaN(value.getTime())?null:value;
   const raw=asText(value).trim();
   if(!raw)return null;
-  if(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}/.test(raw)){
+  if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw)){
     const date=new Date(raw);
     return Number.isNaN(date.getTime())?null:date;
   }
