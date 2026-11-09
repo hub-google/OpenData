@@ -1,4 +1,4 @@
-// Five compact sections; existing button nodes are moved, never cloned, preserving all handlers.
+// Six task-first sections; existing button nodes are moved, never cloned, preserving all handlers.
 const groups=[
  {name:'找標案',icon:'⌕',views:['search','advanced']},
  {name:'我的商機',icon:'◎',views:['radar','issues']},
