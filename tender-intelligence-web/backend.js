@@ -19,6 +19,10 @@ export async function getSession(){
   return data.session;
 }
 const CASE_PAGE_SIZE=30;
+function taipeiDateNumber(value){
+ const fields=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value).map(p=>[p.type,p.value]));
+ return Number(fields.year+fields.month+fields.day);
+}
 function caseFilters(query,filters={},scenario='all'){
  const status=String(filters.status||'全部'),group=String(filters.group||'全部');
  const min=filters.minBudget===''||filters.minBudget==null?null:Number(filters.minBudget);
@@ -44,7 +48,7 @@ function caseFilters(query,filters={},scenario='all'){
    if(scenario==='soon')query=query.lte('deadline_at',new Date(now.getTime()+3*86400000).toISOString());
  }else if(scenario==='failed')query=query.or('latest_notice_type.ilike.%無法決標%,latest_notice_type.ilike.%流標%,latest_notice_type.ilike.%廢標%');
  else if(scenario==='amended')query=query.ilike('latest_notice_type','%更正%')
-   .gte('latest_notice_date',Number(new Date(Date.now()-30*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Taipei'}).replaceAll('-','')));
+   .gte('latest_notice_date',taipeiDateNumber(new Date(Date.now()-30*86400000)));
  else if(scenario==='awarded')query=query.ilike('latest_notice_type','%決標%').not('latest_notice_type','ilike','%無法決標%');
  return query;
 }
