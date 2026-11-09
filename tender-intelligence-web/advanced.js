@@ -127,6 +127,14 @@ async function search(p=1){
  try{
   const client=await getClient();
   const t=Array.isArray(opts.p_terms)&&opts.p_terms.length===1?opts.p_terms[0]:'';
+  const unfiltered=opts.p_expression===null&&
+   opts.p_terms.length===0&&opts.p_exclude.length===0&&
+   !opts.p_any&&!opts.p_agency&&!opts.p_kind&&!opts.p_group&&
+   !opts.p_location&&!opts.p_method&&!opts.p_decision_method&&
+   opts.p_min_budget===null&&opts.p_max_budget===null&&
+   opts.p_date_from===null&&opts.p_date_to===null&&
+   !opts.p_deadline_start&&!opts.p_deadline_end&&!opts.p_deadline_only&&
+   opts.p_sort==='date';
   const fast=opts.p_expression===null&&opts.p_any===false&&
    Array.isArray(opts.p_exclude)&&opts.p_exclude.length===0&&
    t.length>=2&&t.length<=60&&!/[%_\\]/.test(t)&&
@@ -139,9 +147,11 @@ async function search(p=1){
   // Under heavy background ingestion PostgreSQL may cancel a slow read at its
   // statement timeout. Retry just this transient case once; never mutate filters.
   for(let attempt=0;attempt<2;attempt++){
-   const response=fast
-    ?await client.rpc('ti_archive_search_simple',{p_term:t,p_page:opts.p_page,p_limit:opts.p_limit})
-    :await client.rpc('ti_archive_search_v5',opts);
+   const response=unfiltered
+    ?await client.rpc('ti_archive_search_recent',{p_page:opts.p_page,p_limit:opts.p_limit})
+    :fast
+     ?await client.rpc('ti_archive_search_simple',{p_term:t,p_page:opts.p_page,p_limit:opts.p_limit})
+     :await client.rpc('ti_archive_search_v5',opts);
    data=response.data;error=response.error;
    if(!error)break;
    if(!/statement timeout|canceling statement/i.test(String(error.message||''))||attempt===1)break;
