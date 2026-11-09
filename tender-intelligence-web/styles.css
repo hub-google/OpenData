@@ -333,3 +333,36 @@ label{font-size:12px;color:#56677b;font-weight:650}
 .ti-team-role-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,170px) auto;align-items:center;gap:10px;border-top:1px solid var(--line,#e3e9f0);padding:10px 0}
 .ti-team-role-row>span{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:600px){.ti-team-role-row{grid-template-columns:1fr 1fr}.ti-team-role-row>button{grid-column:1/-1;width:100%}}
+
+/* PRD v0.2: task-first tender discovery, progressive disclosure and case clarity. */
+.ti-search-header{margin-bottom:16px}
+.ti-search-header h2{margin:0 0 5px;font-size:19px;letter-spacing:-.3px}
+.ti-search-header p{margin:0;color:var(--muted);font-size:12px}
+.ti-search-scope{flex:0 0 auto;min-width:110px;position:relative;align-self:center;color:#49617c}
+.ti-search-scope>summary{cursor:pointer;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-weight:650;list-style:revert;white-space:nowrap;font-size:12px}
+.ti-search-scope[open]{background:#f7faff;padding:8px;border-radius:10px}
+.ti-search-scope label{display:block;margin:6px 0;font-size:11px}
+.ti-search-scope select{width:100%;min-width:145px;max-width:220px}
+.search-panel>.search-form>input[type=search]{min-height:46px;flex:1 1 300px;font-size:15px}
+.ti-scenario-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:17px 0 3px}
+.ti-scenario-row>span{font-size:12px;font-weight:650;color:var(--muted);margin-right:4px}
+.ti-scenario-row button{background:#f7f9fc;color:#36526f;border:1px solid #dce5f0;border-radius:999px;padding:7px 12px;font-weight:600;font-size:12px}
+.ti-scenario-row button:hover{border-color:#93b7ec;background:#ecf4ff}
+.ti-scenario-row button[aria-pressed=true]{background:#e6f0ff;color:#164eae;border-color:#99bcef}
+.ti-more-filters{border-top:1px solid #edf0f5;margin-top:17px;padding-top:12px}
+.ti-more-filters>summary{cursor:pointer;color:#315879;font-size:12px;font-weight:700;display:list-item;list-style-position:inside}
+.ti-more-filters .filters{margin-top:10px;padding-top:0;border-top:none}
+.ti-business-metrics{grid-template-columns:repeat(4,minmax(0,1fr));margin:20px 0 10px}
+.ti-case-card-actions{margin-top:11px}
+.ti-case-card-actions .ghost-btn{padding:6px 10px;font-size:12px}
+.ti-deadline{font-weight:650;color:#315b78}
+.ti-deadline.ti-unknown{color:#a45e23}
+@media(max-width:1150px){.ti-business-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .ti-business-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ti-search-scope{width:100%;align-self:stretch}
+ .ti-search-scope select{width:100%;max-width:none}
+ .ti-scenario-row{gap:7px}
+ .ti-scenario-row button{padding:8px 11px}
+}
+@media(max-width:410px){.ti-business-metrics{grid-template-columns:1fr 1fr}.ti-business-metrics .metric strong{font-size:20px}}
