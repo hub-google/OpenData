@@ -189,6 +189,7 @@ main().catch(e=>results.push({name:'Setup',status:'FAIL',error:short(e)}))
  const payload={generated_at:new Date().toISOString(),target:BASE,
   browser:'Playwright: 3 isolated anonymous signed-in accounts + real RLS',results,page_errors:exceptions};
  fs.writeFileSync(path.join(OUT,'workspace-rls-report.json'),JSON.stringify(payload,null,2));
+ console.log('WORKSPACE_PAGE_ERRORS',JSON.stringify(exceptions));
  console.log('WORKSPACE_RLS',results.filter(r=>r.status==='PASS').length,'/',results.length,'errors',exceptions.length);
  if(results.some(r=>r.status!=='PASS')||exceptions.length)process.exitCode=1;
 });
