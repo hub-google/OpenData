@@ -56,6 +56,39 @@ export function stateOf(row) {
   if (/徵求/.test(s)) return '公開徵求';
   return '其他';
 }
+// A case state and a notice event are different questions. Never call an
+// auction open merely because a notice contains the word "招標".
+export function deadlineDate(value){
+  if(value instanceof Date)return Number.isNaN(value.getTime())?null:value;
+  const raw=asText(value).trim();
+  if(!raw)return null;
+  if(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}/.test(raw)){
+    const date=new Date(raw);
+    return Number.isNaN(date.getTime())?null:date;
+  }
+  return parseDate(raw);
+}
+export function opportunityOf(row,now=Date.now()){
+  const status=asText(row?.status)||stateOf(row);
+  const raw=row?.deadline_at??row?.deadlineRaw??fieldsOf(row?.detail).deadline;
+  const deadline=deadlineDate(raw);
+  if(status==='無法決標')return {label:'無法決標',kind:'failed',deadline,canConfirmOpen:false};
+  if(status==='決標')return {label:'已決標',kind:'awarded',deadline,canConfirmOpen:false};
+  if(status==='招標'||status==='更正'){
+    if(!deadline)return {label:'截止日待確認',kind:'unknown',deadline:null,canConfirmOpen:false};
+    if(deadline.getTime()<=now)return {label:'已過公告截止時間',kind:'closed',deadline,canConfirmOpen:false};
+    // A correction may have changed the terms or deadline; always show the
+    // recorded timestamp but require official revalidation before bidding.
+    if(status==='更正')return {label:'更正公告・期限待核',kind:'amended',deadline,canConfirmOpen:false};
+    return {label:'公告截止日未到',kind:'open',deadline,canConfirmOpen:true};
+  }
+  return {label:status==='其他'?'案件狀態待查':status,kind:'other',deadline,canConfirmOpen:false};
+}
+export function deadlineLabel(value){
+  const d=deadlineDate(value);
+  return d?new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(d):'截止日待確認';
+}
+
 export function normalize(row) {
   if (!row || !row.unit_id || !row.job_number) return null;
   return {
