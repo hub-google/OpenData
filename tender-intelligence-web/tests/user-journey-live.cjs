@@ -104,6 +104,24 @@ async function main(){
   if(cards!==Math.min(loadedCount,20))throw Error('篩選結果卡片筆數錯誤：'+cards);
   return {info,cards,total,loaded:loadedCount,screenshot:await shot('02b-filtered')};
  });
+ await step('進階搜尋無條件開啟與資料庫真實分頁',async()=>{
+  await nav('advanced');
+  await page.locator('#advSubmit').click();
+  await page.waitForFunction(()=>{
+   const status=document.querySelector('#advStatus')?.textContent||'';
+   return status.includes('實際已入庫資料符合條件')||status.includes('資料庫進階搜尋失敗');
+  },null,{timeout:30000});
+  const status=short(await page.locator('#advStatus').innerText(),320);
+  if(!status.includes('實際已入庫資料符合條件'))throw Error('無條件進階搜尋失敗：'+status);
+  const cases=page.locator('#advResults .case-card');
+  if(await cases.count()!==30)throw Error('無條件最近標案頁應載入 30 筆');
+  const first=await cases.first().locator('a.case-title').getAttribute('href');
+  await page.locator('#advNext').click();
+  await page.waitForFunction(()=>document.querySelector('#advPageInfo')?.textContent?.startsWith('第 2／'),null,{timeout:16000});
+  const second=await cases.first().locator('a.case-title').getAttribute('href');
+  if(first===second)throw Error('進階搜尋翻頁沒有更新案件');
+  return {status,first,second,page:await page.locator('#advPageInfo').innerText(),screenshot:await shot('02c-recent-advanced')};
+ });
  await step('進階搜尋：資安維護最低一百萬',async()=>{
   await nav('advanced');await page.locator('#advQuery').fill('資安 AND 維護');
   await page.locator('#advExclude').fill('租賃');await page.locator('#advMin').fill('1000000');
