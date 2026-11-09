@@ -309,11 +309,11 @@ async function loadRelatedCases(row){
 }
 function renderDetail(row,data){
   const sum=summaryOf(data.records);const info=sum.fields;
-  const opportunity=opportunityOf({...row,status:sum.status,deadline_at:row.deadline_at??sum.deadlineRaw});
+  const opportunity=opportunityOf({...row,status:row.status||sum.status,deadline_at:row.deadline_at??sum.deadlineRaw});
   const page=$('detailContent');page.replaceChildren();
   child(page,E('div','eyebrow','政府公開採購案件 · '+row.job_number),E('h2','',row.title),E('p','drawer-subtitle',data.unit_name||row.agency||'機關未公開'));
   const tags=E('div','detail-pills');
-  child(tags,E('span','case-tag','目前狀態：'+opportunity.label),E('span','case-tag','最新公告類型：'+(sum.latest?.noticeType||typeOf(sum.latest)||sum.status)),E('span','case-tag','公告共 '+sum.notices.length+' 次'),E('span','case-tag',row.group));
+  child(tags,E('span','case-tag','目前狀態：'+opportunity.label),E('span','case-tag','最新公告類型：'+(row.noticeType||typeOf(sum.latest)||sum.status)),E('span','case-tag','公告共 '+sum.notices.length+' 次'),E('span','case-tag',row.group));
   if(sum.hasDeadline){
     const remaining=compareDeadline(sum.deadlineRaw);
     child(tags,E('span','case-tag'+(remaining!==null&&remaining<0?' failed':''),remaining!==null&&remaining>=0?'距截止約 '+remaining+' 天':'已過公告截止時間'));

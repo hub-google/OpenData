@@ -80,12 +80,14 @@ export async function enrichCaseRecords(records){
  const ids=[...new Set(source.filter(r=>r?.unit_id&&r?.job_number).map(r=>String(r.unit_id)+'::'+String(r.job_number)))].slice(0,100);
  if(!ids.length||source.every(r=>Object.hasOwn(r,'deadline_at')))return source;
  const client=await getClient();
- const {data,error}=await client.from('ti_cases').select('id,deadline_at,source_fetched_at,official_url').in('id',ids);
+ const {data,error}=await client.from('ti_cases').select('id,deadline_at,source_fetched_at,official_url,latest_notice_type,latest_notice_date,latest_filename').in('id',ids);
  if(error)throw error;
  const byId=new Map((data||[]).map(r=>[r.id,r]));
  return source.map(r=>{
   const m=byId.get(String(r.unit_id)+'::'+String(r.job_number));
   return m?{...r,deadline_at:m.deadline_at,source_fetched_at:m.source_fetched_at,
+    date:m.latest_notice_date??r.date,filename:m.latest_filename||r.filename,
+    brief:{...(r.brief||{}),...(m.latest_notice_type?{type:m.latest_notice_type}:{})},
     detail:{...(r.detail||{}),...(m.official_url?{url:m.official_url}:{})}}:r;
  });
 }
