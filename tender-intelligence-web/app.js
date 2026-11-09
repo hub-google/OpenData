@@ -2,9 +2,9 @@ import {loadAgencyEvidence} from './agency-deep.js';
 import {
   API_ROOT,asText,keyOf,safeNumber,formatMoney,parseDate,dateLabel,typeOf,
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
-  compareDeadline,csvEscape,safeOfficial
+  compareDeadline,opportunityOf,deadlineLabel,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,fetchArchive,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -30,7 +30,7 @@ function loadStore() {
 const store=loadStore();
 const cloud={client:null,user:null,taskRows:[]};
 const state={docPages:[],rows:[],searchRows:[],sourcePage:1,clientPage:1,totalPages:1,mode:'latest',query:'',date:null,
-  running:0,view:'search',selected:null,details:new Map(),vendorRows:[],docRows:[],watchRunning:false,lastSearch:'最新標案'};
+  running:0,view:'search',scenario:'all',selected:null,details:new Map(),vendorRows:[],docRows:[],watchRunning:false,lastSearch:'最新標案'};
 let toastTimer=null;
 const E=(tag,cls,text)=>{
   const n=document.createElement(tag);
@@ -82,12 +82,15 @@ function makeQuery(){
   const mode=$('searchMode').value;
   if(mode!=='latest'&&mode!=='archive'&&!q){$('searchQuery').focus();toast('請輸入關鍵字、公司或機關名稱。');return null;}
   if(mode==='companyId'&&!/^\d{8}$/.test(q)){toast('統編搜尋請輸入 8 碼數字。');return null;}
-  return {mode,query:q};
+  // The default homepage is the latest feed. Typing a keyword must SEARCH,
+  // rather than silently ignoring it because the scope is "latest".
+  return {mode:mode==='latest'&&q?'title':mode,query:q};
 }
 async function search(mode,query='',sourcePage=1){
   const token=++state.running;
   state.mode=mode;state.query=query;state.sourcePage=sourcePage;state.clientPage=1;state.totalRecords=null;
   $('searchMode').value=mode;$('searchQuery').value=query;
+  const filterPanel=$('searchFilters');if(filterPanel)filterPanel.hidden=['vendor','companyId','agency'].includes(mode);
   $('resultList').replaceChildren(E('div','empty','正在讀取已同步的真實標案…'));
   $('dataError').hidden=true;
   $('resultsHeading').textContent=listModes[mode]||'搜尋結果';
@@ -95,23 +98,23 @@ async function search(mode,query='',sourcePage=1){
   setStatus('正在讀取公告資料庫');
   try{
     let data;
-    if(mode==='archive'){
-      data=await fetchArchive({page:sourcePage,search:query});
+    if(mode==='archive'||mode==='latest'){
+      data=await fetchArchive({page:sourcePage,search:mode==='archive'?query:'',
+        filters:{status:$('statusFilter').value,group:$('groupFilter').value,
+          minBudget:$('budgetFilter').value,sort:$('sortFilter').value},
+        scenario:mode==='latest'?state.scenario:'all'});
       state.totalPages=Math.max(1,Number(data.total_pages||1));
-      state.lastSearch='已入庫歷史資料'+(query?'：'+query:'');
+      state.lastSearch=mode==='archive'
+        ?'已入庫歷史案件'+(query?'：'+query:'')
+        :(state.scenario==='open'?'公告截止日未到的案件':
+          state.scenario==='soon'?'三日內截止的案件':
+          state.scenario==='failed'?'目前無法決標的案件':
+          state.scenario==='amended'?'最近三十日更正的案件':
+          state.scenario==='awarded'?'已有決標公告的案件':'最新收錄案件');
     }else if(mode==='title'){
       data=await fetchUnifiedTitleSearch(query,sourcePage,{status:$('statusFilter').value,group:$('groupFilter').value,minBudget:$('budgetFilter').value,sort:$('sortFilter').value});
       state.totalPages=Math.max(1,Number(data.total_pages||1));
       state.lastSearch='跨日全文搜尋：'+query+'｜完整資料庫分頁';
-    }else if(mode==='latest'){
-      // Never fetch an entire 3,000+ notice day on the first page. Freeze the
-      // selected source date across pages to avoid page drift during ingestion.
-      data=await fetchLatestCachedNotices({page:sourcePage,date:sourcePage>1?state.date:null});
-      state.date=data.date;
-      state.totalPages=Math.max(1,Number(data.total_pages||1));
-      state.lastSearch=data.source==='case_fallback'
-        ?'最新標案索引暫時無法讀取，已切換歷史案件備援'
-        :'最新收錄 '+dateLabel(state.date)+'｜每個案件僅顯示一筆，歷次公告請開啟詳情';
     }else{
       data=await fetchBasicArchiveSearch({mode,query,page:sourcePage});
       state.totalPages=Math.max(1,Number(data.total_pages||1));
@@ -120,7 +123,9 @@ async function search(mode,query='',sourcePage=1){
     if(token!==state.running)return;
     state.totalRecords=data.total_records!==null&&data.total_records!==undefined&&Number.isFinite(Number(data.total_records))?Number(data.total_records):null;
     state.latestSource=mode==='latest'?data.source:null;
-    state.rows=(Array.isArray(data.records)?data.records:[]).map(normalize).filter(Boolean);
+    const verified=await enrichCaseRecords(Array.isArray(data.records)?data.records:[]);
+    if(token!==state.running)return;
+    state.rows=verified.map(normalize).filter(Boolean);
     renderSearch();
     setStatus(data.source==='case_fallback'?'最新案件索引暫時不穩定，已切換歷史備援'
       :'資料庫連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),
@@ -136,62 +141,53 @@ async function search(mode,query='',sourcePage=1){
   }
 }
 function searchLocally(){
-  // Full-database title search has already applied ALL user filters and sorting
-  // in ti_fast_archive_filtered. Filtering this 30-row slice a second time with
-  // different client-side status rules silently hides real matches.
-  if(state.mode==='title'){
-    state.searchRows=state.rows;
-    return;
-  }
-  // All modes show distinct procurement cases, not duplicate notice versions.
-  state.searchRows=filtered(dedupe(state.rows),{
-    group:$('groupFilter').value,status:$('statusFilter').value,
-    minBudget:$('budgetFilter').value,sort:$('sortFilter').value
-  });
+  // Every server page contains unique cases. Never filter 30 returned cases
+  // locally and present that incomplete subset as the complete search result.
+  state.searchRows=dedupe(state.rows);
 }
 function renderSearch(){
   searchLocally();
   const rows=state.searchRows;
-  $('metricLoaded').textContent=state.rows.length.toLocaleString('zh-TW');
-  $('metricCases').textContent=(state.totalRecords??dedupe(state.rows).length).toLocaleString('zh-TW');
-  $('metricOpen').textContent=state.rows.filter(r=>r.status==='招標').length.toLocaleString('zh-TW');
+  $('metricLoaded').textContent=rows.length.toLocaleString('zh-TW');
+  $('metricCases').textContent=state.totalRecords===null?'—':state.totalRecords.toLocaleString('zh-TW');
+  $('metricOpen').textContent=rows.filter(r=>opportunityOf(r).canConfirmOpen).length.toLocaleString('zh-TW');
   $('metricSaved').textContent=Object.keys(store.saved).length.toLocaleString('zh-TW');
   $('trackingCount').textContent=Object.keys(store.saved).length;
-  const localPages=Math.max(1,Math.ceil(rows.length/20));
-  state.clientPage=Math.min(state.clientPage,localPages);
   const total=state.totalRecords===null?'':'｜符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件案件';
-  $('resultInfo').textContent=state.lastSearch+total+'｜本批載入 '+dedupe(state.rows).length+' 件案件'+(state.mode==='title'?'；條件已套用全庫':'；本批篩選後 '+rows.length+' 件')+'（依機關與案號去重，非全國完整資料）';
-  const subset=rows.slice((state.clientPage-1)*20,state.clientPage*20);
-  $('resultList').replaceChildren(...(subset.length?subset.map(r=>caseCard(r)): [E('div','empty',state.rows.length?'沒有符合本頁篩選條件的案件，請放寬篩選。':'此查詢無資料，或資料來源暫時無法回傳。')]));
-  $('pageInfo').textContent='來源第 '+state.sourcePage+'/'+state.totalPages+' 頁 · 這批第 '+state.clientPage+'/'+localPages+' 頁';
-  $('prevPage').disabled=state.sourcePage===1&&state.clientPage===1;
-  $('nextPage').disabled=state.sourcePage>=state.totalPages&&state.clientPage>=localPages;
+  $('resultInfo').textContent=state.lastSearch+total+'｜本頁 '+rows.length+' 件（同機關同案號一案一筆；非全國完整資料）'+
+    (['vendor','companyId','agency'].includes(state.mode)?'｜此類查詢依專屬索引，不適用進階篩選':'');
+  $('resultList').replaceChildren(...(rows.length?rows.map(r=>caseCard(r)):[
+    E('div','empty','本頁沒有符合條件的案件，或資料尚未入庫。請調整條件，亦可查閱資料說明。')
+  ]));
+  $('pageInfo').textContent='第 '+state.sourcePage+' / '+state.totalPages+' 頁';
+  $('prevPage').disabled=state.sourcePage<=1;
+  $('nextPage').disabled=state.sourcePage>=state.totalPages;
 }
 function nextPage(direction){
-  const localPages=Math.max(1,Math.ceil(state.searchRows.length/20));
-  if(direction>0){
-    if(state.clientPage<localPages){state.clientPage++;renderSearch();return;}
-    if(state.sourcePage>=state.totalPages)return;
-    search(state.mode,state.query,state.sourcePage+1);
-  }else{
-    if(state.clientPage>1){state.clientPage--;renderSearch();return;}
-    if(state.sourcePage>1)search(state.mode,state.query,state.sourcePage-1).then(()=>{state.clientPage=Math.max(1,Math.ceil(state.searchRows.length/20));renderSearch();});
-  }
+  const target=state.sourcePage+direction;
+  if(target<1||target>state.totalPages)return;
+  void search(state.mode,state.query,target);
 }
 function caseCard(row,{radarScore=null}={}){
   const card=E('article','case-card');
   const left=E('div','case-left'),right=E('div','case-right');
+  const opportunity=opportunityOf(row);
   child(left,btn(row.title,'case-title',()=>openDetail(row)));
   const m=E('div','case-meta');
-  const tag=E('span','case-tag'+(row.status==='決標'?' awarded':row.status==='無法決標'?' failed':row.status==='更正'?' amended':''),row.status);
+  const tag=E('span','case-tag'+(opportunity.kind==='awarded'?' awarded':opportunity.kind==='failed'?' failed':opportunity.kind==='amended'?' amended':''),opportunity.label);
   child(m,tag,E('span','',row.agency||'機關未公開'),E('span','','·'),E('span','',row.group));
-  if(row.job_number)child(m,E('span','', '· 案號 '+row.job_number));
+  if(row.job_number)child(m,E('span','','· 案號 '+row.job_number));
   const second=E('div','case-meta');
-  child(second,E('span','','公告 '+dateLabel(row.date)),E('span','','· '+(row.noticeType||'類型未公開')));
-  if(state.mode==='latest'&&row.filename&&row.filename!=='db-cached')child(second,E('span','','· 最新公告編號 '+row.filename));
+  child(second,E('span','','最近公告 '+dateLabel(row.date)),
+    E('span','','· 公告類型：'+(row.noticeType||'未確認')));
+  if(row.status==='招標'||row.status==='更正')
+    child(second,E('span','ti-deadline '+(opportunity.kind==='unknown'?'ti-unknown':''),
+      '· '+(row.deadline_at?'官方截止 '+deadlineLabel(row.deadline_at):'官方截止日待確認')));
   if(state.mode==='title'&&row.match_field)child(second,E('span','case-tag','命中：'+row.match_field));
   if(radarScore!==null)child(second,E('span','case-tag','關鍵字匹配 '+radarScore+' 項'));
-  child(left,m,second);
+  const actions=E('div','ti-case-card-actions');
+  actions.append(btn('查看案件與公告歷程','ghost-btn',()=>openDetail(row)));
+  child(left,m,second,actions);
   const amount=E('div','');
   child(amount,E('small','','公開預算'),E('strong','',row.budget===null?'尚無可確認資料':formatMoney(row.budget)));
   const favorite=btn(store.saved[row.id]?'★':'☆','favorite-btn'+(store.saved[row.id]?' saved':''),()=>toggleSaved(row));
@@ -312,15 +308,18 @@ async function loadRelatedCases(row){
 }
 function renderDetail(row,data){
   const sum=summaryOf(data.records);const info=sum.fields;
+  const opportunity=opportunityOf({...row,status:sum.status,deadline_at:row.deadline_at??sum.deadlineRaw});
   const page=$('detailContent');page.replaceChildren();
   child(page,E('div','eyebrow','政府公開採購案件 · '+row.job_number),E('h2','',row.title),E('p','drawer-subtitle',data.unit_name||row.agency||'機關未公開'));
   const tags=E('div','detail-pills');
-  child(tags,E('span','case-tag',sum.status),E('span','case-tag','公告共 '+sum.notices.length+' 次'),E('span','case-tag',row.group));
+  child(tags,E('span','case-tag','目前狀態：'+opportunity.label),E('span','case-tag','最新公告類型：'+(sum.latest?.noticeType||typeOf(sum.latest)||sum.status)),E('span','case-tag','公告共 '+sum.notices.length+' 次'),E('span','case-tag',row.group));
   if(sum.hasDeadline){
     const remaining=compareDeadline(sum.deadlineRaw);
     child(tags,E('span','case-tag'+(remaining!==null&&remaining<0?' failed':''),remaining!==null&&remaining>=0?'距截止約 '+remaining+' 天':'已過公告截止時間'));
   }
   page.append(tags);
+  if(opportunity.kind==='unknown')page.append(E('p','notice warning','此案目前沒有可確認的官方截止時間，不能判定仍可投標。請核對最新官方公告或提出詳情補抓。'));
+  if(opportunity.kind==='amended')page.append(E('p','notice warning','此案有更正公告；即使既有截標日期尚未到，也必須核對更正內容與最新期限，不能直接視為可投標。'));
   if(data.source==='ingested_archive'){
     page.append(E('p','notice warning','即時來源無法直接讀取，以下為本站已成功入庫的真實公告紀錄；未擷取到的標書細節一律顯示未公開，請以官方原文確認。'+
       (data.partial_history?'本頁歷史上限 500 筆；請核對完整原始紀錄。':'')+
@@ -1075,10 +1074,24 @@ function hook(){
     e.preventDefault();
     clearTimeout(filterDebounce);
     const submitted=makeQuery();
-    if(submitted)void search(submitted.mode,submitted.query,1);
+    if(submitted){
+      state.scenario='all';
+      document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed','false'));
+      void search(submitted.mode,submitted.query,1);
+    }
   });
   $('searchQuery').addEventListener('input',()=>clearTimeout(filterDebounce));
   $('searchMode').addEventListener('change',()=>clearTimeout(filterDebounce));
+  document.querySelectorAll('[data-scenario]').forEach(b=>b.addEventListener('click',()=>{
+    clearTimeout(filterDebounce);
+    state.scenario=b.dataset.scenario||'all';
+    $('statusFilter').value='全部';
+    $('searchMode').value='latest';
+    $('searchQuery').value='';
+    document.querySelectorAll('[data-scenario]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    showView('search');
+    void search('latest','',1);
+  }));
   document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
     clearTimeout(filterDebounce);
     const x=b.dataset.preset;
@@ -1088,13 +1101,12 @@ function hook(){
   }));
   for(const id of ['statusFilter','groupFilter','budgetFilter','sortFilter']){
     $(id).addEventListener(id==='budgetFilter'?'input':'change',()=>{
-      if(state.mode!=='title'){state.clientPage=1;renderSearch();return;}
       clearTimeout(filterDebounce);
-      // Never overwrite a query the user has typed but not submitted.
-      // An old in-flight filter refresh used to reset the input to state.query.
+      if(!['latest','archive','title'].includes(state.mode))return;
+      // Don't replace a keyword the user has typed but not submitted.
       if($('searchQuery').value.trim()!==state.query)return;
       filterDebounce=setTimeout(()=>{
-        if($('searchQuery').value.trim()===state.query)void search('title',state.query,1);
+        if($('searchQuery').value.trim()===state.query)void search(state.mode,state.query,1);
       },id==='budgetFilter'?420:0);
     });
   }
