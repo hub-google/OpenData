@@ -228,8 +228,8 @@ export function possibleRelatedCase(reference,candidate){
  if(!reference?.unit_id||reference.unit_id!==candidate?.unit_id ||
     !reference.job_number||reference.job_number===candidate.job_number)return null;
  const compact=s=>asText(s).toLocaleLowerCase('zh-TW')
-   .replace(/(?:民國)?(?:1[01-9]\\d|20\\d\\d)(?:\\s*[-–～~至]\\s*(?:1[01-9]\\d|20\\d\\d))?年度?/g,'')
-   .replace(/[\\s\\p{P}\\p{S}]/gu,'');
+   .replace(/(?:民國)?(?:1[01-9]\d|20\d\d)(?:\s*[-–～~至]\s*(?:1[01-9]\d|20\d\d))?年度?/g,'')
+   .replace(/[\s\p{P}\p{S}]/gu,'');
  const a=compact(reference.title||titleOf(reference)),b=compact(candidate.title||titleOf(candidate));
  if(a.length<5||b.length<5)return null;
  const common=a===b?1:(()=>{
@@ -243,7 +243,7 @@ export function possibleRelatedCase(reference,candidate){
 // missing dates are never silently converted into a positive eligibility call.
 export function assessCompanyFit(row,company={},profile={},assets=[]){
  const info=opportunityOf(row),reasons=[],unknowns=[];
- const services=asText(company.services).split(/[，,、;；\\n]+/).map(x=>x.trim()).filter(x=>x.length>=2);
+ const services=asText(company.services).split(/[，,、;；\n]+/).map(x=>x.trim()).filter(x=>x.length>=2);
  const hay=(asText(row.title)+' '+asText(row.category)).toLocaleLowerCase('zh-TW');
  const hits=services.filter(x=>hay.includes(x.toLocaleLowerCase('zh-TW'))).slice(0,8);
  if(hits.length)reasons.push('公司登錄服務與案名／採購分類命中：'+hits.join('、'));
