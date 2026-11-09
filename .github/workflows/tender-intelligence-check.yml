@@ -109,7 +109,7 @@ jobs:
           assert '<script type="module" src="./proposal.js"></script>' in html
           assert '<script type="module" src="./account-privacy.js"></script>' in html
           assert '<script type="module" src="./debarred.js"></script>' in html
-          assert '<script type="module" src="./support.js"></script>' in html
+          assert __import__('re').search(r'<script type="module" src="\./support\.js(?:\?[^"]*)?"></script>', html)
           assert '<link rel="stylesheet" href="./support.css">' in html
           assert 'id="view-debarred"' in html
           assert 'id="accountDeleteForm"' in html
