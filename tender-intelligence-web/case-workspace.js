@@ -204,32 +204,70 @@ function makeContracts(panel,caseId){
  });
  void reload();
 }
+// Four task-based main tabs. Internal preparation tools continue sharing the
+// original ti_* rows: this only relocates existing nodes and controls.
+function moveSection(from,to,heading){
+ const h=[...from.children].find(n=>n.tagName==='H3'&&n.textContent.includes(heading));
+ if(!h)return;
+ const next=h.nextElementSibling;
+ to.append(h);
+ if(next&&next!==h&&next.tagName!=='H3')to.append(next);
+}
 function mount(caseInfo){
  window.__tiActiveCaseId=caseInfo?.caseId||null;
  window.__tiActiveCaseTitle=caseInfo?.title||'';
- const root=$('detailContent');if(!root||!caseInfo?.caseId||root.querySelector('.ti-case-tabs'))return;
+ const root=$('detailContent');
+ if(!root||!caseInfo?.caseId||root.querySelector('.ti-case-tabs'))return;
  const grid=root.querySelector('.detail-grid');if(!grid)return;
- const children=Array.from(root.children),idx=children.indexOf(grid);
+ const nodes=Array.from(root.children),idx=nodes.indexOf(grid);
  if(idx<0)return;
  const overview=el('section','','ti-case-panel');
- for(const node of children.slice(idx))overview.append(node);
- const tabs=el('div','','ti-case-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','案件工作區');
- const container=el('div','','ti-case-panels');
- const labels=['案件概況','投標評估','文件與標書','任務協作','歷史行情','合約履約'];
- const panels=labels.map((name,i)=>{const p=i===0?overview:el('section','','ti-case-panel');p.hidden=i!==0;container.append(p);return p;});
- labels.forEach((name,i)=>{
-  const b=el('button',name,'ti-case-tab');b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',i===0?'true':'false');
+ for(const element of nodes.slice(idx))overview.append(element);
+ const notices=el('section','','ti-case-panel'),competition=el('section','','ti-case-panel'),preparation=el('section','','ti-case-panel');
+ moveSection(overview,notices,'公告歷程與官方來源');
+ moveSection(overview,notices,'最新公告原始欄位');
+ const source=overview.querySelector('.detail-source');if(source)notices.append(source);
+ moveSection(overview,competition,'公告出現的廠商');
+ if(!notices.children.length)notices.append(el('p','此案目前只有摘要，尚無已入庫公告歷程。','minor'));
+ const tabs=el('div','','ti-case-tabs');
+ tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','案件主要任務');
+ const container=el('div','','ti-case-panels'),panels=[overview,notices,competition,preparation];
+ const labels=['案件重點','公告歷程','行情與競爭','投標準備'];
+ panels.forEach((panel,i)=>{panel.hidden=i!==0;container.append(panel)});
+ const tabButtons=[];
+ labels.forEach((label,i)=>{
+  const b=el('button',label,'ti-case-tab');b.type='button';b.setAttribute('role','tab');
+  b.setAttribute('aria-selected',i===0?'true':'false');
+  b.setAttribute('data-main-tab',String(i));
   if(i===0)b.classList.add('selected');
   b.addEventListener('click',()=>{
-   for(const [j,p] of panels.entries())p.hidden=j!==i;
-   for(const [j,t] of [...tabs.children].entries()){t.classList.toggle('selected',j===i);t.setAttribute('aria-selected',j===i?'true':'false');}
-  });tabs.append(b);
+   panels.forEach((panel,j)=>panel.hidden=j!==i);
+   tabButtons.forEach((tab,j)=>{tab.classList.toggle('selected',j===i);tab.setAttribute('aria-selected',String(j===i))});
+  });
+  tabButtons.push(b);tabs.append(b);
  });
  root.append(tabs,container);
- makeDecision(panels[1],caseInfo.caseId);
- makeDocuments(panels[2],caseInfo.caseId);
- makeTasks(panels[3],caseInfo.caseId);
- makeHistory(panels[4],caseInfo,overview);
- makeContracts(panels[5],caseInfo.caseId);
+ makeHistory(competition,caseInfo,overview);
+ const prepTabs=el('div','','ti-prep-tabs');prepTabs.setAttribute('role','tablist');
+ prepTabs.setAttribute('aria-label','投標準備項目');
+ const prepPanels=[],prepButtons=[];
+ const sections=[['decision','評估與決策'],['documents','資格與標書'],['tasks','待辦與分工'],['contracts','履約與保證金']];
+ for(const [i,[key,label]] of sections.entries()){
+  const panel=el('section','','ti-prep-panel');panel.hidden=i!==0;
+  const button=el('button',label,'ti-prep-tab');button.type='button';
+  button.dataset.prepTab=key;button.setAttribute('role','tab');
+  button.setAttribute('aria-selected',String(i===0));
+  if(i===0)button.classList.add('selected');
+  button.addEventListener('click',()=>{
+   prepPanels.forEach((p,j)=>p.hidden=j!==i);
+   prepButtons.forEach((b,j)=>{b.classList.toggle('selected',j===i);b.setAttribute('aria-selected',String(j===i))});
+  });
+  prepTabs.append(button);prepButtons.push(button);prepPanels.push(panel);
+ }
+ preparation.append(prepTabs,...prepPanels);
+ makeDecision(prepPanels[0],caseInfo.caseId);
+ makeDocuments(prepPanels[1],caseInfo.caseId);
+ makeTasks(prepPanels[2],caseInfo.caseId);
+ makeContracts(prepPanels[3],caseInfo.caseId);
 }
 document.addEventListener('ti:case-opened',e=>mount(e.detail));
