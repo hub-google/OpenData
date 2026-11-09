@@ -79,8 +79,10 @@ async function run(){
   await page.locator('#documentFile').setInputFiles({name:'two-page-scan.pdf',mimeType:'application/pdf',buffer:bytes});
   await page.locator('#tiOcrStartPage').fill('2');
   const second=await recognize();
-  if(second.pages.length!==1||second.pages[0].source!=='第 2 頁')
-   throw Error('無法由指定第二頁開始真實 OCR：'+JSON.stringify(second.pages));
+  const recognized=second.pages.filter(x=>x.method?.includes('OCR'));
+  if(recognized.length!==1||recognized[0].source!=='第 2 頁'||
+     !second.pages.some(x=>x.source==='第 1 頁'&&x.characters===0))
+   throw Error('未辨識頁應保持空白，第二頁應標為 OCR：'+JSON.stringify(second.pages));
   await page.locator('#tiOcrStartPage').fill('1');
   const merged=await recognize();
   if(merged.pages.length!==2||merged.pages[0].source!=='第 1 頁'||merged.pages[1].source!=='第 2 頁')
