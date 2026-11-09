@@ -39,7 +39,8 @@ function caseFilters(query,filters={},scenario='all'){
    const now=new Date();
    query=query.gt('deadline_at',now.toISOString())
     .or('latest_notice_type.ilike.%招標%,latest_notice_type.ilike.%取得報價單%,latest_notice_type.ilike.%取得企劃書%')
-    .not('latest_notice_type','ilike','%決標%').not('latest_notice_type','ilike','%公開閱覽%');
+    .not('latest_notice_type','ilike','%決標%').not('latest_notice_type','ilike','%公開閱覽%')
+    .not('latest_notice_type','ilike','%更正%');
    if(scenario==='soon')query=query.lte('deadline_at',new Date(now.getTime()+3*86400000).toISOString());
  }else if(scenario==='failed')query=query.or('latest_notice_type.ilike.%無法決標%,latest_notice_type.ilike.%流標%,latest_notice_type.ilike.%廢標%');
  else if(scenario==='amended')query=query.ilike('latest_notice_type','%更正%')
