@@ -1,6 +1,6 @@
 // Evidence-first tender briefing displayed before the six case tabs.
 import {getClient} from './backend.js';
-import {safeOfficial} from './core.mjs';
+import {safeOfficial,stateOf,opportunityOf} from './core.mjs';
 const node=(tag,text='',cls='')=>{const el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;return el;};
 const sourceUrl='https://web.pcc.gov.tw/';
 let token=0;
@@ -56,10 +56,9 @@ async function render(info){
  deposit=String(details.deposit||'').trim(),
  budget=caseRow.budget_amount,
  stage=String(caseRow.latest_notice_type||'');
- const awarded=/決標/.test(stage)&&!/無法決標/.test(stage);
- const past=deadline&&new Date(deadline)<new Date();
- const timeStatus=awarded?'最新公告為決標':deadline?(past?'公告截止時間已過':'尚未到官方截止時間'):'未取得官方截標時間';
- const timeDetail=deadline?dateTime(deadline):'不能把未知當成仍可投標';
+ const current=opportunityOf({status:stateOf({brief:{type:stage}}),deadline_at:deadline});
+ const timeStatus=current.label;
+ const timeDetail=deadline?'官方截標紀錄：'+dateTime(deadline)+'；如有更正請核對官方原文':'未取得官方截止日，不能判斷可投標';
  const known=[Boolean(deadline),Boolean(official),Boolean(qualification),Boolean(deposit),budget!==null&&budget!==undefined,Boolean(classification)];
  grid.append(
   cell('① 還能投嗎？',timeStatus,timeDetail),
