@@ -79,7 +79,7 @@ async function run(){
   await page.locator('#documentFile').setInputFiles({name:'two-page-scan.pdf',mimeType:'application/pdf',buffer:bytes});
   await page.locator('#tiOcrStartPage').fill('2');
   const second=await recognize();
-  const recognized=second.pages.filter(x=>x.method?.includes('OCR'));
+  const recognized=second.pages.filter(x=>x.characters>0&&x.method?.startsWith('OCR'));
   if(recognized.length!==1||recognized[0].source!=='第 2 頁'||
      !second.pages.some(x=>x.source==='第 1 頁'&&x.characters===0))
    throw Error('未辨識頁應保持空白，第二頁應標為 OCR：'+JSON.stringify(second.pages));
