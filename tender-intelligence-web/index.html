@@ -295,6 +295,11 @@
       <section id="view-tracking" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">BID PIPELINE</div><h1>我的投標工作台</h1><p>將搜尋到的真實案件加入工作台、記錄進度、備註及內部截止日。登入後可跨裝置同步；未登入時保留本機追蹤。</p></div>
         <div class="toolbar"><button id="trackingCsv" class="ghost-btn" type="button">↓ 匯出追蹤 CSV</button><button id="trackingXlsx" class="ghost-btn" type="button">↓ 匯出追蹤 Excel</button><button id="trackingIcs" class="ghost-btn" type="button">↓ 匯出日曆 ICS</button><button id="trackingImport" class="ghost-btn" type="button">↑ 匯入備份</button><input id="trackingImportFile" type="file" accept=".json,application/json" hidden><button id="trackingBackup" class="ghost-btn" type="button">↓ 備份 JSON</button></div>
+        <section id="trackingPerformance" class="panel ti-performance-summary" aria-label="我的投標成果統計">
+          <h2>我的投標成果</h2>
+          <p class="minor">只統計你自行標記的投標階段，不代表官方開標或決標紀錄；沒有已得標與未得標紀錄時，不顯示虛假的勝率。</p>
+          <div class="empty">載入投標成果統計中…</div>
+        </section>
         <div id="trackingOutput" class="tracking-grid"></div>
         <div class="panel" style="margin-top:22px">
           <h2>投標待辦任務</h2>
