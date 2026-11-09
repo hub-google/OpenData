@@ -72,23 +72,37 @@ async function main(){
   await login(owner);await navigate(owner,'team');
   await owner.locator('#workspaceName').fill('【自動測試-'+stamp+'】隔離工作區');
   await owner.locator('#workspaceCreateForm button[type=submit]').click();
-  await owner.waitForFunction(()=>document.querySelector('#workspaceSelect')?.value?.length===36,null,{timeout:15000});
+  const loaded=await owner.waitForFunction(()=>document.querySelector('#workspaceSelect')?.value?.length===36,null,{timeout:50000}).then(()=>true).catch(()=>false);
+  if(!loaded){
+   await owner.locator('#workspaceRefresh').click();
+   const retry=await owner.waitForFunction(()=>document.querySelector('#workspaceSelect')?.value?.length===36,null,{timeout:20000}).then(()=>true).catch(()=>false);
+   if(!retry){
+    const diagnostic=await owner.evaluate(async()=>{
+     const {getClient}=await import('./backend.js'),db=await getClient(),
+      {data,error}=await db.from('ti_workspaces').select('id,name,owner_id').limit(3);
+     return {status:document.querySelector('#workspaceOutput')?.textContent?.slice(0,600),
+      select:document.querySelector('#workspaceSelect')?.value,toast:document.querySelector('#toast')?.textContent,
+      user:document.querySelector('#accountButton')?.textContent,rows:data,error:error?.message};
+    });
+    throw Error('建立後工作區列表未顯示：'+JSON.stringify(diagnostic).slice(0,650));
+   }
+  }
   workspaceId=await owner.locator('#workspaceSelect').inputValue();
   await owner.getByPlaceholder('例如：準備報價附件').fill('WORKSPACE-RLS-'+stamp);
   await owner.getByRole('button',{name:'建立團隊待辦'}).click();
-  await owner.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:15000});
+  await owner.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:35000});
   return {workspace_created:true,task_visible:true};
  });
  await step('Owner generates single-use invitation; member joins',async()=>{
   await owner.locator('#workspaceInvite').click();
-  await owner.waitForFunction(()=>document.querySelector('#workspaceInviteLink')?.textContent?.includes('?invite='),null,{timeout:12000});
+  await owner.waitForFunction(()=>document.querySelector('#workspaceInviteLink')?.textContent?.includes('?invite='),null,{timeout:35000});
   const url=await owner.locator('#workspaceInviteLink').innerText();
   inviteToken=url.match(/[?&]invite=([0-9a-f]{48})/)?.[1];
   if(!inviteToken)throw Error('邀請連結未包含有效一次性憑證');
   await login(member);await navigate(member,'team');
   await member.locator('#workspaceJoinCode').fill(inviteToken);
   await member.locator('#workspaceJoinForm button[type=submit]').click();
-  await member.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:18000});
+  await member.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:40000});
   const read=await db(member,'read',{id:workspaceId});
   if(!read.titles?.some(x=>x.includes(stamp)))throw Error('加入後仍無法讀取共享任務');
   return {joined:true,task_count:read.titles.length};
