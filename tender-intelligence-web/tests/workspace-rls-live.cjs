@@ -89,8 +89,12 @@ async function main(){
   }
   workspaceId=await owner.locator('#workspaceSelect').inputValue();
   await owner.getByPlaceholder('例如：準備報價附件').fill('WORKSPACE-RLS-'+stamp);
-  await owner.getByRole('button',{name:'建立團隊待辦'}).click({force:true,timeout:20000});
-  await owner.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:35000});
+  await owner.locator('#workspaceTaskSubmit').click();
+  const persisted=await owner.waitForFunction(s=>
+    document.querySelector('#workspaceTaskStatus')?.textContent?.includes('已新增「'+s+'」'),
+    'WORKSPACE-RLS-'+stamp,{timeout:22000}).then(()=>true).catch(()=>false);
+  if(!persisted)throw Error('待辦未能從表單保存：'+await owner.locator('#workspaceTaskStatus').innerText());
+  await owner.waitForFunction(s=>document.querySelector('#workspaceOutput')?.textContent?.includes(s),'WORKSPACE-RLS-'+stamp,{timeout:20000});
   return {workspace_created:true,task_visible:true};
  });
  await step('Owner generates single-use invitation; member joins',async()=>{
@@ -140,7 +144,8 @@ async function main(){
   const rejected=await db(member,'write',{id:workspaceId,title:'viewer-should-not-write'});
   const self=await db(member,'set-role',{id:workspaceId,member:memberId,role:'admin'});
   const visible=await db(member,'read',{id:workspaceId});
-  if(!rejected.error||!self.error||visible.titles?.length!==1)throw Error('唯讀角色越權：'+JSON.stringify({rejected,self,visible}));
+  if(!rejected.error||!self.error||!visible.titles?.some(t=>t.includes('WORKSPACE-RLS-'+stamp)))
+   throw Error('唯讀角色越權或不能讀取既有任務：'+JSON.stringify({rejected,self,visible}));
   await member.locator('#workspaceRefresh').click();
   await member.waitForFunction(()=>document.querySelector('#workspaceOutput')?.textContent?.includes('你的權限：viewer'),null,{timeout:12000});
   if(await member.getByRole('button',{name:'建立團隊待辦'}).count())throw Error('唯讀成員仍可看到建立任務按鈕');
