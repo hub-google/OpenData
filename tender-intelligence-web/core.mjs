@@ -208,7 +208,7 @@ export function noticeChangeSummary(current,previous){
  const sameDay=asText(current?.date)===asText(previous?.date);
  const changes=[];
  for(const [name,read] of [
-   ['公告類型',typeOf],['案名',titleOf],['採購類別',categoryOf],
+   ['公告類型',typeOf],['案名',r=>asText(r?.brief?.title||r?.detail?.['採購資料:標案名稱'])],['採購類別',categoryOf],
    ['公開預算',r=>safeNumber(r?.budget_amount)]
  ]){
    const a=read(current),b=read(previous);
