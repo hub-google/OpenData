@@ -178,6 +178,25 @@ async function run(){
   await nav('company');await page.locator('#tiCompanyRefresh').click();await page.waitForTimeout(1200);
   return {company:await page.locator('#tiCompanyName').inputValue(),asset:short(await page.locator('#tiCompanyAssets').innerText(),240),screen:await shot('21-readback')};
  });
+ await step('投標績效統計只計入自行記錄的已結案結果',async()=>{
+  await nav('tracking');
+  const panel=page.locator('#trackingPerformance');
+  await panel.waitFor({state:'visible',timeout:10000});
+  const results=()=>panel.locator('.ti-performance-metric strong').allTextContents();
+  const first=await results();
+  if(first.length!==4||first[3]!=='—')throw Error('未有已結案紀錄卻顯示得標率：'+JSON.stringify(first));
+  const select=page.locator('#trackingOutput .track-fields select').first();
+  await select.selectOption('已得標');
+  const won=await results();
+  if(won[2]!=='1'||won[3]!=='100.0%')throw Error('自行記錄已得標績效錯誤：'+JSON.stringify(won));
+  await select.selectOption('未得標');
+  const lost=await results();
+  if(lost[2]!=='0'||lost[3]!=='0.0%')throw Error('自行記錄未得標績效錯誤：'+JSON.stringify(lost));
+  await select.selectOption('評估中');
+  const reset=await results();
+  if(reset[3]!=='—')throw Error('回復未決後應隱藏得標率：'+JSON.stringify(reset));
+  return {initial:first,won,lost,reset,screen:await shot('22-private-bid-outcomes')};
+ });
  await step('刪除單案私人文件並確認已從資料庫移除',async()=>{
   await page.goto(BASE+'?case_unit=3.1.1&case_no=UT-11601',{waitUntil:'domcontentloaded',timeout:35000});
   await page.getByRole('tab',{name:'文件與標書'}).click();
