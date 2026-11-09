@@ -23,7 +23,7 @@ function caseFilters(query,filters={},scenario='all'){
  const status=String(filters.status||'全部'),group=String(filters.group||'全部');
  const min=filters.minBudget===''||filters.minBudget==null?null:Number(filters.minBudget);
  if(min!==null&&(!Number.isFinite(min)||min<0))throw Error('最低公開預算格式錯誤');
- if(group!=='全部'&&group)query=query.ilike('category',group+'%');
+ if(group!=='全部'&&group)query=query.eq('group_name',group);
  if(min!==null)query=query.gte('budget_amount',min);
  if(status==='招標')query=query
    .or('latest_notice_type.ilike.%招標%,latest_notice_type.ilike.%取得報價單%,latest_notice_type.ilike.%取得企劃書%')
@@ -53,7 +53,7 @@ function caseFilters(query,filters={},scenario='all'){
 export async function fetchArchive({page=1,search='',filters={},scenario='all'}={}){
  const client=await getClient(),current=Math.max(1,Math.trunc(Number(page)||1));
  const from=(current-1)*CASE_PAGE_SIZE;
- let q=client.from('ti_cases').select('id,unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,deadline_at,source_fetched_at',{count:'exact'});
+ let q=client.from('ti_cases').select('id,unit_id,job_number,title,agency,category,group_name,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,deadline_at,source_fetched_at',{count:'exact'});
  const term=String(search||'').trim();
  if(term)q=q.ilike('title','%'+term.replace(/[%_]/g,'\\$&').slice(0,80)+'%');
  q=caseFilters(q,filters,scenario);
@@ -69,7 +69,7 @@ export async function fetchArchive({page=1,search='',filters={},scenario='all'}=
   date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
   budget_amount:r.budget_amount,award_amount:r.award_amount,
   deadline_at:r.deadline_at,source_fetched_at:r.source_fetched_at,
-  brief:{title:r.title,type:r.latest_notice_type,category:r.category},
+  brief:{title:r.title,type:r.latest_notice_type,category:r.category||r.group_name},
   detail:r.official_url?{url:r.official_url}:{}
  })),total_pages:Math.max(1,Math.ceil((count||0)/CASE_PAGE_SIZE)),total_records:count??null,source:'case_feed'};
 }
