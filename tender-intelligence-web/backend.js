@@ -18,26 +18,82 @@ export async function getSession(){
   if(error)throw error;
   return data.session;
 }
-export async function fetchArchive({page=1,search=""}={}){
-  const client=await getClient();
-  const from=(page-1)*100,to=from+99;
-  let q=client.from("ti_cases").select("id,unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,source_fetched_at",{count:"exact"}).order("latest_notice_date",{ascending:false}).order("id",{ascending:true}).range(from,to);
-  if(search)q=q.ilike("title","%"+search.replace(/[%_]/g,"\\$&").slice(0,80)+"%");
-  const {data,count,error}=await q;
-  if(error)throw error;
-  return {records:(data||[]).map(r=>({
-    unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
-    date:r.latest_notice_date,filename:r.latest_filename||"db-cached",
-    budget_amount:r.budget_amount,award_amount:r.award_amount,
-    brief:{title:r.title,type:r.latest_notice_type,category:r.category}
-  })),total_pages:Math.max(1,Math.ceil((count||0)/100)),total_records:count||0};
+const CASE_PAGE_SIZE=30;
+function caseFilters(query,filters={},scenario='all'){
+ const status=String(filters.status||'全部'),group=String(filters.group||'全部');
+ const min=filters.minBudget===''||filters.minBudget==null?null:Number(filters.minBudget);
+ if(min!==null&&(!Number.isFinite(min)||min<0))throw Error('最低公開預算格式錯誤');
+ if(group!=='全部'&&group)query=query.ilike('category',group+'%');
+ if(min!==null)query=query.gte('budget_amount',min);
+ if(status==='招標')query=query
+   .or('latest_notice_type.ilike.%招標%,latest_notice_type.ilike.%取得報價單%,latest_notice_type.ilike.%取得企劃書%')
+   .not('latest_notice_type','ilike','%公開閱覽%')
+   .not('latest_notice_type','ilike','%決標%');
+ else if(status==='決標')query=query.ilike('latest_notice_type','%決標%').not('latest_notice_type','ilike','%無法決標%');
+ else if(status==='無法決標')query=query.or('latest_notice_type.ilike.%無法決標%,latest_notice_type.ilike.%流標%,latest_notice_type.ilike.%廢標%');
+ else if(status==='更正')query=query.ilike('latest_notice_type','%更正%');
+ else if(status==='公開閱覽')query=query.ilike('latest_notice_type','%公開閱覽%');
+ else if(status==='公開徵求')query=query.ilike('latest_notice_type','%公開徵求廠商提供參考資料%');
+ else if(status==='財物標售')query=query.or('latest_notice_type.ilike.%財物變賣%,latest_notice_type.ilike.%財物標售%,latest_notice_type.ilike.%財物出租%');
+ if(scenario==='open'||scenario==='soon'){
+   const now=new Date();
+   query=query.gt('deadline_at',now.toISOString())
+    .or('latest_notice_type.ilike.%招標%,latest_notice_type.ilike.%取得報價單%,latest_notice_type.ilike.%取得企劃書%')
+    .not('latest_notice_type','ilike','%決標%').not('latest_notice_type','ilike','%公開閱覽%');
+   if(scenario==='soon')query=query.lte('deadline_at',new Date(now.getTime()+3*86400000).toISOString());
+ }else if(scenario==='failed')query=query.or('latest_notice_type.ilike.%無法決標%,latest_notice_type.ilike.%流標%,latest_notice_type.ilike.%廢標%');
+ else if(scenario==='amended')query=query.ilike('latest_notice_type','%更正%')
+   .gte('latest_notice_date',Number(new Date(Date.now()-30*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Taipei'}).replaceAll('-','')));
+ else if(scenario==='awarded')query=query.ilike('latest_notice_type','%決標%').not('latest_notice_type','ilike','%無法決標%');
+ return query;
+}
+// Every non-keyword feed applies filters and sorting BEFORE server pagination.
+// One source page equals one user-visible page; no second in-memory pager.
+export async function fetchArchive({page=1,search='',filters={},scenario='all'}={}){
+ const client=await getClient(),current=Math.max(1,Math.trunc(Number(page)||1));
+ const from=(current-1)*CASE_PAGE_SIZE;
+ let q=client.from('ti_cases').select('id,unit_id,job_number,title,agency,category,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,deadline_at,source_fetched_at',{count:'exact'});
+ const term=String(search||'').trim();
+ if(term)q=q.ilike('title','%'+term.replace(/[%_]/g,'\\$&').slice(0,80)+'%');
+ q=caseFilters(q,filters,scenario);
+ const sort=filters.sort||'date';
+ if(sort==='budget')q=q.order('budget_amount',{ascending:false,nullsFirst:false});
+ else if(sort==='title')q=q.order('title',{ascending:true});
+ else q=q.order('latest_notice_date',{ascending:false});
+ q=q.order('id',{ascending:true}).range(from,from+CASE_PAGE_SIZE-1);
+ const {data,count,error}=await q;
+ if(error)throw error;
+ return {records:(data||[]).map(r=>({
+  unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
+  date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
+  budget_amount:r.budget_amount,award_amount:r.award_amount,
+  deadline_at:r.deadline_at,source_fetched_at:r.source_fetched_at,
+  brief:{title:r.title,type:r.latest_notice_type,category:r.category},
+  detail:r.official_url?{url:r.official_url}:{}
+ })),total_pages:Math.max(1,Math.ceil((count||0)/CASE_PAGE_SIZE)),total_records:count??null,source:'case_feed'};
+}
+// Match all search modes to verified case metadata, never infer a deadline
+// from a title or a prior award notice.
+export async function enrichCaseRecords(records){
+ const source=Array.isArray(records)?records:[];
+ const ids=[...new Set(source.filter(r=>r?.unit_id&&r?.job_number).map(r=>String(r.unit_id)+'::'+String(r.job_number)))].slice(0,100);
+ if(!ids.length||source.every(r=>Object.hasOwn(r,'deadline_at')))return source;
+ const client=await getClient();
+ const {data,error}=await client.from('ti_cases').select('id,deadline_at,source_fetched_at,official_url').in('id',ids);
+ if(error)throw error;
+ const byId=new Map((data||[]).map(r=>[r.id,r]));
+ return source.map(r=>{
+  const m=byId.get(String(r.unit_id)+'::'+String(r.job_number));
+  return m?{...r,deadline_at:m.deadline_at,source_fetched_at:m.source_fetched_at,
+    detail:{...(r.detail||{}),...(m.official_url?{url:m.official_url}:{})}}:r;
+ });
 }
 // Exact-field backup searches when the upstream API blocks browser CORS.
 // All rows come from the already-ingested public government announcements.
 export async function fetchBasicArchiveSearch({mode,query,page=1}={}){
   const client=await getClient();
   const {data,error}=await client.rpc("ti_basic_archive_search",{
-    p_mode:mode,p_query:String(query||''),p_page:page,p_limit:100
+    p_mode:mode,p_query:String(query||''),p_page:page,p_limit:30
   });
   if(error)throw error;
   if(!data||!Array.isArray(data.records))throw Error('資料庫未提供有效的搜尋結果');
