@@ -978,6 +978,13 @@ function loadLibrary(url,globalName){
 }
 export async function parseDocument(file){
   const name=file.name.toLocaleLowerCase('zh-TW'),output=[];
+  // OCR results are local, temporary, and tied to the exact selected file.
+  // All downstream document/qualification/AI tools consume the same page text
+  // instead of accidentally re-reading an empty scanned PDF text layer.
+  const cache=window.__tiOcrCache;
+  const same=cache&&cache.name===file.name&&cache.size===file.size&&
+   cache.lastModified===file.lastModified&&Array.isArray(cache.pages);
+  const ocrPages=new Map(same?cache.pages.map(page=>[page.source,page]):[]);
   if(name.endsWith('.pdf')){
     const pdfjs=await loadLibrary('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','pdfjsLib');
     pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -985,9 +992,18 @@ export async function parseDocument(file){
     const limit=Math.min(pdf.numPages,150);
     for(let i=1;i<=limit;i++){
       const page=await pdf.getPage(i),txt=await page.getTextContent();
-      output.push({source:'第 '+i+' 頁',text:txt.items.map(x=>asText(x.str)).join(' ')});
+      const source='第 '+i+' 頁',original=txt.items.map(x=>asText(x.str)).join(' ').trim();
+      const scanned=ocrPages.get(source);
+      const useOcr=original.length<50&&scanned&&String(scanned.text||'').trim().length>0;
+      output.push(useOcr?
+       {source,text:String(scanned.text).trim(),method:'OCR（使用者已辨識）',
+        confidence:scanned.confidence??null}:
+       {source,text:original,method:original?'PDF 文字層':'無可讀文字，請先執行掃描檔 OCR'});
     }
     if(pdf.numPages>limit)toast('PDF 僅處理前 '+limit+' 頁；長文件請另行核對。');
+  }else if(/\.(png|jpg|jpeg|webp)$/i.test(name)){
+    if(!same||!cache.pages.length)throw Error('圖片尚無可用文字：請先點選「掃描檔 OCR」，確認辨識結果再整理條款。');
+    return cache.pages.map(page=>({...page,text:String(page.text||'').trim()}));
   }else if(name.endsWith('.docx')){
     const mammoth=await loadLibrary('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js','mammoth');
     const r=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
@@ -1002,7 +1018,7 @@ export async function parseDocument(file){
     if(wb.SheetNames.length>20)toast('活頁簿只處理前 20 張工作表；其餘請另行檢查。');
   }else if(name.endsWith('.txt')||name.endsWith('.md')){
     output.push({source:'文字檔（無頁碼）',text:await file.text()});
-  }else throw Error('請使用 TXT、MD、PDF、DOCX 或 XLSX');
+  }else throw Error('請使用 TXT、MD、PDF、DOCX、XLSX；PNG／JPG／WEBP 需先執行 OCR');
   return output;
 }
 const terms=[
@@ -1034,7 +1050,18 @@ async function analyzeDocument(){
     }
     state.docRows=hits;
     showDocumentRows();
-    toast(hits.length?'完成：從 '+pages.length+' 個文字區段擷取 '+hits.length+' 段候選條款。':'未找到關鍵條款；可能是掃描影像或格式無法解析。');
+    const missing=pages.filter(page=>!String(page.text||'').trim());
+    const ocr=pages.filter(page=>String(page.method||'').includes('OCR'));
+    if(missing.length){
+      const note=E('div','notice warning','有 '+missing.length+' 頁／區段仍無可讀原文（'+
+       missing.slice(0,12).map(p=>p.source).join('、')+
+       (missing.length>12?' 等':'')+'）。這些頁面未納入條款檢核，不能假設沒有其他資格、日期或附件要求。');
+      $('documentOutput').prepend(note);
+    }
+    const summary='已從 '+pages.length+' 個區段抽取 '+hits.length+' 段候選條款'+
+      (ocr.length?'（含 OCR '+ocr.length+' 頁）':'')+
+      (missing.length?'；尚有 '+missing.length+' 頁無可讀文字':'')+'。';
+    toast(summary);
   }catch(err){state.docRows=[];$('documentOutput').replaceChildren(E('div','empty','解析失敗：'+readableError(err)));}
   finally{trigger.disabled=false;}
 }
@@ -1113,20 +1140,13 @@ function hook(){
   $('documentAnalyze').addEventListener('click',analyzeDocument);
   $('documentAI').addEventListener('click',()=>void analyzeDocumentAI());
   $('documentCsv').addEventListener('click',exportDoc);
-  $('documentFile').addEventListener('change',()=>{$('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';window.__tiOcrCache=null;});
-  document.addEventListener('ti:ocr-complete',event=>{
-    const pages=Array.isArray(event.detail?.pages)?event.detail.pages:[];
-    if(!pages.length)return;
-    state.docPages=pages;
-    const hits=[];
-    for(const page of pages){
-      const parts=asText(page.text).replace(/\r/g,'\n').split(/[\n。；;]+/).map(x=>x.trim().replace(/\s+/g,' ')).filter(x=>x.length>=8);
-      for(const part of parts)for(const [group,regex] of terms){
-        if(regex.test(part)&&hits.filter(x=>x.group===group).length<12)hits.push({group,source:page.source,text:part.slice(0,650)});
-      }
-    }
-    state.docRows=hits;showDocumentRows();toast('OCR 文字已帶入檢核清單，請核對辨識結果。');
+  $('documentFile').addEventListener('change',()=>{
+    $('documentFileName').textContent=$('documentFile').files?.[0]?.name||'';
+    window.__tiOcrCache=null;
+    state.docRows=[];state.docPages=[];
+    $('documentOutput').replaceChildren(E('div','empty','已更換文件。請重新整理條款或執行掃描檔 OCR；舊檔檢核結果不會沿用。'));
   });
+  document.addEventListener('ti:ocr-complete',()=>{void analyzeDocument();});
 }
 hook();
 initCloudUI();
