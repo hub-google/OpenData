@@ -154,7 +154,7 @@ function renderSearch(){
   $('metricSaved').textContent=Object.keys(store.saved).length.toLocaleString('zh-TW');
   $('trackingCount').textContent=Object.keys(store.saved).length;
   const total=state.totalRecords===null?'':'｜符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件案件';
-  $('resultInfo').textContent=state.lastSearch+total+'｜本頁 '+rows.length+' 件（同機關同案號一案一筆；非全國完整資料）'+
+  $('resultInfo').textContent=state.lastSearch+total+'｜本頁 '+rows.length+' 件（每個案件僅顯示一筆，依機關與案號去重；非全國完整資料）'+
     (['vendor','companyId','agency'].includes(state.mode)?'｜此類查詢依專屬索引，不適用進階篩選':'');
   $('resultList').replaceChildren(...(rows.length?rows.map(r=>caseCard(r)):[
     E('div','empty','本頁沒有符合條件的案件，或資料尚未入庫。請調整條件，亦可查閱資料說明。')
