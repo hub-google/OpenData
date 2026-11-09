@@ -87,6 +87,21 @@ async function firstAdvancedId(){
    assert.ok(content.includes('已成功入庫')||content.includes('公告歷程'),'Source evidence unavailable');
    assert.ok(!content.includes('案件詳情載入失敗'),content);
  });
+ await check('Four case tasks retain notice history, intelligence and bid tools',async()=>{
+   const tabNames=await page.locator('#detailContent .ti-case-tab').allTextContents();
+   assert.deepEqual(tabNames,['案件重點','公告歷程','行情與競爭','投標準備']);
+   await page.locator('#detailContent .ti-case-tab').nth(1).click();
+   assert.ok(await page.locator('#detailContent .ti-case-panel:not([hidden]) .detail-timeline').count()>0,'Notice timeline missing');
+   await page.locator('#detailContent .ti-case-tab').nth(3).click();
+   assert.equal(await page.locator('#detailContent .ti-prep-tab').count(),4);
+   for(const name of ['decision','documents','tasks','contracts']){
+     await page.locator('#detailContent [data-prep-tab="'+name+'"]').click();
+     assert.equal(await page.locator('#detailContent .ti-prep-panel:not([hidden])').count(),1);
+   }
+   await page.locator('#detailContent .ti-case-tab').nth(2).click();
+   assert.ok((await page.locator('#detailContent .ti-case-panel:not([hidden])').innerText()).includes('行情'),'Intelligence panel missing');
+   await page.locator('#detailContent .ti-case-tab').nth(0).click();
+ });
  await check('Exact-case share link opens same agency and case',async()=>{
    const cells=await page.locator('#detailContent .detail-grid strong').allTextContents();
    const unit=cells[0],job=cells[1];
