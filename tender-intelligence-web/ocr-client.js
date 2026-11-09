@@ -23,6 +23,7 @@ async function run(){
   const Tesseract=await script('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js','Tesseract');
   worker=await Tesseract.createWorker('chi_tra+eng',1,{logger:m=>{if(m.status==='recognizing text')status('正在辨識文字：'+Math.round((m.progress||0)*100)+'%');}});
   const pages=[];
+  let unprocessed=0;
   if(/\.pdf$/i.test(f.name)){
    // Same pinned PDF.js used by the existing document parser.
    const pdfjs=await script('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','pdfjsLib');
@@ -39,22 +40,35 @@ async function run(){
     canvas.width=Math.round(viewport.width);canvas.height=Math.round(viewport.height);
     const context=canvas.getContext('2d',{willReadFrequently:true});if(!context)throw Error('無法建立圖片畫布');
     await page.render({canvasContext:context,viewport}).promise;
-    const result=await worker.recognize(canvas);
-    pages.push({source:'第 '+p+' 頁',text:String(result?.data?.text||'').trim(),method:'OCR'});
-    canvas.width=0;canvas.height=0;
+    try{
+      const result=await worker.recognize(canvas);
+      pages.push({source:'第 '+p+' 頁',text:String(result?.data?.text||'').trim(),
+        confidence:Number.isFinite(result?.data?.confidence)?result.data.confidence:null,method:'OCR'});
+    }catch(error){
+      pages.push({source:'第 '+p+' 頁',text:'',method:'OCR 失敗',
+        error:String(error?.message||error).slice(0,120)});
+    }finally{canvas.width=0;canvas.height=0;}
    }
-   if(pdf.numPages>max)status('僅處理前 '+max+' 頁，其餘 '+(pdf.numPages-max)+' 頁仍須人工確認。');
+   unprocessed=pdf.numPages-max;
   }else{
    const result=await worker.recognize(f);
-   pages.push({source:'圖片 OCR',text:String(result?.data?.text||'').trim(),method:'OCR'});
+   pages.push({source:'圖片 OCR',text:String(result?.data?.text||'').trim(),
+     confidence:Number.isFinite(result?.data?.confidence)?result.data.confidence:null,method:'OCR'});
   }
   const actual=pages.filter(p=>p.text.trim());
   if(!actual.length)throw Error('辨識結果沒有可用文字，請人工核對圖片畫質與文件原文。');
+  if($('documentFile').files?.[0]!==f)throw Error('辨識期間已換檔；舊檔結果不會覆蓋新文件。');
   window.__tiOcrCache={name:f.name,size:f.size,lastModified:f.lastModified,pages};
   document.dispatchEvent(new CustomEvent('ti:ocr-complete',{detail:{pages}}));
   const pre=document.createElement('pre');pre.className='ti-ocr-preview';pre.textContent=pages.map(p=>'【'+p.source+'｜'+p.method+'】\n'+(p.text||'未辨識')).join('\n\n').slice(0,125000);
   output.append(pre);
-  status('已辨識 '+actual.length+' 頁／區段，結果已帶入條款整理。OCR 可能有錯字，請逐頁核對；文件沒有被自動上傳。');
+  const missing=pages.filter(p=>!p.text.trim()),low=pages.filter(p=>p.method==='OCR'&&
+     p.confidence!==null&&p.confidence<55);
+  status('已取得 '+actual.length+' 頁／區段'+
+   (missing.length?'；'+missing.length+' 頁辨識失敗或空白':'')+
+   (unprocessed?'；另有 '+unprocessed+' 頁超出本次 8 頁上限':'')+
+   (low.length?'；'+low.length+' 頁信心分數較低':'')+
+   '。結果已帶入條款整理。請逐頁核對，沒有自動上傳。');
  }catch(error){status('OCR 未完成：'+String(error?.message||error).slice(0,220));}
  finally{try{await worker?.terminate()}catch{}button.disabled=false;}
 }
