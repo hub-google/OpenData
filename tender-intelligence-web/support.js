@@ -180,7 +180,7 @@ window.addEventListener("ti-demo-account-ready",async()=>{
  // Demo login must not forcibly open a large floating panel that covers
  // business controls, especially on phones and team/task forms.
  await initialize(true);
- if(staff&&!$("#tiSupportPanel").hidden)setTab("admin");
+ if(staff&&!$("tiSupportPanel").hidden)setTab("admin");
 });
 $("tiSupportFab").addEventListener("click",openSupport);
 $("tiSupportClose").addEventListener("click",openSupport);
