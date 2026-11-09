@@ -93,18 +93,18 @@
           <div class="ti-search-header"><h2>搜尋政府採購案件</h2><p>輸入案名、機關或廠商；不限今天公告。搜尋結果以案件為單位，不會把每次更正當成新商機。</p></div>
           <form id="searchForm" class="search-form">
             <input id="searchQuery" type="search" placeholder="例如：資安、圖書採購、機關或廠商名稱" autocomplete="off" maxlength="120" aria-label="搜尋關鍵字">
+            <div class="ti-search-scope">
+              <label for="searchMode">搜尋範圍</label>
+              <select id="searchMode" aria-label="搜尋範圍">
+                <option value="latest">最新標案</option>
+                <option value="title">案件全文搜尋</option>
+                <option value="archive">歷史案件名稱</option>
+                <option value="vendor">廠商名稱</option>
+                <option value="companyId">廠商統編</option>
+                <option value="agency">機關名稱</option>
+              </select>
+            </div>
             <button class="primary-btn" type="submit">搜尋標案</button>
-            <details class="ti-search-scope"><summary>搜尋範圍</summary>
-              <label for="searchMode">搜尋方式</label>
-            <label for="searchMode" class="sr-only">搜尋類型</label>
-            <select id="searchMode" aria-label="搜尋類型">
-              <option value="latest">最新標案</option>
-              <option value="title">跨日全文搜尋</option><option value="archive">自有資料庫歷史（已收錄）</option>
-              <option value="vendor">廠商名稱</option>
-              <option value="companyId">廠商統編</option>
-              <option value="agency">機關名稱</option>
-            </select>
-            </details>
           </form>
           <div class="ti-scenario-row" role="group" aria-label="按案件目前狀態快速尋找商機">
             <span>快速找案</span>

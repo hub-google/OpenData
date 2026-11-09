@@ -47,6 +47,11 @@ export function groupOf(row) {
 export function stateOf(row) {
   const s=typeOf(row);
   if (/無法決標|流標|廢標/.test(s)) return '無法決標';
+  // Amending an award does not reopen bidding.
+  if (/更正決標/.test(s)) return '決標';
+  // Corrected reference requests/previews are not solicitations.
+  if (/公開閱覽/.test(s)) return '公開閱覽';
+  if (/公開徵求廠商提供參考資料/.test(s)) return '公開徵求';
   if (/更正/.test(s)) return '更正';
   if (/決標/.test(s)) return '決標';
   if (/財物變賣|標售|標租/.test(s)) return '財物標售';
@@ -149,7 +154,7 @@ export function fieldsOf(detail) {
   };
 }
 export function summaryOf(records) {
-  const notices=[...(records||[])].sort((a,b)=>Number(b.date||0)-Number(a.date||0));
+  const notices=[...(records||[])].sort((a,b)=>Number(b.date||0)-Number(a.date||0)||asText(b.filename).localeCompare(asText(a.filename),'zh-TW'));
   const latest=notices[0]||null;
   // Deadline is a bid announcement property, not a decision notice property.
   const tenderNotice=notices.find(r=> /招標|徵求|閱覽/.test(typeOf(r)))||null;
