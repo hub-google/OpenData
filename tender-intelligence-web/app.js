@@ -8,7 +8,7 @@ import {getClient,fetchArchive,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,f
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
-const listModes={latest:'最新公告',archive:'自有資料庫已收錄案件',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
+const listModes={latest:'最新標案',archive:'自有資料庫已收錄案件',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
 const viewNames={company:'我的公司資料',debarred:'拒絕往來公告',proposal:'標書差異與健檢',decisions:'投標決策評估',contracts:'合約與保證金',directory:'供應商名錄',developer:'我的 API／MCP',guide:'採購新手指南',advanced:'進階搜尋',search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',issues:'無法決標與快截止',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',billing:'方案與帳務',about:'資料說明'};
 const states=['評估中','準備投標','已投標','待決標','已得標','未得標','不投'];
 const readableError = err => {
@@ -30,7 +30,7 @@ function loadStore() {
 const store=loadStore();
 const cloud={client:null,user:null,taskRows:[]};
 const state={docPages:[],rows:[],searchRows:[],sourcePage:1,clientPage:1,totalPages:1,mode:'latest',query:'',date:null,
-  running:0,view:'search',selected:null,details:new Map(),vendorRows:[],docRows:[],watchRunning:false,lastSearch:'最新公告'};
+  running:0,view:'search',selected:null,details:new Map(),vendorRows:[],docRows:[],watchRunning:false,lastSearch:'最新標案'};
 let toastTimer=null;
 const E=(tag,cls,text)=>{
   const n=document.createElement(tag);
@@ -110,8 +110,8 @@ async function search(mode,query='',sourcePage=1){
       state.date=data.date;
       state.totalPages=Math.max(1,Number(data.total_pages||1));
       state.lastSearch=data.source==='case_fallback'
-       ?'公告明細目前無法讀取，改顯示真實已入庫案件（每案一筆，非當日公告全量）'
-       :'已入庫最新公告 '+dateLabel(state.date)+'｜依最後成功同步結果顯示（非即時 API）';
+        ?'最新標案索引暫時無法讀取，已切換歷史案件備援'
+        :'最新收錄 '+dateLabel(state.date)+'｜每個案件僅顯示一筆，歷次公告請開啟詳情';
     }else{
       data=await fetchBasicArchiveSearch({mode,query,page:sourcePage});
       state.totalPages=Math.max(1,Number(data.total_pages||1));
@@ -122,7 +122,7 @@ async function search(mode,query='',sourcePage=1){
     state.latestSource=mode==='latest'?data.source:null;
     state.rows=(Array.isArray(data.records)?data.records:[]).map(normalize).filter(Boolean);
     renderSearch();
-    setStatus(data.source==='case_fallback'?'公告明細暫時不穩定，已切換真實案件備援'
+    setStatus(data.source==='case_fallback'?'最新案件索引暫時不穩定，已切換歷史備援'
       :'資料庫連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),
       data.source==='case_fallback'?'failure':'success');
   }catch(err){
@@ -143,8 +143,8 @@ function searchLocally(){
     state.searchRows=state.rows;
     return;
   }
-  // Latest is a notice feed, while other modes return distinct indexed cases.
-  state.searchRows=filtered(state.mode==='latest'?state.rows:dedupe(state.rows),{
+  // All modes show distinct procurement cases, not duplicate notice versions.
+  state.searchRows=filtered(dedupe(state.rows),{
     group:$('groupFilter').value,status:$('statusFilter').value,
     minBudget:$('budgetFilter').value,sort:$('sortFilter').value
   });
@@ -153,17 +153,14 @@ function renderSearch(){
   searchLocally();
   const rows=state.searchRows;
   $('metricLoaded').textContent=state.rows.length.toLocaleString('zh-TW');
-  $('metricCases').textContent=dedupe(state.rows).length.toLocaleString('zh-TW');
+  $('metricCases').textContent=(state.totalRecords??dedupe(state.rows).length).toLocaleString('zh-TW');
   $('metricOpen').textContent=state.rows.filter(r=>r.status==='招標').length.toLocaleString('zh-TW');
   $('metricSaved').textContent=Object.keys(store.saved).length.toLocaleString('zh-TW');
   $('trackingCount').textContent=Object.keys(store.saved).length;
   const localPages=Math.max(1,Math.ceil(rows.length/20));
   state.clientPage=Math.min(state.clientPage,localPages);
-  const isNotice=state.mode==='latest'&&state.latestSource==='database_notices';
-  const total=state.totalRecords===null?'':state.mode==='latest'
-    ?'｜已入庫合計 '+state.totalRecords.toLocaleString('zh-TW')+(isNotice?' 筆當日公告':' 件案件')
-    :'｜資料庫符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件';
-  $('resultInfo').textContent=state.lastSearch+total+'｜當批載入 '+state.rows.length+' 筆'+(isNotice?'公告、'+dedupe(state.rows).length+' 件不同案件':'案件')+(state.mode==='title'?'；條件已套用全庫':'；當批篩選後 '+rows.length+' 筆')+'（非全國完整資料）';
+  const total=state.totalRecords===null?'':'｜符合 '+state.totalRecords.toLocaleString('zh-TW')+' 件案件';
+  $('resultInfo').textContent=state.lastSearch+total+'｜本批載入 '+dedupe(state.rows).length+' 件案件'+(state.mode==='title'?'；條件已套用全庫':'；本批篩選後 '+rows.length+' 件')+'（依機關與案號去重，非全國完整資料）';
   const subset=rows.slice((state.clientPage-1)*20,state.clientPage*20);
   $('resultList').replaceChildren(...(subset.length?subset.map(r=>caseCard(r)): [E('div','empty',state.rows.length?'沒有符合本頁篩選條件的案件，請放寬篩選。':'此查詢無資料，或資料來源暫時無法回傳。')]));
   $('pageInfo').textContent='來源第 '+state.sourcePage+'/'+state.totalPages+' 頁 · 這批第 '+state.clientPage+'/'+localPages+' 頁';
@@ -191,7 +188,7 @@ function caseCard(row,{radarScore=null}={}){
   if(row.job_number)child(m,E('span','', '· 案號 '+row.job_number));
   const second=E('div','case-meta');
   child(second,E('span','','公告 '+dateLabel(row.date)),E('span','','· '+(row.noticeType||'類型未公開')));
-  if(state.mode==='latest'&&row.filename&&row.filename!=='db-cached')child(second,E('span','','· 公告編號 '+row.filename));
+  if(state.mode==='latest'&&row.filename&&row.filename!=='db-cached')child(second,E('span','','· 最新公告編號 '+row.filename));
   if(state.mode==='title'&&row.match_field)child(second,E('span','case-tag','命中：'+row.match_field));
   if(radarScore!==null)child(second,E('span','case-tag','關鍵字匹配 '+radarScore+' 項'));
   child(left,m,second);
