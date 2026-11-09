@@ -68,7 +68,7 @@ async function main(){
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  async function create(){
   const ctx=await browser.newContext({locale:'zh-TW',timezoneId:'Asia/Taipei',viewport:{width:1280,height:900}});
-  const p=await ctx.newPage();p.on('pageerror',e=>exceptions.push(short(e)));return p;
+  const p=await ctx.newPage();p.on('pageerror',e=>exceptions.push(String(e.stack||e.message||e).slice(0,1600)));return p;
  }
  [owner,member,outsider]=await Promise.all([create(),create(),create()]);
  await step('Owner creates workspace and a shared task',async()=>{
