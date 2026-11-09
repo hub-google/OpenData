@@ -70,6 +70,26 @@ async function run(){
   await page.screenshot({path:path.join(DIR,'ocr-real-scanned-pdf.png')});
   return result;
  });
+ await test('Long PDF OCR can process a later page then accumulate earlier pages',async()=>{
+  const batch=await PDFDocument.create(),graphic=await batch.embedPng(png);
+  for(let i=0;i<2;i++){
+   const page=batch.addPage([960,350]);page.drawImage(graphic,{x:0,y:40,width:960,height:260});
+  }
+  const bytes=Buffer.from(await batch.save());
+  await page.locator('#documentFile').setInputFiles({name:'two-page-scan.pdf',mimeType:'application/pdf',buffer:bytes});
+  await page.locator('#tiOcrStartPage').fill('2');
+  const second=await recognize();
+  if(second.pages.length!==1||second.pages[0].source!=='第 2 頁')
+   throw Error('無法由指定第二頁開始真實 OCR：'+JSON.stringify(second.pages));
+  await page.locator('#tiOcrStartPage').fill('1');
+  const merged=await recognize();
+  if(merged.pages.length!==2||merged.pages[0].source!=='第 1 頁'||merged.pages[1].source!=='第 2 頁')
+   throw Error('跨批辨識文字未保留原頁碼：'+JSON.stringify(merged.pages));
+  const saved=await parsed();
+  if(saved.filter(x=>x.method?.includes('OCR')).length!==2)throw Error('完整文件解析未使用兩批辨識文字');
+  await page.screenshot({path:path.join(DIR,'ocr-scanned-pdf-two-batches.png')});
+  return {first_batch:second.pages.length,total:merged.pages.length,source_pages:merged.pages.map(x=>x.source)};
+ });
  await test('Image OCR feeds shared parser; changing files invalidates stale cache',async()=>{
   await page.locator('#documentFile').setInputFiles({name:'official-scan.png',mimeType:'image/png',buffer:png});
   const before=await page.evaluate(async()=>{
