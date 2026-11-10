@@ -1722,14 +1722,14 @@ async function renderCloudDocuments(){
  const box=$('cloudDocuments');
  if(!cloud.user){box.replaceChildren(E('div','empty','登入後查看私有雲端文件。'));return;}
  try{
-  const {data,error}=await cloud.client.from('ti_documents').select('*')
+  const {data,error}=await cloud.client.from('ti_documents').select('id,user_id,case_id,filename,storage_path,mime_type,bytes,extraction_status,indexed_at,created_at')
    .eq('user_id',cloud.user.id).order('created_at',{ascending:false}).limit(100);
   if(error)throw error;
   box.replaceChildren();
   if(!data?.length){box.append(E('div','empty','尚未上傳任何雲端文件。'));return;}
   for(const file of data){
     const wrap=E('div','watch-item'),head=E('header','');
-    child(head,E('h3','',file.filename),btn(file.search_text?'重建索引':'建立索引','ghost-btn',async()=>{
+    child(head,E('h3','',file.filename),btn(file.indexed_at?'重建索引':'建立索引','ghost-btn',async()=>{
       if(cloud.user?.id!==file.user_id){toast('帳號已切換，請重新載入文件。');return;}
       toast('正在下載自己的文件並於瀏覽器重新建立私人索引…');
       try{
@@ -1753,7 +1753,7 @@ async function renderCloudDocuments(){
     }));
     child(wrap,head,E('p','',new Date(file.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})+
       '｜'+(file.bytes||0).toLocaleString('zh-TW')+' bytes｜'+
-      (file.search_text?'可搜尋原文':'尚未建立可搜尋文字（可重建索引／先執行 OCR）')));
+      (file.indexed_at?'可搜尋原文':'尚未建立可搜尋文字（可重建索引／先執行 OCR）')));
     box.append(wrap);
   }
  }catch(err){box.replaceChildren(E('div','empty','私有文件讀取失敗：'+readableError(err)));}
