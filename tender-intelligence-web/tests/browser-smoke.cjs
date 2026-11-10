@@ -364,6 +364,21 @@ async function firstAdvancedId(){
      assert.ok(drawer&&drawer.width<=width.screen+8,'Detail drawer wider than viewport');
    }finally{await mobile.close();}
  });
+ await check('S01 restored source-backed location and deadline sorting use real server results',async()=>{
+   const p=await browser.newPage({locale:'zh-TW'});
+   try{
+     await p.goto(base+'?mode=latest&location='+encodeURIComponent('台北')+'&sort=deadline',
+       {waitUntil:'domcontentloaded',timeout:45000});
+     await p.locator('#resultList .case-card').first().waitFor({timeout:45000});
+     assert.equal(await p.locator('#locationFilter').inputValue(),'台北');
+     assert.equal(await p.locator('#sortFilter').inputValue(),'deadline');
+     const count=Number((await p.locator('#metricCases').textContent()||'').replace(/,/g,''));
+     assert.ok(count>0&&count<10000,'Location query returned suspicious count: '+count);
+     assert.ok((await p.locator('#resultInfo').innerText()).includes('資料庫'));
+     await p.locator('#searchFilters summary').click();
+     await p.screenshot({path:out+'/tender-s01-extended-filters.png',fullPage:true});
+   }finally{await p.close();}
+ });
  console.log('ALL PRD PUBLIC BROWSER SMOKE TESTS PASSED');
 })().catch(async(e)=>{
  if(page)await page.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});
