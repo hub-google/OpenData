@@ -790,7 +790,7 @@ function renderAnalytics(){
   for(const d of state.details.values())for(const r of d.records||[])mergeSample(r);
   const records=[...sampleMap.values()];
   const stats=ratioStats(records);
-  const el=$('analyticsOutput');el.replaceChildren(E('h2','','決標／預算比'));
+  const el=$('analyticsOutput');el.replaceChildren(E('h2','','本次載入案件的簡易決標／預算比（不是完整行情）'));
   const box=E('div','stat-row');
   for(const [label,val] of [['有效可比樣本',stats.count+' 筆'],['中位數',stats.median===null?'資料不足':(stats.median*100).toFixed(1)+'%'],['中間 50% 區間',stats.q1===null?'資料不足':(stats.q1*100).toFixed(1)+'% – '+(stats.q3*100).toFixed(1)+'%']]){
     const c=E('div','stat-compact');child(c,E('span','',label),E('b','',val));box.append(c);
