@@ -54,6 +54,12 @@ export function mountProposalDraft(panel,caseId){
    (reviewStatus==='reviewed'?'已由本人標記核對':'尚未完成')+
    '。所有內容仍須依正式招標書審查。';
  }
+ field.addEventListener('input',()=>{
+  if(reviewStatus==='reviewed'){reviewStatus='needs_review';updateIndicators();}
+ });
+ editor.addEventListener('input',()=>{
+  if(reviewStatus==='reviewed'){reviewStatus='needs_review';updateIndicators();}
+ });
  function setBusy(v){busy=v;for(const b of [create,ai,save,review])b.disabled=v;}
  async function showExisting(){
   const {db,user}=await session();
@@ -96,7 +102,13 @@ export function mountProposalDraft(panel,caseId){
   try{
    const {db,user}=await session();if(!user)throw Error('請先登入正式會員');
    const {data,error}=await db.functions.invoke('ti-proposal-draft',{body:{case_id:caseId}});
-   if(error)throw Error(data?.error||error.context?.statusText||error.message||'AI 服務不可用');
+   if(error){
+    let detail=data?.error||'';
+    if(!detail&&error.context&&typeof error.context.json==='function'){
+      try{detail=(await error.context.clone().json())?.error||'';}catch{}
+    }
+    throw Error(detail||error.message||'AI 服務不可用');
+   }
    if(data?.error)throw Error(data.error);
    if(!data?.markdown||!Array.isArray(data?.source_refs)||data?.mode!=='ai_assisted')
     throw Error('AI 回傳資料未通過原文引用格式驗證，沒有修改你的草稿');
