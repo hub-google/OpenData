@@ -2,6 +2,7 @@
 import {getClient} from './backend.js';
 import {mountBidEffort} from './bid-effort.js';
 import {mountProposalDraft} from './proposal-draft.js';
+import {indexPrivateCase} from './semantic-search.js';
 import {assessCompanyFit,normalize} from './core.mjs';
 import {saveCloudDocument} from './app.js';
 const el=(tag,text='',className='')=>{const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;return node;};
@@ -149,11 +150,19 @@ function makeDocuments(panel,caseId){
  for(const [label,view] of [['標書差異與 AI 健檢','proposal'],['標書條款解析／私人文件庫','documents']]){
   const b=el('button',label,'ghost-btn');b.type='button';b.onclick=()=>openOldView(view);buttons.append(b);
  }
+ const semanticIndex=el('button','建立本案私人文件語意索引（需同意傳送）','ghost-btn');
+ semanticIndex.type='button';
+ const semanticState=el('p','只有你主動確認後，才會將已保存的原文送至向量模型，非授權原文不處理。','minor');
+ buttons.append(semanticIndex);
+ semanticIndex.addEventListener('click',async()=>{
+  semanticIndex.disabled=true;
+  try{await indexPrivateCase(caseId,semanticState);}finally{semanticIndex.disabled=false;}
+ });
  const uploadRow=el('div','','ti-case-editor');
  const input=control('input',{type:'file',accept:'.pdf,.docx,.xlsx,.txt,.md,.png,.jpg,.jpeg,.webp','aria-label':'上傳此案的私人標書'});
  const upload=el('button','上傳至此案文件庫','primary-btn');upload.type='button';
  uploadRow.append(field('選擇本案文件（PDF、DOCX、XLSX、TXT、MD、圖片，15MB 以內）',input),upload);
- const list=el('div','','ti-case-list');panel.append(explain,buttons,uploadRow,list);
+ const list=el('div','','ti-case-list');panel.append(explain,buttons,semanticState,uploadRow,list);
  upload.addEventListener('click',async()=>{
   const file=input.files?.[0];if(!file)return status(panel,'請先選擇要儲存到此案的文件。');
   upload.disabled=true;
