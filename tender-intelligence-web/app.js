@@ -1,4 +1,5 @@
 import {renderBidEffortSummary} from './bid-effort-summary.js';
+import {readBasicSearchUrl,writeBasicSearchUrl} from './search-url.mjs';
 import {loadAgencyEvidence} from './agency-deep.js';
 import {
   API_ROOT,asText,keyOf,safeNumber,formatMoney,parseDate,dateLabel,typeOf,
@@ -98,10 +99,20 @@ function makeQuery(){
   // rather than silently ignoring it because the scope is "latest".
   return {mode:mode==='latest'&&q?'title':mode,query:q};
 }
+function syncBasicSearchUrl(mode,query,page){
+ const path=writeBasicSearchUrl(window.location.href,{
+  mode,query,page,scenario:state.scenario,
+  status:$('statusFilter').value,group:$('groupFilter').value,
+  min:$('budgetFilter').value,sort:$('sortFilter').value
+ });
+ if(path!==null&&path!==window.location.pathname+window.location.search+window.location.hash)
+  window.history.replaceState(window.history.state,'',path);
+}
 async function search(mode,query='',sourcePage=1){
   const token=++state.running;
   state.mode=mode;state.query=query;state.sourcePage=sourcePage;state.clientPage=1;state.totalRecords=null;
   $('searchMode').value=mode;$('searchQuery').value=query;
+  syncBasicSearchUrl(mode,query,sourcePage);
   const filterPanel=$('searchFilters');if(filterPanel)filterPanel.hidden=false;
   $('resultList').replaceChildren(E('div','empty','正在讀取已同步的真實標案…'));
   $('dataError').hidden=true;
@@ -1251,10 +1262,18 @@ renderTracking();
 renderWatches();
 renderRadar();
 renderAnalytics();
-const urlState=new URLSearchParams(window.location.search);
-if(Object.hasOwn(listModes,urlState.get('mode')||'') && (urlState.get('q')||'').length<121)
-  search(urlState.get('mode'),urlState.get('q')||'',1);
-else search('latest','',1);
+const restoredBasicSearch=readBasicSearchUrl(window.location.search);
+if(restoredBasicSearch){
+  $('statusFilter').value=restoredBasicSearch.status;
+  $('groupFilter').value=restoredBasicSearch.group;
+  $('budgetFilter').value=restoredBasicSearch.min;
+  $('sortFilter').value=restoredBasicSearch.sort;
+  state.scenario=restoredBasicSearch.scenario;
+  document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed',
+    String(b.dataset.scenario===restoredBasicSearch.scenario)));
+  updateFilterSummary();
+  void search(restoredBasicSearch.mode,restoredBasicSearch.query,restoredBasicSearch.page);
+}else void search('latest','',1);
 void initCloud();
 void loadVerifiedHomepageKpis();
 void openCaseFromUrl();
