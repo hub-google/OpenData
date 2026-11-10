@@ -51,6 +51,12 @@ function toast(message){$('toast').textContent=message;$('toast').hidden=false;c
 function setStatus(message,type=''){const el=$('apiStatus');el.textContent=message;el.className='connection-tag '+type;el.title=message;el.setAttribute('aria-label',message);}
 function showView(name){
   if(!viewNames[name])return;
+  if(name==='search'&&new URLSearchParams(window.location.search).get('view')==='advanced'){
+    const url=new URL(window.location.href);
+    url.searchParams.set('view','search');
+    for(const key of [...url.searchParams.keys()])if(key.startsWith('a_'))url.searchParams.delete(key);
+    window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash);
+  }
   state.view=name;
   for(const v of Object.keys(viewNames))$('view-'+v).hidden=v!==name;
   document.querySelectorAll('[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view===name));
@@ -1264,6 +1270,8 @@ renderRadar();
 renderAnalytics();
 const restoredBasicSearch=readBasicSearchUrl(window.location.search);
 if(restoredBasicSearch){
+  if(restoredBasicSearch.mode==='latest'&&restoredBasicSearch.query.trim())
+    restoredBasicSearch.mode='title';
   $('statusFilter').value=restoredBasicSearch.status;
   $('groupFilter').value=restoredBasicSearch.group;
   $('budgetFilter').value=restoredBasicSearch.min;
