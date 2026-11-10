@@ -853,6 +853,9 @@ function renderTrackingPerformance(items){
   box.replaceChildren(heading,note,grid,breakdown,effortSummary);
   void renderBidEffortSummary(effortSummary,cloud.client,cloud.user?.id,()=>cloud.user?.id);
 }
+document.addEventListener('ti:bid-effort-changed',()=>{
+ if(state.view==='tracking')renderTrackingPerformance(Object.values(store.saved));
+});
 function renderTracking(){
   const out=$('trackingOutput');out.replaceChildren();
   const items=Object.values(store.saved);
