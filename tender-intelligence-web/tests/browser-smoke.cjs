@@ -113,6 +113,10 @@ async function firstAdvancedId(){
      await page.locator('#detailContent [data-prep-tab="'+name+'"]').click();
      assert.equal(await page.locator('#detailContent .ti-prep-panel:not([hidden])').count(),1);
    }
+   await page.locator('#detailContent [data-prep-tab="proposal"]').click();
+   assert.equal(await page.locator('#detailContent .ti-proposal-editor').count(),1);
+   assert.equal(await page.locator('#detailContent .ti-proposal-title').count(),1);
+   assert.ok((await page.locator('#detailContent .ti-prep-panel:not([hidden])').innerText()).includes('服務建議書'));
    await page.locator('#detailContent .ti-case-tab').nth(2).click();
    assert.ok((await page.locator('#detailContent .ti-case-panel:not([hidden])').innerText()).includes('行情'),'Intelligence panel missing');
    await page.locator('#detailContent .ti-case-tab').nth(0).click();
