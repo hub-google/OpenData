@@ -1,3 +1,4 @@
+import {renderBidEffortSummary} from './bid-effort-summary.js';
 import {loadAgencyEvidence} from './agency-deep.js';
 import {
   API_ROOT,asText,keyOf,safeNumber,formatMoney,parseDate,dateLabel,typeOf,
@@ -848,7 +849,9 @@ function renderTrackingPerformance(items){
     bar.style.width=(items.length?Math.min(100,100*count/items.length):0)+'%';
     track.append(bar);row.append(label,track,total);breakdown.append(row);
   }
-  box.replaceChildren(heading,note,grid,breakdown);
+  const effortSummary=E('section','ti-effort-overview');
+  box.replaceChildren(heading,note,grid,breakdown,effortSummary);
+  void renderBidEffortSummary(effortSummary,cloud.client,cloud.user?.id,()=>cloud.user?.id);
 }
 function renderTracking(){
   const out=$('trackingOutput');out.replaceChildren();
