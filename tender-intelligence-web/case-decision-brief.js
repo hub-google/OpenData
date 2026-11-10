@@ -16,7 +16,7 @@ function jump(tabIndex){
  const main=tabIndex===0?tabs[0]:tabs[3];
  main?.click();
  if(tabIndex>0){
-  const key={1:'decision',2:'documents',3:'tasks',4:'contracts'}[tabIndex];
+  const key={1:'decision',2:'documents',3:'tasks',4:'contracts',5:'effort'}[tabIndex];
   root?.querySelector('[data-prep-tab="'+key+'"]')?.click();
  }
  main?.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -71,7 +71,7 @@ async function render(info){
  summary.textContent='資料完整度 '+evidence+'/6 個關鍵欄位｜依已入庫官方公告核對，不代表其他缺漏欄位在官方不存在。'+
   (detailRow?.fetched_at?'｜詳情更新：'+dateTime(detailRow.fetched_at):'｜尚未補齊案件詳情')+
   (caseRow.source_fetched_at?'｜摘要同步：'+dateTime(caseRow.source_fetched_at):'');
- actions.append(action('核對資格與標書',()=>jump(2)),action('評估是否投標',()=>jump(1)),action('建立待辦',()=>jump(3)));
+ actions.append(action('核對資格與標書',()=>jump(2)),action('評估是否投標',()=>jump(1)),action('建立待辦',()=>jump(3)),action('記錄成本工時',()=>jump(5)));
  if(evidence<6){
   const {data:session}=await db.auth.getUser();
   if(now!==token||!brief.isConnected)return;
