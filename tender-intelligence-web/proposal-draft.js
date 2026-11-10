@@ -68,7 +68,7 @@ export function mountProposalDraft(panel,caseId){
   const {data,error}=await db.from('ti_proposal_drafts')
    .select('title,content_md,source_refs,generation_mode,review_status,updated_at')
    .eq('user_id',user.id).eq('case_id',caseId).maybeSingle();
-  if(error){status.textContent='讀取草稿失敗：'+fail(error);return;}
+  if(error){status.textContent='讀取草稿失敗：'+fail(error);setBusy(false);return;}
   if(!panel.isConnected)return;
   if(data){
    field.value=data.title||'';editor.value=data.content_md||'';
@@ -77,7 +77,7 @@ export function mountProposalDraft(panel,caseId){
    savedContent=editor.value;
    status.textContent='已讀取你之前保存的服務建議書（最後修改：'+String(data.updated_at||'未提供')+'）。';
   }else status.textContent='這件案件尚無私人草稿。可先建立有來源的初稿。';
-  loaded=true;updateIndicators();
+  loaded=true;updateIndicators();setBusy(false);
  }
  create.addEventListener('click',async()=>{
   if(busy||!warnReplacing())return;
@@ -152,5 +152,6 @@ export function mountProposalDraft(panel,caseId){
   setTimeout(()=>URL.revokeObjectURL(url),10000);
   status.textContent='已匯出目前編輯器的 Markdown 草稿，未替你提交官方投標。';
  });
+ setBusy(true);
  void showExisting();
 }
