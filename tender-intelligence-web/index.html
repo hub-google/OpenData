@@ -130,12 +130,19 @@
             <button type="button" data-scenario="amended" aria-pressed="false">近期更正</button>
             <button type="button" data-scenario="awarded" aria-pressed="false">歷史決標</button>
           </div>
-          <details id="searchFilters" class="ti-more-filters"><summary>更多篩選條件（類別、金額、排序）</summary>
+          <details id="searchFilters" class="ti-more-filters"><summary>更多篩選條件（公告日期、履約地、截止日、金額及排序）</summary>
           <div class="filters">
             <label>最新公告類型<select id="statusFilter"><option value="全部">全部公告</option><option value="招標">招標／公開取得</option><option value="決標">決標</option><option value="更正">更正</option><option value="無法決標">無法決標</option><option value="公開閱覽">公開閱覽</option><option value="公開徵求">公開徵求參考資料</option><option value="財物標售">財物標售</option></select></label>
             <label>採購標的<select id="groupFilter"><option value="全部">全部類別</option><option value="工程">工程</option><option value="財物">財物</option><option value="勞務">勞務</option><option value="未分類">未分類</option></select></label>
             <label>最低公開預算（元）<input id="budgetFilter" type="number" min="0" step="10000" placeholder="不限"></label>
-            <label>結果排序<select id="sortFilter"><option value="date">最新公告</option><option value="budget">公開預算高至低</option><option value="title">標案名稱</option></select></label>
+            <label>最高公開預算（元）<input id="maxBudgetFilter" type="number" min="0" step="10000" placeholder="不限"></label>
+            <label>官方履約地點（來源有提供才匹配）<input id="locationFilter" type="text" maxlength="100" placeholder="例如：台北、新北"></label>
+            <label>招標方式（來源有提供才匹配）<input id="methodFilter" type="text" maxlength="100" placeholder="例如：公開招標"></label>
+            <label>公告日期起<input id="dateStartFilter" type="date" aria-label="公告日期起"></label>
+            <label>公告日期迄<input id="dateEndFilter" type="date" aria-label="公告日期迄"></label>
+            <label>官方截止日期起<input id="deadlineStartFilter" type="date" aria-label="官方截止日期起"></label>
+            <label>官方截止日期迄<input id="deadlineEndFilter" type="date" aria-label="官方截止日期迄"></label>
+            <label>結果排序<select id="sortFilter"><option value="date">最新公告</option><option value="deadline">官方截止日期早至晚</option><option value="budget">公開預算高至低</option><option value="title">標案名稱</option></select></label>
           </div>
           </details>
           <p class="hint">搜尋與篩選先在已入庫資料庫執行，再分頁顯示；沒有官方截止日的案件會明確標示「待確認」。「無法決標」只代表公告狀態，不能直接視為重新開放投標。</p>
