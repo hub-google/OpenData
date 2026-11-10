@@ -106,6 +106,19 @@
             </div>
             <button class="primary-btn" type="submit">搜尋標案</button>
           </form>
+          <details class="ti-semantic-panel" id="semanticPanel">
+            <summary>AI 語意搜尋（真正向量模型，正式會員使用）</summary>
+            <p class="minor">找關鍵字不同、但需求意思相近的案件，也可搜尋本人明確同意建立向量索引的私人文件。需要真正模型金鑰及已建索引；未配置時會明確顯示不可用，不以關鍵字搜尋冒充語意結果。每名會員每天最多 30 次語意呼叫。</p>
+            <form id="semanticForm" class="ti-semantic-form">
+              <label>自然語言描述<input id="semanticQuery" type="search" minlength="3" maxlength="150" required placeholder="例如：醫院資訊系統的資安檢測與維運服務"></label>
+              <label>搜尋對象<select id="semanticScope"><option value="cases">政府標案（已索引）</option><option value="documents">我的私人文件索引</option><option value="both">標案＋私人文件</option></select></label>
+              <label>採購分類<select id="semanticGroup"><option value="">所有分類</option><option>工程</option><option>財物</option><option>勞務</option><option>未分類</option></select></label>
+              <label class="ti-semantic-checkbox"><input type="checkbox" id="semanticOnlyOpen"> 只看官方截止日未到的招標</label>
+              <button class="primary-btn" type="submit">使用 AI 語意搜尋</button>
+            </form>
+            <div id="semanticStatus" role="status" aria-live="polite" class="minor">使用語意模型前請先正式登入。一般標案關鍵字搜尋不受影響。</div>
+            <div id="semanticResults" class="ti-semantic-results"></div>
+          </details>
           <div class="ti-scenario-row" role="group" aria-label="按案件目前狀態快速尋找商機">
             <span>快速找案</span>
             <button type="button" data-scenario="all" aria-pressed="true">最新案件</button>
@@ -660,6 +673,7 @@
 </aside>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <script type="module" src="./app.js"></script>
+<script type="module" src="./semantic-search.js"></script>
 <script type="module" src="./delivery.js"></script>
 <script type="module" src="./advanced.js"></script>
   <script type="module" src="./issues.js"></script>
