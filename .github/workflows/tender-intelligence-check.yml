@@ -34,6 +34,9 @@ on:
       - "tender-intelligence-web/supabase/migrations/**"
       - "tender-intelligence-web/core.mjs"
       - "tender-intelligence-web/search-expression.mjs"
+      - "tender-intelligence-web/semantic-search.js"
+      - "tender-intelligence-web/proposal-draft.js"
+      - "tender-intelligence-web/proposal-draft-core.mjs"
       - "tender-intelligence-web/tests/**"
       - ".github/workflows/tender-intelligence-check.yml"
 
@@ -54,6 +57,9 @@ jobs:
       - name: 驗證 JavaScript 語法
         run: |
           node --check tender-intelligence-web/app.js
+          node --check tender-intelligence-web/semantic-search.js
+          node --check tender-intelligence-web/proposal-draft.js
+          node --check tender-intelligence-web/proposal-draft-core.mjs
           node --check tender-intelligence-web/nav-groups.js
           node --check tender-intelligence-web/company-workspace.js
           node --check tender-intelligence-web/case-workspace.js
@@ -97,7 +103,7 @@ jobs:
           root=Path("tender-intelligence-web")
           html=(root/"index.html").read_text(encoding="utf-8")
           assert '<script type="module" src="./app.js"></script>' in html
-          for f in ("nav-groups.js","company-workspace.js","case-workspace.js","case-decision-brief.js","monitor-tabs.js","competitor-tracker.js","ocr-client.js","report-dashboard.js","qualification-check.js","market-trends.js"):
+          for f in ("semantic-search.js","nav-groups.js","company-workspace.js","case-workspace.js","case-decision-brief.js","monitor-tabs.js","competitor-tracker.js","ocr-client.js","report-dashboard.js","qualification-check.js","market-trends.js"):
               assert f'src="./{f}"' in html and (root/f).is_file(),f
           assert 'id="view-company"' in html
           assert 'id="tiOcrButton"' in html
