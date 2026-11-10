@@ -102,6 +102,15 @@ async function firstAdvancedId(){
    assert.ok(!content.includes('案件詳情載入失敗'),content);
    await page.screenshot({path:out+'/tender-case-detail.png',fullPage:true});
  });
+ await check('S02 real semantic query has an honest signed-in entry point',async()=>{
+   const panel=page.locator('#semanticPanel');
+   await panel.locator('summary').click();
+   assert.equal(await page.locator('#semanticForm').count(),1);
+   assert.equal(await page.locator('#semanticQuery').count(),1);
+   assert.equal(await page.locator('#semanticResults').count(),1);
+   assert.ok((await panel.innerText()).includes('真正向量模型'));
+   await panel.locator('summary').click();
+ });
  await check('Four case tasks retain notice history, intelligence and bid tools',async()=>{
    const tabNames=await page.locator('#detailContent .ti-case-tab').allTextContents();
    assert.deepEqual(tabNames,['案件重點','公告歷程','行情與競爭','投標準備']);
