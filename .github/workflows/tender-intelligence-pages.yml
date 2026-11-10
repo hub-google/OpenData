@@ -32,7 +32,7 @@ jobs:
       - name: 語法及規則測試
         run: |
           node --check tender-intelligence-web/app.js
-          for file in nav-groups.js company-workspace.js case-workspace.js case-decision-brief.js monitor-tabs.js competitor-tracker.js ocr-client.js report-dashboard.js qualification-check.js market-trends.js; do
+          for file in backend.js advanced.js nav-groups.js company-workspace.js case-workspace.js case-decision-brief.js bid-effort.js bid-effort-summary.js search-url.mjs monitor-tabs.js competitor-tracker.js ocr-client.js report-dashboard.js qualification-check.js market-trends.js; do
             node --check "tender-intelligence-web/$file"
           done
           node --check tender-intelligence-web/core.mjs
