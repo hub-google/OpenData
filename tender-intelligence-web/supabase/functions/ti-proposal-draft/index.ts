@@ -21,7 +21,8 @@ async function fromApi(path,jwt){
 async function privileged(path,method,body){
  if(!SERVICE)throw Error('後端服務金鑰未配置');
  const res=await fetch(SUPA+'/rest/v1/'+path,{method,
-  headers:{apikey:SERVICE,Authorization:'Bearer '+SERVICE,'Content-Type':'application/json',Prefer:'return=minimal'},
+  headers:{apikey:SERVICE,Authorization:'Bearer '+SERVICE,'Content-Type':'application/json',
+   ...(method==='PATCH'?{Prefer:'return=minimal'}:{})},
   body:JSON.stringify(body),signal:AbortSignal.timeout(18000)});
  if(!res.ok)throw Error('任務紀錄 '+res.status);
  const raw=await res.text();return raw?JSON.parse(raw):null;
