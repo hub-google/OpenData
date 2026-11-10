@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-27T06:13:20.579483+00:00",
+  "generated_at": "2026-11-10T08:19:22.073401+00:00",
   "disclaimer": "異常訊號與查核優先度只用於篩選值得人工核對的公開資料，不代表違法、圍標、圖利或弊案認定。",
   "sources": [
     {
@@ -24,7 +24,7 @@
       "key": "debarred",
       "name": "拒絕往來廠商公告",
       "ok": true,
-      "records": 1708,
+      "records": 1653,
       "url": "https://web.pcc.gov.tw/vms/rvlm/rvlmPublicSearch/queryRVFile/json",
       "dataset": "https://data.gov.tw/dataset/5988",
       "frequency": "每1日"
@@ -33,7 +33,7 @@
       "key": "concentration",
       "name": "近1年工程採購案廠商於同一機關得標20件以上之廠商及機關名",
       "ok": true,
-      "records": 32,
+      "records": 36,
       "url": "https://web.pcc.gov.tw/wr-report/wr/homeClient/downloadOpenAPI?reportId=EngOrgAndBidder2",
       "dataset": "https://data.gov.tw/dataset/6410",
       "frequency": "每1月"
@@ -52,26 +52,13 @@
     "cases": 700,
     "restricted_awards": 21677,
     "restricted_tenders": 28658,
-    "debarred_records": 1708,
-    "concentration_records": 32,
+    "debarred_records": 1653,
+    "concentration_records": 36,
     "ratio_benchmark_records": 7,
-    "combo_cases": 697
+    "combo_cases": 695
   },
   "benchmarks": {
     "engineering_lowest_bid_ratios": [
-      {
-        "month": "11503",
-        "count": 2892,
-        "floor_ratio": 0,
-        "budget_ratio": 0,
-        "raw": {
-          "月份": "11503",
-          "決標件數": "2892",
-          "底價合計": "26917333910",
-          "預算合計": "28023108616",
-          "決標金額合計": "24935699484"
-        }
-      },
       {
         "month": "11504",
         "count": 2597,
@@ -138,16 +125,29 @@
         }
       },
       {
+        "month": "11509",
+        "count": 2883,
+        "floor_ratio": 0,
+        "budget_ratio": 0,
+        "raw": {
+          "月份": "11509",
+          "決標件數": "2883",
+          "底價合計": "27889795990",
+          "預算合計": "28729860134",
+          "決標金額合計": "26486493720"
+        }
+      },
+      {
         "month": "合計",
-        "count": 16704,
+        "count": 16695,
         "floor_ratio": 0,
         "budget_ratio": 0,
         "raw": {
           "月份": "合計",
-          "決標件數": "16704",
-          "底價合計": "155397346235",
-          "預算合計": "160862490820",
-          "決標金額合計": "145550160221"
+          "決標件數": "16695",
+          "底價合計": "156369808315",
+          "預算合計": "161569242338",
+          "決標金額合計": "147100954457"
         }
       }
     ]
@@ -96217,23 +96217,23 @@
       "category": "工程類",
       "method": "",
       "date": "",
-      "amount": 54925000,
+      "amount": 55031000,
       "vendor": "協全營造有限公司",
       "priority": 87,
       "signals": [
         "concentration"
       ],
       "reasons": [
-        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 42 件。"
+        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 41 件。"
       ],
       "metrics": [
         {
           "label": "近1年同機關得標件數",
-          "value": 42
+          "value": 41
         },
         {
           "label": "廠商得標金額",
-          "value": 54925000
+          "value": 55031000
         },
         {
           "label": "可交叉限制性決標紀錄",
@@ -96272,23 +96272,23 @@
       "category": "工程類",
       "method": "",
       "date": "",
-      "amount": 42206700,
+      "amount": 44306700,
       "vendor": "禾晟營造有限公司",
       "priority": 87,
       "signals": [
         "concentration"
       ],
       "reasons": [
-        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 49 件。"
+        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 52 件。"
       ],
       "metrics": [
         {
           "label": "近1年同機關得標件數",
-          "value": 49
+          "value": 52
         },
         {
           "label": "廠商得標金額",
-          "value": 42206700
+          "value": 44306700
         },
         {
           "label": "可交叉限制性決標紀錄",
@@ -96327,23 +96327,23 @@
       "category": "工程類",
       "method": "",
       "date": "",
-      "amount": 30211900,
+      "amount": 34059900,
       "vendor": "桂洲土木包工業",
       "priority": 87,
       "signals": [
         "concentration"
       ],
       "reasons": [
-        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 43 件。"
+        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 46 件。"
       ],
       "metrics": [
         {
           "label": "近1年同機關得標件數",
-          "value": 43
+          "value": 46
         },
         {
           "label": "廠商得標金額",
-          "value": 30211900
+          "value": 34059900
         },
         {
           "label": "可交叉限制性決標紀錄",
@@ -96359,6 +96359,61 @@
         {
           "label": "政府電子採購網決標查詢｜機關＋廠商",
           "url": "https://web.pcc.gov.tw/prkms/tender/common/agent/readTenderAgent?isQuery=true&firstSearch=false&orgName=%E5%8D%97%E6%8A%95%E7%B8%A3%E8%8D%89%E5%B1%AF%E9%8E%AE%E5%85%AC%E6%89%80&gottenVendorName=%E6%A1%82%E6%B4%B2%E5%9C%9F%E6%9C%A8%E5%8C%85%E5%B7%A5%E6%A5%AD&tenderStatus=TENDER_STATUS_1&tenderWay=TENDER_WAY_ALL_DECLARATION&tenderRange=TENDER_RANGE_ALL",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/wr-report/wr/homeClient/downloadOpenAPI?reportId=EngOrgAndBidder2",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/6410",
+          "kind": "dataset"
+        }
+      ]
+    },
+    {
+      "id": "concentration:3",
+      "kind": "concentration_pattern",
+      "title": "近1年工程採購集中｜維繹土木包工業",
+      "agency": "南投縣仁愛鄉公所",
+      "case_no": "",
+      "category": "工程類",
+      "method": "",
+      "date": "",
+      "amount": 22918378,
+      "vendor": "維繹土木包工業",
+      "priority": 87,
+      "signals": [
+        "concentration"
+      ],
+      "reasons": [
+        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 36 件。"
+      ],
+      "metrics": [
+        {
+          "label": "近1年同機關得標件數",
+          "value": 36
+        },
+        {
+          "label": "廠商得標金額",
+          "value": 22918378
+        },
+        {
+          "label": "可交叉限制性決標紀錄",
+          "value": 0
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 0
+        }
+      ],
+      "history": [],
+      "evidence": [
+        {
+          "label": "政府電子採購網決標查詢｜機關＋廠商",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/agent/readTenderAgent?isQuery=true&firstSearch=false&orgName=%E5%8D%97%E6%8A%95%E7%B8%A3%E4%BB%81%E6%84%9B%E9%84%89%E5%85%AC%E6%89%80&gottenVendorName=%E7%B6%AD%E7%B9%B9%E5%9C%9F%E6%9C%A8%E5%8C%85%E5%B7%A5%E6%A5%AD&tenderStatus=TENDER_STATUS_1&tenderWay=TENDER_WAY_ALL_DECLARATION&tenderRange=TENDER_RANGE_ALL",
           "kind": "pcc_search"
         },
         {
@@ -107767,6 +107822,61 @@
         {
           "label": "政府資料開放平臺說明",
           "url": "https://data.gov.tw/dataset/165150",
+          "kind": "dataset"
+        }
+      ]
+    },
+    {
+      "id": "concentration:4",
+      "kind": "concentration_pattern",
+      "title": "近1年工程採購集中｜昇宏泰工程有限公司",
+      "agency": "南投縣中寮鄉公所",
+      "case_no": "",
+      "category": "工程類",
+      "method": "",
+      "date": "",
+      "amount": 14145000,
+      "vendor": "昇宏泰工程有限公司",
+      "priority": 86,
+      "signals": [
+        "concentration"
+      ],
+      "reasons": [
+        "工程會官方資料列示：近1年該廠商於同一機關工程採購得標 34 件。"
+      ],
+      "metrics": [
+        {
+          "label": "近1年同機關得標件數",
+          "value": 34
+        },
+        {
+          "label": "廠商得標金額",
+          "value": 14145000
+        },
+        {
+          "label": "可交叉限制性決標紀錄",
+          "value": 0
+        },
+        {
+          "label": "拒絕往來歷史紀錄",
+          "value": 0
+        }
+      ],
+      "history": [],
+      "evidence": [
+        {
+          "label": "政府電子採購網決標查詢｜機關＋廠商",
+          "url": "https://web.pcc.gov.tw/prkms/tender/common/agent/readTenderAgent?isQuery=true&firstSearch=false&orgName=%E5%8D%97%E6%8A%95%E7%B8%A3%E4%B8%AD%E5%AF%AE%E9%84%89%E5%85%AC%E6%89%80&gottenVendorName=%E6%98%87%E5%AE%8F%E6%B3%B0%E5%B7%A5%E7%A8%8B%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&tenderStatus=TENDER_STATUS_1&tenderWay=TENDER_WAY_ALL_DECLARATION&tenderRange=TENDER_RANGE_ALL",
+          "kind": "pcc_search"
+        },
+        {
+          "label": "官方原始 Open Data",
+          "url": "https://web.pcc.gov.tw/wr-report/wr/homeClient/downloadOpenAPI?reportId=EngOrgAndBidder2",
+          "kind": "raw"
+        },
+        {
+          "label": "政府資料開放平臺說明",
+          "url": "https://data.gov.tw/dataset/6410",
           "kind": "dataset"
         }
       ]
@@ -126661,284 +126771,6 @@
         {
           "label": "政府電子採購網查詢｜案號 114A-060",
           "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=114A-060&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:G1140701:國家資通安全研究院",
-      "kind": "actual_award",
-      "title": "AI資訊安全檢測與驗證技術採購案",
-      "agency": "國家資通安全研究院",
-      "case_no": "G1140701",
-      "category": "研發服務",
-      "method": "最有利標",
-      "date": "2025-09-19",
-      "amount": 5260000,
-      "vendor": "國立陽明交通大學",
-      "priority": 86,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 5,260,000 元，決標金額／預算 = 100.00%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 3 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 5260000
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 3
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 100.0
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-09-19",
-          "title": "AI資訊安全檢測與驗證技術採購案",
-          "case_no": "G1140701",
-          "amount": 5260000,
-          "vendor": "國立陽明交通大學",
-          "agency": "國家資通安全研究院",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 G1140701",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=G1140701&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-09-19",
-          "title": "基於綜整目擊與威脅情資之即時智慧情資分析採購案",
-          "case_no": "G1140705",
-          "amount": 4180000,
-          "vendor": "國立陽明交通大學",
-          "agency": "國家資通安全研究院",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 G1140705",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=G1140705&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-09-19",
-          "title": "系統化漏洞挖掘工具研發與優化採購案",
-          "case_no": "G1140704",
-          "amount": 4000000,
-          "vendor": "國立陽明交通大學",
-          "agency": "國家資通安全研究院",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 G1140704",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=G1140704&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 G1140701",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=G1140701&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-          "kind": "pcc_search"
-        },
-        {
-          "label": "官方原始 Open Data",
-          "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-          "kind": "raw"
-        },
-        {
-          "label": "政府資料開放平臺說明",
-          "url": "https://data.gov.tw/dataset/165150",
-          "kind": "dataset"
-        }
-      ]
-    },
-    {
-      "id": "award:3189:高雄市政府社會局",
-      "kind": "actual_award",
-      "title": "高雄市政府社會局委託辦理「身心障礙者家庭托顧服務」",
-      "agency": "高雄市政府社會局",
-      "case_no": "3189",
-      "category": "社會服務",
-      "method": "最有利標",
-      "date": "2025-12-17",
-      "amount": 5254483,
-      "vendor": "財團法人喜憨兒社會福利基金會",
-      "priority": 86,
-      "signals": [
-        "concentration",
-        "ratio",
-        "restricted"
-      ],
-      "reasons": [
-        "本案出現在工程會「前1年度公告金額以上採購限制性決標公告」官方資料集。",
-        "同案招標資料可匹配預算 5,263,323 元，決標金額／預算 = 99.83%；列為標比偏高訊號，僅供查核排序。",
-        "僅就本年度限制性決標資料，同一機關與廠商已有 3 筆紀錄；列為重複得標訊號。"
-      ],
-      "metrics": [
-        {
-          "label": "決標金額",
-          "value": 5254483
-        },
-        {
-          "label": "同機關同廠商限制性決標紀錄",
-          "value": 3
-        },
-        {
-          "label": "官方集中度名單",
-          "value": false
-        },
-        {
-          "label": "拒絕往來歷史紀錄",
-          "value": 0
-        },
-        {
-          "label": "決標／預算比",
-          "value": 99.83
-        }
-      ],
-      "history": [
-        {
-          "date": "2025-12-19",
-          "title": "高雄市政府社會局委託辦理「三民身心障礙者社區照顧服務」",
-          "case_no": "3196",
-          "amount": 10403919,
-          "vendor": "財團法人喜憨兒社會福利基金會",
-          "agency": "高雄市政府社會局",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 3196",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=3196&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-12-17",
-          "title": "高雄市政府社會局委託辦理「身心障礙者家庭托顧服務」",
-          "case_no": "3189",
-          "amount": 5254483,
-          "vendor": "財團法人喜憨兒社會福利基金會",
-          "agency": "高雄市政府社會局",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 3189",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=3189&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        },
-        {
-          "date": "2025-04-17",
-          "title": "高雄市政府社會局委託辦理「鼓山身心障礙者日間照顧暨日間作業設施服務」",
-          "case_no": "3090",
-          "amount": 14257403,
-          "vendor": "財團法人喜憨兒社會福利基金會",
-          "agency": "高雄市政府社會局",
-          "evidence": [
-            {
-              "label": "政府電子採購網查詢｜案號 3090",
-              "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=3090&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
-              "kind": "pcc_search"
-            },
-            {
-              "label": "官方原始 Open Data",
-              "url": "https://web.pcc.gov.tw/tps/openDataApi/lyOpenData?runType=3",
-              "kind": "raw"
-            },
-            {
-              "label": "政府資料開放平臺說明",
-              "url": "https://data.gov.tw/dataset/165150",
-              "kind": "dataset"
-            }
-          ]
-        }
-      ],
-      "evidence": [
-        {
-          "label": "政府電子採購網查詢｜案號 3189",
-          "url": "https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?pageSize=10&querySentence=3189&sortCol=TENDER_NOTICE_DATE&tenderStatusType=%E6%B1%BA%E6%A8%99&timeRange=114",
           "kind": "pcc_search"
         },
         {

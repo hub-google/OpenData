@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-10-27T06:13:20.579483+00:00",
+  "generated_at": "2026-11-10T08:19:22.073401+00:00",
   "summary": {
     "cases": 700,
     "restricted_awards": 21677,
     "restricted_tenders": 28658,
-    "debarred_records": 1708,
-    "concentration_records": 32,
+    "debarred_records": 1653,
+    "concentration_records": 36,
     "ratio_benchmark_records": 7,
-    "combo_cases": 697
+    "combo_cases": 695
   },
   "sources": [
     {
@@ -32,7 +32,7 @@
       "key": "debarred",
       "name": "拒絕往來廠商公告",
       "ok": true,
-      "records": 1708,
+      "records": 1653,
       "url": "https://web.pcc.gov.tw/vms/rvlm/rvlmPublicSearch/queryRVFile/json",
       "dataset": "https://data.gov.tw/dataset/5988",
       "frequency": "每1日"
@@ -41,7 +41,7 @@
       "key": "concentration",
       "name": "近1年工程採購案廠商於同一機關得標20件以上之廠商及機關名",
       "ok": true,
-      "records": 32,
+      "records": 36,
       "url": "https://web.pcc.gov.tw/wr-report/wr/homeClient/downloadOpenAPI?reportId=EngOrgAndBidder2",
       "dataset": "https://data.gov.tw/dataset/6410",
       "frequency": "每1月"
