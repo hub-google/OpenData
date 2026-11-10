@@ -43,20 +43,20 @@
       <button type="button" class="nav-item" data-view="about"><span>ⓘ</span> 資料說明</button>
     </nav>
     <div class="sidebar-footer">
-      <span class="status-dot"></span> 公開測試版本
+      <span class="status-dot"></span> 資料來源核對中
       <p>資料依最後成功取得的公開採購公告更新，部分欄位仍待補齊。投標前請以官方公告為準。</p>
     </div>
   </aside>
   <div class="workspace">
     <header class="topbar">
       <div class="topbar-left"><button type="button" id="mobileMenu" class="mobile-menu" aria-label="開啟功能選單">☰</button><span id="currentViewLabel">標案搜尋</span><span class="topbar-sep">/</span><span class="topbar-sub">台灣政府採購</span></div>
-      <div class="topbar-right"><button type="button" id="accountDemoQuick" class="primary-btn" title="一鍵登入測試帳號">測試帳號一鍵登入</button><button type="button" id="accountButton" class="ghost-btn" title="會員登入與跨裝置同步">登入／跨裝置同步</button><span id="apiStatus" class="connection-tag">等待讀取資料</span><a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer" class="external-link">政府電子採購網 ↗</a></div>
+      <div class="topbar-right"><button type="button" id="accountDemoQuick" class="primary-btn" title="一鍵登入測試帳號" hidden>測試帳號一鍵登入</button><button type="button" id="accountButton" class="ghost-btn" title="會員登入與跨裝置同步">登入／跨裝置同步</button><span id="apiStatus" class="connection-tag">等待讀取資料</span><a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer" class="external-link">政府電子採購網 ↗</a></div>
     </header>
     <main class="main">
       <section id="accountPanel" class="panel account-panel" hidden>
         <div class="section-heading"><h2>帳戶與跨裝置同步</h2><button id="closeAccount" type="button" class="ghost-btn">關閉</button></div>
-        <p class="hint">可直接使用獨立測試帳號，無需輸入 Email 或密碼。正式會員仍可用 Email 驗證或 Google 登入。</p>
-        <div class="ti-demo-login-box">
+        <p class="hint">使用電子郵件驗證或 Google 帳戶登入，可同步自己的標案收藏、監控條件與投標進度。</p>
+        <div id="accountDemoBox" class="ti-demo-login-box" hidden>
           <div><strong>測試帳號已準備好</strong><p>僅測試用：自動建立個人測試帳號，並提供隔離的客服管理工單，不會看到正式客戶資料。</p></div>
           <button type="button" id="accountDemoLogin" class="primary-btn">一鍵登入測試帳號</button>
         </div>

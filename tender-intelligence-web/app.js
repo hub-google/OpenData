@@ -10,6 +10,9 @@ import {getClient,fetchArchive,fetchCaseSearch,enrichCaseRecords,fetchUnifiedTit
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
+// Test tools are available only through an explicitly requested demonstration view.
+// This flag is a UI control, not an authorization or RLS boundary.
+const demoToolsEnabled=new URLSearchParams(window.location.search).get('demo')==='1';
 const listModes={latest:'最新標案',archive:'自有資料庫已收錄案件',title:'標案名稱',vendor:'廠商名稱',companyId:'廠商統編',agency:'機關名稱'};
 const viewNames={company:'我的公司資料',debarred:'拒絕往來公告',proposal:'標書差異與健檢',decisions:'投標決策評估',contracts:'合約與保證金',directory:'供應商名錄',developer:'我的 API／MCP',guide:'採購新手指南',advanced:'進階搜尋',search:'標案搜尋',radar:'我的商機雷達',agencies:'機關情報',vendors:'廠商與競品',issues:'無法決標與快截止',analytics:'決標行情',tracking:'投標工作台',team:'團隊協作',alerts:'監控與提醒',documents:'標書條款整理',billing:'方案與帳務',about:'資料說明'};
 const states=['評估中','準備投標','已投標','待決標','已得標','未得標','不投'];
@@ -1355,6 +1358,7 @@ function initCloudUI(){
   $('accountButton').addEventListener('click',()=>{$('accountPanel').hidden=false;$('accountPanel').scrollIntoView({behavior:'smooth'});});
   $('closeAccount').addEventListener('click',()=>$('accountPanel').hidden=true);
   async function demoLogin(){
+    if(!demoToolsEnabled)return;
     const quick=$('accountDemoQuick'),panel=$('accountDemoLogin');
     quick.disabled=true;panel.disabled=true;
     const previous=quick.textContent;quick.textContent='登入中…';panel.textContent='正在建立測試帳號…';
@@ -1469,8 +1473,9 @@ function renderAccount(){
   if(state.view==='billing')void renderBilling();
   const demo=cloud.user?.is_anonymous===true;
   $('accountButton').textContent=demo?'測試帳號已登入':cloud.user?'帳戶：'+(cloud.user.email||'已登入'):'登入／跨裝置同步';
-  $('accountDemoQuick').hidden=!!cloud.user;
-  $('accountDemoLogin').hidden=!!cloud.user;
+  $('accountDemoQuick').hidden=!!cloud.user||!demoToolsEnabled;
+  $('accountDemoLogin').hidden=!!cloud.user||!demoToolsEnabled;
+  $('accountDemoBox').hidden=!!cloud.user||!demoToolsEnabled;
   $('accountLogout').hidden=!cloud.user;
   $('accountSync').hidden=!cloud.user;
   $('accountLoginForm').hidden=!!cloud.user;
