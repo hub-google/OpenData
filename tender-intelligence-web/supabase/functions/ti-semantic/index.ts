@@ -1,3 +1,4 @@
+// @ts-nocheck -- Deno runtime JS; strict provider type definitions tracked separately.
 // True S02/W07 vector search. All model calls happen server-side.
 // Missing model key is a clear inactive status; no keyword search is mislabeled AI.
 const DB=Deno.env.get('SUPABASE_URL')||'';

@@ -1,3 +1,4 @@
+// @ts-nocheck -- Deno runtime JS; strict provider type definitions tracked separately.
 // W06 real source-backed AI proposal drafting. No key => explicit 503.
 // Only user-initiated requests. Never send private text before explicit consent.
 const SUPA=Deno.env.get('SUPABASE_URL')||'';
