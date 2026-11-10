@@ -130,7 +130,7 @@ async function search(req,actor,body){
  const vector=vectorLiteral((await embed([q]))[0]);
  const input=[];
  if(scope==='cases'||scope==='both')input.push(api('rpc/ti_search_semantic_cases','POST',{
-   p_embedding:vector,p_limit:20,p_group:group,p_only_open:body?.only_open===true
+   p_embedding:vector,p_limit:30,p_group:group,p_only_open:body?.only_open===true
  },actor.jwt));
  if(scope==='documents'||scope==='both')input.push(api('rpc/ti_search_semantic_documents','POST',{
   p_embedding:vector,p_case_id:caseId,p_limit:12
@@ -138,9 +138,39 @@ async function search(req,actor,body){
  const output=await Promise.all(input);
  let i=0;const cases=scope==='cases'||scope==='both'?output[i++]:[];
  const docs=scope==='documents'||scope==='both'?output[i++]:[];
- return reply(req,{mode:'real_vector_semantic',model:MODEL,query:q,cases,documents:docs,
-  indexed_cases_only:true,ranking:'cosine similarity, not eligibility or award probability',
-  warning:'只比對已建立向量索引的資料，未收錄或尚未索引的案件不會出現在本清單'});
+ let ranked=cases;
+ if(cases.length){
+  // User-owned signals are fetched with the actual member JWT and RLS.
+  const source=await Promise.allSettled([
+   api('ti_company_profiles?select=services&user_id=eq.'+actor.user.id+'&limit=1','GET',null,actor.jwt),
+   api('ti_match_feedback?select=case_id,verdict&user_id=eq.'+actor.user.id+'&order=updated_at.desc&limit=200','GET',null,actor.jwt)
+  ]);
+  const company=source[0].status==='fulfilled'?source[0].value?.[0]||{}:{};
+  const feedback=source[1].status==='fulfilled'?source[1].value||[]:[];
+  const tags=String(company.services||'').split(/[,，、;；\n]+/)
+   .map(s=>s.trim().toLocaleLowerCase('zh-TW')).filter(x=>x.length>=2).slice(0,40);
+  const verdict=new Map(feedback.map(v=>[v.case_id,v.verdict]));
+  ranked=cases.map(item=>{
+   const title=String(item.title||'').toLocaleLowerCase('zh-TW');
+   const matched=tags.filter(tag=>title.includes(tag)).slice(0,5);
+   const choice=verdict.get(item.case_id);
+   const base=Number(item.similarity);
+   const bonus=(matched.length?.07:0)+(choice==='relevant'?.10:choice==='irrelevant'?-.20:0);
+   const reasons=matched.length?['與本人登錄服務直接重疊：'+matched.join('、')]:[];
+   if(choice==='relevant')reasons.push('曾被本人標記為相關');
+   if(choice==='irrelevant')reasons.push('曾被本人標記為不相關，已降低排序');
+   return {...item,
+    fit_rank:Number.isFinite(base)?Math.max(-1,Math.min(1,base+bonus)):null,
+    fit_reasons:reasons,
+    fit_unknowns:[
+      ...(tags.length?matched.length?[]:['公司服務與案名沒有直接文字重疊，需自行核對標書']:['尚未填寫公司服務範圍']),
+      '真正投標資格、實績與原始招標規格未經語意結果認證'
+    ]};
+  }).sort((a,b)=>(b.fit_rank??-2)-(a.fit_rank??-2)).slice(0,20);
+ }
+ return reply(req,{mode:'real_vector_semantic',model:MODEL,query:q,cases:ranked,documents:docs,
+  indexed_cases_only:true,ranking:'cosine similarity + bounded company service overlap and own feedback, not eligibility or award probability',
+  warning:'只比對已建立向量索引的資料；適配排序不是資格判定，未收錄或尚未索引的案件不會出現在本清單'});
 }
 // W07: private, citation-validated retrieval-augmented answer from the
 // owner's own already-indexed snippets. This never reads another user's rows.
