@@ -52,6 +52,22 @@ async function firstAdvancedId(){
    await page.locator('#resultList .case-card').first().waitFor({timeout:60000});
    assert.equal(browserPageErrors.length,0,'Page module syntax/runtime errors: '+browserPageErrors.join(' | '));
  });
+ await check('Production entry hides demo login while retaining explicit demo route',async()=>{
+   assert.equal(await page.locator('#accountDemoQuick').isVisible(),false,'Test button leaked into public header');
+   await page.locator('#accountButton').click();
+   assert.equal(await page.locator('#accountDemoBox').isVisible(),false,'Test signup leaked into member panel');
+   await page.locator('#closeAccount').click();
+   const demoPage=await browser.newPage({locale:'zh-TW'});
+   try{
+     const response=await demoPage.goto(base+'?demo=1',{waitUntil:'domcontentloaded',timeout:45000});
+     assert.ok(response?.ok(),'Explicit demo URL did not load');
+     await demoPage.waitForFunction(()=>!document.getElementById('accountDemoQuick')?.hidden,
+       null,{timeout:45000});
+     assert.equal(await demoPage.locator('#accountDemoQuick').isVisible(),true);
+     await demoPage.locator('#accountButton').click();
+     assert.equal(await demoPage.locator('#accountDemoBox').isVisible(),true);
+   }finally{await demoPage.close();}
+ });
  await check('Latest page contains verified monetary values, not all unknown',async()=>{
    const values=await page.locator('#resultList .case-right strong').allTextContents();
    assert.ok(values.length>0,'No latest cards');
