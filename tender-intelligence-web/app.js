@@ -92,8 +92,13 @@ function updateFilterSummary(){
  if($('statusFilter').value!=='全部')active.push($('statusFilter').selectedOptions[0]?.textContent||'公告類型');
  if($('groupFilter').value!=='全部')active.push($('groupFilter').value);
  if($('budgetFilter').value!=='')active.push('預算下限');
+ if($('maxBudgetFilter').value!=='')active.push('預算上限');
+ if($('locationFilter').value.trim())active.push('履約地');
+ if($('methodFilter').value.trim())active.push('招標方式');
+ if($('deadlineStartFilter').value||$('deadlineEndFilter').value)active.push('官方截標區間');
+ if($('dateStartFilter').value||$('dateEndFilter').value)active.push('公告日期區間');
  if($('sortFilter').value!=='date')active.push('自訂排序');
- summary.textContent=active.length?'更多篩選（已套用：'+active.join('、')+'）':'更多篩選條件（類別、金額、排序）';
+ summary.textContent=active.length?'更多篩選（已套用：'+active.join('、')+'）':'更多篩選條件（公告日期、履約地、截止日、金額及排序）';
 }
 function makeQuery(){
   const q=$('searchQuery').value.trim();
@@ -109,7 +114,11 @@ function syncBasicSearchUrl(mode,query,page){
  const path=writeBasicSearchUrl(window.location.href,{
   mode,query,page,scenario:state.scenario,
   status:$('statusFilter').value,group:$('groupFilter').value,
-  min:$('budgetFilter').value,sort:$('sortFilter').value
+  min:$('budgetFilter').value,max:$('maxBudgetFilter').value,
+  location:$('locationFilter').value,method:$('methodFilter').value,
+  dateStart:$('dateStartFilter').value,dateEnd:$('dateEndFilter').value,
+  deadlineStart:$('deadlineStartFilter').value,deadlineEnd:$('deadlineEndFilter').value,
+  sort:$('sortFilter').value
  });
  if(path!==null&&path!==window.location.pathname+window.location.search+window.location.hash)
   window.history.replaceState(window.history.state,'',path);
@@ -127,7 +136,11 @@ async function search(mode,query='',sourcePage=1){
   setStatus('正在讀取公告資料庫');
   try{
     const filters={status:$('statusFilter').value,group:$('groupFilter').value,
-      minBudget:$('budgetFilter').value,sort:$('sortFilter').value};
+      minBudget:$('budgetFilter').value,maxBudget:$('maxBudgetFilter').value,
+      location:$('locationFilter').value.trim(),method:$('methodFilter').value.trim(),
+      dateStart:$('dateStartFilter').value,dateEnd:$('dateEndFilter').value,
+      deadlineStart:$('deadlineStartFilter').value,deadlineEnd:$('deadlineEndFilter').value,
+      sort:$('sortFilter').value};
     const data=await fetchCaseSearch({
       mode,query,page:sourcePage,filters,scenario:state.scenario
     });
@@ -1182,7 +1195,8 @@ function hook(){
     state.scenario=b.dataset.scenario||'all';
     $('statusFilter').value='全部';
     $('groupFilter').value='全部';
-    $('budgetFilter').value='';
+    for(const id of ['budgetFilter','maxBudgetFilter','locationFilter','methodFilter',
+      'dateStartFilter','dateEndFilter','deadlineStartFilter','deadlineEndFilter'])$(id).value='';
     $('sortFilter').value='date';
     updateFilterSummary();
     $('searchMode').value='latest';
@@ -1198,8 +1212,10 @@ function hook(){
     else{$('searchMode').value='title';$('searchQuery').value=x;search('title',x);}
     showView('search');
   }));
-  for(const id of ['statusFilter','groupFilter','budgetFilter','sortFilter']){
-    $(id).addEventListener(id==='budgetFilter'?'input':'change',()=>{
+  for(const id of ['statusFilter','groupFilter','budgetFilter','maxBudgetFilter',
+    'locationFilter','methodFilter','dateStartFilter','dateEndFilter',
+    'deadlineStartFilter','deadlineEndFilter','sortFilter']){
+    $(id).addEventListener(['budgetFilter','maxBudgetFilter','locationFilter','methodFilter'].includes(id)?'input':'change',()=>{
       clearTimeout(filterDebounce);
       if(id==='statusFilter'&&state.scenario!=='all'){
         state.scenario='all';
@@ -1211,7 +1227,7 @@ function hook(){
       if($('searchQuery').value.trim()!==state.query)return;
       filterDebounce=setTimeout(()=>{
         if($('searchQuery').value.trim()===state.query)void search(state.mode,state.query,1);
-      },id==='budgetFilter'?420:0);
+      },['budgetFilter','maxBudgetFilter','locationFilter','methodFilter'].includes(id)?420:0);
     });
   }
   updateFilterSummary();
@@ -1275,6 +1291,13 @@ if(restoredBasicSearch){
   $('statusFilter').value=restoredBasicSearch.status;
   $('groupFilter').value=restoredBasicSearch.group;
   $('budgetFilter').value=restoredBasicSearch.min;
+  $('maxBudgetFilter').value=restoredBasicSearch.max;
+  $('locationFilter').value=restoredBasicSearch.location;
+  $('methodFilter').value=restoredBasicSearch.method;
+  $('dateStartFilter').value=restoredBasicSearch.dateStart;
+  $('dateEndFilter').value=restoredBasicSearch.dateEnd;
+  $('deadlineStartFilter').value=restoredBasicSearch.deadlineStart;
+  $('deadlineEndFilter').value=restoredBasicSearch.deadlineEnd;
   $('sortFilter').value=restoredBasicSearch.sort;
   state.scenario=restoredBasicSearch.scenario;
   document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed',
