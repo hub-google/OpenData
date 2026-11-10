@@ -67,6 +67,34 @@ function init(){
  const form=$('semanticForm'),status=$('semanticStatus'),box=$('semanticResults');
  if(!form||!status||!box)return;
  let run=0;
+ const ask=$('semanticAsk');
+ ask?.addEventListener('click',async()=>{
+  const question=$('semanticQuery').value.trim();
+  if(question.length<3||question.length>150){
+   status.textContent='請先輸入 3 至 150 個字的私人文件問題。';return;
+  }
+  if(!confirm('本次問題及最多 8 段從你私人文件索引擷取的原文，將傳送至 AI 模型進行問答。確定授權？'))return;
+  ask.disabled=true;status.textContent='正在以本人授權的私人原文進行引用式問答…';
+  box.replaceChildren();
+  try{
+   const db=await getMember(),data=await callSemantic(db,{
+    action:'answer_private',query:question,confirm_private_query:true});
+   status.textContent=data.mode==='grounded_private_rag'?
+    '取得附來源的 AI 回答，仍須核對所有原文與資格。':'未產出可以核對的私人原文回答。';
+   const article=el('article','','ti-semantic-hit');
+   article.append(el('h3','AI 文件回答（需人工核對）'),
+    el('p',data.answer||'沒有可核對的回答'));
+   for(const ref of data.citations||[]){
+    article.append(el('p','來源：'+(ref.filename||'私人文件')+'／'+(ref.source_label||'原文段落'),'minor'),
+     el('blockquote',ref.quote||''));
+   }
+   for(const warning of data.warnings||[])article.append(el('p','注意：'+warning,'minor'));
+   box.append(article);
+  }catch(error){
+   status.textContent='私人文件 AI 問答不可用：'+err(error)+
+    '；未取得可核對回答，不會使用模擬結果。';
+  }finally{ask.disabled=false;}
+ });
  form.addEventListener('submit',async e=>{
   e.preventDefault();const seq=++run;
   const query=$('semanticQuery').value.trim(),scope=$('semanticScope').value,
