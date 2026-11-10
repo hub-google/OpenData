@@ -8,7 +8,7 @@ const hrs=n=>Number(n||0).toLocaleString('zh-TW',{maximumFractionDigits:2})+' �
 const categories=['資格審查','技術規劃','標書撰寫','詢價與報價','內部會議','送件與行政','其他'];
 async function owner(){
  const db=await getClient(),{data,error}=await db.auth.getUser();
- return {db,user:error?null:data?.user||null};
+ return {db,user:error||data?.user?.is_anonymous?null:data?.user||null};
 }
 function formField(label,input){const l=el('label',label);l.append(input);return l;}
 function today(){
