@@ -308,7 +308,7 @@ async function loadVerifiedHomepageKpis(){
   note.textContent='自有資料庫 '+numeral(total)+' 案；目前有明確截止時間 '+numeral(known)+
    ' 案（'+checked+'）。「確認尚未截標」與「三日內截止」只計入有原文證據者，不能據此推斷其餘案件已截止。'+
    '最後成功同步（台灣時間）：'+syncText+'。'+
-   (data.unresolved_source_dates?'另有 '+numeral(data.unresolved_source_dates)+' 個來源缺漏日期追蹤中。':'')+
+   (data.unresolved_source_dates?'來源尚未核實 '+numeral(data.unresolved_source_dates)+' 天（其中 '+numeral(data.calendar_unverified_source_dates||0)+' 天落在例假日或政府預期休刊日、工作日待查 '+numeral(data.workday_unverified_source_dates||0)+' 天）；未把來源 HTTP 錯誤當作零公告。':'')+
    (overdue?'注意：最近同步已超過兩小時，請核對資料說明。':'');
   note.classList.toggle('warning',!!overdue);
  }catch(e){
