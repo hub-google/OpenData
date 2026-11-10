@@ -3,6 +3,8 @@ import {getClient} from './backend.js';
 const $=id=>document.getElementById(id);
 const item=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=String(text);if(cls)e.className=cls;return e};
 let client;
+let knownSourceCount=null;
+const officialSearch='https://web.pcc.gov.tw/vms/rvlm/rvlmPublicSearch/indexSearchRvlmPublic';
 function status(text){$('debarredStatus').textContent=text;}
 async function sourceStatus(){
  try{
@@ -15,6 +17,7 @@ async function sourceStatus(){
   ]);
   if(run.error)throw run.error;if(count.error)throw count.error;
   const d=run.data;
+  knownSourceCount=Number(count.count||0);
   status('來源：政府資料開放平臺第 5988 號（行政院公共工程委員會，公告每日更新）；'+
     '實際已入庫 '+Number(count.count||0).toLocaleString('zh-TW')+' 筆官方公開紀錄。'+
     (d?'最近一次同步：'+(d.status==='success'?'成功':d.status==='error'?'失敗':'執行中')+
@@ -38,7 +41,16 @@ async function search(e){
     req.ilike('company_name','%'+query.replace(/[%_]/g,'\\$&')+'%'));
   if(error)throw error;
   out.replaceChildren();
-  if(!data?.length){out.append(item('p','已入庫的官方公告沒有符合項目；不代表該公司沒有其他官方歷史公告。','empty'));return;}
+  if(!data?.length){
+    const noData=knownSourceCount===0;
+    out.append(item('p',noData?
+      '本平台尚未成功取得官方資料集，因此無法判斷這家廠商是否有相關公告；請直接使用政府電子採購網查詢。':
+      '目前已入庫的公告沒有符合項目；不代表該公司沒有其他官方歷史公告。','empty'));
+    const link=item('a','前往政府電子採購網查核');
+    link.href=officialSearch;link.target='_blank';link.rel='noopener noreferrer';
+    link.className='ghost-btn';out.append(link);
+    return;
+   }
   for(const row of data){
    const card=item('article','','case-card');
    const left=item('div','','case-left');
