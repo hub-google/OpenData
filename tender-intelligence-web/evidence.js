@@ -1,5 +1,6 @@
 // F12/F13 evidence-only identity and numeric summaries from the saved procurement DB.
 import {getClient} from './backend.js';
+import {csvEscape} from './core.mjs';
 const $=id=>document.getElementById(id);
 const n=x=>Number(x||0).toLocaleString('zh-TW');
 const element=(tag,value,cls='')=>{const e=document.createElement(tag);e.textContent=String(value??'');if(cls)e.className=cls;return e;};
@@ -33,7 +34,9 @@ async function vendor(e){
   }
  }catch(err){box.replaceChildren(element('p','查詢失敗：'+String(err.message||err),'notice warning'));}
 }
+let awardRequest=0;
 async function award(e){
+ const ticket=++awardRequest;
  e.preventDefault();const box=$('awardSampleOutput');
  const year=$('awardYear').value.trim(),agency=$('awardAgency').value.trim();
  const group=$('awardGroup').value;
@@ -53,11 +56,15 @@ async function award(e){
    p_method:method,p_min_budget:min,p_max_budget:max,p_limit:30
   });
   if(error)throw error;
+  if(ticket!==awardRequest)return;
   box.replaceChildren();
+  const sufficient=Number(data.count)>=5;
   const summary=element('div','','stat-row');
-  const entries=[['可比較樣本',n(data.count)+' 案'],['中位數',data.median_ratio==null?'無樣本':(Number(data.median_ratio)*100).toFixed(1)+'%'],
-    ['25% 分位',data.q1_ratio==null?'無樣本':(Number(data.q1_ratio)*100).toFixed(1)+'%'],
-    ['75% 分位',data.q3_ratio==null?'無樣本':(Number(data.q3_ratio)*100).toFixed(1)+'%']];
+  const percent=(ratio)=>!sufficient||ratio==null?'樣本不足':(Number(ratio)*100).toFixed(1)+'%';
+  const entries=[['可比較樣本',n(data.count)+' 案'],
+    ['中位數',percent(data.median_ratio)],
+    ['25% 分位',percent(data.q1_ratio)],
+    ['75% 分位',percent(data.q3_ratio)]];
   for(const [title,value] of entries){const card=element('div','','stat-compact');card.append(element('span',title),element('b',value));summary.append(card);}
   box.append(summary);
   box.append(element('p',Number(data.count)<5?'樣本少於 5，不適合推斷行情。':
@@ -75,7 +82,57 @@ async function award(e){
    box.append(div);
   }
   if(!rows.length)box.append(element('p','目前沒有足夠的雙金額真實公告樣本。','empty'));
- }catch(err){box.replaceChildren(element('p','查詢失敗：'+String(err.message||err),'notice warning'));}
+  if(rows.length){
+    const exportButton=element('button','匯出畫面已列的 '+rows.length+' 件來源案件 CSV','ghost-btn');
+    exportButton.type='button';
+    exportButton.addEventListener('click',()=>{
+      const csv=[['公告日期','機關','案號','案名','大類','預算','決標金額','決標／預算','決標方式'],
+       ...rows.map(item=>[item.latest_notice_date,item.agency,item.job_number,item.title,item.group_name,
+        item.budget_amount,item.award_amount,item.ratio,item.decision_method||'未公開'])];
+      const blob=new Blob(['\uFEFF'+csv.map(row=>row.map(csvEscape).join(',')).join('\r\n')],
+       {type:'text/csv;charset=utf-8'});
+      const url=URL.createObjectURL(blob),a=document.createElement('a');
+      a.href=url;a.download='決標行情已顯示來源樣本.csv';a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),10000);
+    });
+    box.append(exportButton);
+  }
+  // Add year-to-year market detail only when its filter set truly matches
+  // the existing award drilldown. Do not silently drop method or price limits.
+  if(!method&&min===null&&max===null){
+    const currentYear=Number(new Intl.DateTimeFormat('en-US',{
+      timeZone:'Asia/Taipei',year:'numeric'}).format(new Date()));
+    const endYear=year?Number(year):currentYear;
+    const beginYear=Math.max(2000,endYear-2);
+    const {data:trend,error:trendError}=await client.rpc('ti_award_market_summary',{
+      p_start_year:beginYear,p_end_year:endYear,p_group:group,p_agency:agency
+    });
+    if(ticket!==awardRequest)return;
+    const trendPanel=element('details','','ti-award-year-trend');
+    trendPanel.append(element('summary','近三年度已入庫樣本的決標比趨勢（逐年完整集合）'));
+    if(trendError)trendPanel.append(element('p','跨年度查詢失敗：'+String(trendError.message||trendError),'minor'));
+    else{
+      trendPanel.append(element('p','只含最新公告已決標、且預算與決標金額皆大於零的已入庫案件。來源涵蓋不完整時不能解讀為全國行情；每年有效樣本少於 5 件不顯示分位數。','minor'));
+      const table=element('table','','analysis-list');
+      const header=element('tr');
+      for(const col of ['年度','有效樣本 n','Q1','中位數','Q3'])header.append(element('th',col));
+      table.append(header);
+      const ratio=(v,size)=>size>=5&&v!=null?(Number(v)*100).toFixed(1)+'%':'樣本不足';
+      for(const row of trend?.years||[]){
+        const tr=element('tr');
+        for(const item of [row.year,n(row.n),ratio(row.q1_ratio,row.n),
+          ratio(row.median_ratio,row.n),ratio(row.q3_ratio,row.n)])tr.append(element('td',item));
+        table.append(tr);
+      }
+      if(!(trend?.years||[]).length)trendPanel.append(element('p','近三年沒有可核對的雙金額已決標案件。','minor'));
+      else trendPanel.append(table);
+      trendPanel.append(element('p','各年統計在資料庫對全部符合條件的案件計算，非只計畫面 30 件；不能直接用作未公開底價預測。','minor'));
+    }
+    box.append(trendPanel);
+  }else{
+    box.append(element('p','選取決標方式或金額範圍時，跨年度總體趨勢會隱藏，避免忽略篩選條件導致錯誤比較。','minor'));
+  }
+ }catch(err){if(ticket===awardRequest)box.replaceChildren(element('p','查詢失敗：'+String(err.message||err),'notice warning'));}
 }
 async function coMentions(){
  const tax=$('vendorEvidenceTaxId').value.trim(),box=$('vendorCoMentionsOutput');
