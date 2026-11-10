@@ -108,8 +108,8 @@ async function firstAdvancedId(){
    await page.locator('#detailContent .ti-case-tab').nth(1).click();
    assert.ok(await page.locator('#detailContent .ti-case-panel:not([hidden]) .detail-timeline').count()>0,'Notice timeline missing');
    await page.locator('#detailContent .ti-case-tab').nth(3).click();
-   assert.equal(await page.locator('#detailContent .ti-prep-tab').count(),4);
-   for(const name of ['decision','documents','tasks','contracts']){
+   assert.equal(await page.locator('#detailContent .ti-prep-tab').count(),5);
+   for(const name of ['decision','documents','tasks','contracts','effort']){
      await page.locator('#detailContent [data-prep-tab="'+name+'"]').click();
      assert.equal(await page.locator('#detailContent .ti-prep-panel:not([hidden])').count(),1);
    }
