@@ -1,6 +1,7 @@
 // Single case workspace: all panels keep the same official case id and reuse existing ti_* tables.
 import {getClient} from './backend.js';
 import {mountBidEffort} from './bid-effort.js';
+import {mountProposalDraft} from './proposal-draft.js';
 import {assessCompanyFit,normalize} from './core.mjs';
 import {saveCloudDocument} from './app.js';
 const el=(tag,text='',className='')=>{const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;return node;};
@@ -309,7 +310,7 @@ function mount(caseInfo){
  const prepTabs=el('div','','ti-prep-tabs');prepTabs.setAttribute('role','tablist');
  prepTabs.setAttribute('aria-label','投標準備項目');
  const prepPanels=[],prepButtons=[];
- const sections=[['decision','評估與決策'],['documents','資格與標書'],['tasks','待辦與分工'],['contracts','履約與保證金'],['effort','成本與工時']];
+ const sections=[['decision','評估與決策'],['documents','資格與標書'],['tasks','待辦與分工'],['contracts','履約與保證金'],['effort','成本與工時'],['proposal','服務建議書']];
  for(const [i,[key,label]] of sections.entries()){
   const panel=el('section','','ti-prep-panel');panel.hidden=i!==0;
   const button=el('button',label,'ti-prep-tab');button.type='button';
@@ -329,5 +330,6 @@ function mount(caseInfo){
  makeTasks(prepPanels[2],caseInfo.caseId);
  makeContracts(prepPanels[3],caseInfo.caseId);
  mountBidEffort(prepPanels[4],caseInfo.caseId);
+ mountProposalDraft(prepPanels[5],caseInfo.caseId);
 }
 document.addEventListener('ti:case-opened',e=>mount(e.detail));
