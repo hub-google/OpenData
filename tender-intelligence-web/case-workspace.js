@@ -142,16 +142,16 @@ function makeTasks(panel,caseId){
  void reload();
 }
 function makeDocuments(panel,caseId){
- panel.append(el('h3','此案的私有標書與 AI 文件'));
+ panel.append(el('h3','此案的私人標書與文件'));
  const explain=el('p','可繼續使用原本的標書解析與兩版原文比較；已有雲端文件會依案件編號顯示。AI 需要正式可用的模型服務。','minor');
  const buttons=el('div','','detail-actions');
  for(const [label,view] of [['標書差異與 AI 健檢','proposal'],['標書條款解析／私人文件庫','documents']]){
   const b=el('button',label,'ghost-btn');b.type='button';b.onclick=()=>openOldView(view);buttons.append(b);
  }
  const uploadRow=el('div','','ti-case-editor');
- const input=control('input',{type:'file',accept:'.pdf,.docx,.txt,.md','aria-label':'上傳此案的私人標書'});
+ const input=control('input',{type:'file',accept:'.pdf,.docx,.xlsx,.txt,.md,.png,.jpg,.jpeg,.webp','aria-label':'上傳此案的私人標書'});
  const upload=el('button','上傳至此案文件庫','primary-btn');upload.type='button';
- uploadRow.append(field('選擇本案文件（PDF、DOCX、TXT、MD，15MB 以內）',input),upload);
+ uploadRow.append(field('選擇本案文件（PDF、DOCX、XLSX、TXT、MD、圖片，15MB 以內）',input),upload);
  const list=el('div','','ti-case-list');panel.append(explain,buttons,uploadRow,list);
  upload.addEventListener('click',async()=>{
   const file=input.files?.[0];if(!file)return status(panel,'請先選擇要儲存到此案的文件。');
@@ -170,7 +170,7 @@ function makeDocuments(panel,caseId){
   if(!data?.length)list.append(el('p','尚無關聯此案的雲端文件；可到文件庫選擇案件上傳。','minor'));
   for(const doc of data||[]){
    const row=el('div','','ti-case-listrow'),
-      name=el('span',doc.filename+'｜'+(doc.extraction_status||'已儲存')),
+      name=el('span',doc.filename+'｜'+({processed:'已建立原文索引',uploaded:'已保存待解析',processing:'解析中',error:'原文待辨識／重建索引'}[doc.extraction_status]||'已儲存')),
       download=el('button','下載文件','ghost-btn'),
       remove=el('button','刪除文件','ghost-btn');
    download.type='button';remove.type='button';
