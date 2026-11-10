@@ -1642,35 +1642,81 @@ async function renderCloudTasks(){
   }
  }catch(err){box.replaceChildren(E('div','empty','讀取待辦失敗：'+readableError(err)));}
 }
+// A private searchable index is derived in the user's browser from the
+// real uploaded file. No content is sent to an AI or an unauthenticated API.
+async function indexPrivateDocument(db,userId,recordId,file){
+  if(!db||!userId||!recordId)throw Error('私人文件索引身分資料不完整');
+  if(cloud.user?.id!==userId)throw Error('登入帳號已切換，已停止建立索引');
+  try{
+    const parsed=await parseDocument(file);
+    const pages=[];let left=120000;
+    for(const p of parsed){
+      const raw=String(p.text||'').trim();
+      if(!raw||left<=0)continue;
+      const text=raw.slice(0,Math.min(8000,left));
+      if(!text)continue;
+      pages.push({source:String(p.source||'原文段落').slice(0,120),text,
+        method:String(p.method||'本機原文解析').slice(0,100)});
+      left-=text.length;
+    }
+    if(cloud.user?.id!==userId)throw Error('登入帳號已切換，已停止建立索引');
+    const normalized=pages.map(p=>p.text).join('\n')
+      .normalize('NFKC').toLocaleLowerCase('zh-TW').replaceAll('臺','台').slice(0,140000);
+    const indexed=Boolean(normalized.trim());
+    const update={
+      extraction_status:indexed?'processed':'error',
+      search_text:indexed?normalized:null,
+      indexed_at:indexed?new Date().toISOString():null,
+      extracted:{version:1,source:'使用者瀏覽器原文解析',pages,
+        warning:indexed?null:'無可搜尋文字；掃描文件需先執行本機 OCR 並重新建立索引'}
+    };
+    const {error}=await db.from('ti_documents').update(update)
+      .eq('user_id',userId).eq('id',recordId);
+    if(error)throw error;
+    return {indexed,pages:pages.length,reason:indexed?'已將可核對原文建立私人全文索引':'無可讀文字，請先執行 OCR'};
+  }catch(err){
+    if(cloud.user?.id===userId){
+      await db.from('ti_documents').update({extraction_status:'error'})
+        .eq('user_id',userId).eq('id',recordId);
+    }
+    return {indexed:false,pages:0,reason:'索引失敗：'+readableError(err)};
+  }
+}
 export async function saveCloudDocument(fileOverride=null,caseIdOverride=null){
  if(!cloud.user){toast('請先登入才能儲存私有雲端文件。');return false;}
+ const userId=cloud.user.id,db=cloud.client;
  const file=fileOverride||$('documentFile').files?.[0];
- if(!file)return toast('請先選擇文件。');
- if(file.size>15*1024*1024)return toast('超過 15 MB 限制。');
- const allowed=['.pdf','.docx','.txt','.md'];
- if(!allowed.some(x=>file.name.toLowerCase().endsWith(x)))return toast('只能上傳 PDF、DOCX、TXT、MD。');
- const button=$('documentCloudSave');button.disabled=true;
+ if(!file){toast('請先選擇文件。');return false;}
+ if(file.size>15*1024*1024){toast('超過 15 MB 限制。');return false;}
+ const allowed=['.pdf','.docx','.txt','.md','.xlsx','.png','.jpg','.jpeg','.webp'];
+ if(!allowed.some(x=>file.name.toLowerCase().endsWith(x))){toast('請使用 PDF、DOCX、XLSX、TXT、MD 或圖片文件。');return false;}
+ const button=$('documentCloudSave');if(button)button.disabled=true;
  let path='';
  try{
   const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-90);
-  path=cloud.user.id+'/'+crypto.randomUUID()+'-'+safeName;
-  const {error:uploadError}=await cloud.client.storage.from('ti-private-documents').upload(path,file,{
+  path=userId+'/'+crypto.randomUUID()+'-'+safeName;
+  const {error:uploadError}=await db.storage.from('ti-private-documents').upload(path,file,{
     upsert:false,contentType:file.type||'application/octet-stream'
   });
   if(uploadError)throw uploadError;
-  const {error:dbError}=await cloud.client.from('ti_documents').insert({
-    user_id:cloud.user.id,case_id:caseIdOverride||$('documentCaseId')?.value||null,filename:file.name,storage_path:path,mime_type:file.type||null,bytes:file.size
-  });
-  if(dbError){
-    await cloud.client.storage.from('ti-private-documents').remove([path]);
-    throw dbError;
+  const {data:record,error:dbError}=await db.from('ti_documents').insert({
+    user_id:userId,case_id:caseIdOverride||$('documentCaseId')?.value||null,
+    filename:file.name,storage_path:path,mime_type:file.type||null,bytes:file.size
+  }).select('id').single();
+  if(dbError||!record?.id){
+    await db.storage.from('ti-private-documents').remove([path]);
+    throw dbError||Error('私有文件索引識別碼未產生');
   }
-  toast('已保存私有文件至 Supabase Storage。');
-  void renderCloudDocuments().catch(error=>console.warn("Cloud file list refresh:",readableError(error)));
-  document.dispatchEvent(new CustomEvent("ti:private-document-saved",{detail:{caseId:caseIdOverride||null,filename:file.name}}));
+  toast('文件已保存至私人儲存區，正在建立可核對的全文索引。');
+  const indexed=await indexPrivateDocument(db,userId,record.id,file);
+  toast(indexed.indexed?'文件保存並完成私人全文索引（'+indexed.pages+' 段／頁）。':
+    '原始檔已保存，但'+indexed.reason+'；可稍後重新建立索引。');
+  void renderCloudDocuments().catch(error=>console.warn('Private documents refresh:',readableError(error)));
+  document.dispatchEvent(new CustomEvent('ti:private-document-saved',{
+    detail:{caseId:caseIdOverride||null,filename:file.name,indexed:indexed.indexed}}));
   return true;
  }catch(err){toast('文件儲存失敗：'+readableError(err));return false;}
- finally{button.disabled=false;}
+ finally{if(button)button.disabled=false;}
 }
 async function renderCloudDocuments(){
  const box=$('cloudDocuments');
@@ -1683,7 +1729,18 @@ async function renderCloudDocuments(){
   if(!data?.length){box.append(E('div','empty','尚未上傳任何雲端文件。'));return;}
   for(const file of data){
     const wrap=E('div','watch-item'),head=E('header','');
-    child(head,E('h3','',file.filename),btn('下載','ghost-btn',async()=>{
+    child(head,E('h3','',file.filename),btn(file.search_text?'重建索引':'建立索引','ghost-btn',async()=>{
+      if(cloud.user?.id!==file.user_id){toast('帳號已切換，請重新載入文件。');return;}
+      toast('正在下載自己的文件並於瀏覽器重新建立私人索引…');
+      try{
+        const {data:blob,error:downloadError}=await cloud.client.storage.from('ti-private-documents').download(file.storage_path);
+        if(downloadError||!blob)throw downloadError||Error('私人檔案未取得');
+        const selected=new File([blob],file.filename,{type:file.mime_type||blob.type});
+        const result=await indexPrivateDocument(cloud.client,file.user_id,file.id,selected);
+        toast(result.indexed?'已更新此文件的全文索引。':result.reason);
+        if(cloud.user?.id===file.user_id)void renderCloudDocuments();
+      }catch(error){toast('重建索引失敗：'+readableError(error));}
+    }),btn('下載','ghost-btn',async()=>{
       const {data:link,error:e}=await cloud.client.storage.from('ti-private-documents').createSignedUrl(file.storage_path,60);
       if(e||!link?.signedUrl)return toast('無法開啟檔案：'+readableError(e));
       window.open(link.signedUrl,'_blank','noopener,noreferrer');
@@ -1694,7 +1751,9 @@ async function renderCloudDocuments(){
       if(r)return toast('清理文件紀錄失敗：'+readableError(r));
       void renderCloudDocuments();
     }));
-    child(wrap,head,E('p','',new Date(file.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})+'｜'+(file.bytes||0).toLocaleString('zh-TW')+' bytes'));
+    child(wrap,head,E('p','',new Date(file.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})+
+      '｜'+(file.bytes||0).toLocaleString('zh-TW')+' bytes｜'+
+      (file.search_text?'可搜尋原文':'尚未建立可搜尋文字（可重建索引／先執行 OCR）')));
     box.append(wrap);
   }
  }catch(err){box.replaceChildren(E('div','empty','私有文件讀取失敗：'+readableError(err)));}
@@ -1702,71 +1761,55 @@ async function renderCloudDocuments(){
 
 
 // V7: private, RLS-protected cross-document retrieval. No AI and no external text index.
+// W07: full private index across all successfully extracted files.
+// Every result is an excerpt attributed to an actual owner-authorized file.
 async function searchPrivateKnowledge(e){
  e.preventDefault();
- const btn=$('knowledgeSearchButton'),status=$('knowledgeStatus'),box=$('knowledgeResults');
- if(!cloud.user||!cloud.client){
-  status.textContent='請登入後使用私有文件知識庫。';return;
- }
- const needle=$('knowledgeQuery').value.trim();
- if(needle.length<2){status.textContent='請輸入至少兩個字。';return;}
- const normalized=needle.normalize('NFKC').toLocaleLowerCase('zh-TW').replaceAll('臺','台');
- const userId=cloud.user.id;
- btn.disabled=true;
+ const button=$('knowledgeSearchButton'),status=$('knowledgeStatus'),box=$('knowledgeResults');
+ if(!cloud.user||!cloud.client){status.textContent='請先登入，才能搜尋私有文件。';return;}
+ const query=$('knowledgeQuery').value.trim(),userId=cloud.user.id;
+ if(query.length<2||query.length>80){status.textContent='請輸入 2 至 80 個字。';return;}
+ button.disabled=true;
+ status.textContent='正在搜尋你已解析的私人文件原文索引，不會傳送內容給 AI…';
  box.replaceChildren();
- status.textContent='正在從你自己的私有雲端下載文件並於瀏覽器搜尋；不傳送內容給 AI…';
  try{
-  const {data:docs,error}=await cloud.client.from('ti_documents')
-   .select('id,filename,storage_path,bytes,mime_type')
-   .eq('user_id',userId).order('created_at',{ascending:false}).limit(8);
-  if(error)throw error;
-  if(!docs?.length){status.textContent='尚無已保存的私有文件。';return;}
-  let scanned=0,skipped=0;const failures=[],matches=[];
-  for(const doc of docs){
-   if(cloud.user?.id!==userId)throw Error('登入帳戶已變更；停止本次搜尋。');
-   if(Number(doc.bytes||0)>15*1024*1024 || !/\.(pdf|docx|txt|md)$/i.test(doc.filename)){
-    skipped++;continue;
-   }
-   try{
-    const {data:blob,error:loadError}=await cloud.client.storage.from('ti-private-documents').download(doc.storage_path);
-    if(loadError)throw loadError;
-    if(blob.size>15*1024*1024)throw Error('檔案太大');
-    const file=new File([blob],doc.filename,{type:doc.mime_type||blob.type});
-    const pages=await parseDocument(file);
-    scanned++;
-    for(const page of pages){
-     const text=String(page.text||'');
-     // Preserve original snippets and page labels; do not generate a synthetic answer.
-     const paragraphs=text.replace(/\r/g,'\n').split(/[\n。；;]+/).map(t=>t.trim().replace(/\s+/g,' ')).filter(t=>t.length>=2);
-     for(const paragraph of paragraphs){
-      const hay=paragraph.normalize('NFKC').toLocaleLowerCase('zh-TW').replaceAll('臺','台');
-      let offset=hay.indexOf(normalized);
-      if(offset===-1)continue;
-      const begin=Math.max(0,offset-85),end=Math.min(paragraph.length,offset+normalized.length+150);
-      matches.push({filename:doc.filename,source:page.source,
-       excerpt:(begin?'…':'')+paragraph.slice(begin,end)+(end<paragraph.length?'…':'')});
-      if(matches.length>=60)break;
-     }
-     if(matches.length>=60)break;
-    }
-    if(matches.length>=60)break;
-   }catch(err){failures.push(doc.filename+'：'+readableError(err));}
+  const [matchesResult,unindexedResult]=await Promise.all([
+    cloud.client.rpc('ti_private_knowledge_search',{p_query:query,p_case_id:null,p_limit:60}),
+    cloud.client.from('ti_documents').select('id',{count:'exact',head:true})
+      .eq('user_id',userId).is('search_text',null)
+  ]);
+  if(matchesResult.error)throw matchesResult.error;
+  if(unindexedResult.error)throw unindexedResult.error;
+  if(cloud.user?.id!==userId)throw Error('登入身分已變更，已停止本次私人資料查詢。');
+  const items=Array.isArray(matchesResult.data)?matchesResult.data:[];
+  const unindexed=Number(unindexedResult.count||0);
+  status.textContent='私人索引找到 '+items.length+' 段可核對的原文（最多 60 段）'+
+    (unindexed?'；另有 '+unindexed+' 份文件尚未完成原文索引，可在文件清單點「建立索引」':'')+
+    '。只顯示原文，不代表人工資格審查或 AI 推論。';
+  if(!items.length){
+    box.append(E('div','empty',unindexed?
+     '已建立索引的文件沒有此關鍵字；部分尚未解析，請先在文件清單建立索引。':
+     '已建立索引的文件沒有此關鍵字。'));
   }
-  if(cloud.user?.id!==userId)throw Error('登入帳戶已變更；搜尋結果已取消。');
-  status.textContent='已檢查 '+scanned+' 份私有文件，原文命中 '+matches.length+' 段'+
-   (matches.length>=60?'（最多顯示 60 段）':'')+
-   (skipped?'；略過 '+skipped+' 份不支援格式／超過限制文件':'')+
-   (failures.length?'；'+failures.length+' 份讀取失敗':'')+'。未把未知條款推測成結論。';
-  if(!matches.length)box.append(E('div','empty','目前讀取成功的文件沒有此關鍵字；掃描型 PDF 或未解析頁面需人工核對。'));
-  for(const hit of matches){
-   const item=E('div','timeline-item');
-   child(item,E('strong','',hit.filename+'｜'+hit.source),E('div','',hit.excerpt));box.append(item);
+  for(const hit of items){
+    const wrap=E('div','timeline-item');
+    child(wrap,E('strong','',hit.filename+'｜'+(hit.source_label||'來源段落')),
+      E('p','',String(hit.excerpt||'')));
+    wrap.append(btn('核對原始文件','ghost-btn',async()=>{
+      if(cloud.user?.id!==userId){toast('帳號已切換，請重新搜尋。');return;}
+      const {data:doc,error}=await cloud.client.from('ti_documents')
+        .select('storage_path').eq('id',hit.document_id).eq('user_id',userId).maybeSingle();
+      if(error||!doc){toast('原文取用失敗：'+readableError(error||'權限或文件已變更'));return;}
+      const {data:url,error:urlError}=await cloud.client.storage
+        .from('ti-private-documents').createSignedUrl(doc.storage_path,60);
+      if(urlError||!url?.signedUrl){toast('無法簽發私人下載連結。');return;}
+      window.open(url.signedUrl,'_blank','noopener,noreferrer');
+    }));
+    box.append(wrap);
   }
-  if(failures.length)box.append(E('p','notice warning','部分文件無法搜尋：'+failures.slice(0,3).join('；')));
- }catch(err){status.textContent='知識庫搜尋失敗：'+readableError(err);}
- finally{btn.disabled=false;}
+ }catch(error){status.textContent='私人全文搜尋失敗：'+readableError(error);}
+ finally{button.disabled=false;}
 }
-
 // PRD: secure multi-member workspace / invitation / shared cases and tasks.
 let selectedWorkspace='',workspaceListVersion=0,workspaceRenderVersion=0;
 async function refreshWorkspaces(){
