@@ -102,21 +102,31 @@ export async function fetchCaseSearch({
 }={}){
  const client=await getClient();
  const amount=filters.minBudget===''||filters.minBudget==null?null:Number(filters.minBudget);
+ const maxBudget=filters.maxBudget===''||filters.maxBudget==null?null:Number(filters.maxBudget);
  if(amount!==null&&(!Number.isFinite(amount)||amount<0))throw Error('最低公開預算格式不正確');
+ if(maxBudget!==null&&(!Number.isFinite(maxBudget)||maxBudget<0))throw Error('最高公開預算格式不正確');
+ if(amount!==null&&maxBudget!==null&&maxBudget<amount)throw Error('最高預算不得低於最低預算');
+ const isoDate=x=>{const s=String(x||'');return s&&/^\d{4}-\d{2}-\d{2}$/.test(s)?s:null;};
+ const dateNum=x=>{const d=isoDate(x);return d?Number(d.replaceAll('-','')):null;};
  const m=mode==='archive'&&!String(query||'').trim()?'latest':mode;
  const args={
   p_mode:m,p_term:String(query||'').trim(),
   p_kind:filters.status==='全部'?'':String(filters.status||''),
   p_group:filters.group==='全部'?'':String(filters.group||''),
   p_min_budget:amount,
-  p_sort:['date','budget','title'].includes(filters.sort)?filters.sort:'date',
+  p_max_budget:maxBudget,
+  p_location:String(filters.location||'').slice(0,100),
+  p_method:String(filters.method||'').slice(0,100),
+  p_date_start:dateNum(filters.dateStart),p_date_end:dateNum(filters.dateEnd),
+  p_deadline_start:isoDate(filters.deadlineStart),p_deadline_end:isoDate(filters.deadlineEnd),
+  p_sort:['date','budget','title','deadline'].includes(filters.sort)?filters.sort:'date',
   p_scenario:mode==='latest'?scenario:'all',
   p_page:Math.max(1,Math.trunc(Number(page)||1)),p_limit:30
  };
  // Preserve exact criteria on retry. Do not quietly drop filters when the RPC fails.
  let data,error;
  for(let i=0;i<2;i++){
-  const response=await client.rpc('ti_case_search_v2',args);
+  const response=await client.rpc('ti_case_search_v3',args);
   data=response.data;error=response.error;
   if(!error||!/statement timeout|canceling statement|57014/i.test(String(error.message||error)))break;
  }
