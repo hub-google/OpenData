@@ -432,3 +432,19 @@ label{font-size:12px;color:#56677b;font-weight:650}
 .ti-award-year-trend .analysis-list th,.ti-award-year-trend .analysis-list td{padding:9px 7px}
 @media(max-width:550px){.ti-award-year-trend{padding:10px;overflow:auto}
 .ti-award-year-trend .analysis-list{min-width:360px}}
+
+/* Genuine AI semantic search, collapsible to preserve task-first homepage. */
+.ti-semantic-panel{margin:12px 0;border:1px solid #dce7f2;background:#f8fbff;border-radius:12px;padding:12px 15px}
+.ti-semantic-panel>summary{cursor:pointer;font-weight:700;color:#225a89}
+.ti-semantic-panel>p{margin:10px 0;font-size:12px;line-height:1.65}
+.ti-semantic-form{display:grid;grid-template-columns:minmax(220px,2fr) repeat(2,minmax(130px,1fr));gap:10px;align-items:end;margin:12px 0}
+.ti-semantic-form>label{font-size:12px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.ti-semantic-form input[type="search"],.ti-semantic-form select{width:100%;min-width:0}
+.ti-semantic-form .ti-semantic-checkbox{flex-direction:row;align-items:center}
+.ti-semantic-form .ti-semantic-checkbox input{width:auto}
+.ti-semantic-hit{margin:9px 0;padding:12px;background:#fff;border:1px solid #e1e9f2;border-radius:10px}
+.ti-semantic-hit h3{margin:0 0 6px;font-size:14px}
+.ti-semantic-hit p{margin:5px 0;overflow-wrap:anywhere}
+.ti-semantic-hit blockquote{margin:8px 0;padding:9px;border-left:2px solid #acc5e1;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:850px){.ti-semantic-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.ti-semantic-form{grid-template-columns:minmax(0,1fr)}.ti-semantic-panel{padding:10px}}
