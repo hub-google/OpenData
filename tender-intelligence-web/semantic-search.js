@@ -46,6 +46,8 @@ function renderResults(box,data){
   const score=Number(result.similarity);
   card.append(el('p',Number.isFinite(score)?'語意相似度 '+(score*100).toFixed(1)+
    '%（不是公司適配或得標率）':'語意相似度未提供','minor'));
+  for(const reason of result.fit_reasons||[])card.append(el('p','適配依據：'+reason,'minor'));
+  for(const unknown of result.fit_unknowns||[])card.append(el('p','待核對：'+unknown,'minor'));
   if(result.source_url&&/^https:\/\/web\.pcc\.gov\.tw(?:\/|$)/.test(result.source_url)){
    const a=el('a','核對官方公告');a.href=result.source_url;a.target='_blank';a.rel='noopener noreferrer';
    card.append(a);
