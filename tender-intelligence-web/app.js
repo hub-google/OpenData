@@ -6,7 +6,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,ensureGuestSession,fetchArchive,fetchCaseSearch,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,ensureGuestSession,fetchArchive,fetchCaseSearch,fetchDefaultCaseFallback,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -151,9 +151,25 @@ async function search(mode,query='',sourcePage=1){
       dateStart:$('dateStartFilter').value,dateEnd:$('dateEndFilter').value,
       deadlineStart:$('deadlineStartFilter').value,deadlineEnd:$('deadlineEndFilter').value,
       sort:$('sortFilter').value};
-    const data=await searchDeadline(fetchCaseSearch({
-      mode,query,page:sourcePage,filters,scenario:state.scenario
-    }),35000,'標案資料庫搜尋');
+    const noFilter=filters.status==='全部'&&filters.group==='全部'
+      &&filters.minBudget===''&&filters.maxBudget===''&&!filters.location
+      &&!filters.method&&!filters.dateStart&&!filters.dateEnd
+      &&!filters.deadlineStart&&!filters.deadlineEnd&&filters.sort==='date';
+    let data;
+    try{
+      data=await searchDeadline(fetchCaseSearch({
+        mode,query,page:sourcePage,filters,scenario:state.scenario
+      }),35000,'標案資料庫搜尋');
+    }catch(primaryError){
+      // Never relax or discard filters to make a failed query appear successful.
+      // The indexed recent-case feed uses genuine stored records only.
+      if(mode!=='latest'||state.scenario!=='all'||!noFilter)throw primaryError;
+      try{
+        data=await searchDeadline(fetchDefaultCaseFallback({page:sourcePage}),14000,'最近案件備援讀取');
+      }catch(fallbackError){
+        throw Error('主要搜尋與來源備援皆失敗：'+readableError(primaryError)+'；'+readableError(fallbackError));
+      }
+    }
     state.totalPages=Math.max(1,Number(data.total_pages||1));
     const descriptions={
       open:'官方截止日未到的招標案件',
@@ -1362,6 +1378,13 @@ async function renderAiUsage(){
  }
 }
 function initCloudUI(){
+  // The explicit demo route must be usable even if the auth server is
+  // unreachable: do not depend on initCloud() succeeding before showing it.
+  if(demoToolsEnabled){
+    $('accountDemoQuick').hidden=false;
+    $('accountDemoLogin').hidden=false;
+    $('accountDemoBox').hidden=false;
+  }
   $('accountButton').addEventListener('click',()=>{$('accountPanel').hidden=false;$('accountPanel').scrollIntoView({behavior:'smooth'});});
   $('closeAccount').addEventListener('click',()=>$('accountPanel').hidden=true);
   async function demoLogin(){

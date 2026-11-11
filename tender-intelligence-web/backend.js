@@ -189,6 +189,35 @@ export async function fetchCaseSearch({
  return data;
 }
 
+// Read-only, indexed recent-case fallback for the default home feed only.
+// Never use for a constrained search: that would silently discard filters.
+// No count is claimed, since a full exact COUNT can itself time out upstream.
+export async function fetchDefaultCaseFallback({page=1}={}){
+ const current=Math.max(1,Math.trunc(Number(page)||1)),size=30;
+ const db=await getClient(),start=(current-1)*size;
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+ let response;
+ try{
+  response=await db.from('ti_cases')
+   .select('id,unit_id,job_number,title,agency,category,group_name,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,deadline_at,source_fetched_at')
+   .order('latest_notice_date',{ascending:false})
+   .order('id',{ascending:true})
+   .range(start,start+size)
+   .abortSignal(controller.signal);
+ }finally{clearTimeout(timer)}
+ if(controller.signal.aborted)throw Error('最近案件備援查詢超時');
+ if(response.error)throw response.error;
+ const all=response.data||[],hasNext=all.length>size;
+ return {records:all.slice(0,size).map(r=>({
+  unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
+  date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
+  budget_amount:r.budget_amount,award_amount:r.award_amount,
+  deadline_at:r.deadline_at,source_fetched_at:r.source_fetched_at,
+  brief:{title:r.title,type:r.latest_notice_type,category:r.category||r.group_name},
+  detail:r.official_url?{url:r.official_url}:{}
+ })),source:'case_fallback',total_records:null,
+ total_pages:current+(hasNext?1:0)};
+}
 // Exact-field backup searches when the upstream API blocks browser CORS.
 // All rows come from the already-ingested public government announcements.
 export async function fetchBasicArchiveSearch({mode,query,page=1}={}){
