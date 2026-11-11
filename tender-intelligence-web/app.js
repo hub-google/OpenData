@@ -126,6 +126,13 @@ function syncBasicSearchUrl(mode,query,page){
  if(path!==null&&path!==window.location.pathname+window.location.search+window.location.hash)
   window.history.replaceState(window.history.state,'',path);
 }
+function searchDeadline(promise,ms,label){
+ let timer;
+ return Promise.race([
+  Promise.resolve(promise),
+  new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' 逾時，請重新搜尋；本站不會提供模擬公告')),ms);})
+ ]).finally(()=>clearTimeout(timer));
+}
 async function search(mode,query='',sourcePage=1){
   const token=++state.running;
   state.mode=mode;state.query=query;state.sourcePage=sourcePage;state.clientPage=1;state.totalRecords=null;
@@ -144,9 +151,9 @@ async function search(mode,query='',sourcePage=1){
       dateStart:$('dateStartFilter').value,dateEnd:$('dateEndFilter').value,
       deadlineStart:$('deadlineStartFilter').value,deadlineEnd:$('deadlineEndFilter').value,
       sort:$('sortFilter').value};
-    const data=await fetchCaseSearch({
+    const data=await searchDeadline(fetchCaseSearch({
       mode,query,page:sourcePage,filters,scenario:state.scenario
-    });
+    }),35000,'標案資料庫搜尋');
     state.totalPages=Math.max(1,Number(data.total_pages||1));
     const descriptions={
       open:'官方截止日未到的招標案件',
@@ -162,7 +169,7 @@ async function search(mode,query='',sourcePage=1){
     if(token!==state.running)return;
     state.totalRecords=data.total_records!==null&&data.total_records!==undefined&&Number.isFinite(Number(data.total_records))?Number(data.total_records):null;
     state.latestSource=mode==='latest'?data.source:null;
-    const verified=await enrichCaseRecords(Array.isArray(data.records)?data.records:[]);
+    const verified=await searchDeadline(enrichCaseRecords(Array.isArray(data.records)?data.records:[]),12000,'標案欄位來源核對');
     if(token!==state.running)return;
     state.rows=verified.map(normalize).filter(Boolean);
     renderSearch();
