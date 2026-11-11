@@ -1,0 +1,2553 @@
+{
+  "generated_at": "2026-11-11T08:54:07.998Z",
+  "target": "https://hub-google.github.io/OpenData/tender-intelligence-web/",
+  "source_md": "tender-intelligence-web/使用者操作情境與UAT驗收劇本-2026-11-11.md",
+  "note": "Screenshots are browser captures of the actual production site. PARTIAL is not acceptance PASS. BLOCKED is not a completed E2E test.",
+  "page_errors": [],
+  "items": [
+    {
+      "id": "UAT-001",
+      "title": "新訪客直接使用",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?mode=title&q=%E8%A8%AD%E8%A8%88",
+      "started_at": "2026-11-11T08:52:18.859Z",
+      "screenshot": "screenshots/UAT-001.png",
+      "steps": [
+        "搜尋畫面回應：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "基本搜尋、詳情與產品允許的訪客工作流可使用；不強迫先註冊。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1103
+    },
+    {
+      "id": "UAT-002",
+      "title": "六大主選單",
+      "priority": "P1",
+      "status": "PASS",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?mode=title&q=%E8%A8%AD%E8%A8%88",
+      "started_at": "2026-11-11T08:52:19.962Z",
+      "screenshot": "screenshots/UAT-002.png",
+      "steps": [
+        "六大主功能區已逐一點擊"
+      ],
+      "expected": "只移動視圖而非重新建立資料；當前選單醒目且可返回。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1156
+    },
+    {
+      "id": "UAT-003",
+      "title": "手機與返回定位",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?mode=title&q=%E8%A8%AD%E8%A8%88",
+      "started_at": "2026-11-11T08:52:21.118Z",
+      "screenshot": "screenshots/UAT-003.png",
+      "steps": [
+        "手機寬度下水平溢出=false",
+        "已用手機漢堡選單進入搜尋區"
+      ],
+      "expected": "無橫向溢出、按鈕可點、內容不遮擋；保留搜尋條件與頁碼。",
+      "error": null,
+      "restoreViewport": true,
+      "screenshot_ok": true,
+      "elapsed_ms": 715
+    },
+    {
+      "id": "UAT-004",
+      "title": "瀏覽器重整與離線",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?mode=title&q=%E8%A8%AD%E8%A8%88",
+      "started_at": "2026-11-11T08:52:21.834Z",
+      "screenshot": "screenshots/UAT-004.png",
+      "steps": [
+        "重整後網站可載入"
+      ],
+      "expected": "已保存資料不丟失；未保存的內容不可假稱已存；網路失敗有明示。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 174
+    },
+    {
+      "id": "UAT-005",
+      "title": "正式帳號登入與同步",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?mode=title&q=%E8%A8%AD%E8%A8%88",
+      "started_at": "2026-11-11T08:52:22.008Z",
+      "screenshot": "screenshots/UAT-005.png",
+      "steps": [
+        "已檢查對應頁面；完整寫入／權限測試需要獨立授權條件"
+      ],
+      "expected": "能綁定本人身分並在另一裝置取得同一人的資料；登出後不能讀私有資料。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 268
+    },
+    {
+      "id": "UAT-006",
+      "title": "變更信箱與刪除帳號",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?mode=title&q=%E8%A8%AD%E8%A8%88",
+      "started_at": "2026-11-11T08:52:22.276Z",
+      "screenshot": "screenshots/UAT-006.png",
+      "steps": [
+        "已檢查對應頁面；完整寫入／權限測試需要獨立授權條件"
+      ],
+      "expected": "錯誤確認不得刪除；成功時只刪本人私有資料，不能波及團隊其他成員。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 249
+    },
+    {
+      "id": "UAT-007",
+      "title": "Demo 入口隔離",
+      "priority": "P2",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?demo=1",
+      "started_at": "2026-11-11T08:52:22.525Z",
+      "screenshot": "screenshots/UAT-007.png",
+      "steps": [
+        "一般入口測試捷徑顯示=false",
+        "demo=1 測試捷徑顯示=false"
+      ],
+      "expected": "公開版不誤導使用者為測試環境；Demo 不讀正式客服資料。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 5194
+    },
+    {
+      "id": "UAT-008",
+      "title": "關鍵字搜尋",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:52:27.720Z",
+      "screenshot": "screenshots/UAT-008.png",
+      "steps": [
+        "搜尋畫面回應：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "搜尋是先在資料庫篩選再分頁；總數與頁面一致；同機關同案號一案一筆。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1071
+    },
+    {
+      "id": "UAT-009",
+      "title": "一案多公告去重",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:52:28.792Z",
+      "screenshot": "screenshots/UAT-009.png",
+      "steps": [
+        "當頁案件卡=0,重複摘要=0"
+      ],
+      "expected": "同機關同正式案號多公告只算一件；不同正式案號不能被案名合併。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 249
+    },
+    {
+      "id": "UAT-010",
+      "title": "官方截止未到",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?scenario=open",
+      "started_at": "2026-11-11T08:52:29.042Z",
+      "screenshot": "screenshots/UAT-010.png",
+      "steps": [
+        "情境切換：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "只包含已知官方截止日且尚未截止的招標類案；不能以網站的日期推斷。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 967
+    },
+    {
+      "id": "UAT-011",
+      "title": "三日內截止",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?scenario=soon",
+      "started_at": "2026-11-11T08:52:30.009Z",
+      "screenshot": "screenshots/UAT-011.png",
+      "steps": [
+        "情境切換：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "只顯示符合真實時間窗的案，時間以台灣時區解釋。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 966
+    },
+    {
+      "id": "UAT-012",
+      "title": "百萬以下預算",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?scenario=small",
+      "started_at": "2026-11-11T08:52:30.975Z",
+      "screenshot": "screenshots/UAT-012.png",
+      "steps": [
+        "情境切換：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "只納入官方已公開且符合金額上限的未截止案件。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 971
+    },
+    {
+      "id": "UAT-013",
+      "title": "無法決標及近期更正",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?scenario=failed",
+      "started_at": "2026-11-11T08:52:32.012Z",
+      "screenshot": "screenshots/UAT-013.png",
+      "steps": [
+        "情境切換：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "顯示的是各案件最新公告類型；保留更正前後脈絡。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 964
+    },
+    {
+      "id": "UAT-014",
+      "title": "多軸綜合條件",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97",
+      "started_at": "2026-11-11T08:52:32.976Z",
+      "screenshot": "screenshots/UAT-014.png",
+      "steps": [
+        "多軸篩選送出：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "所有條件在全庫生效並正確分頁；缺該來源欄位者排除而不是推定。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 300
+    },
+    {
+      "id": "UAT-015",
+      "title": "台／臺同義與搜尋穩定性",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%87%BA%E5%8C%97",
+      "started_at": "2026-11-11T08:52:33.276Z",
+      "screenshot": "screenshots/UAT-015.png",
+      "steps": [
+        "台北：從已同步的政府採購公告資料庫查詢，不使用模擬案件",
+        "臺北：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "正規化後等價條件結果一致；結果排序穩定。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1984
+    },
+    {
+      "id": "UAT-016",
+      "title": "可重現普通搜尋 URL",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:52:35.260Z",
+      "screenshot": "screenshots/UAT-016.png",
+      "steps": [
+        "重整後可分享的網址：https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89"
+      ],
+      "expected": "關鍵字、金額、情境、日期、地點、排序、頁碼可還原；不得涵蓋登入憑證。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1047
+    },
+    {
+      "id": "UAT-017",
+      "title": "匯出 CSV、RSS、重整",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:52:36.308Z",
+      "screenshot": "screenshots/UAT-017.png",
+      "steps": [
+        "匯出等待：page.waitForEvent: Timeout 6000ms exceeded while waiting for event \"download\" =========================== logs =========================== w"
+      ],
+      "expected": "匯出僅為可見或明示範圍，中文可讀、資料可核對、CSV 注入字串已防護。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 6243
+    },
+    {
+      "id": "UAT-018",
+      "title": "布林運算優先順序",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:52:42.552Z",
+      "screenshot": "screenshots/UAT-018.png",
+      "steps": [
+        "進階搜尋送出中，等待完成",
+        "進階搜尋：正在查詢自有 Supabase 中實際已收錄的公告，跨日期條件在資料庫端處理…"
+      ],
+      "expected": "依括號與 AND/OR/NOT 順序正確處理，全庫後端分頁。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 8223
+    },
+    {
+      "id": "UAT-019",
+      "title": "片語及額外排除",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:52:50.784Z",
+      "screenshot": "screenshots/UAT-019.png",
+      "steps": [
+        "進階搜尋送出中，等待完成",
+        "搜尋按鈕仍忙碌，避免重複送出；無法判定篩選結果"
+      ],
+      "expected": "查詢結果與使用者輸入語意相符、排除條件有效。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 12250
+    },
+    {
+      "id": "UAT-020",
+      "title": "官方與公開預算篩選",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:03.034Z",
+      "screenshot": "screenshots/UAT-020.png",
+      "steps": [
+        "進階搜尋送出中，等待完成",
+        "進階搜尋：正在查詢自有 Supabase 中實際已收錄的公告，跨日期條件在資料庫端處理…"
+      ],
+      "expected": "只用官方明示資訊，未知不當作符合；總數與各頁一致。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 12350
+    },
+    {
+      "id": "UAT-021",
+      "title": "清除與分享搜尋",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:15.384Z",
+      "screenshot": "screenshots/UAT-021.png",
+      "steps": [
+        "清除條件後詞="
+      ],
+      "expected": "清除全部條件、複製 URL 能復原篩選而非登入資訊。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 252
+    },
+    {
+      "id": "UAT-022",
+      "title": "儲存並載入條件",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:15.636Z",
+      "screenshot": "screenshots/UAT-022.png",
+      "steps": [
+        "儲存／預覽規則入口存在=true/true（匿名寫入未執行）"
+      ],
+      "expected": "完整條件精確恢復，同名規則處理清楚。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 228
+    },
+    {
+      "id": "UAT-023",
+      "title": "30 日命中預覽與刪除",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:15.865Z",
+      "screenshot": "screenshots/UAT-023.png",
+      "steps": [
+        "儲存／預覽規則入口存在=true/true（匿名寫入未執行）"
+      ],
+      "expected": "預覽明示只計近 30 天已入庫資料，刪除只作用本人。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-024",
+      "title": "伺服器分頁及匯出本頁",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:16.097Z",
+      "screenshot": "screenshots/UAT-024.png",
+      "steps": [
+        "搜尋尚未完成，暫不能驗證翻頁"
+      ],
+      "expected": "每頁不重不漏，匯出範圍和說明一致，排序可重現。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 235
+    },
+    {
+      "id": "UAT-025",
+      "title": "四大案件主分頁",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:16.332Z",
+      "screenshot": "screenshots/UAT-025.png",
+      "steps": [
+        "目前尚無可開啟的正式案件"
+      ],
+      "expected": "全部分頁使用同一 case_id，狀態、案號、機關一致；切換不重建案。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 258
+    },
+    {
+      "id": "UAT-026",
+      "title": "最新公告與修正沿革",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:16.590Z",
+      "screenshot": "screenshots/UAT-026.png",
+      "steps": [
+        "目前尚無可開啟的正式案件"
+      ],
+      "expected": "每個版本各自標示日期、公告類型、來源；最新版狀態有依據。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 265
+    },
+    {
+      "id": "UAT-027",
+      "title": "缺失欄位處理",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:16.855Z",
+      "screenshot": "screenshots/UAT-027.png",
+      "steps": [
+        "目前尚無可開啟的正式案件"
+      ],
+      "expected": "缺值是「未知／待查」，不可顯示 0、假官方日期或宣稱可賺多少。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 251
+    },
+    {
+      "id": "UAT-028",
+      "title": "正式官方來源連結",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:17.107Z",
+      "screenshot": "screenshots/UAT-028.png",
+      "steps": [
+        "目前尚無可開啟的正式案件"
+      ],
+      "expected": "直達 URL 只有實際已知時才出現；其餘提供安全搜尋指引。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 248
+    },
+    {
+      "id": "UAT-029",
+      "title": "發起詳情補抓",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:17.356Z",
+      "screenshot": "screenshots/UAT-029.png",
+      "steps": [
+        "目前尚無可開啟的正式案件"
+      ],
+      "expected": "確認排隊即顯示已提交；不等於已完成補齊，更新結果有時間與出處。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 249
+    },
+    {
+      "id": "UAT-030",
+      "title": "同公告廠商與資料脈絡",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:17.606Z",
+      "screenshot": "screenshots/UAT-030.png",
+      "steps": [
+        "目前尚無可開啟的正式案件"
+      ],
+      "expected": "僅顯示官方明列者及其角色；不推論未揭露之投標者。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 249
+    },
+    {
+      "id": "UAT-031",
+      "title": "案件詳情快速工具",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:17.855Z",
+      "screenshot": "screenshots/UAT-031.png",
+      "steps": [
+        "目前尚無可開啟的正式案件"
+      ],
+      "expected": "被帶入的永遠是原 case_id；跨頁跳轉不丟該案關聯。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 251
+    },
+    {
+      "id": "UAT-032",
+      "title": "詳情關閉與鍵盤操作",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:18.107Z",
+      "screenshot": "screenshots/UAT-032.png",
+      "steps": [
+        "目前尚無可開啟的正式案件"
+      ],
+      "expected": "可關閉、可閱讀、焦點不被模態框困住；手機可滾動完整資訊。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 248
+    },
+    {
+      "id": "UAT-033",
+      "title": "自然語意找相似採購",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:18.355Z",
+      "screenshot": "screenshots/UAT-033.png",
+      "steps": [],
+      "expected": "真正 embedding 相似搜尋，回傳來源與相關度；不能拿關鍵字包含率假扮。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 255
+    },
+    {
+      "id": "UAT-034",
+      "title": "無模型金鑰安全退場",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:18.611Z",
+      "screenshot": "screenshots/UAT-034.png",
+      "steps": [
+        "AI 結果："
+      ],
+      "expected": "明確標示需登入／未設定金鑰，且一般免費搜尋不受影響。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 829
+    },
+    {
+      "id": "UAT-035",
+      "title": "30 次用量限制",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:19.441Z",
+      "screenshot": "screenshots/UAT-035.png",
+      "steps": [],
+      "expected": "成功請求計數，超額明確拒絕，與其他帳號互不混算。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 250
+    },
+    {
+      "id": "UAT-036",
+      "title": "私人問答引用驗證",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:19.691Z",
+      "screenshot": "screenshots/UAT-036.png",
+      "steps": [],
+      "expected": "回答只依本人文件與可驗證的原文摘錄；沒有精確引用即拒絕下結論。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 250
+    },
+    {
+      "id": "UAT-037",
+      "title": "建立個人業務輪廓",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:19.942Z",
+      "screenshot": "screenshots/UAT-037.png",
+      "steps": [
+        "商機雷達：請儲存關鍵字，再點「查詢資料庫跨日商機」。只看已入庫資料，未知預算與截止日會顯示待核對。"
+      ],
+      "expected": "保存條件、可分析當頁；不宣稱匹配分數等於得標率。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 292
+    },
+    {
+      "id": "UAT-038",
+      "title": "跨日全庫商機查詢",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:20.235Z",
+      "screenshot": "screenshots/UAT-038.png",
+      "steps": [
+        "商機雷達：正在自有資料庫跨日搜尋實際已入庫招標公告（不包含更正或決標），並排序關鍵字關聯性…"
+      ],
+      "expected": "不只搜尋目前可見的 30 案，結果來自已入庫的跨日正式招標資料。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 863
+    },
+    {
+      "id": "UAT-039",
+      "title": "期望履約區域處理",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:21.098Z",
+      "screenshot": "screenshots/UAT-039.png",
+      "steps": [
+        "商機雷達：正在自有資料庫跨日搜尋實際已入庫招標公告（不包含更正或決標），並排序關鍵字關聯性…"
+      ],
+      "expected": "依目前 UI 明示區域僅做紀錄，不拿機關地址推斷實際履約地。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 234
+    },
+    {
+      "id": "UAT-040",
+      "title": "輪廓編輯與排除",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:21.333Z",
+      "screenshot": "screenshots/UAT-040.png",
+      "steps": [
+        "商機雷達：正在自有資料庫跨日搜尋實際已入庫招標公告（不包含更正或決標），並排序關鍵字關聯性…"
+      ],
+      "expected": "新輪廓生效，返回不污染基本搜尋條件。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 216
+    },
+    {
+      "id": "UAT-041",
+      "title": "商機匹配解釋",
+      "priority": "P2",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:21.549Z",
+      "screenshot": "screenshots/UAT-041.png",
+      "steps": [
+        "商機雷達：正在自有資料庫跨日搜尋實際已入庫招標公告（不包含更正或決標），並排序關鍵字關聯性…"
+      ],
+      "expected": "讓業務知道哪些詞命中、哪些資格仍未知；不能假設有承接能力。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 215
+    },
+    {
+      "id": "UAT-042",
+      "title": "以機關代碼查年度資料",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:21.764Z",
+      "screenshot": "screenshots/UAT-042.png",
+      "steps": [
+        "機關輸出：正在讀取機關已入庫統計…"
+      ],
+      "expected": "顯示 API 來源與年份，單位、樣本邊界清楚。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 949
+    },
+    {
+      "id": "UAT-043",
+      "title": "從案件跳機關",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:22.714Z",
+      "screenshot": "screenshots/UAT-043.png",
+      "steps": [
+        "機關輸出：正在讀取機關已入庫統計…"
+      ],
+      "expected": "帶入該案真正機關代碼，而非猜公司名稱或固定預設值。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 916
+    },
+    {
+      "id": "UAT-044",
+      "title": "月別採購與去重",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:23.631Z",
+      "screenshot": "screenshots/UAT-044.png",
+      "steps": [
+        "機關輸出：正在讀取機關已入庫統計…"
+      ],
+      "expected": "同機關同案號正確去重，缺資料月份不解讀為沒有發包。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 914
+    },
+    {
+      "id": "UAT-045",
+      "title": "疑似週期性重購",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:24.546Z",
+      "screenshot": "screenshots/UAT-045.png",
+      "steps": [
+        "機關輸出：正在讀取機關已入庫統計…"
+      ],
+      "expected": "只列候選歷史證據，不推測下次發布日期或必然重購。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 916
+    },
+    {
+      "id": "UAT-046",
+      "title": "得標商排行樣本集中度",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:25.462Z",
+      "screenshot": "screenshots/UAT-046.png",
+      "steps": [
+        "機關輸出：正在讀取機關已入庫統計…"
+      ],
+      "expected": "按真實可識別得標案號去重；集中度不是市場占有率。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 917
+    },
+    {
+      "id": "UAT-047",
+      "title": "公司名稱及統編查詢",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:26.380Z",
+      "screenshot": "screenshots/UAT-047.png",
+      "steps": [
+        "廠商查詢：載入中"
+      ],
+      "expected": "只列出資料庫有出處的公告，名稱與統編匹配可追溯。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 669
+    },
+    {
+      "id": "UAT-048",
+      "title": "廠商別名證據",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:27.049Z",
+      "screenshot": "screenshots/UAT-048.png",
+      "steps": [
+        "廠商查詢：載入中"
+      ],
+      "expected": "只有一對一的來源配對才算可能名稱證據，不稱政府登記已核實。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 666
+    },
+    {
+      "id": "UAT-049",
+      "title": "同公告其他公司",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:27.715Z",
+      "screenshot": "screenshots/UAT-049.png",
+      "steps": [
+        "廠商查詢：載入中"
+      ],
+      "expected": "只說同公告共現，不推論共同投標、串標、真正競爭或得標。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 651
+    },
+    {
+      "id": "UAT-050",
+      "title": "已核對投標／得標角色",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:28.374Z",
+      "screenshot": "screenshots/UAT-050.png",
+      "steps": [
+        "廠商查詢：載入中"
+      ],
+      "expected": "不同身分分開計數，附年度、機關及案號來源。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 659
+    },
+    {
+      "id": "UAT-051",
+      "title": "空資料與來源缺漏",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:29.034Z",
+      "screenshot": "screenshots/UAT-051.png",
+      "steps": [
+        "廠商查詢：載入中"
+      ],
+      "expected": "明示「本平台尚無可確認資料」，不要說「此公司從未投標」。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 664
+    },
+    {
+      "id": "UAT-052",
+      "title": "無法決標狀態清單",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:29.698Z",
+      "screenshot": "screenshots/UAT-052.png",
+      "steps": [
+        "查詢按鈕仍在載入／不可用，未重複送出",
+        "無法決標／快截止狀態：正在查詢已入庫的真實公告…"
+      ],
+      "expected": "狀態由最新官方公告決定，可回原案核對。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 626
+    },
+    {
+      "id": "UAT-053",
+      "title": "官方快截止",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:30.324Z",
+      "screenshot": "screenshots/UAT-053.png",
+      "steps": [
+        "查詢按鈕仍在載入／不可用，未重複送出",
+        "無法決標／快截止狀態：正在查詢已入庫的真實公告…"
+      ],
+      "expected": "只列可核對時間者，未知期限單獨提示。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 633
+    },
+    {
+      "id": "UAT-054",
+      "title": "只用有效決標金額比",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:30.957Z",
+      "screenshot": "screenshots/UAT-054.png",
+      "steps": [
+        "行情樣本：正在讀取跨日真實價格樣本…"
+      ],
+      "expected": "只算最新狀態真實決標、同案兩金額皆有效的樣本。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 785
+    },
+    {
+      "id": "UAT-055",
+      "title": "行情條件分層",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:31.742Z",
+      "screenshot": "screenshots/UAT-055.png",
+      "steps": [
+        "行情樣本：正在讀取跨日真實價格樣本…"
+      ],
+      "expected": "所有限制真正作用在統計來源；說明前端當頁 vs 全庫統計不同。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 754
+    },
+    {
+      "id": "UAT-056",
+      "title": "分位數及樣本門檻",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:32.497Z",
+      "screenshot": "screenshots/UAT-056.png",
+      "steps": [
+        "行情樣本：正在讀取跨日真實價格樣本…"
+      ],
+      "expected": "只在 n 足夠時呈現分位數，最多明示 30 筆可追溯來源不等於樣本總數。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 728
+    },
+    {
+      "id": "UAT-057",
+      "title": "跨年度市場趨勢",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:33.225Z",
+      "screenshot": "screenshots/UAT-057.png",
+      "steps": [
+        "行情樣本：正在讀取跨日真實價格樣本…"
+      ],
+      "expected": "按已收錄資料範圍計算，標示資料稀疏或缺漏。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 750
+    },
+    {
+      "id": "UAT-058",
+      "title": "收藏與去重",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:33.975Z",
+      "screenshot": "screenshots/UAT-058.png",
+      "steps": [
+        "追蹤待辦入口=true；私人測試寫入未執行"
+      ],
+      "expected": "同一 user_id＋case_id 只一筆追蹤，標題與案號正確。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 237
+    },
+    {
+      "id": "UAT-059",
+      "title": "編輯投標階段與備註",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:34.213Z",
+      "screenshot": "screenshots/UAT-059.png",
+      "steps": [
+        "追蹤待辦入口=true；私人測試寫入未執行"
+      ],
+      "expected": "變更持久保存，私人階段與官方公告狀態分開標示。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 231
+    },
+    {
+      "id": "UAT-060",
+      "title": "新增、完成、刪除待辦",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:34.445Z",
+      "screenshot": "screenshots/UAT-060.png",
+      "steps": [
+        "追蹤待辦入口=true；私人測試寫入未執行"
+      ],
+      "expected": "任務進度及期限保存且不重複。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-061",
+      "title": "個人投標成果",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:34.678Z",
+      "screenshot": "screenshots/UAT-061.png",
+      "steps": [
+        "追蹤待辦入口=true；私人測試寫入未執行"
+      ],
+      "expected": "只統計本人標記，不冒稱官方得標結果；無有效分母不算勝率。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 234
+    },
+    {
+      "id": "UAT-062",
+      "title": "CSV／Excel／ICS 匯出",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:34.912Z",
+      "screenshot": "screenshots/UAT-062.png",
+      "steps": [
+        "匯出：page.waitForEvent: Timeout 4500ms exceeded while waiting for event \"download\" ======================",
+        "追蹤待辦入口=true；私人測試寫入未執行"
+      ],
+      "expected": "中文、日期、案號、關聯正常，ICS 台灣時間合理；不能外洩別人的案件。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 4734
+    },
+    {
+      "id": "UAT-063",
+      "title": "JSON 備份與匯入",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:39.646Z",
+      "screenshot": "screenshots/UAT-063.png",
+      "steps": [
+        "追蹤待辦入口=true；私人測試寫入未執行"
+      ],
+      "expected": "可恢復本人資料，不覆寫他人；版本不相容需明示。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-064",
+      "title": "兩帳號私人隔離",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:39.878Z",
+      "screenshot": "screenshots/UAT-064.png",
+      "steps": [
+        "追蹤待辦入口=true；私人測試寫入未執行"
+      ],
+      "expected": "C 看不到 B 的資料也不能修改、刪除，直接 API 存取需由 RLS 阻擋。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 234
+    },
+    {
+      "id": "UAT-065",
+      "title": "六項決策證據",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:40.112Z",
+      "screenshot": "screenshots/UAT-065.png",
+      "steps": [
+        "決策頁：證據覆蓋率 0／100 權重 已核對條件中的符合權重：0／0；未核對 100 權重。這不是得標率，也不是在所有權重均有資料前的完整適配分數。 仍須人工確認：產品類別及文本相符、法定資格與實績已核實、履約地點與承作規模、準備時間與交件條件、具有可比的歷史競爭證據、有證據支持的公司毛利／商業考量"
+      ],
+      "expected": "六個權重合計 100；未核實項顯示證據覆蓋率而不是硬給零分或滿分。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 236
+    },
+    {
+      "id": "UAT-066",
+      "title": "Go／No-Go 紀錄",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:40.349Z",
+      "screenshot": "screenshots/UAT-066.png",
+      "steps": [
+        "決策頁：證據覆蓋率 0／100 權重 已核對條件中的符合權重：0／0；未核對 100 權重。這不是得標率，也不是在所有權重均有資料前的完整適配分數。 仍須人工確認：產品類別及文本相符、法定資格與實績已核實、履約地點與承作規模、準備時間與交件條件、具有可比的歷史競爭證據、有證據支持的公司毛利／商業考量"
+      ],
+      "expected": "決策與來源／日期保存，只屬本人授權範圍。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 230
+    },
+    {
+      "id": "UAT-067",
+      "title": "公司承接適配重新評估",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:40.580Z",
+      "screenshot": "screenshots/UAT-067.png",
+      "steps": [
+        "決策頁：證據覆蓋率 0／100 權重 已核對條件中的符合權重：0／0；未核對 100 權重。這不是得標率，也不是在所有權重均有資料前的完整適配分數。 仍須人工確認：產品類別及文本相符、法定資格與實績已核實、履約地點與承作規模、準備時間與交件條件、具有可比的歷史競爭證據、有證據支持的公司毛利／商業考量"
+      ],
+      "expected": "各維度列「已知依據／待核對」，不是保證資格合格。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-068",
+      "title": "修改資料後結果更新",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:40.814Z",
+      "screenshot": "screenshots/UAT-068.png",
+      "steps": [
+        "決策頁：證據覆蓋率 0／100 權重 已核對條件中的符合權重：0／0；未核對 100 權重。這不是得標率，也不是在所有權重均有資料前的完整適配分數。 仍須人工確認：產品類別及文本相符、法定資格與實績已核實、履約地點與承作規模、準備時間與交件條件、具有可比的歷史競爭證據、有證據支持的公司毛利／商業考量"
+      ],
+      "expected": "能反映變更，沒有舊結論快取污染。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-069",
+      "title": "兩案獨立決策",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:41.047Z",
+      "screenshot": "screenshots/UAT-069.png",
+      "steps": [
+        "決策頁：證據覆蓋率 0／100 權重 已核對條件中的符合權重：0／0；未核對 100 權重。這不是得標率，也不是在所有權重均有資料前的完整適配分數。 仍須人工確認：產品類別及文本相符、法定資格與實績已核實、履約地點與承作規模、準備時間與交件條件、具有可比的歷史競爭證據、有證據支持的公司毛利／商業考量"
+      ],
+      "expected": "決策、備註與依據依 case_id 分離。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-070",
+      "title": "純文字與 Office 文件檢核",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:41.279Z",
+      "screenshot": "screenshots/UAT-070.png",
+      "steps": [
+        "TXT 本機整理結果："
+      ],
+      "expected": "資格、截止、履約、評選、押標金資訊回溯原文；可下載清單。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 651
+    },
+    {
+      "id": "UAT-071",
+      "title": "PDF 文字層解析",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:41.930Z",
+      "screenshot": "screenshots/UAT-071.png",
+      "steps": [],
+      "expected": "只從實際文字層擷取，保留頁碼與文字證據。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 240
+    },
+    {
+      "id": "UAT-072",
+      "title": "掃描 PDF OCR 分批",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:42.171Z",
+      "screenshot": "screenshots/UAT-072.png",
+      "steps": [],
+      "expected": "每批至多 8 頁、逐批累加；錯字須人工確認，不捏造看不到的文字。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 249
+    },
+    {
+      "id": "UAT-073",
+      "title": "未選檔與 15MB 限制",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:42.420Z",
+      "screenshot": "screenshots/UAT-073.png",
+      "steps": [
+        "檔案欄="
+      ],
+      "expected": "在傳送前阻擋並給清楚的格式／大小說明。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 285
+    },
+    {
+      "id": "UAT-074",
+      "title": "本機處理與雲端上傳分界",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:42.706Z",
+      "screenshot": "screenshots/UAT-074.png",
+      "steps": [],
+      "expected": "本機規則處理不應偷偷上傳；只有主動保存才新增私人文件。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 247
+    },
+    {
+      "id": "UAT-075",
+      "title": "私人知識庫全文檢索",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:42.954Z",
+      "screenshot": "screenshots/UAT-075.png",
+      "steps": [],
+      "expected": "搜尋本人可讀的實際索引，顯示檔名、頁碼及摘錄。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-076",
+      "title": "私人文件權限與刪除",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:43.187Z",
+      "screenshot": "screenshots/UAT-076.png",
+      "steps": [],
+      "expected": "C 永遠不可取得；刪除後檔案、索引及向量權限一致。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-077",
+      "title": "資格／實績跨文件比對",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:43.421Z",
+      "screenshot": "screenshots/UAT-077.png",
+      "steps": [],
+      "expected": "顯示符合候選與不確定項；證書本身真偽仍需人工核對。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-078",
+      "title": "AI 標單分析未啟用退場",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:43.655Z",
+      "screenshot": "screenshots/UAT-078.png",
+      "steps": [
+        "AI 整理入口"
+      ],
+      "expected": "清楚顯示服務不可用，不產生看似成功的 AI 分析。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 250
+    },
+    {
+      "id": "UAT-079",
+      "title": "AI 24 小時額度、快取與歷程",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:43.905Z",
+      "screenshot": "screenshots/UAT-079.png",
+      "steps": [],
+      "expected": "只有成功任務計入額度；相同來源優先快取；輸出可核對引用。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 248
+    },
+    {
+      "id": "UAT-080",
+      "title": "舊版與新版標書差異",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:44.153Z",
+      "screenshot": "screenshots/UAT-080.png",
+      "steps": [
+        "建議書／標書檢查入口"
+      ],
+      "expected": "展示有來源的原文增刪與檔名，能匯出完整差異 CSV。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-081",
+      "title": "AI 投標書逐條覆核",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:44.386Z",
+      "screenshot": "screenshots/UAT-081.png",
+      "steps": [
+        "建議書／標書檢查入口"
+      ],
+      "expected": "只在模型可用且原文能核對時產生結果；每項缺漏有出處。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 231
+    },
+    {
+      "id": "UAT-082",
+      "title": "依原文建立服務建議書",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:44.618Z",
+      "screenshot": "screenshots/UAT-082.png",
+      "steps": [
+        "尚無可開啟案例",
+        "建議書／標書檢查入口"
+      ],
+      "expected": "建立有真實段落引用與待填欄的 Markdown 草稿，不編造實績或價格。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 408
+    },
+    {
+      "id": "UAT-083",
+      "title": "草稿編輯、保存與重載",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:45.027Z",
+      "screenshot": "screenshots/UAT-083.png",
+      "steps": [
+        "尚無可開啟案例",
+        "建議書／標書檢查入口"
+      ],
+      "expected": "正文、來源數、生成方式、修改時間保存；僅本人可讀。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 416
+    },
+    {
+      "id": "UAT-084",
+      "title": "人工核對失效規則",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:45.443Z",
+      "screenshot": "screenshots/UAT-084.png",
+      "steps": [
+        "尚無可開啟案例",
+        "建議書／標書檢查入口"
+      ],
+      "expected": "修改後回到待審閱，不能沿用舊的已審核標記。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 416
+    },
+    {
+      "id": "UAT-085",
+      "title": "AI 輔助撰稿權限",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:45.859Z",
+      "screenshot": "screenshots/UAT-085.png",
+      "steps": [
+        "尚無可開啟案例",
+        "建議書／標書檢查入口"
+      ],
+      "expected": "來源 ID 與原文字串經後端驗證；不可驗證段落刪除，仍須人工審閱。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 416
+    },
+    {
+      "id": "UAT-086",
+      "title": "Markdown 草稿匯出",
+      "priority": "P2",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:46.276Z",
+      "screenshot": "screenshots/UAT-086.png",
+      "steps": [
+        "尚無可開啟案例",
+        "建議書／標書檢查入口"
+      ],
+      "expected": "中文、標題、引用與待填項完整，不代表已向政府送件。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 416
+    },
+    {
+      "id": "UAT-087",
+      "title": "私人公司服務輪廓",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:46.693Z",
+      "screenshot": "screenshots/UAT-087.png",
+      "steps": [
+        "公司欄位及私人附件入口（不寫入）"
+      ],
+      "expected": "屬本人私人資料，不自動公開供應商名錄。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 222
+    },
+    {
+      "id": "UAT-088",
+      "title": "帶入商機雷達",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:46.915Z",
+      "screenshot": "screenshots/UAT-088.png",
+      "steps": [
+        "公司欄位及私人附件入口（不寫入）"
+      ],
+      "expected": "帶入本人實際填寫服務，不自動推定官方營業項目。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-089",
+      "title": "新增證照／實績／產品資料",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:47.147Z",
+      "screenshot": "screenshots/UAT-089.png",
+      "steps": [
+        "公司欄位及私人附件入口（不寫入）"
+      ],
+      "expected": "列表正確、來源清楚、期限可用於人工資格比對。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-090",
+      "title": "私人證明附件隔離",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:47.381Z",
+      "screenshot": "screenshots/UAT-090.png",
+      "steps": [
+        "公司欄位及私人附件入口（不寫入）"
+      ],
+      "expected": "B 可讀，C 不可讀且不能用附件路徑猜到私檔。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-091",
+      "title": "過期與空證據處理",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:47.615Z",
+      "screenshot": "screenshots/UAT-091.png",
+      "steps": [
+        "公司欄位及私人附件入口（不寫入）"
+      ],
+      "expected": "有效日期未知不能自動稱仍有效；過期風險清楚。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-092",
+      "title": "建立工作區及切換",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:47.848Z",
+      "screenshot": "screenshots/UAT-092.png",
+      "steps": [
+        "團隊協作入口（未登入專用團隊，未寫入）"
+      ],
+      "expected": "不同工作區任務及案件清單隔離，顯示目前作用對象。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 229
+    },
+    {
+      "id": "UAT-093",
+      "title": "邀請碼一次性",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:48.078Z",
+      "screenshot": "screenshots/UAT-093.png",
+      "steps": [
+        "團隊協作入口（未登入專用團隊，未寫入）"
+      ],
+      "expected": "只有符合規則的一次性邀請生效，不能重放擴權。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 229
+    },
+    {
+      "id": "UAT-094",
+      "title": "指派團隊待辦",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:48.308Z",
+      "screenshot": "screenshots/UAT-094.png",
+      "steps": [
+        "團隊協作入口（未登入專用團隊，未寫入）"
+      ],
+      "expected": "被指派者看到任務並能更新授權範圍內狀態。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-095",
+      "title": "非成員存取隔離",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:48.541Z",
+      "screenshot": "screenshots/UAT-095.png",
+      "steps": [
+        "團隊協作入口（未登入專用團隊，未寫入）"
+      ],
+      "expected": "資料庫端拒絕，不僅是按鈕隱藏；不能跨租戶讀取。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 216
+    },
+    {
+      "id": "UAT-096",
+      "title": "邀請與權限變更",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:48.758Z",
+      "screenshot": "screenshots/UAT-096.png",
+      "steps": [
+        "團隊協作入口（未登入專用團隊，未寫入）"
+      ],
+      "expected": "角色授權與伺服器一致，撤權立即生效。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-097",
+      "title": "同一會員多工作區",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:48.991Z",
+      "screenshot": "screenshots/UAT-097.png",
+      "steps": [
+        "團隊協作入口（未登入專用團隊，未寫入）"
+      ],
+      "expected": "不串資料、不誤寫另一團隊；私人收藏不自動變成共用。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-098",
+      "title": "監控關鍵字建立與觸發",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:49.225Z",
+      "screenshot": "screenshots/UAT-098.png",
+      "steps": [
+        "監控標籤及通知入口可見"
+      ],
+      "expected": "保存關鍵字，顯示命中來源與最後檢查時間。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 271
+    },
+    {
+      "id": "UAT-099",
+      "title": "站內通知確實來源",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:49.497Z",
+      "screenshot": "screenshots/UAT-099.png",
+      "steps": [
+        "監控標籤及通知入口可見"
+      ],
+      "expected": "每條有來源，可關頁後保留；不能假裝 Email／LINE 實際送達。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 249
+    },
+    {
+      "id": "UAT-100",
+      "title": "裝置通知權限",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:49.746Z",
+      "screenshot": "screenshots/UAT-100.png",
+      "steps": [
+        "裝置通知權限=denied",
+        "監控標籤及通知入口可見"
+      ],
+      "expected": "通知狀態與瀏覽器授權一致；拒絕後可繼續使用站內提醒。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 250
+    },
+    {
+      "id": "UAT-101",
+      "title": "截標前提醒",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:49.997Z",
+      "screenshot": "screenshots/UAT-101.png",
+      "steps": [
+        "提醒天數欄位輸入 7,3,1",
+        "監控標籤及通知入口可見"
+      ],
+      "expected": "日期、時區、去重一致，未知截止不得觸發確切時間提醒。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 268
+    },
+    {
+      "id": "UAT-102",
+      "title": "取消監控與通知切換",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:50.266Z",
+      "screenshot": "screenshots/UAT-102.png",
+      "steps": [
+        "監控標籤及通知入口可見"
+      ],
+      "expected": "停用後不再送本人新事件，歷史紀錄保留規則清楚。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 249
+    },
+    {
+      "id": "UAT-103",
+      "title": "競爭廠商追蹤",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:50.515Z",
+      "screenshot": "screenshots/UAT-103.png",
+      "steps": [
+        "當前子頁=競品追蹤"
+      ],
+      "expected": "本人追蹤名單保存；來源證據與自動外送能力區分。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 247
+    },
+    {
+      "id": "UAT-104",
+      "title": "指定廠商跳查與取消",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:50.762Z",
+      "screenshot": "screenshots/UAT-104.png",
+      "steps": [
+        "當前子頁=競品追蹤"
+      ],
+      "expected": "查詢代入對應名稱或統編，取消只刪自己。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 247
+    },
+    {
+      "id": "UAT-105",
+      "title": "建立每日／週／月報表",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:51.010Z",
+      "screenshot": "screenshots/UAT-105.png",
+      "steps": [
+        "當前子頁=自動報表"
+      ],
+      "expected": "排程內容、頻率、本人權限與 UI 一致；明示伺服器 08:20（台灣時間）檢查排程。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 254
+    },
+    {
+      "id": "UAT-106",
+      "title": "即時生成、預覽、下載",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:51.265Z",
+      "screenshot": "screenshots/UAT-106.png",
+      "steps": [
+        "當前子頁=自動報表"
+      ],
+      "expected": "只有已完成報表可下載，數字只限真實已入庫資料。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 253
+    },
+    {
+      "id": "UAT-107",
+      "title": "暫停、啟用與刪除排程",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:51.519Z",
+      "screenshot": "screenshots/UAT-107.png",
+      "steps": [
+        "當前子頁=自動報表"
+      ],
+      "expected": "狀態持久、刪除需確認；舊報表依目前設計仍保留。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 243
+    },
+    {
+      "id": "UAT-108",
+      "title": "Email／LINE 未配置狀態",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:51.763Z",
+      "screenshot": "screenshots/UAT-108.png",
+      "steps": [
+        "當前子頁=通知設定",
+        "Email/LINE 外送說明：Email：此專案尚未配置 Email 發送服務（不會寄信）｜LINE：尚未綁定 LINE，LINE 專案金鑰未完整配置（不會推播）｜AI 文件模型：沒有設定模型金鑰"
+      ],
+      "expected": "若服務未啟用，必須顯示未啟用，不生成送達成功記錄。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 254
+    },
+    {
+      "id": "UAT-109",
+      "title": "實際送達與失敗重試",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:52.018Z",
+      "screenshot": "screenshots/UAT-109.png",
+      "steps": [
+        "當前子頁=通知設定"
+      ],
+      "expected": "送達、待處理、重試、永久失敗狀態清楚；退訂後不再發。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 249
+    },
+    {
+      "id": "UAT-110",
+      "title": "建立履保／請款事項",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:52.267Z",
+      "screenshot": "screenshots/UAT-110.png",
+      "steps": [
+        "履約事項表單存在=true"
+      ],
+      "expected": "項目正確保存，金額明示使用者自填而非官方金額。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 230
+    },
+    {
+      "id": "UAT-111",
+      "title": "修改與完成履約事項",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:52.497Z",
+      "screenshot": "screenshots/UAT-111.png",
+      "steps": [
+        "履約事項表單存在=true"
+      ],
+      "expected": "最新內容一致，不重複產生另一筆。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 217
+    },
+    {
+      "id": "UAT-112",
+      "title": "到期提醒",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:52.714Z",
+      "screenshot": "screenshots/UAT-112.png",
+      "steps": [
+        "履約事項表單存在=true"
+      ],
+      "expected": "到期依本人設定時間提醒，不重複轟炸。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 278
+    },
+    {
+      "id": "UAT-113",
+      "title": "台帳 CSV",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:52.993Z",
+      "screenshot": "screenshots/UAT-113.png",
+      "steps": [
+        "履約事項表單存在=true"
+      ],
+      "expected": "欄位完整、編碼及公式注入保護正確；只含本人資料。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 251
+    },
+    {
+      "id": "UAT-114",
+      "title": "自願公開供應商名錄",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:53.245Z",
+      "screenshot": "screenshots/UAT-114.png",
+      "steps": [
+        "自行刊登／查詢入口（不向公眾刊登假資料）"
+      ],
+      "expected": "公開資料明確標「廠商自行提供、未驗證」，不可宣稱政府認證。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 234
+    },
+    {
+      "id": "UAT-115",
+      "title": "公開查詢及刪除刊登",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:53.480Z",
+      "screenshot": "screenshots/UAT-115.png",
+      "steps": [
+        "自行刊登／查詢入口（不向公眾刊登假資料）"
+      ],
+      "expected": "依同意顯示的欄位可查；刪除後不可再公開展示。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 810
+    },
+    {
+      "id": "UAT-116",
+      "title": "拒絕往來官方紀錄",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:54.291Z",
+      "screenshot": "screenshots/UAT-116.png",
+      "steps": [
+        "拒往來源同步：來源：政府資料開放平臺第 5988 號（行政院公共工程委員會，公告每日更新）；實際已入庫 1,050 筆官方公開紀錄。最近一次同步：失敗，2026/11/11 上午8:24:03；官方來源錯誤：Error: database 500 ti_debarred_vendor_notices {\"code\":\"21000\",\"details\":null,\"hint\":\"Ensure that no rows proposed for insertion within the same command have 所列資料不保證為目前最新有效之拒絕往來狀態。"
+      ],
+      "expected": "實際刊登歷程與日期可查；上游逾時必須標示同步失敗。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 274
+    },
+    {
+      "id": "UAT-117",
+      "title": "拒往與同名問題",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:54.566Z",
+      "screenshot": "screenshots/UAT-117.png",
+      "steps": [
+        "拒往來源同步：來源：政府資料開放平臺第 5988 號（行政院公共工程委員會，公告每日更新）；實際已入庫 1,050 筆官方公開紀錄。最近一次同步：失敗，2026/11/11 上午8:24:03；官方來源錯誤：Error: database 500 ti_debarred_vendor_notices {\"code\":\"21000\",\"details\":null,\"hint\":\"Ensure that no rows proposed for insertion within the same command have 所列資料不保證為目前最新有效之拒絕往來狀態。"
+      ],
+      "expected": "歷史刊登不等於目前停權；同名不代表同法人。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 267
+    },
+    {
+      "id": "UAT-118",
+      "title": "政府採購新手指南",
+      "priority": "P2",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:54.833Z",
+      "screenshot": "screenshots/UAT-118.png",
+      "steps": [
+        "官方新手指南：新手從找案到投標的核對流程 招標、決標及更正公告 一案可能公告多次。先核對機關、案號、公告類型及最新截止時間；網站列出的是來源實際可取得的公告，不能把所有招標都稱尚可投。 查看政府官方入口／最新法規 投標資格及投標文件 依原公告與招標文件核對營業項目、資格證明、實績、保險、服務建議書、截止收件時間。文件未揭露的條件必須標示未知。 查看政府官方入口／最新法規 押標金和履約保證金 押標金通常是投標階段擔保，履約保證金與得標後履約相關；法律有例外。金額、繳納及返還方式仍應逐案核對文件與法規。 查看政府官方入口／最新法規 最低標與最有利標 決標可能依價格或綜合評選程序，應看公告中的決標方式與評選文件；"
+      ],
+      "expected": "白話流程可讀，官方入口可用，本站不提供官方代投／代繳。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 238
+    },
+    {
+      "id": "UAT-119",
+      "title": "目前免費狀態與付款入口",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:55.072Z",
+      "screenshot": "screenshots/UAT-119.png",
+      "steps": [
+        "正式版的「方案與帳務」選單為隱藏狀態"
+      ],
+      "expected": "目前標為測試定價、正式收款未啟用，絕不可產生真實扣款。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 64
+    },
+    {
+      "id": "UAT-120",
+      "title": "付款方式與同意選項",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:55.137Z",
+      "screenshot": "screenshots/UAT-120.png",
+      "steps": [
+        "正式版的「方案與帳務」選單為隱藏狀態"
+      ],
+      "expected": "未經條款同意、商家審核及金流核准不得建立付費訂單。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 65
+    },
+    {
+      "id": "UAT-121",
+      "title": "最近訂單及重新整理",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:55.202Z",
+      "screenshot": "screenshots/UAT-121.png",
+      "steps": [
+        "正式版的「方案與帳務」選單為隱藏狀態"
+      ],
+      "expected": "只顯示本人的真實紀錄與付款狀態；不憑瀏覽器回跳判成功。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 68
+    },
+    {
+      "id": "UAT-122",
+      "title": "取消自動續扣",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:55.271Z",
+      "screenshot": "screenshots/UAT-122.png",
+      "steps": [
+        "正式版的「方案與帳務」選單為隱藏狀態"
+      ],
+      "expected": "取消後停止未來續費，既有付款與退款規則不被隱藏。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 65
+    },
+    {
+      "id": "UAT-123",
+      "title": "API Key 身分門檻",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:55.336Z",
+      "screenshot": "screenshots/UAT-123.png",
+      "steps": [
+        "API／MCP 安全入口："
+      ],
+      "expected": "依最新 API 安全驗收，匿名臨時會員不得持正式 API Key，應清楚提示；正式會員可建立本人 Key。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 236
+    },
+    {
+      "id": "UAT-124",
+      "title": "Key 只顯示一次",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:55.573Z",
+      "screenshot": "screenshots/UAT-124.png",
+      "steps": [
+        "API／MCP 安全入口："
+      ],
+      "expected": "Secret 僅建立當下顯示，之後不可還原明文。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 246
+    },
+    {
+      "id": "UAT-125",
+      "title": "REST 只查本人資料",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:55.820Z",
+      "screenshot": "screenshots/UAT-125.png",
+      "steps": [
+        "API／MCP 安全入口："
+      ],
+      "expected": "最多 20 筆每次，只能讀各自收藏與任務；跨帳號不可查。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 225
+    },
+    {
+      "id": "UAT-126",
+      "title": "額度與效期",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:56.045Z",
+      "screenshot": "screenshots/UAT-126.png",
+      "steps": [
+        "API／MCP 安全入口："
+      ],
+      "expected": "達到上限或過期返回標準錯誤，不影響其他會員。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 233
+    },
+    {
+      "id": "UAT-127",
+      "title": "MCP 協定與撤銷",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:56.279Z",
+      "screenshot": "screenshots/UAT-127.png",
+      "steps": [
+        "API／MCP 安全入口："
+      ],
+      "expected": "MCP 僅唯讀且與 REST 同一授權；撤銷立即失效。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-128",
+      "title": "AI 客服入口",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:56.512Z",
+      "screenshot": "screenshots/UAT-128.png",
+      "steps": [
+        "客服現在分頁=chat；不建立真實測試工單"
+      ],
+      "expected": "可送出對話並標示 AI 服務是否真正啟用；不可假稱已呼叫模型。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 331
+    },
+    {
+      "id": "UAT-129",
+      "title": "新對話與歷史",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:56.844Z",
+      "screenshot": "screenshots/UAT-129.png",
+      "steps": [
+        "客服現在分頁=history；不建立真實測試工單"
+      ],
+      "expected": "不同對話保有不同內容；重整後僅本人可查看。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 330
+    },
+    {
+      "id": "UAT-130",
+      "title": "問卷型問題回報",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:57.175Z",
+      "screenshot": "screenshots/UAT-130.png",
+      "steps": [
+        "客服現在分頁=form；不建立真實測試工單"
+      ],
+      "expected": "回傳工單編號，站內保存，不要求 Email 客服。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 338
+    },
+    {
+      "id": "UAT-131",
+      "title": "AI 轉真人",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:57.514Z",
+      "screenshot": "screenshots/UAT-131.png",
+      "steps": [
+        "客服現在分頁=form；不建立真實測試工單"
+      ],
+      "expected": "工單可回溯前面的對話且資料僅限本人與授權客服。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 346
+    },
+    {
+      "id": "UAT-132",
+      "title": "使用者補充與回覆",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:57.860Z",
+      "screenshot": "screenshots/UAT-132.png",
+      "steps": [
+        "客服現在分頁=chat；不建立真實測試工單"
+      ],
+      "expected": "同工單串接留言且時間與狀態正確；不跳 Email。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 350
+    },
+    {
+      "id": "UAT-133",
+      "title": "客服管理者權限",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:58.211Z",
+      "screenshot": "screenshots/UAT-133.png",
+      "steps": [
+        "客服現在分頁=admin；不建立真實測試工單"
+      ],
+      "expected": "只有客服員可見／操作管理，後端授權同時生效。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 302
+    },
+    {
+      "id": "UAT-134",
+      "title": "客服處理與狀態",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:58.514Z",
+      "screenshot": "screenshots/UAT-134.png",
+      "steps": [
+        "客服現在分頁=admin；不建立真實測試工單"
+      ],
+      "expected": "狀態流轉與內容實際保存，使用者只能看自己的工單。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 312
+    },
+    {
+      "id": "UAT-135",
+      "title": "客服限額與防濫用",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:58.827Z",
+      "screenshot": "screenshots/UAT-135.png",
+      "steps": [
+        "客服現在分頁=chat；不建立真實測試工單"
+      ],
+      "expected": "依後端實際配額拒絕，防止同表單多次重複提交。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 399
+    },
+    {
+      "id": "UAT-136",
+      "title": "來源同步失敗不可造假",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E5%AE%89",
+      "started_at": "2026-11-11T08:53:59.227Z",
+      "screenshot": "screenshots/UAT-136.png",
+      "steps": [
+        "資料說明與同步來源顯示"
+      ],
+      "expected": "每次失敗仍保留錯誤與真實覆蓋缺口，來源 500 不等於零公告。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 262
+    },
+    {
+      "id": "UAT-137",
+      "title": "官方預算與業務價值",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E8%A8%8A",
+      "started_at": "2026-11-11T08:53:59.490Z",
+      "screenshot": "screenshots/UAT-137.png",
+      "steps": [
+        "真實預算展示：從已同步的政府採購公告資料庫查詢，不使用模擬案件"
+      ],
+      "expected": "所有頁面維持同一已知／未知語義；不能稱未知預算為可賺金額或 0 元。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1049
+    },
+    {
+      "id": "UAT-138",
+      "title": "跨租戶讀寫防護",
+      "priority": "P0",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E8%A8%8A",
+      "started_at": "2026-11-11T08:54:00.540Z",
+      "screenshot": "screenshots/UAT-138.png",
+      "steps": [
+        "已檢查對應頁面；完整寫入／權限測試需要獨立授權條件"
+      ],
+      "expected": "所有權限在 DB/Edge 層確認，不能只靠前端隱藏。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 224
+    },
+    {
+      "id": "UAT-139",
+      "title": "輸入污染及 XSS",
+      "priority": "P0",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%3Cimg+src%3Dx+onerror%3Dalert%281%29%3E",
+      "started_at": "2026-11-11T08:54:00.765Z",
+      "screenshot": "screenshots/UAT-139.png",
+      "steps": [
+        "搜尋輸入的惡意文字不得被執行"
+      ],
+      "expected": "顯示均為文字、CSV 出口防公式執行；不破壞 UI。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1042
+    },
+    {
+      "id": "UAT-140",
+      "title": "API 錯誤與重試",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%3Cimg+src%3Dx+onerror%3Dalert%281%29%3E",
+      "started_at": "2026-11-11T08:54:01.808Z",
+      "screenshot": "screenshots/UAT-140.png",
+      "steps": [
+        "已恢復網路"
+      ],
+      "expected": "有 loading、錯誤、重試、去重，不覆蓋舊資料；必要時保留使用者輸入。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 565
+    },
+    {
+      "id": "UAT-141",
+      "title": "大量資料／分頁效能",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E8%A8%8A",
+      "started_at": "2026-11-11T08:54:02.374Z",
+      "screenshot": "screenshots/UAT-141.png",
+      "steps": [
+        "互動耗時 965ms，非 p95 壓測"
+      ],
+      "expected": "在先篩後分頁的資料庫查詢中保持可操作，不整庫打包傳給瀏覽器。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1067
+    },
+    {
+      "id": "UAT-142",
+      "title": "桌面／手機視覺回歸",
+      "priority": "P1",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E8%A8%8A",
+      "started_at": "2026-11-11T08:54:03.442Z",
+      "screenshot": "screenshots/UAT-142.png",
+      "steps": [
+        "手機寬度下水平溢出=false"
+      ],
+      "expected": "核心操作不被遮擋，手機表單可見且可提交，選單不跑版。",
+      "error": null,
+      "restoreViewport": true,
+      "screenshot_ok": true,
+      "elapsed_ms": 747
+    },
+    {
+      "id": "UAT-143",
+      "title": "同時操作資料競態",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E8%A8%8A",
+      "started_at": "2026-11-11T08:54:04.190Z",
+      "screenshot": "screenshots/UAT-143.png",
+      "steps": [
+        "已檢查對應頁面；完整寫入／權限測試需要獨立授權條件"
+      ],
+      "expected": "不莫名回滾另一方提交；衝突應有最新狀態或明確提醒。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 239
+    },
+    {
+      "id": "UAT-144",
+      "title": "文件隔離與私密資訊",
+      "priority": "P1",
+      "status": "BLOCKED",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E8%B3%87%E8%A8%8A",
+      "started_at": "2026-11-11T08:54:04.430Z",
+      "screenshot": "screenshots/UAT-144.png",
+      "steps": [
+        "已檢查對應頁面；完整寫入／權限測試需要獨立授權條件"
+      ],
+      "expected": "API 金鑰、JWT、私人文件正文與第三方 AI Key 不出現在公開 GitHub 或共享 URL。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 232
+    },
+    {
+      "id": "UAT-145",
+      "title": "無資料／空狀態一致",
+      "priority": "P2",
+      "status": "PARTIAL",
+      "url": "https://hub-google.github.io/OpenData/tender-intelligence-web/?min=100000&max=1000000&location=%E8%87%BA%E5%8C%97&mode=title&q=%E4%B8%8D%E5%8F%AF%E8%83%BD%E5%AD%98%E5%9C%A8%E4%B9%8B%E6%B8%AC%E8%A9%A6%E6%A1%88%E8%99%9F+ZZ-987654321",
+      "started_at": "2026-11-11T08:54:04.663Z",
+      "screenshot": "screenshots/UAT-145.png",
+      "steps": [
+        "空查詢：標案名稱：不可能存在之測試案號 ZZ-987654321｜全庫篩選｜符合 0 件案件｜本頁 0 件（每個案件僅顯示一筆，依機關與案號去重；非全國完整資料）｜全部篩選與排序先在資料庫完成"
+      ],
+      "expected": "提供明確開始動作，不只有「—」或空白，不顯示舊測試資料。",
+      "error": null,
+      "restoreViewport": false,
+      "screenshot_ok": true,
+      "elapsed_ms": 1043
+    }
+  ],
+  "e2e_items": [
+    {
+      "id": "E2E-01",
+      "title": "個人設計師找案與決策",
+      "status": "PARTIAL",
+      "screenshot": "screenshots/E2E-01.png",
+      "observations": [
+        "完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入"
+      ],
+      "screenshot_ok": true
+    },
+    {
+      "id": "E2E-02",
+      "title": "資訊公司機關重購商機",
+      "status": "PARTIAL",
+      "screenshot": "screenshots/E2E-02.png",
+      "observations": [
+        "完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入"
+      ],
+      "screenshot_ok": true
+    },
+    {
+      "id": "E2E-03",
+      "title": "標書資格解析與截止待辦",
+      "status": "PARTIAL",
+      "screenshot": "screenshots/E2E-03.png",
+      "observations": [
+        "完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入"
+      ],
+      "screenshot_ok": true
+    },
+    {
+      "id": "E2E-04",
+      "title": "主管比較備標成本",
+      "status": "PARTIAL",
+      "screenshot": "screenshots/E2E-04.png",
+      "observations": [
+        "完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入"
+      ],
+      "screenshot_ok": true
+    },
+    {
+      "id": "E2E-05",
+      "title": "財務履約與保證金",
+      "status": "PARTIAL",
+      "screenshot": "screenshots/E2E-05.png",
+      "observations": [
+        "完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入"
+      ],
+      "screenshot_ok": true
+    },
+    {
+      "id": "E2E-06",
+      "title": "三人投標團隊",
+      "status": "PARTIAL",
+      "screenshot": "screenshots/E2E-06.png",
+      "observations": [
+        "完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入"
+      ],
+      "screenshot_ok": true
+    },
+    {
+      "id": "E2E-07",
+      "title": "競品報表與提醒",
+      "status": "PARTIAL",
+      "screenshot": "screenshots/E2E-07.png",
+      "observations": [
+        "完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入"
+      ],
+      "screenshot_ok": true
+    },
+    {
+      "id": "E2E-08",
+      "title": "來源資料錯誤到客服",
+      "status": "PARTIAL",
+      "screenshot": "screenshots/E2E-08.png",
+      "observations": [
+        "完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入"
+      ],
+      "screenshot_ok": true
+    }
+  ]
+}
