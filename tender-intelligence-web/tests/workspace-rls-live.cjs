@@ -26,7 +26,7 @@ async function navigate(p,view){
 }
 async function db(p,expression,args){
  return p.evaluate(async({expression,args})=>{
-  const {getClient}=await import('./backend.js');
+  const {getClient}=await import(new URL('./backend.js',document.baseURI).href);
   const client=await getClient();
   switch(expression){
    case 'identity':return (await client.auth.getUser()).data.user.id;
@@ -82,7 +82,7 @@ async function main(){
    const retry=await owner.waitForFunction(()=>document.querySelector('#workspaceSelect')?.value?.length===36,null,{timeout:20000}).then(()=>true).catch(()=>false);
    if(!retry){
     const diagnostic=await owner.evaluate(async()=>{
-     const {getClient}=await import('./backend.js'),db=await getClient(),
+     const {getClient}=await import(new URL('./backend.js',document.baseURI).href),db=await getClient(),
       {data,error}=await db.from('ti_workspaces').select('id,name,owner_id').limit(3);
      return {status:document.querySelector('#workspaceOutput')?.textContent?.slice(0,600),
       select:document.querySelector('#workspaceSelect')?.value,toast:document.querySelector('#toast')?.textContent,
@@ -111,7 +111,7 @@ async function main(){
   await member.locator('#workspaceJoinCode').fill(inviteToken);
   await member.locator('#workspaceJoinForm button[type=submit]').click();
   const joined=await member.waitForFunction(async(id)=>{
-   const {getClient}=await import('./backend.js'),client=await getClient();
+   const {getClient}=await import(new URL('./backend.js',document.baseURI).href),client=await getClient();
    const {data,error}=await client.from('ti_workspace_members').select('user_id').eq('workspace_id',id);
    const self=(await client.auth.getUser()).data.user?.id;
    return !error&&data?.some(x=>x.user_id===self);
