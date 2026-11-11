@@ -1,6 +1,6 @@
 // S02/W07: genuine vector semantic search. Never label keyword matching as AI.
 // The model key stays in Supabase Edge Functions; no model calls from the browser.
-import {getClient} from './backend.js';
+import {ensureGuestSession} from './backend.js';
 const $=id=>document.getElementById(id);
 const el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=String(text??'');if(cls)n.className=cls;return n;};
 const err=e=>String(e?.message||e||'未知錯誤').slice(0,220);
@@ -17,8 +17,8 @@ async function callSemantic(client,body){
  return data;
 }
 async function getMember(){
- const db=await getClient(),{data,error}=await db.auth.getUser();
- if(error||!data?.user||data.user.is_anonymous)throw Error('請先以 Email 或 Google 正式登入後使用 AI 語意搜尋');
+ const db=await ensureGuestSession(),{data,error}=await db.auth.getUser();
+ if(error||!data?.user)throw Error('無法建立訪客使用身分，請確認網路後再試');
  return db;
 }
 function caseLink(id,title){
