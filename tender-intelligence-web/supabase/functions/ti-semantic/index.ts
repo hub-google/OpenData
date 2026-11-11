@@ -37,13 +37,13 @@ async function sha(s){const bytes=new Uint8Array(await crypto.subtle.digest('SHA
  return Array.from(bytes,n=>n.toString(16).padStart(2,'0')).join('');}
 async function member(req){
  const bearer=req.headers.get('Authorization')||'';
- if(!bearer.startsWith('Bearer '))throw Error('請先登入正式會員再使用語意功能');
+ if(!bearer.startsWith('Bearer '))throw Error('缺少有效的訪客登入授權，請重新整理網頁');
  const jwt=bearer.slice(7);
  const auth=await fetch(DB+'/auth/v1/user',{headers:{apikey:PUB,Authorization:'Bearer '+jwt},
   signal:AbortSignal.timeout(12000)});
  if(!auth.ok)throw Error('會員授權失效，請重新登入');
  const user=await auth.json();
- if(!user?.id||user.is_anonymous)throw Error('語意搜尋僅開放正式登入會員');
+ if(!user?.id)throw Error('訪客登入授權無效，請重新整理網頁');
  return {jwt,user};
 }
 async function quota(user){
