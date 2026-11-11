@@ -46,10 +46,25 @@ async function firstAdvancedId(){
  const browserPageErrors=[];
  page.on('pageerror',e=>{browserPageErrors.push(e.message);console.error('BROWSER_PAGE_ERROR '+e.message);});
  page.on('console',m=>{if(m.type()==='error')console.error('BROWSER_CONSOLE '+m.text());});
+ page.on('response',r=>{if(r.status()>=400){const u=new URL(r.url());console.error('BROWSER_HTTP_ERROR '+r.status()+' '+u.origin+u.pathname)}});
+ page.on('requestfailed',r=>{const u=new URL(r.url());console.error('BROWSER_NETWORK_ERROR '+u.origin+u.pathname+' '+r.failure()?.errorText)});
  await check('Open public website',async()=>{
    const res=await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
    assert.ok(res?.ok(),String(res?.status()));
-   await page.locator('#resultList .case-card').first().waitFor({timeout:60000});
+   try{await page.locator('#resultList .case-card').first().waitFor({timeout:60000});}
+   catch(e){
+     const snapshot=await page.evaluate(()=>({
+       resultInfo:document.querySelector('#resultInfo')?.textContent,
+       dataError:document.querySelector('#dataError')?.textContent,
+       dataErrorHidden:document.querySelector('#dataError')?.hidden,
+       sourceStatus:document.querySelector('#sourceStatus')?.textContent,
+       resultList:document.querySelector('#resultList')?.textContent?.slice(0,600),
+       statusText:document.querySelector('#databaseStatus')?.textContent,
+       esmLoaded:!!document.querySelector('script[src*="app.js"]'),
+     }));
+     console.error('BROWSER_SEARCH_DIAGNOSTICS '+JSON.stringify(snapshot));
+     throw e;
+   }
    assert.equal(browserPageErrors.length,0,'Page module syntax/runtime errors: '+browserPageErrors.join(' | '));
  });
  await check('Production entry hides demo login while retaining explicit demo route',async()=>{
