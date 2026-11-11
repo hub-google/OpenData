@@ -67,7 +67,7 @@ support.innerHTML=`
      <textarea name="message" rows="5" maxlength="6000" minlength="10" required placeholder="請描述操作步驟、預期結果或錯誤訊息。如為標案問題，請提供案號。"></textarea>
     </label>
     <label class="ti-support-check"><input name="urgent" type="checkbox"><span>此問題影響我正常使用網站</span></label>
-    <p id="tiSupportGuestHint" class="ti-support-guest-note">未登入時，請使用同一瀏覽器查看後續回覆；登入後提交可跨裝置查詢。</p>
+    <p id="tiSupportGuestHint" class="ti-support-guest-note">免註冊訪客可直接送出客服問題；請保留目前瀏覽器資料以查看後續回覆，跨裝置同步可自行選擇登入。</p>
     <button class="ti-support-primary" id="tiSupportFormSubmit" type="submit">送出問題回報</button>
    </form>
   </section>
@@ -160,7 +160,7 @@ async function initialize(force=false){
   $("tiSupportDemoReset").hidden=!x.demo_mode;
   $("tiSupportAiStatus").textContent=x.gemini_ready?"Gemini AI 已配置":"AI 功能開發中";
   $("tiSupportAiStatus").classList.toggle("is-live",x.gemini_ready);
-  $("tiSupportGuestHint").textContent=x.demo_mode?"這是獨立測試帳號，工單僅供你測試；登出後可能無法跨裝置找回。":x.signed_in?"此問題會連結你的登入帳號，可跨裝置查看回覆。":"未登入時，請使用同一瀏覽器查看後續回覆；登入後提交可跨裝置查詢。";
+  $("tiSupportGuestHint").textContent=x.demo_mode?"現在是訪客模式；請使用同一瀏覽器查看後續回覆。":x.signed_in?"此問題會連結你的登入帳號，可跨裝置查看回覆。":"免註冊訪客可直接送出客服問題；請保留目前瀏覽器資料以查看後續回覆，跨裝置同步可自行選擇登入。";
   await Promise.all([restoreChat(),loadUnread()]);
  }catch(e){initialized=false;messageStatus("客服載入失敗："+e.message,"error");$("tiSupportAiStatus").textContent="目前無法確認 AI 狀態";}
 }
