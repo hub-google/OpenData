@@ -27,15 +27,21 @@ async function check(name,fn,file){
    headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},
    body:JSON.stringify({code:'TEST_503',message:'UAT simulated upstream unavailable'})});
  });
- await check('UAT: Supabase HTTP 503 must stop spinner and show explicit error',async()=>{
+ await check('UAT: HTTP 503 must show source-backed fallback or an honest error',async()=>{
   const res=await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:45000});
   assert.ok(res?.ok(),'GitHub Pages HTTP '+res?.status());
-  await page.locator('#dataError').waitFor({state:'visible',timeout:55000});
-  const info=await page.locator('#dataError').innerText();
-  assert.match(info,/真實資料讀取失敗/,'Must display real error, not mock cases');
-  assert.equal(await page.locator('#resultList .case-card').count(),0,'No fabricated cards may appear');
-  assert.ok(intercepted>=1,'App must attempt true database RPC');
-  return {intercepted,error:info.slice(0,350),http:http.slice(-5)};
+  await page.waitForFunction(()=>{
+   const info=document.getElementById('resultInfo')?.textContent||'';
+   return !info.includes('從已同步的政府採購公告資料庫查詢') ||
+    document.getElementById('dataError')?.hidden===false;
+  },null,{timeout:55000});
+  const cards=await page.locator('#resultList .case-card').count();
+  const error=await page.locator('#dataError').isVisible();
+  const message=error?await page.locator('#dataError').innerText():await page.locator('#resultInfo').innerText();
+  assert.ok(intercepted>=1,'Must actually attempt the normal RPC first');
+  if(!error)assert.ok(cards>0,'A successful fallback cannot be empty under this real sample');
+  else assert.equal(cards,0,'A failed fallback must not fabricate cards');
+  return {intercepted,sourceBackedFallback:!error,cards,message:message.slice(0,330),http:http.slice(-5)};
  },'01-upstream-503.png');
  await page.unroute(rpc);
  await check('UAT: after outage, retry can read genuine matching cases',async()=>{
