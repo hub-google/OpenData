@@ -134,6 +134,7 @@ async function firstAdvancedId(){
    await page.screenshot({path:out+'/tender-case-detail.png',fullPage:true});
  });
  await check('S02 real semantic query has an honest signed-in entry point',async()=>{
+   await page.locator('#closeDetail').click();
    const panel=page.locator('#semanticPanel');
    await panel.locator('summary').click();
    assert.equal(await page.locator('#semanticForm').count(),1);
@@ -141,6 +142,8 @@ async function firstAdvancedId(){
    assert.equal(await page.locator('#semanticResults').count(),1);
    assert.ok((await panel.innerText()).includes('真正向量模型'));
    await panel.locator('summary').click();
+   await page.locator('#resultList .case-title').first().click();
+   await page.locator('#detailContent .detail-grid').waitFor({timeout:30000});
  });
  await check('Four case tasks retain notice history, intelligence and bid tools',async()=>{
    const tabNames=await page.locator('#detailContent .ti-case-tab').allTextContents();
