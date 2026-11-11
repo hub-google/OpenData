@@ -12,6 +12,26 @@ export function getClient(){
   ).catch(e=>{pending=null;throw e});
   return pending;
 }
+// A visitor gets a private, persisted Supabase identity without a signup screen.
+let guestSessionPending=null;
+export async function ensureGuestSession(){
+ const client=await getClient();
+ const existing=await client.auth.getSession();
+ if(existing.error)throw existing.error;
+ if(existing.data.session?.user)return client;
+ if(!guestSessionPending){
+  guestSessionPending=(async()=>{
+   const latest=await client.auth.getSession();
+   if(latest.error)throw latest.error;
+   if(!latest.data.session?.user){
+    const {error}=await client.auth.signInAnonymously();
+    if(error)throw error;
+   }
+  })().finally(()=>{guestSessionPending=null;});
+ }
+ await guestSessionPending;
+ return client;
+}
 export async function getSession(){
   const client=await getClient();
   const {data,error}=await client.auth.getSession();
