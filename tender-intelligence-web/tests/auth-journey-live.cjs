@@ -245,4 +245,4 @@ function save(){
  console.log('AUTH AUDIT',records.filter(r=>r.status==='PASS').length,'/',records.length);
 }
 run().catch(e=>{records.push({name:'測試流程未預期中止',status:'FAIL',error:short(e.message)});console.error(e)})
-.finally(async()=>{try{await browser?.close()}catch{}save();});
+.finally(async()=>{try{await browser?.close()}catch{}save();if(!records.length||records.some(r=>r.status!=='PASS')||pageErrors.length)process.exitCode=1;});

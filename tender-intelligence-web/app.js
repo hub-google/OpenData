@@ -1473,9 +1473,10 @@ function renderAccount(){
   if(state.view==='billing')void renderBilling();
   const demo=cloud.user?.is_anonymous===true;
   $('accountButton').textContent=demo?'訪客模式｜免註冊':cloud.user?'帳戶：'+(cloud.user.email||'已登入'):'正在準備訪客模式…';
-  $('accountDemoQuick').hidden=!!cloud.user||!demoToolsEnabled;
-  $('accountDemoLogin').hidden=!!cloud.user||!demoToolsEnabled;
-  $('accountDemoBox').hidden=!!cloud.user||!demoToolsEnabled;
+  const hideDemoTools=!demoToolsEnabled||(!!cloud.user&&!demo);
+  $('accountDemoQuick').hidden=hideDemoTools;
+  $('accountDemoLogin').hidden=hideDemoTools;
+  $('accountDemoBox').hidden=hideDemoTools;
   $('accountLogout').hidden=!cloud.user||demo;
   $('accountSync').hidden=!cloud.user;
   $('accountLoginForm').hidden=!!cloud.user&&!demo;
