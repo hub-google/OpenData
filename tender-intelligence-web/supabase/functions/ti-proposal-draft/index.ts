@@ -58,7 +58,7 @@ Deno.serve(async req=>{
    signal:AbortSignal.timeout(12000)});
   if(!auth.ok)return reply({error:'登入已失效'},401,origin);
   member=await auth.json();
-  if(!member?.id||member.is_anonymous)return reply({error:'需正式登入會員才可使用私有標書 AI'},401,origin);
+  if(!member?.id)return reply({error:'訪客登入授權無效，請重新整理網頁'},401,origin);
  }catch{return reply({error:'無法驗證登入，請再試'},503,origin)}
  let body;
  try{body=await req.json()}catch{return reply({error:'請提供合法 JSON'},400,origin)}
