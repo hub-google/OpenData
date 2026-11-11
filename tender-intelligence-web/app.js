@@ -1496,7 +1496,11 @@ async function initCloud(){
       cloud.user=next;
       renderAccount();
       if(next)setTimeout(()=>void cloudHydrate(),0);
-      else{clearUserState();}
+      else{
+        clearUserState();
+        // After a deliberate sign-out, return to a fresh isolated visitor session.
+        setTimeout(()=>void ensureGuestSession().catch(e=>toast('訪客模式暫時不可用：'+readableError(e))),0);
+      }
     });
     renderAccount();
     if(cloud.user)await cloudHydrate();
