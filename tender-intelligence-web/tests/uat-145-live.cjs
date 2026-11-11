@@ -177,12 +177,13 @@ async function doAction(n){
    return {status:visible?'PARTIAL':'BLOCKED',observations};
  }
  if(n===7){
-   const demo=await browser.newPage({viewport:{width:1280,height:840},locale:'zh-TW'});
-   await demo.goto(BASE+'?demo=1',{waitUntil:'domcontentloaded',timeout:45000});
-   add('一般入口測試捷徑顯示='+await page.locator('#accountDemoQuick').isVisible().catch(()=>false));
-   add('demo=1 測試捷徑顯示='+await demo.locator('#accountDemoQuick').isVisible().catch(()=>false));
-   await demo.close();
-   status='PASS';return {status,observations};
+   const publicVisible=await page.locator('#accountDemoQuick').isVisible().catch(()=>false);
+   await page.goto(BASE+'?demo=1',{waitUntil:'domcontentloaded',timeout:45000});
+   await page.waitForFunction(()=>!document.querySelector('#accountDemoQuick')?.hidden,null,{timeout:5000}).catch(()=>{});
+   const demoVisible=await page.locator('#accountDemoQuick').isVisible().catch(()=>false);
+   add('一般入口測試捷徑顯示='+publicVisible);
+   add('demo=1 測試捷徑顯示='+demoVisible);
+   status=(!publicVisible&&demoVisible)?'PASS':'PARTIAL';return {status,observations};
  }
  if(n===3||n===142){
    await page.setViewportSize({width:390,height:844});
@@ -209,6 +210,7 @@ async function doAction(n){
  if(scenarios[n]){await go('search');await stepClick('[data-scenario="'+scenarios[n]+'"]');await page.waitForTimeout(700);add('情境切換：'+await text('#resultInfo'));return {status:'PARTIAL',observations};}
  if(n===14){
    await go('search');
+   await page.locator('#budgetFilter').evaluate(e=>{const d=e.closest('details');if(d)d.open=true});
    await page.locator('#budgetFilter').fill('100000');
    await page.locator('#maxBudgetFilter').fill('1000000');
    await page.locator('#locationFilter').fill('臺北');
@@ -224,10 +226,12 @@ async function doAction(n){
    if(n===18)await page.locator('#advQuery').fill('(「網路設備」 OR 資安) AND 維護 -租賃');
    if(n===19){await page.locator('#advQuery').fill('「資訊系統」');await page.locator('#advExclude').fill('租賃,拆除');}
    if(n===20){await page.locator('#advAgency').fill('國防部');await page.locator('#advMin').fill('100000');}
-   if(n<=20){await stepClick('#advSubmit');await page.waitForTimeout(850);add('進階搜尋：'+await text('#advStatus'));}
+   if(n<=20){if(await page.locator('#advSubmit').isDisabled()){add('進階搜尋送出中，等待完成');await page.locator('#advSubmit').waitFor({state:'visible',timeout:4500});await page.waitForFunction(()=>!document.querySelector('#advSubmit')?.disabled,null,{timeout:12000}).catch(()=>{})}
+     if(await page.locator('#advSubmit').isDisabled())return {status:'BLOCKED',observations:[...observations,'搜尋按鈕仍忙碌，避免重複送出；無法判定篩選結果']};
+     await stepClick('#advSubmit');await page.waitForTimeout(850);add('進階搜尋：'+await text('#advStatus'));}
    if(n===21){await stepClick('#advClear');add('清除條件後詞='+await page.locator('#advQuery').inputValue());}
    if(n===22||n===23)add('儲存／預覽規則入口存在='+await has('#advSaveRule')+'/'+await has('#advPreviewRule')+'（匿名寫入未執行）');
-   if(n===24){await stepClick('#advSubmit');await page.waitForTimeout(550);if(await page.locator('#advNext').isEnabled())await stepClick('#advNext');add('分頁='+await text('#advPageInfo'));}
+   if(n===24){if(await page.locator('#advSubmit').isDisabled())return {status:'BLOCKED',observations:['搜尋尚未完成，暫不能驗證翻頁']};await stepClick('#advSubmit');await page.waitForTimeout(550);if(await page.locator('#advNext').isEnabled())await stepClick('#advNext');add('分頁='+await text('#advPageInfo'));}
    return {status:'PARTIAL',observations};
  }
  if(range(25,32,n)){
@@ -277,7 +281,7 @@ async function doAction(n){
    await page.waitForTimeout(400);add('廠商查詢：'+await text('#vendorSummary'));
    return {status:'PARTIAL',observations};
  }
- if(n===52||n===53){await go('issues');if(await has('#issueSubmit'))await stepClick('#issueSubmit');await page.waitForTimeout(400);add('無法決標／快截止狀態：'+await text('#issueStatus'));return {status:'PARTIAL',observations};}
+ if(n===52||n===53){await go('issues');if(await has('#issueSubmit')&&await page.locator('#issueSubmit').isEnabled())await stepClick('#issueSubmit');else add('查詢按鈕仍在載入／不可用，未重複送出');await page.waitForTimeout(400);add('無法決標／快截止狀態：'+await text('#issueStatus'));return {status:'PARTIAL',observations};}
  if(range(54,57,n)){
    await go('analytics');
    if(await has('#awardSampleForm')){await stepClick('#awardSampleForm button[type="submit"]');await page.waitForTimeout(500);}
@@ -317,9 +321,9 @@ async function doAction(n){
  if(range(87,91,n)){await go('company');add('公司欄位及私人附件入口（不寫入）');return {status:block?'BLOCKED':'PARTIAL',observations};}
  if(range(92,97,n)){await go('team');add('團隊協作入口（未登入專用團隊，未寫入）');return {status:'BLOCKED',observations};}
  if(range(98,102,n)){
-   await monitor('標案監控');
+   await monitor(n===101?'通知設定':'標案監控');
    if(n===100 && await has('#enableDesktop'))add('裝置通知權限='+await page.evaluate(()=>Notification.permission));
-   if(n===101 && await has('#reminderDays'))await page.locator('#reminderDays').fill('7,3,1');
+   if(n===101 && await has('#reminderDays')){await page.locator('#reminderDays').fill('7,3,1');add('提醒天數欄位輸入 7,3,1')}
    add('監控標籤及通知入口可見');
    return {status:'PARTIAL',observations};
  }
@@ -398,6 +402,7 @@ async function main(){
      item.screenshot_ok=false;
      item.error=(item.error||'')+' SCREENSHOT_ERROR '+clamp(e.message,180);
    }
+   if(id==='UAT-007'){await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:45000}).catch(()=>{})}
    item.elapsed_ms=Date.now()-start;
    results.push(item);
    fs.writeFileSync(path.join(OUT,'checkpoint.json'),JSON.stringify({generated_at:new Date().toISOString(),count:results.length,items:results},null,2),'utf8');
