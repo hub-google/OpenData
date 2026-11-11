@@ -84,7 +84,7 @@ async function run(){
   const content=short(await p.innerText(),480),toast=short(await page.locator('#toast').innerText(),300);
   if(!saved){
    const rows=await page.evaluate(async()=>{
-    const {getClient}=await import('./backend.js'),db=await getClient(),{data:{user}}=await db.auth.getUser();
+    const {getClient}=await import(new URL('./backend.js',document.baseURI).href),db=await getClient(),{data:{user}}=await db.auth.getUser();
     const {data,error}=await db.from('ti_documents').select('filename,case_id,storage_path').eq('user_id',user.id).order('created_at',{ascending:false}).limit(5);
     return {data,error:error?.message};
    });
@@ -159,7 +159,7 @@ async function run(){
    await p2.locator('#accountDemoQuick').click();
    await p2.waitForFunction(()=>document.querySelector('#accountButton')?.textContent?.includes('測試帳號已登入'),null,{timeout:20000});
    const rows=await p2.evaluate(async()=>{
-    const {getClient}=await import('./backend.js'),db=await getClient();
+    const {getClient}=await import(new URL('./backend.js',document.baseURI).href),db=await getClient();
     const [docs,assets,cases,reports]=await Promise.all([
      db.from('ti_documents').select('id').limit(20),
      db.from('ti_company_assets').select('id').limit(20),
@@ -171,7 +171,7 @@ async function run(){
    });
    if(rows.errors.length||rows.docs||rows.assets||rows.cases||rows.reports)
      throw Error('新測試帳號看到了別人的資料或存取失敗：'+JSON.stringify(rows));
-   await p2.evaluate(async()=>{const {getClient}=await import('./backend.js');(await getClient()).auth.signOut()});
+   await p2.evaluate(async()=>{const {getClient}=await import(new URL('./backend.js',document.baseURI).href);(await getClient()).auth.signOut()});
    return rows;
   }finally{await other.close();}
  });
@@ -207,7 +207,7 @@ async function run(){
   await panel.getByRole('button',{name:'刪除文件'}).first().click();
   await page.waitForFunction(()=>!document.querySelector('#detailContent .ti-case-panel:not([hidden])')?.textContent?.includes('tender-audit-check.txt'),null,{timeout:12000});
   const result=await page.evaluate(async()=>{
-   const {getClient}=await import('./backend.js'),db=await getClient(),{data:{user}}=await db.auth.getUser();
+   const {getClient}=await import(new URL('./backend.js',document.baseURI).href),db=await getClient(),{data:{user}}=await db.auth.getUser();
    const {data,error}=await db.from('ti_documents').select('id').eq('user_id',user.id).eq('case_id','3.1.1::UT-11601');
    return {remaining:data?.length,error:error?.message};
   });
@@ -216,7 +216,7 @@ async function run(){
  });
  await step('清理本次測試帳號下的私人測試資料',async()=>{
   const result=await page.evaluate(async()=>{
-   const {getClient}=await import('./backend.js'),db=await getClient(),{data:{user}}=await db.auth.getUser();
+   const {getClient}=await import(new URL('./backend.js',document.baseURI).href),db=await getClient(),{data:{user}}=await db.auth.getUser();
    if(!user?.is_anonymous)throw Error('refuse cleanup of non-anonymous user');
    const removed={};
    const {data:docs}=await db.from('ti_documents').select('id,storage_path').eq('user_id',user.id);
