@@ -50,7 +50,7 @@
   <div class="workspace">
     <header class="topbar">
       <div class="topbar-left"><button type="button" id="mobileMenu" class="mobile-menu" aria-label="開啟功能選單">☰</button><span id="currentViewLabel">標案搜尋</span><span class="topbar-sep">/</span><span class="topbar-sub">台灣政府採購</span></div>
-      <div class="topbar-right"><button type="button" id="accountDemoQuick" class="primary-btn" title="一鍵登入測試帳號" hidden>測試帳號一鍵登入</button><button type="button" id="accountButton" class="ghost-btn" title="會員登入與跨裝置同步">登入／跨裝置同步</button><span id="apiStatus" class="connection-tag">等待讀取資料</span><a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer" class="external-link">政府電子採購網 ↗</a></div>
+      <div class="topbar-right"><button type="button" id="accountDemoQuick" class="primary-btn" title="一鍵登入測試帳號" hidden>測試帳號一鍵登入</button><button type="button" id="accountButton" class="ghost-btn" title="跨裝置同步（選用）">訪客模式｜免註冊</button><span id="apiStatus" class="connection-tag">等待讀取資料</span><a href="https://web.pcc.gov.tw/" target="_blank" rel="noopener noreferrer" class="external-link">政府電子採購網 ↗</a></div>
     </header>
     <main class="main">
       <section id="accountPanel" class="panel account-panel" hidden>
@@ -72,7 +72,7 @@
           <input id="accountNewEmail" type="email" autocomplete="email" placeholder="輸入要更換的新 Email" required>
           <button type="submit" class="ghost-btn">申請更換登入 Email</button>
         </form>
-        <div id="accountInfo" class="minor">尚未登入，本機追蹤仍可使用。</div>
+        <div id="accountInfo" class="minor">正在準備免註冊訪客身分…</div>
         <div class="toolbar"><button id="accountLogout" class="ghost-btn" type="button" hidden>登出</button><button id="accountSync" class="ghost-btn" type="button" hidden>立即同步</button></div>
         <form id="accountDeleteForm" class="setting-form" hidden>
           <h3>刪除自己的會員帳戶與私有資料</h3>
@@ -502,7 +502,7 @@
         <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX、XLSX、PNG、JPG（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="tiOcrButton" class="ghost-btn" type="button">掃描檔 OCR</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><button id="documentAI" class="ghost-btn" type="button">AI 解析資格／期限／評選條款</button><button id="tiCompareCompany" class="ghost-btn" type="button">與公司證照／實績比對</button><span id="documentFileName" class="minor"></span></div></div>
         <div class="panel analysis-panel"><h2>掃描檔 OCR 辨識</h2><p class="hint">限本人合法取得文件。本機使用繁體中文／英文辨識；掃描 PDF 每批最多 8 頁，可依序處理前 150 頁，辨識文字會累計並帶入條款檢核。OCR 可能有錯字，請人工核對。</p><div class="toolbar"><label>從第幾頁開始（每批最多 8 頁）<input id="tiOcrStartPage" type="number" min="1" max="150" step="1" value="1" style="width:90px"></label><button id="tiOcrNextBatch" type="button" class="ghost-btn">辨識下一批 8 頁</button></div><div id="tiOcrStatus" class="minor" role="status">請先選擇 PDF 或圖片，再點選「掃描檔 OCR」。</div><div id="tiOcrOutput"></div></div>
         <div class="panel analysis-panel"><h2>標案資格與公司實績比對</h2><p class="hint">依已取得的標書原文找出資格條款，與私人公司資料交叉比對。相似內容僅表示可能相關；每項結果仍需人工確認。</p><div id="tiCompareStatus" class="minor" role="status">請先選擇招標文件，必要時先執行掃描 OCR。</div><div id="tiCompareResults"></div></div>
-        <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div><div class="panel analysis-panel" id="documentAiOutput" aria-live="polite"><h2>AI 標單分析</h2><p class="minor">請登入並選擇合法取得的文件後使用。AI 僅整理原文，資格判斷仍需人工核對。</p></div>
+        <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div><div class="panel analysis-panel" id="documentAiOutput" aria-live="polite"><h2>AI 標單分析</h2><p class="minor">選擇合法取得的文件後即可使用；AI 僅整理原文，資格判斷仍需人工核對。</p></div>
         <div class="panel analysis-panel">
           <div class="section-heading"><h2>我的 AI 使用額度與歷程</h2><button id="aiUsageRefresh" type="button" class="ghost-btn">刷新紀錄</button></div>
           <p class="hint">只計算最近 24 小時成功完成的標書分析／投標書健檢。相同來源重送會優先讀取原結果，不重複扣除額度；失敗任務不計入。這不代表 AI 已配置金鑰或正式付款。</p>
@@ -644,7 +644,7 @@
             <label>核發／專案日期<input id="tiAssetIssued" type="date"></label>
             <label>有效期限<input id="tiAssetExpires" type="date"></label>
             <label class="wide">內容與證據備註<textarea id="tiAssetDetails" rows="3" maxlength="5000" placeholder="來源、可查核的條件、履約內容；勿填沒有實際取得的證照"></textarea></label>
-            <label class="wide">私人證明附件（選填）<input id="tiAssetFile" type="file" accept=".pdf,.docx,.txt,.md"><small>PDF／DOCX／TXT／MD，15MB 以內。儲存於私人文件庫，其他會員無法查看。</small></label>
+            <label class="wide">私人證明附件（選填）<input id="tiAssetFile" type="file" accept=".pdf,.docx,.txt,.md"><small>PDF／DOCX／TXT／MD，15MB 以內。儲存於私人文件庫，其他訪客及帳戶無法查看。</small></label>
             <div class="form-actions"><button id="tiAssetSave" class="primary-btn" type="submit">新增資料</button></div>
           </form>
           <div id="tiCompanyStatus" class="notice" role="status">訪客也可保存私人公司資料。</div>
@@ -666,7 +666,7 @@
           <h2>有哪些是真正的功能？</h2>
           <p>真實資料搜尋、公告詳情與歷史、機關年度統計、廠商公告查詢、依資料可用性計算決標比、CSV／RSS 檔案下載、個人商機匹配、追蹤看板、ICS 日曆、瀏覽器開頁檢查通知、本機文字文件檢核。</p>
           <h2>哪些尚未完成驗收？</h2>
-          <p>會員與雲端保存、多人協作及 AI 文件解析的後端程式已建立，實際帳戶登入與 AI 服務仍需通過端到端測試；AI 另須配置金鑰才能運作。LINE／Email 背景外送需要獨立且合法授權的發送服務；目前只有伺服器產生的站內通知。全量歷史資料持續回補中，尚未完成所有年度收錄及商業授權確認。</p>
+          <p>免註冊訪客與私人雲端保存、多人協作及 AI 文件解析的後端程式已建立，實際訪客流程與 AI 服務仍需通過端到端測試；AI 另須配置金鑰才能運作。LINE／Email 背景外送需要獨立且合法授權的發送服務；目前只有伺服器產生的站內通知。全量歷史資料持續回補中，尚未完成所有年度收錄及商業授權確認。</p>
           <h2>開源與研究</h2>
           <p><a href="https://github.com/hub-google/OpenData/tree/main/tender-intelligence-web" target="_blank" rel="noopener noreferrer">GitHub 原始碼與 PRD</a>；資料實際歸屬及使用條件以原提供者為準。</p>
         </div>
