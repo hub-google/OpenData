@@ -192,6 +192,7 @@ function save(){
  md.push('','頁面 JS 例外：'+errors.length,'網路失敗請求：'+requests.length,'','未登入的私人資料 CRUD 與發送通知不屬於本次驗收。');
  fs.writeFileSync(DIR+'/2026-11-05-live-click-audit.md',md.join('\n'),'utf8');
  console.log('TOTAL',results.filter(x=>x.status==='PASS').length,'/',results.length,'PAGE_ERRORS',errors.length,'NETWORK_ERRORS',requests.length);
+ if(results.some(x=>x.status!=='PASS')||!results.length||errors.length)process.exitCode=1;
 }
 main().catch(e=>{results.push({name:'測試意外中止',status:'FAIL',error:short(e.message)});console.error(e)})
 .finally(async()=>{try{await browser?.close()}catch(e){}save()});
