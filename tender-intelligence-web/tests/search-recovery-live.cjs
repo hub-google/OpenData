@@ -60,6 +60,29 @@ async function check(name,fn,file){
   assert.ok(info.includes('資安'),'Retry should keep query');
   return {cards,info:info.slice(0,330)};
  },'02-recovered-search.png');
+ await check('UAT: advanced search API 503 releases submit and reports the real error',async()=>{
+   const targeted='**/rest/v1/rpc/ti_archive_search_recent';
+   let calls=0;
+   await page.route(targeted,async route=>{
+     calls++;
+     await route.fulfill({status:503,contentType:'application/json',
+       headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},
+       body:JSON.stringify({code:'TEST_503',message:'UAT advanced search outage'})});
+   });
+   try{
+     const nav=page.locator('[data-view="advanced"]').first();
+     const group=nav.locator('xpath=ancestor::details[1]');
+     if(await group.count())await group.evaluate(el=>el.open=true);
+     await nav.click();
+     await page.waitForFunction(()=>document.querySelector('#advStatus')?.textContent?.includes('資料庫進階搜尋失敗'),
+       null,{timeout:35000});
+     const msg=await page.locator('#advStatus').innerText();
+     assert.ok(calls>0,'Advanced search must have made real RPC request');
+     assert.equal(await page.locator('#advSubmit').isEnabled(),true,'Submit must recover after failure');
+     assert.equal(await page.locator('#advResults .case-card').count(),0,'No simulated tender cases allowed');
+     return {calls,submitEnabled:true,error:msg.slice(0,250)};
+   }finally{await page.unroute(targeted);}
+ },'04-advanced-error-recovered.png');
  await check('UAT: public page never exposes production debug credentials',async()=>{
   const value=await page.locator('#accountDemoQuick').isVisible().catch(()=>false);
   assert.equal(value,false,'Demo one-click login must not appear on public route');
@@ -73,5 +96,5 @@ async function check(name,fn,file){
   checks,summary:{passed:checks.filter(x=>x.status==='PASS').length,total:checks.length}};
  fs.writeFileSync(path.join(OUT,'results.json'),JSON.stringify(report,null,2));
  console.log('SEARCH_RECOVERY_UAT',report.summary);
- if(checks.length<3||checks.some(x=>x.status!=='PASS'))process.exitCode=1;
+ if(checks.length<4||checks.some(x=>x.status!=='PASS'))process.exitCode=1;
 });
