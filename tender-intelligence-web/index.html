@@ -54,8 +54,8 @@
     </header>
     <main class="main">
       <section id="accountPanel" class="panel account-panel" hidden>
-        <div class="section-heading"><h2>帳戶與跨裝置同步</h2><button id="closeAccount" type="button" class="ghost-btn">關閉</button></div>
-        <p class="hint">使用電子郵件驗證或 Google 帳戶登入，可同步自己的標案收藏、監控條件與投標進度。</p>
+        <div class="section-heading"><h2>跨裝置同步（選用）</h2><button id="closeAccount" type="button" class="ghost-btn">關閉</button></div>
+        <p class="hint">不必註冊，進站就能使用所有已啟用功能，訪客資料會隔離保存。只有想跨裝置找回資料時，才需要自行選擇 Email 或 Google 登入。</p>
         <div id="accountDemoBox" class="ti-demo-login-box" hidden>
           <div><strong>測試帳號已準備好</strong><p>僅測試用：自動建立個人測試帳號，並提供隔離的客服管理工單，不會看到正式客戶資料。</p></div>
           <button type="button" id="accountDemoLogin" class="primary-btn">一鍵登入測試帳號</button>
@@ -107,8 +107,8 @@
             <button class="primary-btn" type="submit">搜尋標案</button>
           </form>
           <details class="ti-semantic-panel" id="semanticPanel">
-            <summary>AI 語意搜尋（真正向量模型，正式會員使用）</summary>
-            <p class="minor">找關鍵字不同、但需求意思相近的案件，也可搜尋本人明確同意建立向量索引的私人文件。需要真正模型金鑰及已建索引；未配置時會明確顯示不可用，不以關鍵字搜尋冒充語意結果。每名會員每天最多 30 次語意呼叫。</p>
+            <summary>AI 語意搜尋（免註冊，真正向量模型）</summary>
+            <p class="minor">找關鍵字不同、但需求意思相近的案件，也可搜尋本人明確同意建立向量索引的私人文件。需要真正模型金鑰及已建索引；未配置時會明確顯示不可用，不以關鍵字搜尋冒充語意結果。每個訪客或帳戶每天最多 30 次語意呼叫。</p>
             <form id="semanticForm" class="ti-semantic-form">
               <label>自然語言描述<input id="semanticQuery" type="search" minlength="3" maxlength="150" required placeholder="例如：醫院資訊系統的資安檢測與維運服務"></label>
               <label>搜尋對象<select id="semanticScope"><option value="cases">政府標案（已索引）</option><option value="documents">我的私人文件索引</option><option value="both">標案＋私人文件</option></select></label>
@@ -117,7 +117,7 @@
               <button class="primary-btn" type="submit">使用 AI 語意搜尋</button>
               <button id="semanticAsk" class="ghost-btn" type="button">用已索引的私人文件回答問題</button>
             </form>
-            <div id="semanticStatus" role="status" aria-live="polite" class="minor">使用語意模型前請先正式登入。一般標案關鍵字搜尋不受影響。</div>
+            <div id="semanticStatus" role="status" aria-live="polite" class="minor">免註冊即可嘗試語意搜尋；若模型或向量索引尚未配置，會顯示實際狀態。</div>
             <div id="semanticResults" class="ti-semantic-results"></div>
           </details>
           <div class="ti-scenario-row" role="group" aria-label="按案件目前狀態快速尋找商機">
@@ -151,7 +151,7 @@
           <div class="metric"><span>本頁載入案件</span><strong id="metricLoaded">—</strong><small>非全國總數</small></div>
           <div class="metric"><span>符合案件總數</span><strong id="metricCases">—</strong><small>依機關與案號計算</small></div>
           <div class="metric"><span>本頁官方截止未到</span><strong id="metricOpen">—</strong><small>不等於尚未截標</small></div>
-          <div class="metric"><span>已收藏</span><strong id="metricSaved">0</strong><small>登入後可雲端同步</small></div>
+          <div class="metric"><span>已收藏</span><strong id="metricSaved">0</strong><small>訪客可直接收藏</small></div>
         </div>
         <div class="metrics ti-business-metrics" id="verifiedMetrics" aria-label="自有資料庫已核對的標案概況">
           <div class="metric" hidden><span>最新收錄公告</span><strong id="verifiedLatest">—</strong><small id="verifiedLatestDate">以公告日期為準</small></div>
@@ -202,18 +202,18 @@
  </div>
  <div class="panel">
   <h2>儲存完整進階搜尋條件（跨裝置）</h2>
-  <p class="hint">需登入。可保存目前所有篩選條件，於另一裝置載入；命中數預覽只計算已成功入庫的近 30 天，不代表全國完整資料。</p>
+  <p class="hint">免註冊可儲存所有篩選條件。訪客資料保存在目前瀏覽器身分；如需在另一裝置載入，可自行選擇登入同步。命中數預覽只計算已成功入庫的近 30 天，不代表全國完整資料。</p>
   <div class="inline-form">
     <input id="advSavedName" maxlength="120" placeholder="為目前篩選條件命名，例如：台北資安採購">
     <button id="advSaveRule" type="button" class="ghost-btn">儲存目前條件</button>
   </div>
   <div class="inline-form">
-    <select id="advSavedList" aria-label="已儲存的搜尋條件"><option value="">請登入後讀取已儲存條件</option></select>
+    <select id="advSavedList" aria-label="已儲存的搜尋條件"><option value="">準備讀取已儲存條件</option></select>
     <button id="advLoadRule" type="button" class="ghost-btn">載入條件</button>
     <button id="advPreviewRule" type="button" class="ghost-btn">預覽近 30 天命中數</button>
     <button id="advDeleteRule" type="button" class="ghost-btn">刪除這組條件</button>
   </div>
-  <p id="advSavedStatus" class="minor" role="status">登入後可保存與管理完整搜尋條件。</p>
+  <p id="advSavedStatus" class="minor" role="status">訪客也可保存與管理搜尋條件。</p>
 </div>
 
  <div id="advStatus" class="notice" role="status" aria-live="polite">資料僅包含已成功回填的日期；履約地、金額未公開時維持未知。</div>
@@ -329,7 +329,7 @@
       </section>
 
       <section id="view-tracking" class="view" hidden>
-        <div class="page-heading"><div class="eyebrow">BID PIPELINE</div><h1>我的投標工作台</h1><p>將搜尋到的真實案件加入工作台、記錄進度、備註及內部截止日。登入後可跨裝置同步；未登入時保留本機追蹤。</p></div>
+        <div class="page-heading"><div class="eyebrow">BID PIPELINE</div><h1>我的投標工作台</h1><p>將搜尋到的真實案件加入工作台、記錄進度、備註及內部截止日。免註冊即可保存追蹤；跨裝置同步可自行選擇登入。</p></div>
         <div class="toolbar"><button id="trackingCsv" class="ghost-btn" type="button">↓ 匯出追蹤 CSV</button><button id="trackingXlsx" class="ghost-btn" type="button">↓ 匯出追蹤 Excel</button><button id="trackingIcs" class="ghost-btn" type="button">↓ 匯出日曆 ICS</button><button id="trackingImport" class="ghost-btn" type="button">↑ 匯入備份</button><input id="trackingImportFile" type="file" accept=".json,application/json" hidden><button id="trackingBackup" class="ghost-btn" type="button">↓ 備份 JSON</button></div>
         <section id="trackingPerformance" class="panel ti-performance-summary" aria-label="我的投標成果統計">
           <h2>我的投標成果</h2>
@@ -339,14 +339,14 @@
         <div id="trackingOutput" class="tracking-grid"></div>
         <div class="panel" style="margin-top:22px">
           <h2>投標待辦任務</h2>
-          <p class="hint">登入後可跨裝置同步任務；未登入時只保留既有的本機追蹤與備註。</p>
+          <p class="hint">訪客可立即建立雲端待辦，資料以個別訪客身分隔離；跨裝置同步可自行選用。</p>
           <form id="taskForm" class="inline-form">
             <select id="taskCase" aria-label="關聯標案" required><option value="">選擇已追蹤標案</option></select>
             <input id="taskTitle" placeholder="輸入待辦，例如：確認資格證明" maxlength="300" required>
             <input id="taskDue" type="date" aria-label="任務截止日">
             <button class="primary-btn" type="submit">建立待辦</button>
           </form>
-          <div id="taskList" class="watch-list" style="margin-top:15px"><div class="empty">登入後讀取雲端待辦。</div></div>
+          <div id="taskList" class="watch-list" style="margin-top:15px"><div class="empty">正在讀取個人待辦。</div></div>
         </div>
       </section>
 
@@ -357,7 +357,7 @@
         <div class="notice warning">下列結論由使用者自行核對，不能只憑公司名稱推斷資格或實績。系統不做未公開底價、得標率或內定判定。</div>
         <div class="panel">
           <form id="decisionForm" class="setting-form">
-            <label class="wide">已收藏的真實標案<select id="decisionCase" required><option value="">先登入並收藏真實標案</option></select></label>
+            <label class="wide">已收藏的真實標案<select id="decisionCase" required><option value="">先收藏真實標案</option></select></label>
             <div id="decisionCriteria" class="wide"></div>
             <label>決策<select id="decisionChoice"><option>評估中</option><option>建議追蹤</option><option>準備投標</option><option>不投</option></select></label>
             <label class="wide">決策依據／人工覆核說明<textarea id="decisionNotes" rows="3" maxlength="5000" placeholder="附上文件頁碼、證照名稱、估算成本或風險證據；未知可保留空白。"></textarea></label>
@@ -381,7 +381,7 @@
             <div class="form-actions"><button class="primary-btn" type="submit">新增管理項目</button><button type="button" id="contractExport" class="ghost-btn">匯出私人台帳 CSV</button></div>
           </form>
         </div>
-        <div id="contractStatus" class="notice">登入後可查看自己的履約台帳與提醒。</div>
+        <div id="contractStatus" class="notice">正在讀取個人履約台帳與提醒。</div>
         <div id="contractAlerts" class="watch-list"></div>
         <div id="contractItems" class="watch-list"></div>
       </section>
@@ -401,7 +401,7 @@
             <label class="wide"><input id="vendorSelfPublish" type="checkbox"> 我確認有權公開上述公司資訊及聯絡方式，並同意向訪客展示「廠商自行提供，未經本平台驗證」。</label>
             <div class="form-actions"><button type="submit" class="primary-btn">儲存公司檔案</button><button id="vendorSelfDelete" type="button" class="ghost-btn">刪除自己的公司檔案</button></div>
           </form>
-          <p id="vendorSelfStatus" class="minor">請登入後操作自己的刊登資料。</p>
+          <p id="vendorSelfStatus" class="minor">可以直接刊登自己的供應商資料。</p>
         </div>
         <div class="panel"><form id="directorySearchForm" class="inline-form"><input id="directoryKeyword" placeholder="搜尋公開刊登公司名稱" maxlength="60"><button type="submit" class="primary-btn">查詢名錄</button></form></div>
         <div id="directoryList" class="result-list"></div>
@@ -433,7 +433,7 @@
       </section>
 
       <section id="view-team" class="view" hidden>
-        <div class="page-heading"><div class="eyebrow">TEAM COLLABORATION</div><h1>團隊投標協作</h1><p>建立公司工作區、產生一次性邀請連結、共用投標案件及待辦。必須登入，使用資料庫權限隔離。</p></div>
+        <div class="page-heading"><div class="eyebrow">TEAM COLLABORATION</div><h1>團隊投標協作</h1><p>免註冊即可建立團隊工作區、產生邀請連結、共用投標案件及待辦；仍以每個訪客或帳戶的身分隔離權限。</p></div>
         <div class="panel">
           <form id="workspaceCreateForm" class="inline-form">
             <input id="workspaceName" maxlength="120" placeholder="輸入公司／團隊名稱" required>
@@ -461,10 +461,10 @@
           </form>
           <p id="workspaceTaskStatus" class="minor" role="status">待辦只會建立在目前選擇的工作區。</p>
         </div>
-        <div id="workspaceOutput" class="panel analysis-panel"><div class="empty">登入並建立或加入工作區後，即可共用真實標案。</div></div>
+        <div id="workspaceOutput" class="panel analysis-panel"><div class="empty">建立或加入工作區後，即可共用真實標案。</div></div>
       </section>
       <section id="view-alerts" class="view" hidden>
-        <div class="page-heading"><div class="eyebrow">WATCH & ALERTS</div><h1>監控與提醒</h1><p>登入後以伺服器保存規則和異動紀錄；自願訂閱的 Email／LINE 經正式發送服務處理，關閉網頁後仍可收到已啟用的通知。</p></div>
+        <div class="page-heading"><div class="eyebrow">WATCH & ALERTS</div><h1>監控與提醒</h1><p>免註冊即可保存監控規則與異動紀錄；Email／LINE 外送需自行完成聯絡方式驗證並依發送服務配置，關閉網頁後仍可收到已啟用的通知。</p></div>
         <div class="notice warning">站內通知已由資料庫自動比對產生。Email／LINE 外送須使用者明確開啟，且該標案專案已設定專屬金鑰才能發送；尚未設定時一律顯示「未啟用」，不會假裝成功。</div>
         <div class="panel">
           <h2>通知方式</h2>
@@ -483,46 +483,46 @@
             <button id="connectLine" type="button" class="ghost-btn">綁定 LINE</button>
             <button id="unlinkLine" type="button" class="ghost-btn">解除 LINE 綁定</button>
           </div>
-          <div id="deliveryStatus" class="minor">登入後才能儲存跨裝置通知設定。</div>
+          <div id="deliveryStatus" class="minor">訪客可保存站內通知設定。</div>
           <div class="panel" style="margin-top:14px">
             <div class="section-heading"><h3>通知送達紀錄</h3><button id="deliveryHistoryRefresh" type="button" class="ghost-btn">刷新</button></div>
             <p class="hint">僅顯示本人通知的實際發送結果；待處理、重試、永久失敗和已送達不會混為一談。第三方金鑰未設定時不會虛構寄送成功。</p>
-            <div id="deliveryHistory" class="watch-list">請登入查看通知紀錄。</div>
+            <div id="deliveryHistory" class="watch-list">正在讀取通知紀錄。</div>
           </div>
         </div>
         <div class="panel"><form id="watchForm" class="inline-form"><input id="watchTerm" placeholder="要監控的標案關鍵字（例如：資安）" maxlength="70" required><button class="primary-btn" type="submit">新增監控</button></form><div class="toolbar"><button id="checkWatch" class="ghost-btn" type="button">立即檢查新公告</button><button id="enableDesktop" class="ghost-btn" type="button">允許此裝置通知</button><span id="watchCheckedAt" class="minor">尚未檢查</span></div></div>
         <div id="watchOutput" class="watch-list"></div>
         <div class="section-heading"><h2>資料庫自動比對的新公告</h2><button type="button" id="refreshInbox" class="ghost-btn">刷新雲端通知</button></div>
-        <div id="cloudInbox" class="watch-list"><div class="empty">登入後會顯示伺服器每小時同步時比對的新公告。關閉網頁後也會保留通知紀錄。</div></div>
+        <div id="cloudInbox" class="watch-list"><div class="empty">此處顯示伺服器同步時比對的新公告。關閉網頁後也會保留通知紀錄。</div></div>
       </section>
 
       <section id="view-documents" class="view" hidden>
         <div class="page-heading"><div class="eyebrow">DOCUMENT CHECKLIST</div><h1>標書條款整理</h1><p>從你合法取得的招標文件整理資格、截標、履約、評選與押標金關鍵段落，保留原始出處與頁碼。</p></div>
-        <div class="notice warning"><strong>兩種分析方式：</strong>本機規則整理不需登入，文件不會上傳；AI 標單解析需要登入，僅傳送解析後的文件文字至已部署的後端與 AI 服務。若尚未配置 AI 金鑰，會明確顯示無法提供服務，不會產生假分析。掃描型 PDF／圖片可使用本機 OCR（先擷取再核對），OCR 結果可供條款整理及已設定的 AI 解析。</div>
+        <div class="notice warning"><strong>兩種分析方式：</strong>本機規則整理不需登入，文件不會上傳；AI 標單解析也可由訪客使用；經使用者操作後，僅傳送解析後的文件文字至已部署的後端與 AI 服務。若尚未配置 AI 金鑰，會明確顯示無法提供服務，不會產生假分析。掃描型 PDF／圖片可使用本機 OCR（先擷取再核對），OCR 結果可供條款整理及已設定的 AI 解析。</div>
         <div class="panel"><label class="upload" for="documentFile"><strong>選擇招標文件</strong><span>TXT、MD、PDF、DOCX、XLSX、PNG、JPG（單檔上限 15 MB）</span><input id="documentFile" type="file" accept=".txt,.md,.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><div class="toolbar"><button id="documentAnalyze" class="primary-btn" type="button">整理條款</button><button id="tiOcrButton" class="ghost-btn" type="button">掃描檔 OCR</button><button id="documentCsv" class="ghost-btn" type="button">↓ 匯出檢核清單</button><button id="documentAI" class="ghost-btn" type="button">AI 解析資格／期限／評選條款</button><button id="tiCompareCompany" class="ghost-btn" type="button">與公司證照／實績比對</button><span id="documentFileName" class="minor"></span></div></div>
         <div class="panel analysis-panel"><h2>掃描檔 OCR 辨識</h2><p class="hint">限本人合法取得文件。本機使用繁體中文／英文辨識；掃描 PDF 每批最多 8 頁，可依序處理前 150 頁，辨識文字會累計並帶入條款檢核。OCR 可能有錯字，請人工核對。</p><div class="toolbar"><label>從第幾頁開始（每批最多 8 頁）<input id="tiOcrStartPage" type="number" min="1" max="150" step="1" value="1" style="width:90px"></label><button id="tiOcrNextBatch" type="button" class="ghost-btn">辨識下一批 8 頁</button></div><div id="tiOcrStatus" class="minor" role="status">請先選擇 PDF 或圖片，再點選「掃描檔 OCR」。</div><div id="tiOcrOutput"></div></div>
-        <div class="panel analysis-panel"><h2>標案資格與公司實績比對</h2><p class="hint">依已取得的標書原文找出資格條款，與私人公司資料交叉比對。相似內容僅表示可能相關；每項結果仍需人工確認。</p><div id="tiCompareStatus" class="minor" role="status">請先選擇招標文件並登入，必要時先執行掃描 OCR。</div><div id="tiCompareResults"></div></div>
+        <div class="panel analysis-panel"><h2>標案資格與公司實績比對</h2><p class="hint">依已取得的標書原文找出資格條款，與私人公司資料交叉比對。相似內容僅表示可能相關；每項結果仍需人工確認。</p><div id="tiCompareStatus" class="minor" role="status">請先選擇招標文件，必要時先執行掃描 OCR。</div><div id="tiCompareResults"></div></div>
         <div id="documentOutput" class="panel analysis-panel"><div class="empty">上傳文件後可以分類檢視條款，檢核清單標示來源頁碼。</div></div><div class="panel analysis-panel" id="documentAiOutput" aria-live="polite"><h2>AI 標單分析</h2><p class="minor">請登入並選擇合法取得的文件後使用。AI 僅整理原文，資格判斷仍需人工核對。</p></div>
         <div class="panel analysis-panel">
           <div class="section-heading"><h2>我的 AI 使用額度與歷程</h2><button id="aiUsageRefresh" type="button" class="ghost-btn">刷新紀錄</button></div>
           <p class="hint">只計算最近 24 小時成功完成的標書分析／投標書健檢。相同來源重送會優先讀取原結果，不重複扣除額度；失敗任務不計入。這不代表 AI 已配置金鑰或正式付款。</p>
-          <div id="aiUsageStatus" role="status" class="minor">登入後查看額度。</div>
+          <div id="aiUsageStatus" role="status" class="minor">正在讀取使用額度。</div>
           <div id="aiUsageHistory" class="watch-list"></div>
         </div>
         <div class="panel" style="margin-top:16px">
           <h2>私有雲端文件</h2>
-          <p class="hint">登入後才可上傳至 Supabase 私有儲存區；同一個帳戶可跨裝置下載。未登入不會把文件送出。</p>
+          <p class="hint">訪客可上傳自己的私有文件並於目前瀏覽器取回，資料依訪客身分隔離。未選擇上傳時，文件不會自動送出；跨裝置下載可自行選擇登入同步。</p>
           <div class="toolbar"><label>關聯追蹤標案 <select id="documentCaseId"><option value="">不關聯案件</option></select></label></div>
           <button id="documentCloudSave" class="ghost-btn" type="button">將所選文件保存至私有雲端</button>
-          <div id="cloudDocuments" class="watch-list" style="margin-top:14px"><div class="empty">尚未登入，無法讀取私有雲端文件。</div></div>
+          <div id="cloudDocuments" class="watch-list" style="margin-top:14px"><div class="empty">正在讀取私有文件。</div></div>
           <div class="panel" style="margin-top:18px">
             <h3>私有標書知識庫｜跨文件原文搜尋</h3>
-            <p class="hint">登入後會在你的私人資料庫建立原文索引，支援 PDF、DOCX、XLSX、文字及已辨識的圖片。查詢只搜尋本人有權讀取的索引，回傳文件名稱、實際頁碼或工作表及原文摘錄，可開啟原檔核對；未索引文件可在下方重新建立索引。這不是 AI 語意判斷，也不能替代人工資格確認。</p>
+            <p class="hint">建立原文索引時會存入你的私人資料庫，支援 PDF、DOCX、XLSX、文字及已辨識的圖片。查詢只搜尋本人有權讀取的索引，回傳文件名稱、實際頁碼或工作表及原文摘錄，可開啟原檔核對；未索引文件可在下方重新建立索引。這不是 AI 語意判斷，也不能替代人工資格確認。</p>
             <form id="knowledgeSearchForm" class="inline-form">
               <input id="knowledgeQuery" maxlength="120" required placeholder="搜尋原文，例如：履約保證金">
               <button id="knowledgeSearchButton" type="submit" class="ghost-btn">搜尋我的知識庫</button>
             </form>
-            <div id="knowledgeStatus" class="minor" role="status">需要登入及至少一份已上傳文件。</div>
+            <div id="knowledgeStatus" class="minor" role="status">需要至少一份已上傳文件。</div>
             <div id="knowledgeResults" class="watch-list" aria-live="polite"></div>
           </div>
         </div>
@@ -565,7 +565,7 @@
         <h1>標書版本比對與投標書健檢</h1>
         <p>同時檢視更正前後標書的原文差異；也能將招標要求與自己的投標書逐條核對，附來源頁碼與缺漏提示。</p></div>
         <div class="notice warning">
-          「比較版本」只在本機執行，不會把文件送出。只有「AI 投標書健檢」需要登入並把兩份文件解析後的文字傳至 Supabase Edge Function 與 AI 供應商。
+          「比較版本」只在本機執行，不會把文件送出。「AI 投標書健檢」不要求註冊；使用者確認後才會將兩份文件解析後的文字傳至 AI 服務。
           如未配置 AI 金鑰，會明確顯示無法執行，不提供模擬結果。掃描型 PDF 若無文字層仍須人工處理。
         </div>
         <div class="panel">
@@ -600,7 +600,7 @@
             <label for="devKeyName">用途</label><input id="devKeyName" maxlength="80" placeholder="例如：我的 BI 報表" required>
             <button type="submit" class="primary-btn" id="devCreateButton">產生金鑰（只顯示一次）</button>
           </form>
-          <p id="devStatus" role="status" class="hint">登入後才可建立及管理本人金鑰。</p>
+          <p id="devStatus" role="status" class="hint">訪客也可建立及管理自己的 API 金鑰；請妥善備份。</p>
           <div id="devSecretContainer" hidden>
             <label for="devSecret">剛產生的金鑰（請立即保存，重新整理即不再顯示）</label>
             <textarea id="devSecret" readonly rows="3" aria-label="剛產生的 API 金鑰"></textarea>
@@ -621,7 +621,7 @@
         <div class="page-heading">
           <div class="eyebrow">PRIVATE COMPANY CAPABILITIES</div>
           <h1>我的公司資料</h1>
-          <p>維護私人服務項目、證照、履約實績與型錄。這些內容只有登入帳戶能看見，不會自動公開成供應商名錄，也不會被視為已取得官方查證。</p>
+          <p>維護私人服務項目、證照、履約實績與型錄。這些內容只有目前訪客或登入帳戶能看見，不會自動公開成供應商名錄，也不會被視為已取得官方查證。</p>
         </div>
         <div class="panel">
           <h2>公司與服務輪廓</h2>
@@ -647,7 +647,7 @@
             <label class="wide">私人證明附件（選填）<input id="tiAssetFile" type="file" accept=".pdf,.docx,.txt,.md"><small>PDF／DOCX／TXT／MD，15MB 以內。儲存於私人文件庫，其他會員無法查看。</small></label>
             <div class="form-actions"><button id="tiAssetSave" class="primary-btn" type="submit">新增資料</button></div>
           </form>
-          <div id="tiCompanyStatus" class="notice" role="status">登入後可保存私人公司資料。</div>
+          <div id="tiCompanyStatus" class="notice" role="status">訪客也可保存私人公司資料。</div>
           <div id="tiCompanyAssets" class="ti-asset-list"></div>
         </div>
       </section>
