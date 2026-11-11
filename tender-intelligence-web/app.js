@@ -6,7 +6,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,fetchArchive,fetchCaseSearch,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,ensureGuestSession,fetchArchive,fetchCaseSearch,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -1472,21 +1472,21 @@ function clearUserState(){
 function renderAccount(){
   if(state.view==='billing')void renderBilling();
   const demo=cloud.user?.is_anonymous===true;
-  $('accountButton').textContent=demo?'測試帳號已登入':cloud.user?'帳戶：'+(cloud.user.email||'已登入'):'登入／跨裝置同步';
+  $('accountButton').textContent=demo?'訪客模式｜免註冊':cloud.user?'帳戶：'+(cloud.user.email||'已登入'):'正在準備訪客模式…';
   $('accountDemoQuick').hidden=!!cloud.user||!demoToolsEnabled;
   $('accountDemoLogin').hidden=!!cloud.user||!demoToolsEnabled;
   $('accountDemoBox').hidden=!!cloud.user||!demoToolsEnabled;
-  $('accountLogout').hidden=!cloud.user;
+  $('accountLogout').hidden=!cloud.user||demo;
   $('accountSync').hidden=!cloud.user;
-  $('accountLoginForm').hidden=!!cloud.user;
-  $('accountGoogle').hidden=!!cloud.user;
+  $('accountLoginForm').hidden=!!cloud.user&&!demo;
+  $('accountGoogle').hidden=!!cloud.user&&!demo;
   $('accountChangeEmail').hidden=!cloud.user||demo;
-  if(demo)$('accountInfo').textContent='目前使用獨立測試帳號；客服管理介面只顯示你的示範工單，不會存取正式客戶資料。';
+  if(demo)$('accountInfo').textContent='現在是免註冊訪客模式，已可使用所有已啟用功能。你的私人資料只屬於這個訪客身分，清除瀏覽器資料後可能無法復原。若想在不同裝置同步，可選擇 Email 或 Google。';
   else if(cloud.user)$('accountInfo').textContent='已驗證帳戶：'+cloud.user.email+'。追蹤、商機條件、監控與待辦由 Supabase 的 RLS 保護。';
 }
 async function initCloud(){
   try{
-    cloud.client=await getClient();
+    cloud.client=await ensureGuestSession();
     const {data,error}=await cloud.client.auth.getSession();
     if(error)throw error;
     cloud.user=data.session?.user||null;

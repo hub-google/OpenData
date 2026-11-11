@@ -15,19 +15,13 @@ async function sync(){
  }
  currentUser=who;
  const out=$('devKeys');out.replaceChildren();
- if(!who){$('devCreateButton').disabled=true;message('請先登入標案會員，才能管理 API 金鑰。');return;}
- if(who.is_anonymous){
-  $('devCreateButton').disabled=true;
-  message('測試帳號不可建立正式 API 金鑰；請使用 Email 驗證或 Google 帳戶登入。');
-  out.append(label('div','測試模式僅供體驗與驗收，不提供正式 API 憑證。','empty'));
-  return;
- }
+ if(!who){$('devCreateButton').disabled=true;message('正在準備訪客身分，請重新整理後再試。');return;}
  $('devCreateButton').disabled=false;
  const {data:keys,error:e}=await db.from('ti_api_keys')
   .select('id,name,token_prefix,created_at,expires_at,last_used_at,daily_requests,quota_day,total_requests,revoked_at')
   .eq('user_id',who.id).is('revoked_at',null).order('created_at',{ascending:false}).limit(10);
  if(e)throw e;
- message('已登入：'+(who.email||'會員')+'｜金鑰僅可存取你自己的收藏與待辦；沒有任何全國標案批次輸出權限。');
+ message((who.is_anonymous?'訪客模式':('帳戶：'+(who.email||'會員')))+'｜可建立自己的 API 金鑰，僅可存取這個身分的收藏與待辦；離開訪客身分後可能無法找回金鑰。');
  if(!keys?.length){out.append(label('div','目前沒有有效金鑰。','empty'));return;}
  for(const key of keys){
   const wrap=label('div','','watch-item'),row=label('header','');
@@ -54,7 +48,7 @@ async function create(e){
  if(name.length<2||name.length>80){message('用途名稱必須是 2 至 80 字。');return;}
  const button=$('devCreateButton');button.disabled=true;
  try{
-  if(!currentUser||currentUser.is_anonymous)throw Error('請使用已驗證的正式會員登入，測試帳號不可建立 API 金鑰');
+  if(!currentUser)throw Error('訪客身分尚未準備好，請重新整理後再試');
   const bytes=crypto.getRandomValues(new Uint8Array(32));
   const token='ti_'+Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
   const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token))),
