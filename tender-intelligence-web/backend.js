@@ -3,28 +3,57 @@
 export const DATABASE_PROJECT="unapiwajmgqqtdkixaab";
 export const DATABASE_URL="https://unapiwajmgqqtdkixaab.supabase.co";
 export const PUBLISHABLE_KEY="sb_publishable_L09XC4Tekm6cZaPTTczm3g_Aap-SOSy";
+// A CDN or PostgREST request can stall without rejecting. Bound all waits so
+// the UI can display a real error instead of spinning indefinitely.
+function deadline(promise,ms,label){
+ let timer;
+ return Promise.race([
+  Promise.resolve(promise),
+  new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' 等候逾時（'+Math.round(ms/1000)+' 秒）')),ms);})
+ ]).finally(()=>clearTimeout(timer));
+}
+// Officially supported UMD distribution is a fallback only if the ESM CDN
+// does not respond. No service-role credentials or private data live here.
+function loadUmdSdk(){
+ if(globalThis.supabase?.createClient)return Promise.resolve(globalThis.supabase);
+ return new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js';
+  script.async=true;
+  script.onload=()=>globalThis.supabase?.createClient?resolve(globalThis.supabase):reject(Error('備援 Supabase SDK 沒有 createClient'));
+  script.onerror=()=>reject(Error('備援 Supabase SDK 載入失敗'));
+  document.head.append(script);
+ });
+}
 let pending=null;
 export function getClient(){
-  if(!pending)pending=import("https://esm.sh/@supabase/supabase-js@2.58.0").then(m=>
-    m.createClient(DATABASE_URL,PUBLISHABLE_KEY,{
-      auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}
-    })
-  ).catch(e=>{pending=null;throw e});
-  return pending;
+ if(!pending)pending=(async()=>{
+  let sdk;
+  try{sdk=await deadline(import('https://esm.sh/@supabase/supabase-js@2.58.0'),12000,'Supabase SDK');}
+  catch(primary){
+   try{sdk=await deadline(loadUmdSdk(),12000,'備援 Supabase SDK');}
+   catch(secondary){throw Error('資料庫程式載入失敗，請檢查網路後重試：'+String(secondary?.message||secondary));}
+  }
+  if(typeof sdk?.createClient!=='function')throw Error('Supabase SDK 載入格式不正確');
+  return sdk.createClient(DATABASE_URL,PUBLISHABLE_KEY,{
+    auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}
+  });
+ })().catch(e=>{pending=null;throw e});
+ return pending;
 }
 // A visitor gets a private, persisted Supabase identity without a signup screen.
 let guestSessionPending=null;
 export async function ensureGuestSession(){
  const client=await getClient();
- const existing=await client.auth.getSession();
+ const existing=await deadline(client.auth.getSession(),10000,'取得訪客登入狀態');
  if(existing.error)throw existing.error;
  if(existing.data.session?.user)return client;
  if(!guestSessionPending){
   guestSessionPending=(async()=>{
-   const latest=await client.auth.getSession();
+   const latest=await deadline(client.auth.getSession(),10000,'確認訪客登入狀態');
    if(latest.error)throw latest.error;
    if(!latest.data.session?.user){
-    const {error}=await client.auth.signInAnonymously();
+    const {error}=await deadline(client.auth.signInAnonymously(),18000,'建立訪客身分');
     if(error)throw error;
    }
   })().finally(()=>{guestSessionPending=null;});
@@ -146,7 +175,12 @@ export async function fetchCaseSearch({
  // Preserve exact criteria on retry. Do not quietly drop filters when the RPC fails.
  let data,error;
  for(let i=0;i<2;i++){
-  const response=await client.rpc('ti_case_search_v3',args);
+  const controller=new AbortController();
+  const abortTimer=setTimeout(()=>controller.abort(),18000);
+  let response;
+  try{response=await client.rpc('ti_case_search_v3',args).abortSignal(controller.signal);}
+  finally{clearTimeout(abortTimer);}
+  if(controller.signal.aborted)throw Error('資料庫標案搜尋逾時（18 秒），請稍後重試；沒有使用模擬資料');
   data=response.data;error=response.error;
   if(!error||!/statement timeout|canceling statement|57014/i.test(String(error.message||error)))break;
  }
