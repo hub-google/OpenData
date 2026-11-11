@@ -21,9 +21,10 @@ async function run(){
  page=await browser.newPage({viewport:{width:1400,height:900},locale:'zh-TW',timezoneId:'Asia/Taipei'});
  page.setDefaultTimeout(14000);page.on('pageerror',e=>pageErrors.push(short(e.message)));
  await step('使用網站的一鍵測試帳號登入',async()=>{
-  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:40000});
+  await page.goto(BASE+'?demo=1',{waitUntil:'domcontentloaded',timeout:40000});
+  await page.locator('#accountDemoQuick').waitFor({state:'visible',timeout:30000});
   await page.locator('#accountDemoQuick').click();
-  await page.waitForFunction(()=>document.querySelector('#accountButton')?.textContent?.includes('測試帳號已登入'),{timeout:25000});
+  await page.waitForFunction(()=>document.querySelector('#accountInfo')?.textContent?.includes('測試帳號已登入'),null,{timeout:25000});
   loggedIn=true;
   return {account_button:short(await page.locator('#accountButton').innerText()),screen:await shot('11-login')};
  });
