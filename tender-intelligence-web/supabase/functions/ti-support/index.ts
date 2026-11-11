@@ -29,7 +29,7 @@ async function getUser(req:Request){
  const res=await fetch(URL+"/auth/v1/user",{headers:{apikey:PUBLIC,Authorization:"Bearer "+token},signal:AbortSignal.timeout(9000)});
  if(!res.ok)throw Error("登入已失效，請重新登入");
  const body=await res.json();
- return body?.id&&uuid.test(body.id)?{id:body.id,email:String(body.email||""),confirmed:Boolean(body.email_confirmed_at),is_demo:body.is_anonymous===true}:null;
+ return body?.id&&uuid.test(body.id)?{id:body.id,email:String(body.email||""),confirmed:Boolean(body.email_confirmed_at),is_demo:false}:null;
 }
 async function visitor(body:any){
  const token=String(body?.visitor_token||"").toLowerCase();
@@ -143,7 +143,7 @@ Deno.serve(async req=>{
    }
    // Once the visitor completes verified sign-in, attach only their previously anonymous browser threads.
    if(user?.confirmed)await query("ti_support_threads?visitor_hash=eq."+hash+"&user_id=is.null&is_demo=eq.false","PATCH",{user_id:user.id});
-   return result(req,{gemini_ready:Boolean(GEMINI),staff:await isStaff(user),demo_mode:false,signed_in:Boolean(user)});
+   return result(req,{gemini_ready:Boolean(GEMINI),staff:await isStaff(user),demo_mode:false,signed_in:Boolean(user?.confirmed)});
   }
   if(action==="list"){
    const prefix="ti_support_threads?select=id,kind,category,subject,status,updated_at,created_at,customer_read_at&";
