@@ -218,6 +218,39 @@ export async function fetchDefaultCaseFallback({page=1}={}){
  })),source:'case_fallback',total_records:null,
  total_pages:current+(hasNext?1:0)};
 }
+// The existing ti_archive_search_simple already uses the indexed exact
+// searchable text match. It is equivalent to the canonical title/keyword
+// lookup only when no additional filters are present; never invoke otherwise.
+export async function fetchFastTitleFallback({query,page=1}={}){
+ const term=String(query||'').trim();
+ if(term.length<2||term.length>60||/[%_\\]/.test(term))throw Error('快速索引不支援這組查詢字元');
+ const current=Math.max(1,Math.trunc(Number(page)||1)),db=await getClient();
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+ let response;
+ try{response=await db.rpc('ti_archive_search_simple',{
+    p_term:term,p_page:current,p_limit:30
+  }).abortSignal(controller.signal);
+ }finally{clearTimeout(timer)}
+ if(controller.signal.aborted)throw Error('標案關鍵字快速索引查詢超時');
+ if(response.error)throw response.error;
+ const data=response.data;
+ if(!data||!Array.isArray(data.rows))throw Error('快速索引沒有返回來源清單');
+ const normalized=term.toLowerCase().replaceAll('臺','台');
+ const total=Number.isFinite(Number(data.total))?Number(data.total):null;
+ return {records:data.rows.map(r=>({
+  unit_id:r.unit_id,job_number:r.job_number,unit_name:r.agency,
+  date:r.latest_notice_date,filename:r.latest_filename||'db-cached',
+  budget_amount:r.budget_amount,award_amount:r.award_amount,
+  deadline_at:r.deadline_at,source_fetched_at:r.source_fetched_at,
+  brief:{title:r.title,type:r.latest_notice_type,category:r.category||r.group_name},
+  detail:r.official_url?{url:r.official_url}:{},
+  match_field:String(r.title||'').toLowerCase().replaceAll('臺','台').includes(normalized)
+   ?'標案名稱':'公告其他索引欄位'
+ })),source:'case_index_fast_fallback',
+ total_records:total,total_pages:total===null
+   ?current+(data.rows.length===30?1:0)
+   :Math.max(1,Math.ceil(total/30))};
+}
 // Exact-field backup searches when the upstream API blocks browser CORS.
 // All rows come from the already-ingested public government announcements.
 export async function fetchBasicArchiveSearch({mode,query,page=1}={}){
