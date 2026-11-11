@@ -1,0 +1,35 @@
+name: 標案搜尋故障恢復與真實資料驗收
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["發布政府標案情報平台"]
+    types: [completed]
+    branches: ["main"]
+permissions:
+  contents: read
+jobs:
+  outage-and-retry:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install pinned browser runner
+        run: |
+          npm install --prefix /tmp/tender-recovery --no-save playwright@1.58.2
+          /tmp/tender-recovery/node_modules/.bin/playwright install --with-deps chromium
+      - name: Test real browser outage and recovery
+        env:
+          NODE_PATH: /tmp/tender-recovery/node_modules
+        run: node tender-intelligence-web/tests/search-recovery-live.cjs
+      - name: Upload actual screenshots and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tender-search-recovery-evidence
+          path: tender-intelligence-web/audits/search-recovery/
+          if-no-files-found: warn
+          retention-days: 30
