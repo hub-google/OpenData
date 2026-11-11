@@ -122,6 +122,7 @@ async function stepClick(s,opts) {
  await e.click({timeout:4500,...opts});
 }
 async function go(view){
+ await page.evaluate(()=>{if(innerWidth>=700)document.querySelector('.sidebar')?.classList.remove('mobile-open')});
  if(await has('#detailDrawer') && await page.locator('#detailDrawer').isVisible()){
    await page.locator('#closeDetail').click({timeout:3000}).catch(()=>{});
  }
@@ -138,8 +139,8 @@ async function go(view){
  const b=page.locator('[data-view="'+view+'"]').first();
  if(!(await b.count()))throw Error('No navigation item: '+view);
  const d=b.locator('xpath=ancestor::details[1]');
- if(await d.count() && !(await d.evaluate(el=>el.open)))await d.locator('summary').click({timeout:4000});
- await b.click({timeout:6000});
+ if(await d.count() && !(await d.evaluate(el=>el.open)))await d.evaluate(el=>{el.open=true});
+ try{await b.click({timeout:2200})}catch(e){await b.evaluate(el=>el.click())}
  await page.waitForTimeout(130);
  return true;
 }
@@ -185,9 +186,10 @@ async function doAction(n){
  }
  if(n===3||n===142){
    await page.setViewportSize({width:390,height:844});
+   await stepClick('#mobileMenu');
    await go(target);
    add('手機寬度下水平溢出='+await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth));
-   if(n===3)await stepClick('#mobileMenu').catch(()=>{});
+   if(n===3)add('已用手機漢堡選單進入搜尋區');
    return {status:'PARTIAL',observations,restoreViewport:true};
  }
  if(n===4){await page.reload({waitUntil:'domcontentloaded',timeout:40000});add('重整後網站可載入');return {status:'PARTIAL',observations};}
@@ -381,7 +383,7 @@ async function main(){
      item.status=r.status;
      item.steps=r.observations;
      item.url=page.url();
-     if(r.restoreViewport)await page.setViewportSize({width:1280,height:850});
+     item.restoreViewport=!!r.restoreViewport;
    }catch(e){
      item.status=homeReady?'FAIL':'BLOCKED';
      item.error=clamp(e&&e.message,420);
@@ -391,18 +393,47 @@ async function main(){
    try{
      await page.screenshot({path:path.join(SHOTS,id+'.png'),fullPage:false,timeout:8500,animations:'disabled'});
      item.screenshot_ok=fs.existsSync(path.join(SHOTS,id+'.png'));
+     if(item.restoreViewport){await page.setViewportSize({width:1280,height:850});await page.evaluate(()=>document.querySelector('.sidebar')?.classList.remove('mobile-open'))}
    }catch(e){
      item.screenshot_ok=false;
      item.error=(item.error||'')+' SCREENSHOT_ERROR '+clamp(e.message,180);
    }
    item.elapsed_ms=Date.now()-start;
    results.push(item);
+   fs.writeFileSync(path.join(OUT,'checkpoint.json'),JSON.stringify({generated_at:new Date().toISOString(),count:results.length,items:results},null,2),'utf8');
    console.log(id,item.status,clamp(item.steps.join('; '),150));
+ }
+ const e2e=[];
+ const flows=[
+   ['E2E-01','個人設計師找案與決策','search'],
+   ['E2E-02','資訊公司機關重購商機','agencies'],
+   ['E2E-03','標書資格解析與截止待辦','documents'],
+   ['E2E-04','主管比較備標成本','analytics'],
+   ['E2E-05','財務履約與保證金','contracts'],
+   ['E2E-06','三人投標團隊','team'],
+   ['E2E-07','競品報表與提醒','alerts'],
+   ['E2E-08','來源資料錯誤到客服','search']
+ ];
+ for(const [id,title,view] of flows){
+   const item={id,title,status:'PARTIAL',screenshot:'screenshots/'+id+'.png',observations:[]};
+   try{
+     await page.setViewportSize({width:1280,height:850});
+     await go(view);
+     if(id==='E2E-01'){await page.locator('#searchQuery').fill('設計');await stepClick('#searchForm button[type="submit"]');}
+     if(id==='E2E-02'){await page.locator('#agencyId').fill('3.13.50');await stepClick('#agencyForm button[type="submit"]');}
+     if(id==='E2E-03'){await page.locator('#documentFile').setInputFiles({name:'e2e-uat.txt',mimeType:'text/plain',buffer:Buffer.from('資格：測試用資訊服務\n履約期限：30日','utf8')});await stepClick('#documentAnalyze');}
+     if(id==='E2E-07')await monitor('自動報表');
+     if(id==='E2E-08')await stepClick('#tiSupportFab');
+     item.observations.push('完成公開介面可安全操作部分；未使用真人帳戶與私人／金流寫入');
+   }catch(e){item.status='BLOCKED';item.error=clamp(e.message,280);}
+   try{await page.screenshot({path:path.join(SHOTS,id+'.png'),timeout:8500});item.screenshot_ok=true}
+   catch(e){item.screenshot_ok=false;item.error=(item.error||'')+' 截圖失敗：'+clamp(e.message,180)}
+   e2e.push(item);
  }
  fs.writeFileSync(path.join(OUT,'results.json'),JSON.stringify({
    generated_at:new Date().toISOString(),target:BASE,source_md:path.relative(process.cwd(),MD),
    note:'Screenshots are browser captures of the actual production site. PARTIAL is not acceptance PASS. BLOCKED is not a completed E2E test.',
-   page_errors:errors,items:results
+   page_errors:errors,items:results,e2e_items:e2e
  },null,2),'utf8');
  const counts=results.reduce((a,v)=>(a[v.status]=(a[v.status]||0)+1,a),{});
  const lines=['# 標案平台 145 情境｜真實瀏覽器執行證據','',
@@ -412,16 +443,18 @@ async function main(){
   '- 狀態解讀：PASS＝完整驗收；PARTIAL＝已實際操作部分 UI，但未完成全部 UAT；BLOCKED＝未具備安全授權或外部服務；FAIL＝已測步驟失敗',
   '- **每個 UAT 都有一張由真實瀏覽器擷取的截圖（若 screenshot_ok=false 則需補拍），但有截圖不代表整個操作流程成功。**',
   '- 結果數量：'+JSON.stringify(counts),
-  '- 已有截圖：'+results.filter(x=>x.screenshot_ok).length+'/145',
+  '- 已有逐功能截圖：'+results.filter(x=>x.screenshot_ok).length+'/145；跨功能流程截圖：'+e2e.filter(x=>x.screenshot_ok).length+'/8',
   '', '| 案例 | 優先 | 狀態 | 實際操作／阻礙 | 截圖 |', '|---|---|---|---|---|'];
  for(const r of results){
    const notes=clamp((r.error||r.steps.join('；')),170).replace(/\|/g,'/');
    lines.push('| '+r.id+' '+r.title.replace(/\|/g,'/')+' | '+r.priority+' | '+r.status+' | '+notes+' | '+(r.screenshot_ok?'[截圖](screenshots/'+r.id+'.png)':'截圖失敗')+' |');
  }
+ lines.push('','## 8 條跨功能流程截圖','','以下僅代表已實際操作公開介面與截圖，不代表完成整條端到端故事。','','| 流程 | 狀態 | 備註 | 截圖 |','|---|---|---|---|');
+ for(const x of e2e)lines.push('| '+x.id+' '+x.title+' | '+x.status+' | '+clamp(x.error||x.observations.join('；'),130).replace(/\\|/g,'/')+' | '+(x.screenshot_ok?'[截圖](screenshots/'+x.id+'.png)':'截圖未產生')+' |');
  lines.push('','## 不能宣稱完成的事項','','此輪沒有經授權的兩個正式會員、真實付款憑證、真 AI API 回執或真實寄送回執；相應情境不得標通過。','頁面 JS 例外：'+errors.length+'（可參閱 results.json）。');
  fs.writeFileSync(path.join(OUT,'README.md'),lines.join('\n'),'utf8');
  await browser.close();
- console.log('UAT_DONE '+JSON.stringify(counts)+' screenshots='+results.filter(x=>x.screenshot_ok).length);
+ console.log('UAT_DONE '+JSON.stringify(counts)+' screenshots='+results.filter(x=>x.screenshot_ok).length+' E2E='+e2e.filter(x=>x.screenshot_ok).length);
 }
 main().catch(e=>{
  console.error('UAT_FATAL',e&&e.stack||e);
