@@ -151,15 +151,23 @@ async function search(p=1){
   // Under heavy background ingestion PostgreSQL may cancel a slow read at its
   // statement timeout. Retry just this transient case once; never mutate filters.
   for(let attempt=0;attempt<2;attempt++){
-   const response=unfiltered
-    ?await client.rpc('ti_archive_search_recent',{p_page:opts.p_page,p_limit:opts.p_limit})
-    :fast
-     ?await client.rpc('ti_archive_search_simple',{p_term:t,p_page:opts.p_page,p_limit:opts.p_limit})
-     :await client.rpc('ti_archive_search_v5',opts);
+   // Aborting the specific PostgREST request lets the user edit conditions
+   // again; a stuck request must not leave the submit button disabled forever.
+   const controller=new AbortController();
+   const timer=setTimeout(()=>controller.abort(),16000);
+   let response;
+   try{
+    response=unfiltered
+     ?await client.rpc('ti_archive_search_recent',{p_page:opts.p_page,p_limit:opts.p_limit}).abortSignal(controller.signal)
+     :fast
+      ?await client.rpc('ti_archive_search_simple',{p_term:t,p_page:opts.p_page,p_limit:opts.p_limit}).abortSignal(controller.signal)
+      :await client.rpc('ti_archive_search_v5',opts).abortSignal(controller.signal);
+   }finally{clearTimeout(timer);}
+   if(n!==request)return;
+   if(controller.signal.aborted)throw Error('本次資料庫查詢逾時，請縮小條件後重試；不會顯示模擬案件');
    data=response.data;error=response.error;
    if(!error)break;
    if(!/statement timeout|canceling statement/i.test(String(error.message||''))||attempt===1)break;
-   if(n!==request)return;
    status('資料庫正忙於同步公告，正在重新查詢同一組條件…');
    await new Promise(resolve=>setTimeout(resolve,300));
   }
