@@ -6,7 +6,7 @@ import {
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
   compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,csvEscape,safeOfficial
 } from './core.mjs';
-import {getClient,ensureGuestSession,fetchArchive,fetchCaseSearch,fetchDefaultCaseFallback,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
+import {getClient,ensureGuestSession,fetchArchive,fetchCaseSearch,fetchDefaultCaseFallback,fetchFastTitleFallback,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
 const $ = id => document.getElementById(id);
 const STORE='opendata-tender-v2';
@@ -162,10 +162,17 @@ async function search(mode,query='',sourcePage=1){
       }),35000,'標案資料庫搜尋');
     }catch(primaryError){
       // Never relax or discard filters to make a failed query appear successful.
-      // The indexed recent-case feed uses genuine stored records only.
-      if(mode!=='latest'||state.scenario!=='all'||!noFilter)throw primaryError;
+      // Both backups read only the already-ingested, source-backed case index.
+      const keyword=String(query||'').trim();
+      const useRecent=mode==='latest'&&state.scenario==='all'&&noFilter;
+      const useFastTitle=mode==='title'&&state.scenario==='all'&&noFilter
+        &&keyword.length>=2&&keyword.length<=60&&!/[%_\\]/.test(keyword);
+      if(!useRecent&&!useFastTitle)throw primaryError;
       try{
-        data=await searchDeadline(fetchDefaultCaseFallback({page:sourcePage}),14000,'最近案件備援讀取');
+        data=await searchDeadline(useRecent
+          ?fetchDefaultCaseFallback({page:sourcePage})
+          :fetchFastTitleFallback({query:keyword,page:sourcePage}),
+          14000,useRecent?'最近案件備援讀取':'標案名稱快速索引備援');
       }catch(fallbackError){
         throw Error('主要搜尋與來源備援皆失敗：'+readableError(primaryError)+'；'+readableError(fallbackError));
       }
@@ -189,9 +196,11 @@ async function search(mode,query='',sourcePage=1){
     if(token!==state.running)return;
     state.rows=verified.map(normalize).filter(Boolean);
     renderSearch();
-    setStatus(data.source==='case_fallback'?'最新案件索引暫時不穩定，已切換歷史備援'
-      :'資料庫連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),
-      data.source==='case_fallback'?'failure':'success');
+    const usingFallback=data.source==='case_fallback'||data.source==='case_index_fast_fallback';
+    setStatus(data.source==='case_fallback'?'一般案件查詢暫時不穩定，已切換已入庫案件備援':
+      data.source==='case_index_fast_fallback'?'標案名稱主搜尋逾時，已切換已入庫快速索引':
+      '資料庫連線正常 · '+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()),
+      usingFallback?'failure':'success');
   }catch(err){
     if(token!==state.running)return;
     state.rows=[];state.searchRows=[];state.totalPages=1;
