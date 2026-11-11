@@ -11,9 +11,10 @@ let browser,owner,member,outsider,workspaceId,inviteToken;
 const short=x=>String(x?.message||x||'').replace(/\s+/g,' ').slice(0,450);
 async function step(name,fn){try{const data=await fn();results.push({name,status:'PASS',data});console.log('PASS',name,JSON.stringify(data).slice(0,470));}catch(e){results.push({name,status:'FAIL',error:short(e)});console.error('FAIL',name,short(e));}}
 async function login(p){
- await p.goto(BASE,{waitUntil:'domcontentloaded',timeout:45000});
+ await p.goto(BASE+'?demo=1',{waitUntil:'domcontentloaded',timeout:45000});
+ await p.locator('#accountDemoQuick').waitFor({state:'visible',timeout:30000});
  await p.locator('#accountDemoQuick').click();
- await p.waitForFunction(()=>document.querySelector('#accountButton')?.textContent?.includes('測試帳號已登入'),null,{timeout:30000});
+ await p.waitForFunction(()=>document.querySelector('#accountInfo')?.textContent?.includes('測試帳號已登入'),null,{timeout:30000});
  await p.waitForTimeout(250);
  if(!await p.locator('#tiSupportPanel').isHidden())
   throw Error('登入後客服視窗自行展開，遮住工作區操作按鈕');
