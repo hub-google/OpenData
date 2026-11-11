@@ -1,0 +1,64 @@
+name: 標案平台145情境逐案瀏覽器截圖
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/tender-uat-145.yml"
+      - "tender-intelligence-web/tests/uat-145-live.cjs"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tender-uat-145-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  public-uat-with-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact repository version
+        uses: actions/checkout@v4
+      - name: Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install headless Chromium for genuine browser testing
+        run: |
+          npm install --prefix /tmp/tender-uat --no-save playwright@1.58.2
+          /tmp/tender-uat/node_modules/.bin/playwright install --with-deps chromium
+      - name: Attempt 145 cases against deployed website and capture every case
+        env:
+          NODE_PATH: /tmp/tender-uat/node_modules
+        run: node tender-intelligence-web/tests/uat-145-live.cjs
+      - name: Upload screenshots and machine-readable reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tender-uat-145-screenshots
+          path: tender-intelligence-web/audits/uat-20261111/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Publish a separate immutable evidence branch for inline screenshot browsing
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULT=tender-intelligence-web/audits/uat-20261111
+          if [ ! -f "$RESULT/results.json" ]; then
+            echo "No completed UAT results to publish"; exit 0
+          fi
+          DEST="${RUNNER_TEMP}/tender-uat-evidence"
+          mkdir -p "$DEST"
+          cp -a "$RESULT" "$DEST/uat-20261111"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan "tender-uat-evidence-${{ github.run_id }}"
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          mkdir -p tender-intelligence-web/audits
+          cp -a "$DEST/uat-20261111" tender-intelligence-web/audits/
+          git add tender-intelligence-web/audits/uat-20261111
+          git commit -m "Evidence: live browser screenshots for all 145 UAT scenarios"
+          git push origin "HEAD:refs/heads/tender-uat-evidence-${{ github.run_id }}"
