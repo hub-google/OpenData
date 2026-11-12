@@ -2,16 +2,11 @@ name: 標案工作區三帳號權限驗收
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["發布政府標案情報平台"]
-    types: [completed]
-    branches: ["main"]
 
 permissions:
   contents: read
 jobs:
   three-account-rls:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

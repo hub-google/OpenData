@@ -2,10 +2,6 @@ name: 真實瀏覽器驗證政府標案搜尋
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["發布政府標案情報平台"]
-    types: [completed]
-    branches: ["main"]
 
 concurrency:
   group: tender-browser-smoke
@@ -16,7 +12,6 @@ permissions:
 
 jobs:
   browser-smoke:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
