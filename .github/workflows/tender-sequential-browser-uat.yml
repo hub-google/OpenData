@@ -25,7 +25,7 @@ jobs:
       - name: Checkout deployed source
         uses: actions/checkout@v4
         with:
-          ref: \${{ github.event_name == 'workflow_dispatch' && 'main' || github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.event.workflow_run.head_sha }}
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -76,19 +76,19 @@ jobs:
           mkdir -p /tmp/tender-e2e-evidence/audits /tmp/tender-e2e-evidence/smoke
           cp -a tender-intelligence-web/audits/. /tmp/tender-e2e-evidence/audits/ 2>/dev/null || true
           cp -a /tmp/tender-browser-artifacts/. /tmp/tender-e2e-evidence/smoke/ 2>/dev/null || true
-          echo "CI run \${{ github.run_id }}" > /tmp/tender-e2e-evidence/README.md
+          echo "CI run ${{ github.run_id }}" > /tmp/tender-e2e-evidence/README.md
           echo "Actual page captures; each test status in the corresponding JSON report. A screenshot is not a PASS." >> /tmp/tender-e2e-evidence/README.md
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch --orphan "tender-sequential-evidence-\${{ github.run_id }}"
+          git switch --orphan "tender-sequential-evidence-${{ github.run_id }}"
           git rm -rf --cached . >/dev/null 2>&1 || true
           mkdir -p tender-intelligence-web/audits tender-intelligence-web/smoke
           cp -a /tmp/tender-e2e-evidence/audits/. tender-intelligence-web/audits/
           cp -a /tmp/tender-e2e-evidence/smoke/. tender-intelligence-web/smoke/
           cp /tmp/tender-e2e-evidence/README.md tender-intelligence-web/README-EVIDENCE.md
           git add tender-intelligence-web
-          git commit -m "Live sequential tender browser evidence \${{ github.run_id }}"
-          git push origin "HEAD:refs/heads/tender-sequential-evidence-\${{ github.run_id }}"
+          git commit -m "Live sequential tender browser evidence ${{ github.run_id }}"
+          git push origin "HEAD:refs/heads/tender-sequential-evidence-${{ github.run_id }}"
       - name: Fail workflow when any real acceptance check failed
         if: always()
         shell: bash
@@ -97,14 +97,14 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| 驗收 | 執行狀態 |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 搜尋、分頁 | \${{ steps.smoke.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 公開操作、行情 | \${{ steps.public.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 私人文件、決策 | \${{ steps.auth.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 三帳號權限隔離 | \${{ steps.workspace.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| OCR | \${{ steps.ocr.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 斷線恢復 | \${{ steps.recovery.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 搜尋、分頁 | ${{ steps.smoke.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 公開操作、行情 | ${{ steps.public.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 私人文件、決策 | ${{ steps.auth.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 三帳號權限隔離 | ${{ steps.workspace.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| OCR | ${{ steps.ocr.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 斷線恢復 | ${{ steps.recovery.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
           failures=0
-          for outcome in "\${{ steps.smoke.outcome }}" "\${{ steps.public.outcome }}" "\${{ steps.auth.outcome }}" "\${{ steps.workspace.outcome }}" "\${{ steps.ocr.outcome }}" "\${{ steps.recovery.outcome }}"; do
+          for outcome in "${{ steps.smoke.outcome }}" "${{ steps.public.outcome }}" "${{ steps.auth.outcome }}" "${{ steps.workspace.outcome }}" "${{ steps.ocr.outcome }}" "${{ steps.recovery.outcome }}"; do
             if [ "$outcome" != "success" ]; then failures=$((failures+1)); fi
           done
           echo "" >> "$GITHUB_STEP_SUMMARY"
