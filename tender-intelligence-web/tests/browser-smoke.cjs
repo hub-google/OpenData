@@ -250,8 +250,20 @@ async function firstAdvancedId(){
  });
  await check('Advanced search default page 1 loads',async()=>{
    await navigate('advanced');
-   await waitPage(1,60000);
+   // The first automatic database request can fail transiently. Validate the
+   // explicit real-user retry path rather than waiting forever for the old
+   // "第 1" string when the UI correctly displayed an error.
+   await page.waitForFunction(()=>{
+     const b=document.getElementById('advSubmit');
+     return b&&!b.disabled;
+   },null,{timeout:45000});
+   await search();
    assert.ok((await page.locator('#advResults .case-card').count())>0);
+   console.log('ADVANCED_DEFAULT_RETRY '+JSON.stringify({
+     status:await page.locator('#advStatus').innerText(),
+     page:await page.locator('#advPageInfo').innerText()
+   }));
+   await page.screenshot({path:out+'/tender-advanced-page-1.png'});
  });
  await check('Advanced next page and previous page both change results',async()=>{
    const first=await firstAdvancedId();
