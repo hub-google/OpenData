@@ -1,0 +1,112 @@
+name: 政府標案實際瀏覽器完整回歸（循序）
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["發布政府標案情報平台"]
+    types: [completed]
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tender-sequential-e2e-main
+  cancel-in-progress: true
+
+jobs:
+  sequential-browser-uat:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      NODE_PATH: /tmp/tender-browser/node_modules
+    steps:
+      - name: Checkout deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: \${{ github.event_name == 'workflow_dispatch' && 'main' || github.event.workflow_run.head_sha }}
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Chromium and OCR test fixtures once
+        run: |
+          npm install --prefix /tmp/tender-browser --no-save playwright@1.58.2 pdf-lib@1.17.1
+          /tmp/tender-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: "01 Search, cases and result paging"
+        id: smoke
+        continue-on-error: true
+        run: node tender-intelligence-web/tests/browser-smoke.cjs
+      - name: "02 Real public navigation, radar and market"
+        id: public
+        continue-on-error: true
+        run: node tender-intelligence-web/tests/user-journey-live.cjs
+      - name: "03 Private owner, case document byte match and cleanup"
+        id: auth
+        continue-on-error: true
+        run: node tender-intelligence-web/tests/auth-journey-live.cjs
+      - name: "04 Real three-user workspace RLS"
+        id: workspace
+        continue-on-error: true
+        run: node tender-intelligence-web/tests/workspace-rls-live.cjs
+      - name: "05 Scanned PDF and image OCR"
+        id: ocr
+        continue-on-error: true
+        run: node tender-intelligence-web/tests/ocr-live.cjs
+      - name: "06 HTTP 503 failure and recovery"
+        id: recovery
+        continue-on-error: true
+        run: node tender-intelligence-web/tests/search-recovery-live.cjs
+      - name: Upload screenshots and JSON results from all six suites
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tender-sequential-uat-evidence
+          path: |
+            /tmp/tender-browser-artifacts/
+            tender-intelligence-web/audits/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Publish immutable screenshot/report branch
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tender-e2e-evidence/audits /tmp/tender-e2e-evidence/smoke
+          cp -a tender-intelligence-web/audits/. /tmp/tender-e2e-evidence/audits/ 2>/dev/null || true
+          cp -a /tmp/tender-browser-artifacts/. /tmp/tender-e2e-evidence/smoke/ 2>/dev/null || true
+          echo "CI run \${{ github.run_id }}" > /tmp/tender-e2e-evidence/README.md
+          echo "Actual page captures; each test status in the corresponding JSON report. A screenshot is not a PASS." >> /tmp/tender-e2e-evidence/README.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan "tender-sequential-evidence-\${{ github.run_id }}"
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          mkdir -p tender-intelligence-web/audits tender-intelligence-web/smoke
+          cp -a /tmp/tender-e2e-evidence/audits/. tender-intelligence-web/audits/
+          cp -a /tmp/tender-e2e-evidence/smoke/. tender-intelligence-web/smoke/
+          cp /tmp/tender-e2e-evidence/README.md tender-intelligence-web/README-EVIDENCE.md
+          git add tender-intelligence-web
+          git commit -m "Live sequential tender browser evidence \${{ github.run_id }}"
+          git push origin "HEAD:refs/heads/tender-sequential-evidence-\${{ github.run_id }}"
+      - name: Fail workflow when any real acceptance check failed
+        if: always()
+        shell: bash
+        run: |
+          echo "## 實際瀏覽器六大驗收" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 驗收 | 執行狀態 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 搜尋、分頁 | \${{ steps.smoke.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 公開操作、行情 | \${{ steps.public.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 私人文件、決策 | \${{ steps.auth.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 三帳號權限隔離 | \${{ steps.workspace.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| OCR | \${{ steps.ocr.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 斷線恢復 | \${{ steps.recovery.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          failures=0
+          for outcome in "\${{ steps.smoke.outcome }}" "\${{ steps.public.outcome }}" "\${{ steps.auth.outcome }}" "\${{ steps.workspace.outcome }}" "\${{ steps.ocr.outcome }}" "\${{ steps.recovery.outcome }}"; do
+            if [ "$outcome" != "success" ]; then failures=$((failures+1)); fi
+          done
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "失敗套件數：$failures / 6（失敗不得顯示總驗收成功）" >> "$GITHUB_STEP_SUMMARY"
+          test "$failures" -eq 0
