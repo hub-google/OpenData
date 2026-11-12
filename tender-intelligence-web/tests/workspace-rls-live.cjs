@@ -176,7 +176,19 @@ async function main(){
   if(!rejected.error||!self.error||!visible.titles?.some(t=>t.includes('WORKSPACE-RLS-'+stamp)))
    throw Error('唯讀角色越權或不能讀取既有任務：'+JSON.stringify({rejected,self,visible}));
   await member.locator('#workspaceRefresh').click();
-  await member.waitForFunction(()=>document.querySelector('#workspaceOutput')?.textContent?.includes('你的權限：viewer'),null,{timeout:12000});
+  const roleShown=await member.waitForFunction(()=>
+    document.querySelector('#workspaceOutput .ti-workspace-permission-status')?.textContent?.includes('你的權限：viewer')||
+    document.querySelector('#workspaceOutput')?.textContent?.includes('你的權限：viewer'),
+    null,{timeout:20000}).then(()=>true).catch(()=>false);
+  if(!roleShown){
+    await member.screenshot({path:path.join(OUT,'viewer-role-refresh-failed.png')}).catch(()=>{});
+    const diagnostics={
+     output:(await member.locator('#workspaceOutput').innerText()).slice(0,550),
+     workspace:await member.locator('#workspaceSelect').inputValue(),
+     composerHidden:await member.locator('#workspaceTaskComposer').isHidden()
+    };
+    throw Error('唯讀權限雖已由資料庫確認，但會員頁面未更新：'+JSON.stringify(diagnostics));
+  }
   if(await member.getByRole('button',{name:'建立團隊待辦'}).count())throw Error('唯讀成員仍可看到建立任務按鈕');
   await owner.screenshot({path:path.join(OUT,'owner-role-controls.png')});
   await member.screenshot({path:path.join(OUT,'viewer-read-only.png')});
