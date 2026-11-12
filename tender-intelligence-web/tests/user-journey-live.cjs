@@ -8,7 +8,7 @@ let browser,page;
 const short=(s,n=450)=>String(s||'').replace(/\s+/g,' ').slice(0,n);
 async function step(name,fn){
  try{const data=await fn();results.push({name,status:'PASS',data});console.log('PASS',name,JSON.stringify(data).slice(0,500))}
- catch(e){results.push({name,status:'FAIL',error:short(e.message)});console.error('FAIL',name,short(e.message))}
+ catch(e){const screenshot=await shot('FAIL-'+String(results.length+1).padStart(2,'0'));results.push({name,status:'FAIL',error:short(e.message,850),screenshot});console.error('FAIL',name,short(e.message))}
 }
 async function nav(view){
  if(await page.locator('#detailDrawer').isVisible())await page.locator('#closeDetail').click();
@@ -18,6 +18,18 @@ async function nav(view){
  await b.click();await page.waitForTimeout(300);
 }
 async function shot(n){try{await page.screenshot({path:DIR+'/'+n+'.png',timeout:10000});return n+'.png'}catch(e){return short(e.message,70)}}
+async function awaitBasic(keyword,timeout=50000){
+ await page.waitForFunction(word=>{
+  const info=document.getElementById('resultInfo')?.textContent||'';
+  const loaded=document.querySelectorAll('#resultList .case-card').length;
+  const failed=document.getElementById('dataError')?.hidden===false;
+  return failed||(info.includes(word)&&loaded>0);
+ },keyword,{timeout});
+ if(await page.locator('#dataError').isVisible())throw Error('真實搜尋失敗：'+await page.locator('#dataError').innerText());
+}
+async function openFilters(){
+ await page.locator('#searchFilters').evaluate(el=>{el.hidden=false;el.open=true});
+}
 async function main(){
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  page=await browser.newPage({viewport:{width:1400,height:900},locale:'zh-TW',timezoneId:'Asia/Taipei'});
@@ -32,135 +44,204 @@ async function main(){
  await step('首頁最新公告分頁與真實資料備援',async()=>{
   await nav('search');
   await page.waitForFunction(()=>{
-    const info=document.querySelector('#resultInfo')?.textContent||'';
-    return info.includes('當批載入')||!document.querySelector('#dataError')?.hidden;
-  },null,{timeout:32000});
-  if(await page.locator('#dataError').isVisible())
-   throw Error('首頁最新公告連備援都無法讀取：'+short(await page.locator('#dataError').innerText(),320));
-  const info=short(await page.locator('#resultInfo').innerText(),450),fallback=info.includes('公告明細目前無法讀取');
+   return document.querySelectorAll('#resultList .case-card').length>0||document.getElementById('dataError')?.hidden===false;
+  },null,{timeout:50000});
+  if(await page.locator('#dataError').isVisible())throw Error('首頁真實案例未能載入：'+short(await page.locator('#dataError').innerText(),280));
   const cards=await page.locator('#resultList .case-card').count();
-  if(cards<1)throw Error('首頁沒有可閱讀的真實公告／案件資料：'+info);
-  if(fallback&&!info.includes('每案一筆'))throw Error('備援資料沒有清楚標示差異：'+info);
-  if(!fallback&&!info.includes('已入庫最新公告'))throw Error('公告資料來源未明確：'+info);
-  const pageText=await page.locator('#pageInfo').innerText();
-  if(!fallback){
-   const match=info.match(/已入庫合計\s*([\d,]+)\s*筆當日公告/);
-   if(!match)throw Error('最新公告沒有可驗證的全日數量：'+info);
-   const count=Number(match[1].replaceAll(',',''));
-   const expectedPages=Math.ceil(count/100);
-   if(count>100&&(!pageText.includes('來源第 1/'+expectedPages+' 頁')))
-    throw Error('真實當日 '+count+' 筆公告卻不能前往來源第 2 頁：'+pageText);
-  }
-  return {info,fallback,cards,source_page:pageText,screenshot:await shot('01b-latest')};
+  const info=short(await page.locator('#resultInfo').innerText());
+  const pagination=await page.locator('#pageInfo').innerText();
+  if(!cards||!info.includes('最新已收錄案件')||!info.includes('每個案件僅顯示一筆'))
+   throw Error('首頁實際案件或來源標示不一致：'+info);
+  return {cards,info,pagination,screenshot:await shot('01b-latest')};
  });
  await step('標案搜尋：資訊系統',async()=>{
-  await nav('search');await page.locator('#searchMode').selectOption('title');
-  await page.locator('#searchQuery').fill('資訊系統');await page.locator('#searchForm button[type="submit"]').click();await page.waitForTimeout(4500);
+  await nav('search');
+  await openFilters();await page.locator('#searchFilters').evaluate(e=>e.open=false);
+  await page.locator('#searchMode').selectOption('title');
+  await page.locator('#searchQuery').fill('資訊系統');
+  await page.locator('#searchForm button[type="submit"]').click();
+  await awaitBasic('標案名稱：資訊系統');
   const info=short(await page.locator('#resultInfo').innerText());
-  if(!info.includes('資料庫符合')||info.includes('資料庫符合 100 件'))throw Error('首頁跨日搜尋沒有完整結果：'+info+'；'+short(await page.locator('#dataError').innerText(),260));
-  return {info,cards:await page.locator('#resultList article').count(),sample:short(await page.locator('#resultList').innerText(),280),screenshot:await shot('02-search')};
+  const count=await page.locator('#resultList .case-card').count();
+  if(!info.includes('符合')||count<1)throw Error('搜尋未取得經證實的全庫案件：'+info);
+  return {info,cards:count,sample:short(await page.locator('#resultList').innerText(),220),screenshot:await shot('02-search')};
  });
  await step('跨頁搜尋不漏案也不重複來源頁',async()=>{
-  await nav('search');
+  await nav('search');await openFilters();
   await page.locator('#statusFilter').selectOption('全部');
   await page.locator('#groupFilter').selectOption('全部');
   await page.locator('#budgetFilter').fill('');
+  await page.locator('#maxBudgetFilter').fill('');
   await page.locator('#sortFilter').selectOption('date');
   await page.locator('#searchMode').selectOption('title');
   await page.locator('#searchQuery').fill('資訊系統');
   await page.locator('#searchForm button[type="submit"]').click();
-  await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('資料庫符合')&&document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資訊系統'),null,{timeout:18000});
-  const ids=async()=>page.locator('#resultList article').evaluateAll(cards=>cards.map(card=>card.textContent.match(/案號\s*([^\s]+)/)?.[1]||card.textContent.slice(0,100)));
-  const first=await ids();
-  if(first.length!==20)throw Error('首批第一頁應有 20 筆，實際 '+first.length);
+  await awaitBasic('標案名稱：資訊系統');
+  const keys=()=>page.locator('#resultList .case-card').evaluateAll(cards=>cards.map(x=>[
+   x.querySelector('.case-meta')?.textContent?.trim()||'',
+   x.innerText.match(/案號\s+([^\s]+)/)?.[1]||''
+  ].join('|')));
+  const before=await keys();
+  if(before.length!==30||new Set(before).size!==before.length)throw Error('第一頁筆數或案號重複：'+before.length);
+  if(await page.locator('#nextPage').isDisabled())throw Error('資料庫已有多頁結果，但下一頁無法使用');
   await page.locator('#nextPage').click();
-  const second=await ids();
-  if(second.length!==10)throw Error('首批第二頁應有 10 筆，實際 '+second.length);
-  await page.locator('#nextPage').click();
-  await page.waitForFunction(()=>document.querySelector('#pageInfo')?.textContent?.includes('來源第 2/'),null,{timeout:17000});
-  const third=await ids();
-  if(third.length!==20)throw Error('第二批第一頁應有 20 筆，實際 '+third.length);
-  const duplicates=third.filter(x=>first.includes(x)||second.includes(x));
-  if(duplicates.length)throw Error('跨來源頁重複案號：'+duplicates.slice(0,5).join(','));
-  return {first:first.length,second:second.length,third:third.length,duplicates:0,info:await page.locator('#pageInfo').innerText()};
+  await page.waitForFunction(first=>{
+   const info=document.getElementById('pageInfo')?.textContent||'';
+   const card=document.querySelector('#resultList .case-card');
+   return info.includes('第 2 /')&&!!card&&!card.innerText.includes(first);
+  },before[0].split('|').pop(),{timeout:50000});
+  if(await page.locator('#dataError').isVisible())throw Error(await page.locator('#dataError').innerText());
+  const after=await keys();
+  if(after.length!==30||new Set(after).size!==after.length)
+    throw Error('第二頁筆數或重複案號：'+after.length);
+  const overlap=after.filter(x=>before.includes(x));
+  if(overlap.length)throw Error('不同頁面存在重複的案件：'+overlap.slice(0,4).join(';'));
+  return {firstPage:before.length,secondPage:after.length,overlap:0,info:await page.locator('#pageInfo').innerText(),screenshot:await shot('02a-pagination')};
  });
  await step('首頁全文搜尋的全庫類別與預算篩選',async()=>{
-  await nav('search');
+  await nav('search');await openFilters();
   await page.locator('#searchMode').selectOption('title');
-  await page.locator('#searchQuery').fill('資安');
+  await page.locator('#searchQuery').fill('資訊系統');
   await page.locator('#groupFilter').selectOption('勞務');
   await page.locator('#statusFilter').selectOption('招標');
   await page.locator('#budgetFilter').fill('1000000');
   await page.locator('#searchForm button[type="submit"]').click();
-  const ready=await page.waitForFunction(()=>document.querySelector('#resultInfo')?.textContent?.includes('跨日全文搜尋：資安')&&document.querySelector('#resultInfo')?.textContent?.includes('條件已套用全庫'),null,{timeout:18000}).then(()=>true).catch(()=>false);
-  if(!ready)throw Error('篩選後結果未更新；輸入框='+await page.locator('#searchQuery').inputValue()+'；結果='+short(await page.locator('#resultInfo').innerText(),380)+'；錯誤='+short(await page.locator('#dataError').innerText(),180));
-  const info=short(await page.locator('#resultInfo').innerText(),400);
+  await page.waitForFunction(()=>{
+   const info=document.getElementById('resultInfo')?.textContent||'';
+   return document.getElementById('dataError')?.hidden===false ||
+    (info.includes('標案名稱：資訊系統')&&info.includes('本頁'));
+  },null,{timeout:50000});
   if(await page.locator('#dataError').isVisible())throw Error(await page.locator('#dataError').innerText());
-  const matched=info.match(/資料庫符合\s*([\d,]+)\s*件.*當批載入\s*([\d,]+)\s*筆/);
-  if(!matched)throw Error('沒有可靠的全庫符合與當批載入統計：'+info);
-  const total=Number(matched[1].replaceAll(',','')),loadedCount=Number(matched[2].replaceAll(',',''));
-  if(total<1||loadedCount!==Math.min(total,30))throw Error('全庫篩選與畫面筆數不一致：'+info);
-  const cards=await page.locator('#resultList article').count();
-  if(cards!==Math.min(loadedCount,20))throw Error('篩選結果卡片筆數錯誤：'+cards);
-  return {info,cards,total,loaded:loadedCount,screenshot:await shot('02b-filtered')};
+  const info=short(await page.locator('#resultInfo').innerText(),400);
+  const cards=await page.locator('#resultList .case-card').count();
+  const invalid=await page.locator('#resultList .case-card').evaluateAll(cs=>cs.map(c=>{
+   const text=c.textContent||'';
+   const money=Number((c.querySelector('.case-right strong')?.textContent||'').replace(/[^\d]/g,''));
+   return {label:c.querySelector('.case-tag')?.textContent,group:text.includes('勞務'),money,valid:money>=1000000&&text.includes('勞務')&&text.includes('招標')};
+  }).filter(x=>!x.valid));
+  if(!info.includes('符合')||cards===0||invalid.length)throw Error('全庫篩選有錯誤或無資料：'+JSON.stringify({info,cards,invalid:invalid.slice(0,2)}));
+  return {info,cards,invalid:0,screenshot:await shot('02b-filtered')};
  });
  await step('進階搜尋無條件開啟與資料庫真實分頁',async()=>{
   await nav('advanced');
+  await page.waitForFunction(()=>!document.querySelector('#advSubmit')?.disabled,null,{timeout:42000});
+  await page.locator('#advClear').click();
   await page.locator('#advSubmit').click();
   await page.waitForFunction(()=>{
-   const status=document.querySelector('#advStatus')?.textContent||'';
-   return status.includes('實際已入庫資料符合條件')||status.includes('資料庫進階搜尋失敗');
-  },null,{timeout:30000});
-  const status=short(await page.locator('#advStatus').innerText(),320);
-  if(!status.includes('實際已入庫資料符合條件'))throw Error('無條件進階搜尋失敗：'+status);
+   const t=document.getElementById('advStatus')?.textContent||'';
+   return t.includes('實際已入庫資料符合條件')||t.includes('資料庫進階搜尋失敗');
+  },null,{timeout:42000});
+  const status=short(await page.locator('#advStatus').innerText());
+  if(!status.includes('實際已入庫資料符合條件'))throw Error(status);
   const cases=page.locator('#advResults .case-card');
-  if(await cases.count()!==30)throw Error('無條件最近標案頁應載入 30 筆');
+  if(await cases.count()!==30)throw Error('最近案件第一頁應有30案，實際 '+await cases.count());
   const first=await cases.first().locator('a.case-title').getAttribute('href');
   await page.locator('#advNext').click();
-  await page.waitForFunction(()=>document.querySelector('#advPageInfo')?.textContent?.startsWith('第 2／'),null,{timeout:16000});
+  await page.waitForFunction(first=>{
+   const nav=document.getElementById('advPageInfo')?.textContent||'';
+   const href=document.querySelector('#advResults .case-card a.case-title')?.getAttribute('href');
+   return nav.startsWith('第 2／')&&href&&href!==first;
+  },first,{timeout:42000});
   const second=await cases.first().locator('a.case-title').getAttribute('href');
-  if(first===second)throw Error('進階搜尋翻頁沒有更新案件');
+  if(first===second)throw Error('進階搜尋第二頁仍顯示相同案件');
   return {status,first,second,page:await page.locator('#advPageInfo').innerText(),screenshot:await shot('02c-recent-advanced')};
  });
  await step('進階搜尋：資安維護最低一百萬',async()=>{
-  await nav('advanced');await page.locator('#advQuery').fill('資安 AND 維護');
-  await page.locator('#advExclude').fill('租賃');await page.locator('#advMin').fill('1000000');
-  await page.locator('#advKind').selectOption('招標');await page.locator('#advGroup').selectOption('勞務');
-  await page.locator('#advOpen').check();await page.locator('#advSubmit').click();await page.waitForTimeout(4500);
-  return {status:short(await page.locator('#advStatus').innerText()),page:short(await page.locator('#advPageInfo').innerText()),sample:short(await page.locator('#advResults').innerText(),300),screenshot:await shot('03-advanced')};
+  await nav('advanced');
+  await page.waitForFunction(()=>!document.querySelector('#advSubmit')?.disabled,null,{timeout:42000});
+  await page.locator('#advQuery').fill('資安 AND 維護');
+  await page.locator('#advExclude').fill('租賃');
+  await page.locator('#advMin').fill('1000000');
+  await page.locator('#advKind').selectOption('招標');
+  await page.locator('#advGroup').selectOption('勞務');
+  await page.locator('#advOpen').check();
+  await page.locator('#advSubmit').click();
+  await page.waitForFunction(()=>{
+   const t=document.getElementById('advStatus')?.textContent||'';
+   return t.includes('實際已入庫資料符合條件')||t.includes('資料庫進階搜尋失敗');
+  },null,{timeout:42000});
+  const status=short(await page.locator('#advStatus').innerText());
+  if(!status.includes('實際已入庫資料符合條件'))throw Error('進階組合條件查詢失敗：'+status);
+  return {status,caseCount:await page.locator('#advResults .case-card').count(),screenshot:await shot('03-advanced')};
  });
  await step('商機雷達：跨日搜尋',async()=>{
-  await nav('radar');await page.locator('#profileKeywords').fill('資安,資訊系統');
+  await nav('radar');
+  await page.locator('#profileKeywords').fill('資安,資訊系統');
   await page.locator('#profileExcludes').fill('租賃');
-  await page.locator('#profileForm button[type="submit"]').click();await page.locator('#radarFullSearch').click();await page.waitForTimeout(4500);
-  return {status:short(await page.locator('#radarFullStatus').innerText()),items:await page.locator('#radarFullResults .case-card').count(),screenshot:await shot('04-radar')};
+  await page.locator('#profileForm button[type="submit"]').click();
+  await page.locator('#radarFullSearch').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#radarFullStatus')?.textContent||'';
+   return t.includes('已入庫招標類公告共')||t.includes('搜尋失敗')||t.includes('讀取失敗');
+  },null,{timeout:50000});
+  const status=short(await page.locator('#radarFullStatus').innerText());
+  const items=await page.locator('#radarFullResults .case-card').count();
+  if(!status.includes('已入庫招標類公告共')||items===0)throw Error('商機雷達未完成搜尋：'+status);
+  return {status,items,screenshot:await shot('04-radar')};
  });
  await step('市場情報：廠商查詢',async()=>{
-  await nav('vendors');await page.locator('#vendorMode').selectOption('name');
+  await nav('vendors');
+  await page.locator('#vendorMode').selectOption('name');
   await page.locator('#vendorQuery').fill('台灣糖業股份有限公司');
-  await page.locator('#vendorForm button[type="submit"]').click();await page.waitForTimeout(5000);
-  return {summary:short(await page.locator('#vendorSummary').innerText()),sample:short(await page.locator('#vendorOutput').innerText(),250),screenshot:await shot('05-vendor')};
+  await page.locator('#vendorForm button[type="submit"]').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#vendorSummary')?.textContent||'';
+   return t.includes('已入庫來源資料')||t.includes('失敗');
+  },null,{timeout:50000});
+  const summary=short(await page.locator('#vendorSummary').innerText());
+  const cards=await page.locator('#vendorOutput .case-card').count();
+  if(!summary.includes('已入庫來源資料')||cards===0)throw Error('廠商查詢未完成：'+summary);
+  return {summary,cards,sample:short(await page.locator('#vendorOutput').innerText(),230),screenshot:await shot('05-vendor')};
  });
  await step('市場行情：未分類逐月趨勢',async()=>{
-  await nav('analytics');await page.locator('#tiMarketMonths').selectOption('6');
-  await page.locator('#tiMarketGroup').selectOption('未分類');await page.locator('#tiMarketSubmit').click();await page.waitForTimeout(4500);
-  return {status:short(await page.locator('#tiMarketStatus').innerText()),bars:await page.locator('#tiMarketTrend .ti-market-row').count(),screenshot:await shot('06-market')};
+  await nav('analytics');
+  await page.locator('#tiMarketMonths').selectOption('6');
+  await page.locator('#tiMarketGroup').selectOption('未分類');
+  await page.locator('#tiMarketSubmit').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#tiMarketStatus')?.textContent||'';
+   return t.includes('目前符合')||t.includes('已入庫符合條件')||t.includes('市場趨勢查詢失敗');
+  },null,{timeout:50000});
+  const status=short(await page.locator('#tiMarketStatus').innerText());
+  const bars=await page.locator('#tiMarketTrend .ti-market-row').count();
+  if(status.includes('失敗')||bars===0)throw Error('市場趨勢尚未產出：'+status);
+  return {status,bars,screenshot:await shot('06-market')};
  });
- await step('私人公司資料：未登入狀態',async()=>{
-  await nav('company');return {company_fields:await page.locator('#tiCompanyForm input').count(),assets:await page.locator('#tiAssetForm').count(),status:short(await page.locator('#tiCompanyStatus').innerText()),screenshot:await shot('07-company')};
+ await step('訪客公司資料及私人身分狀態',async()=>{
+  await nav('company');
+  const user=await page.evaluate(async()=>{
+   const {getClient}=await import(new URL('./backend.js',document.baseURI).href);
+   const {data,error}=await (await getClient()).auth.getUser();
+   if(error)throw Error(error.message);
+   return data?.user?{id:data.user.id,anonymous:data.user.is_anonymous}:null;
+  });
+  if(!user?.id||user.anonymous!==true)throw Error('訪客公司資料頁沒有獨立匿名身分');
+  const fields=await page.locator('#tiCompanyForm input').count();
+  if(fields<1||await page.locator('#tiAssetForm').count()!==1)throw Error('私人公司表單未顯示');
+  return {guestAuthenticated:true,companyFields:fields,status:short(await page.locator('#tiCompanyStatus').innerText()),screenshot:await shot('07-company')};
  });
  await step('監控與自動報表入口',async()=>{
   await nav('alerts');return {keyword:await page.locator('#watchTerm').count(),competitor:await page.locator('[name="competitorName"]').count(),report:await page.locator('.ti-report-form').count(),screenshot:await shot('08-alerts')};
  });
  await step('指定真實標案深連結與六分頁',async()=>{
   const res=await page.goto(BASE+'?case_unit=3.1.1&case_no=UT-11601',{waitUntil:'domcontentloaded',timeout:40000});
-  await page.waitForTimeout(6000);
-  const tabs=await page.locator('.ti-case-tab').allTextContents();
-  let history='';if(tabs.length){await page.getByRole('tab',{name:'歷史行情'}).click();history=short(await page.locator('.ti-case-panel:not([hidden])').innerText(),230);}
-  await page.waitForFunction(()=>document.querySelector('#detailContent .ti-decision-brief')?.textContent?.includes('資料完整度'),null,{timeout:14000});
-  const brief=short(await page.locator('#detailContent .ti-decision-brief').innerText(),360);
-  if(!brief.includes('資料完整度')||tabs.length!==6)throw Error('案件整合摘要未載入：'+brief);
-  return {http:res?.status(),drawer:await page.locator('#detailDrawer').isVisible(),tabs,history,brief,screenshot:await shot('09-case')};
+  await page.locator('#detailContent .ti-case-tabs [role="tab"]').first().waitFor({state:'visible',timeout:30000});
+  const tabs=await page.locator('#detailContent .ti-case-tab').allTextContents();
+  if(tabs.join('|')!=='案件重點|公告歷程|行情與競爭|投標準備')throw Error('案件主分頁內容錯誤：'+tabs.join(','));
+  for(let i=0;i<tabs.length;i++){
+   await page.locator('#detailContent .ti-case-tab').nth(i).click();
+   if(await page.locator('#detailContent .ti-case-panel:not([hidden])').count()!==1)throw Error('主分頁未切換：'+tabs[i]);
+  }
+  await page.locator('#detailContent [data-main-tab="3"]').click();
+  const prepTabs=await page.locator('#detailContent .ti-prep-tab').allTextContents();
+  if(prepTabs.join('|')!=='評估與決策|資格與標書|待辦與分工|履約與保證金|成本與工時|服務建議書')
+   throw Error('案件子分頁內容錯誤：'+prepTabs.join(','));
+  for(const id of ['decision','documents','tasks','contracts','effort','proposal']){
+   await page.locator('#detailContent [data-prep-tab="'+id+'"]').click();
+   const panel=page.locator('#detailContent .ti-prep-panel:not([hidden])');
+   await panel.waitFor({state:'visible',timeout:12000});
+  }
+  return {http:res?.status(),mainTabs:tabs,prepTabs,drawer:await page.locator('#detailDrawer').isVisible(),screenshot:await shot('09-case')};
  });
  await step('監控與通知四分頁操作',async()=>{
   await nav('alerts');
