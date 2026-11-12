@@ -165,24 +165,60 @@ async function main(){
   return {status,caseCount:await page.locator('#advResults .case-card').count(),screenshot:await shot('03-advanced')};
  });
  await step('商機雷達：跨日搜尋',async()=>{
-  await nav('radar');await page.locator('#profileKeywords').fill('資安,資訊系統');
+  await nav('radar');
+  await page.locator('#profileKeywords').fill('資安,資訊系統');
   await page.locator('#profileExcludes').fill('租賃');
-  await page.locator('#profileForm button[type="submit"]').click();await page.locator('#radarFullSearch').click();await page.waitForTimeout(4500);
-  return {status:short(await page.locator('#radarFullStatus').innerText()),items:await page.locator('#radarFullResults .case-card').count(),screenshot:await shot('04-radar')};
+  await page.locator('#profileForm button[type="submit"]').click();
+  await page.locator('#radarFullSearch').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#radarFullStatus')?.textContent||'';
+   return t.includes('已入庫招標類公告共')||t.includes('搜尋失敗')||t.includes('讀取失敗');
+  },null,{timeout:50000});
+  const status=short(await page.locator('#radarFullStatus').innerText());
+  const items=await page.locator('#radarFullResults .case-card').count();
+  if(!status.includes('已入庫招標類公告共')||items===0)throw Error('商機雷達未完成搜尋：'+status);
+  return {status,items,screenshot:await shot('04-radar')};
  });
  await step('市場情報：廠商查詢',async()=>{
-  await nav('vendors');await page.locator('#vendorMode').selectOption('name');
+  await nav('vendors');
+  await page.locator('#vendorMode').selectOption('name');
   await page.locator('#vendorQuery').fill('台灣糖業股份有限公司');
-  await page.locator('#vendorForm button[type="submit"]').click();await page.waitForTimeout(5000);
-  return {summary:short(await page.locator('#vendorSummary').innerText()),sample:short(await page.locator('#vendorOutput').innerText(),250),screenshot:await shot('05-vendor')};
+  await page.locator('#vendorForm button[type="submit"]').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#vendorSummary')?.textContent||'';
+   return t.includes('已入庫來源資料')||t.includes('失敗');
+  },null,{timeout:50000});
+  const summary=short(await page.locator('#vendorSummary').innerText());
+  const cards=await page.locator('#vendorOutput .case-card').count();
+  if(!summary.includes('已入庫來源資料')||cards===0)throw Error('廠商查詢未完成：'+summary);
+  return {summary,cards,sample:short(await page.locator('#vendorOutput').innerText(),230),screenshot:await shot('05-vendor')};
  });
  await step('市場行情：未分類逐月趨勢',async()=>{
-  await nav('analytics');await page.locator('#tiMarketMonths').selectOption('6');
-  await page.locator('#tiMarketGroup').selectOption('未分類');await page.locator('#tiMarketSubmit').click();await page.waitForTimeout(4500);
-  return {status:short(await page.locator('#tiMarketStatus').innerText()),bars:await page.locator('#tiMarketTrend .ti-market-row').count(),screenshot:await shot('06-market')};
+  await nav('analytics');
+  await page.locator('#tiMarketMonths').selectOption('6');
+  await page.locator('#tiMarketGroup').selectOption('未分類');
+  await page.locator('#tiMarketSubmit').click();
+  await page.waitForFunction(()=>{
+   const t=document.querySelector('#tiMarketStatus')?.textContent||'';
+   return t.includes('目前符合')||t.includes('已入庫符合條件')||t.includes('市場趨勢查詢失敗');
+  },null,{timeout:50000});
+  const status=short(await page.locator('#tiMarketStatus').innerText());
+  const bars=await page.locator('#tiMarketTrend .ti-market-row').count();
+  if(status.includes('失敗')||bars===0)throw Error('市場趨勢尚未產出：'+status);
+  return {status,bars,screenshot:await shot('06-market')};
  });
- await step('私人公司資料：未登入狀態',async()=>{
-  await nav('company');return {company_fields:await page.locator('#tiCompanyForm input').count(),assets:await page.locator('#tiAssetForm').count(),status:short(await page.locator('#tiCompanyStatus').innerText()),screenshot:await shot('07-company')};
+ await step('訪客公司資料及私人身分狀態',async()=>{
+  await nav('company');
+  const user=await page.evaluate(async()=>{
+   const {getClient}=await import(new URL('./backend.js',document.baseURI).href);
+   const {data,error}=await (await getClient()).auth.getUser();
+   if(error)throw Error(error.message);
+   return data?.user?{id:data.user.id,anonymous:data.user.is_anonymous}:null;
+  });
+  if(!user?.id||user.anonymous!==true)throw Error('訪客公司資料頁沒有獨立匿名身分');
+  const fields=await page.locator('#tiCompanyForm input').count();
+  if(fields<1||await page.locator('#tiAssetForm').count()!==1)throw Error('私人公司表單未顯示');
+  return {guestAuthenticated:true,companyFields:fields,status:short(await page.locator('#tiCompanyStatus').innerText()),screenshot:await shot('07-company')};
  });
  await step('監控與自動報表入口',async()=>{
   await nav('alerts');return {keyword:await page.locator('#watchTerm').count(),competitor:await page.locator('[name="competitorName"]').count(),report:await page.locator('.ti-report-form').count(),screenshot:await shot('08-alerts')};
