@@ -191,7 +191,7 @@ async function firstAdvancedId(){
  await check('Basic title search works when OpenFun CORS fails',async()=>{
    await searchBasic('title','醫療');
    const info=await page.locator('#resultInfo').innerText();
-   assert.ok(info.includes('跨日全文搜尋：醫療'),'全文搜尋沒有使用原查詢條件：'+info);
+   assert.ok(info.includes('標案名稱：醫療'),'全文搜尋沒有使用原查詢條件：'+info);
    assert.ok((await page.locator('#resultList .case-card').first().innerText()).includes('命中：'),'未說明本案的命中來源');
  });
  await check('Basic agency-name search works on actual stored agencies',async()=>{
