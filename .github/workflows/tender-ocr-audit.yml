@@ -2,16 +2,11 @@ name: 標案 OCR 掃描文件真實瀏覽器測試
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["發布政府標案情報平台"]
-    types: [completed]
-    branches: ["main"]
 
 permissions:
   contents: read
 jobs:
   real-local-ocr:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
