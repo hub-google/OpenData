@@ -43,6 +43,9 @@ async function main(){
  });
  await step('首頁最新公告分頁與真實資料備援',async()=>{
   await nav('search');
+  // The default landing scenario prioritizes confirmed-open opportunities.
+  // Select the actual all-cases control before asserting latest-case text.
+  await page.locator('[data-scenario="all"]').click();
   await page.waitForFunction(()=>{
    return document.querySelectorAll('#resultList .case-card').length>0||document.getElementById('dataError')?.hidden===false;
   },null,{timeout:50000});
