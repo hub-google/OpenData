@@ -1953,10 +1953,26 @@ async function searchPrivateKnowledge(e){
 let selectedWorkspace='',workspaceListVersion=0,workspaceRenderVersion=0;
 async function refreshWorkspaces(){
  const version=++workspaceListVersion;
- const panel=$('workspaceOutput'),choose=$('workspaceSelect'),userId=cloud.user?.id;
- if(!userId){++workspaceRenderVersion;$('workspaceTaskComposer').hidden=true;panel.replaceChildren(E('div','empty','請先登入，才能讀取團隊工作區。'));return;}
+ const panel=$('workspaceOutput'),choose=$('workspaceSelect');
  try{
-  const {data,error}=await cloud.client.from('ti_workspaces').select('id,name,owner_id,created_at').order('created_at',{ascending:false});
+  // Supabase anonymous sign-ins may replace a browser guest behind the cached
+  // auth callback. Never derive workspace membership from a stale cloud.user.
+  const client=cloud.client||await getClient();
+  const {data:verified,error:identityError}=await client.auth.getUser();
+  if(identityError)throw identityError;
+  const userId=verified?.user?.id;
+  if(!userId){
+   ++workspaceRenderVersion;
+   $('workspaceTaskComposer').hidden=true;
+   panel.replaceChildren(E('div','empty','請先登入，才能讀取團隊工作區。'));
+   return;
+  }
+  if(cloud.user?.id!==userId){
+   cloud.client=client;
+   cloud.user=verified.user;
+   renderAccount();
+  }
+  const {data,error}=await client.from('ti_workspaces').select('id,name,owner_id,created_at').order('created_at',{ascending:false});
   if(error)throw error;
   // A slower earlier read may not override a newer selection or login.
   if(version!==workspaceListVersion||cloud.user?.id!==userId)return;
@@ -1974,10 +1990,21 @@ async function refreshWorkspaces(){
 }
 async function renderWorkspace(){
  const version=++workspaceRenderVersion;
- const id=selectedWorkspace,box=$('workspaceOutput'),userId=cloud.user?.id;
- if(!userId||!id){$('workspaceTaskComposer').hidden=true;box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
- box.replaceChildren(E('div','empty','正在讀取團隊案件及任務…'));
+ const id=selectedWorkspace,box=$('workspaceOutput');
+ let userId=cloud.user?.id;
+ if(!id){$('workspaceTaskComposer').hidden=true;box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
+ box.replaceChildren(E('div','empty','正在核對登入身分與團隊資料…'));
  try{
+  // Reverify against the actual current JWT user, which can change when an
+  // anonymous guest is refreshed. The DB authorizes by auth.uid(), not cached UI.
+  const {data:identity,error:identityError}=await cloud.client.auth.getUser();
+  if(identityError)throw identityError;
+  if(!identity?.user?.id)throw Error('無法驗證目前團隊使用者身分');
+  if(userId!==identity.user.id){
+   userId=identity.user.id;
+   cloud.user=identity.user;
+   renderAccount();
+  }
   // Permission is security-critical and must not wait for six unrelated panels.
   // A slow market/sync side read must not keep showing a member's old editor UI.
   const members=await cloud.client.from('ti_workspace_members')
