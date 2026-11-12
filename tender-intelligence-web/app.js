@@ -292,12 +292,28 @@ function buildDetailCell(label,value){
   const box=E('div','');child(box,E('small','',label),E('strong','',value===null||value===undefined||value===''?'未公開':value));return box;
 }
 async function loadCaseHistory(unit,job){
+  let archive=null,archiveError=null;
+  try{archive=await fetchArchivedCaseDetail(unit,job);}
+  catch(e){archiveError=e;}
+  // The indexed list usually has only a brief summary. Fetch the public
+  // source details on demand so the user sees original terms/amounts
+  // without waiting for the background enrichment backlog.
+  const hasFields=archive?.records?.some(r=>r?.detail&&Object.keys(r.detail).some(k=>k!=='url'));
+  if(hasFields)return archive;
   try{
-    return await fetchArchivedCaseDetail(unit,job);
-  }catch(archiveError){
-    const data=await api('/tender',{unit_id:unit,job_number:job},12000);
-    if(!Array.isArray(data.records)||!data.records.length)throw archiveError;
-    return data;
+    const current=await api('/tender',{unit_id:unit,job_number:job},12000);
+    if(!Array.isArray(current.records)||!current.records.length)throw Error('公開來源沒有詳細公告紀錄');
+    if(!archive)return current;
+    const byNotice=new Map();
+    for(const rec of archive.records||[])
+      byNotice.set(String(rec.date)+'::'+String(rec.filename),rec);
+    for(const rec of current.records)
+      byNotice.set(String(rec.date)+'::'+String(rec.filename),rec);
+    return {...current,unit_name:current.unit_name||archive.unit_name,
+      records:[...byNotice.values()],source:'public_detail_live'};
+  }catch(e){
+    if(archive)return archive;
+    throw archiveError||e;
   }
 }
 async function openDetail(row){
