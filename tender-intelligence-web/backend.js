@@ -359,7 +359,11 @@ export async function fetchArchivedCaseDetail(unitId,jobNumber){
     ...(detail.deposit?{'領投開標:押標金額度':detail.deposit}:{}),
     ...(detail.qualification?{'採購資料:廠商應附具之基本資格證明文件或物品':detail.qualification}:{}),
     ...(detail.tender_method?{'採購資料:招標方式':detail.tender_method}:{}),
-    ...(detail.decision_method?{'採購資料:決標方式':detail.decision_method}:{})
+    ...(detail.decision_method?{'採購資料:決標方式':detail.decision_method}:{}),
+    ...(detail.contact?{'標案內容:聯絡人':detail.contact}:{}),
+    ...(detail.phone?{'標案內容:聯絡電話':detail.phone}:{}),
+    ...(detail.description?{'標案內容:內容摘要':detail.description}:{}),
+    ...(detail.extra_description?{'標案內容:附加說明':detail.extra_description}:{})
   };
   const records=(notices.length?notices:[{
     source_date:item.latest_notice_date,filename:item.latest_filename,

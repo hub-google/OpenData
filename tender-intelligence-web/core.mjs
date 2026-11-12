@@ -94,6 +94,17 @@ export function deadlineLabel(value){
   return d?new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(d):'截止日待確認';
 }
 
+// A government notice link is reconstructed only from source-supplied date/file
+// identifiers using the published PCC redirect format. Never guess a case ID.
+export function officialNoticeUrl(row) {
+  const direct=safeOfficial(row?.detail?.url||row?.official_url);
+  if(direct)return direct;
+  const date=asText(row?.date??row?.source_date??row?.latest_notice_date);
+  const file=asText(row?.filename??row?.latest_filename);
+  if(!/^[0-9]{8}$/.test(date)||!(/^[A-Z]{2,4}-[0-9]{1,2}-[0-9]{5,12}$/).test(file))return '';
+  return 'https://web.pcc.gov.tw/prkms/tender/common/noticeDate/redirectPublic?ds='+
+    date+'&fn='+encodeURIComponent(file+'.xml');
+}
 export function normalize(row) {
   if (!row || !row.unit_id || !row.job_number) return null;
   return {

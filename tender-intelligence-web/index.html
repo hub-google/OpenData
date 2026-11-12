@@ -122,7 +122,10 @@
           </details>
           <div class="ti-scenario-row" role="group" aria-label="按案件目前狀態快速尋找商機">
             <span>快速找案</span>
-            <button type="button" data-scenario="all" aria-pressed="true">最新案件</button>
+            <button type="button" data-scenario="ready" aria-pressed="true">正式招標・有預算</button>
+            <button type="button" data-scenario="verify" aria-pressed="false">正式招標・待核實</button>
+            <button type="button" data-scenario="early" aria-pressed="false">前期徵詢・非招標</button>
+            <button type="button" data-scenario="all" aria-pressed="false">全部公告</button>
             <button type="button" data-scenario="open" aria-pressed="false">確認截止未到</button>
             <button type="button" data-scenario="soon" aria-pressed="false">三日內截止</button>
             <button type="button" data-scenario="small" aria-pressed="false">百萬以下（截止未到）</button>
@@ -145,6 +148,7 @@
             <label>結果排序<select id="sortFilter"><option value="date">最新公告</option><option value="deadline">官方截止日期早至晚</option><option value="budget">公開預算高至低</option><option value="title">標案名稱</option></select></label>
           </div>
           </details>
+          <p class="hint">預設只顯示官方截止未到且預算已核實的正式招標。預算或期限缺漏的正式招標請切換「待核實」；參考資料徵詢另列為「前期徵詢」，不等於可直接投標。公開預算是案件規模，不代表淨利。</p>
           <p class="hint">搜尋與篩選先在已入庫資料庫執行，再分頁顯示；沒有官方截止日的案件會明確標示「待確認」。「無法決標」只代表公告狀態，不能直接視為重新開放投標。</p>
         </div>
         <div class="metrics" id="metrics" hidden>
