@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-11-12T06:54:01.024Z",
+  "target": "https://hub-google.github.io/OpenData/tender-intelligence-web/",
+  "browser": "Playwright: 3 isolated anonymous signed-in accounts + real RLS",
+  "results": [
+    {
+      "name": "Owner creates workspace and a shared task",
+      "status": "PASS",
+      "data": {
+        "workspace_created": true,
+        "task_visible": true
+      }
+    },
+    {
+      "name": "Owner generates single-use invitation; member joins",
+      "status": "PASS",
+      "data": {
+        "joined": true,
+        "task_count": 1
+      }
+    },
+    {
+      "name": "Uninvited third account cannot read, write, or replay invitation",
+      "status": "PASS",
+      "data": {
+        "outsider_visible": 0,
+        "insert_denied": true,
+        "invite_replay_denied": true,
+        "escalation_denied": true
+      }
+    },
+    {
+      "name": "Owner changes editor to viewer; viewer remains read-only even via Data API",
+      "status": "FAIL",
+      "error": "page.waitForFunction: Timeout 12000ms exceeded.",
+      "screenshot": "fail-04.png"
+    },
+    {
+      "name": "Owner restores editor; editor can add a shared task",
+      "status": "PASS",
+      "data": {
+        "editor_write": true
+      }
+    },
+    {
+      "name": "Owner removes member; access is revoked immediately",
+      "status": "PASS",
+      "data": {
+        "member_revoke_effective": true
+      }
+    }
+  ],
+  "page_errors": []
+}

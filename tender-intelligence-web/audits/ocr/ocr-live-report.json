@@ -1,0 +1,77 @@
+{
+  "at": "2026-11-12T06:54:12.222Z",
+  "target": "https://hub-google.github.io/OpenData/tender-intelligence-web/",
+  "browser": "Real Playwright Chromium + Tesseract OCR",
+  "tests": [
+    {
+      "name": "Scanned PDF has no text layer until actual local OCR",
+      "status": "PASS",
+      "data": {
+        "page_count": 1,
+        "text_before": 0
+      }
+    },
+    {
+      "name": "Scanned PDF OCR feeds same original page into requirements review",
+      "status": "PASS",
+      "data": {
+        "message": "已取得 1 頁／區段。結果已累計帶入條款整理。請逐頁核對，沒有自動上傳。",
+        "pages": [
+          {
+            "source": "第 1 頁",
+            "method": "OCR（使用者已辨識）",
+            "characters": 30
+          }
+        ],
+        "sample": "ISO 27001 CERTIFICATE REQUIRED",
+        "qualification": "資格／證明（2）\n第 1 頁\nISO 27001\n第 1 頁\nCERTIFICATE REQUIRED\n\n此結果僅為全文關鍵字規則選取，未執行法律或資格判定；請以正式文件和公告為準。"
+      }
+    },
+    {
+      "name": "Long PDF OCR can process a later page then accumulate earlier pages",
+      "status": "PASS",
+      "data": {
+        "first_batch": 2,
+        "total": 2,
+        "source_pages": [
+          "第 1 頁",
+          "第 2 頁"
+        ]
+      }
+    },
+    {
+      "name": "Nine-page scanned PDF continues with next eight-page batch button",
+      "status": "PASS",
+      "data": {
+        "first_batch": 8,
+        "total_pages": 9,
+        "next_disabled": true
+      }
+    },
+    {
+      "name": "Image OCR feeds shared parser; changing files invalidates stale cache",
+      "status": "PASS",
+      "data": {
+        "message": "已取得 1 頁／區段。結果已累計帶入條款整理。請逐頁核對，沒有自動上傳。",
+        "pages": [
+          {
+            "source": "圖片 OCR",
+            "method": "OCR",
+            "characters": 30
+          }
+        ],
+        "sample": "ISO 27001 CERTIFICATE REQUIRED",
+        "qualification": "資格／證明（2）\n圖片 OCR\nISO 27001\n圖片 OCR\nCERTIFICATE REQUIRED\n\n此結果僅為全文關鍵字規則選取，未執行法律或資格判定；請以正式文件和公告為準。"
+      }
+    },
+    {
+      "name": "Switching to new source clears old OCR evidence",
+      "status": "PASS",
+      "data": {
+        "cache": null,
+        "text": "新文件只有中文說明，不含舊版 ISO 證照要求"
+      }
+    }
+  ],
+  "page_errors": []
+}
