@@ -61,7 +61,8 @@ async function check(name,fn,file){
   return {cards,info:info.slice(0,330)};
  },'02-recovered-search.png');
  await check('UAT: advanced search API 503 releases submit and reports the real error',async()=>{
-   const targeted='**/rest/v1/rpc/ti_archive_search_recent';
+   // The UI selects recent/simple/v5 based on its validated current form; intercept all variants.
+   const targeted='**/rest/v1/rpc/ti_archive_search_*';
    let calls=0;
    await page.route(targeted,async route=>{
      calls++;
