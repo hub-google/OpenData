@@ -7,7 +7,7 @@ let browser,page,loggedIn=false;
 const short=(s,n=400)=>String(s||'').replace(/\s+/g,' ').trim().slice(0,n);
 async function step(name,fn){
  try{const data=await fn();records.push({name,status:'PASS',data});console.log('PASS',name,JSON.stringify(data).slice(0,500));}
- catch(e){records.push({name,status:'FAIL',error:short(e.message)});console.log('FAIL',name,short(e.message));}
+ catch(e){const screen=await shot('FAIL-'+String(records.length+1).padStart(2,'0'));records.push({name,status:'FAIL',error:short(e.message,700),screen});console.log('FAIL',name,short(e.message));}
 }
 async function nav(id){
  const btn=page.locator('[data-view="'+id+'"]').first(),grp=btn.locator('xpath=ancestor::details[1]');
@@ -15,7 +15,29 @@ async function nav(id){
  await btn.click();await page.waitForTimeout(220);
 }
 async function shot(name){try{await page.screenshot({path:DIR+'/'+name+'.png',timeout:10000});return name+'.png';}catch(e){return 'unavailable';}}
-const file={name:'tender-audit-check.txt',mimeType:'text/plain',buffer:Buffer.from('資格：廠商須具備資訊安全設備維護實績，並檢附有效資格證明。履約期限：116年12月31日。押標金：依官方招標文件規定。','utf8')};
+async function prep(key){
+ const drawer=page.locator('#detailDrawer');
+ await drawer.waitFor({state:'visible',timeout:25000});
+ await page.locator('#detailContent [data-main-tab="3"]').click();
+ const tab=page.locator('#detailContent [data-prep-tab="'+key+'"]');
+ await tab.click();
+ const panel=page.locator('#detailContent .ti-prep-panel:not([hidden])');
+ await panel.waitFor({state:'visible',timeout:12000});
+ return panel;
+}
+async function ownedRows(table,cols,caseId='3.1.1::UT-11601'){
+ return page.evaluate(async ({table,cols,caseId})=>{
+  const {getClient}=await import(new URL('./backend.js',document.baseURI).href);
+  const db=await getClient(),{data:{user},error:authError}=await db.auth.getUser();
+  if(authError||!user)throw Error('No authenticated owner');
+  let q=db.from(table).select(cols).eq('user_id',user.id);
+  if(caseId)q=q.eq('case_id',caseId);
+  const {data,error}=await q.limit(50);
+  if(error)throw Error(error.message);
+  return data||[];
+ },{table,cols,caseId});
+}
+const file={name:'tender-audit-check.txt',mimeType:'text/plain',buffer:Buffer.from('資格：廠商須具備資訊系統設備維護實績，並檢附有效資格證明。履約期限：116年12月31日。押標金：依官方招標文件規定。','utf8')};
 async function run(){
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  page=await browser.newPage({viewport:{width:1400,height:900},locale:'zh-TW',timezoneId:'Asia/Taipei'});
@@ -39,11 +61,11 @@ async function run(){
  });
  await step('新增公司實績並查回清單',async()=>{
   await page.locator('#tiAssetType').selectOption('project');
-  await page.locator('#tiAssetTitle').fill(prefix+'模擬維護實績');
+  await page.locator('#tiAssetTitle').fill(prefix+'資訊系統設備維護實績');
   await page.locator('#tiAssetIssuer').fill('測試來源（非真實）');
   await page.locator('#tiAssetDetails').fill('這筆資料僅驗證表單與資料庫寫入，不表示真實資格。');
   await page.locator('#tiAssetSave').click();
-  await page.waitForFunction(value=>document.querySelector('#tiCompanyAssets')?.textContent?.includes(value),prefix+'模擬維護實績',{timeout:10000});
+  await page.waitForFunction(value=>document.querySelector('#tiCompanyAssets')?.textContent?.includes(value),prefix+'資訊系統設備維護實績',{timeout:10000});
   return {status:short(await page.locator('#tiCompanyStatus').innerText()),visible:await page.locator('#tiCompanyAssets').innerText(),screen:await shot('13-company-asset')};
  });
  await step('從真實標案詳情加入私人追蹤',async()=>{
@@ -61,59 +83,59 @@ async function run(){
   return {status:short(await brief.innerText(),290)};
  });
  await step('案件詳情：儲存投標評估',async()=>{
-  await page.getByRole('tab',{name:'投標評估'}).click();
-  const p=page.locator('#detailContent .ti-case-panel:not([hidden])');
+  const p=await prep('decision');
   await p.locator('select').first().selectOption('評估中');
   await p.locator('textarea').first().fill(prefix+'：尚未取得招標文件，不可判斷公司資格');
-  await p.getByRole('button',{name:'儲存案件決策'}).click();await page.waitForTimeout(1000);
-  return {status:short(await p.innerText(),300),screen:await shot('15-decision')};
+  await p.getByRole('button',{name:'儲存案件決策'}).click();
+  await page.waitForFunction(()=>document.querySelector('#detailContent .ti-prep-panel:not([hidden]) .ti-case-status')?.textContent?.includes('決策已保存'),null,{timeout:15000});
+  const rows=await ownedRows('ti_bid_decisions','decision,evidence_notes');
+  if(!rows.some(x=>x.decision==='評估中'&&x.evidence_notes.includes(prefix)))throw Error('決策成功提示與資料庫不一致：'+JSON.stringify(rows));
+  return {status:short(await p.innerText(),300),dbRows:rows.length,screen:await shot('15-decision')};
  });
  await step('案件詳情：新增待辦事項',async()=>{
-  await page.getByRole('tab',{name:'任務協作'}).click();
-  const p=page.locator('#detailContent .ti-case-panel:not([hidden])');
-  await p.locator('input').first().fill(prefix+'核對招標資格');
-  await p.getByRole('button',{name:'新增任務'}).click();await page.waitForTimeout(1300);
-  return {content:short(await p.innerText(),340),screen:await shot('16-task')};
+  const p=await prep('tasks');
+  await p.locator('input[required]').first().fill(prefix+'核對招標資格');
+  await p.getByRole('button',{name:'新增任務'}).click();
+  await page.waitForFunction(name=>document.querySelector('#detailContent .ti-prep-panel:not([hidden]) .ti-case-list')?.textContent?.includes(name),prefix+'核對招標資格',{timeout:16000});
+  const rows=await ownedRows('ti_tasks','title,done');
+  if(!rows.some(x=>x.title===prefix+'核對招標資格'))throw Error('待辦沒有成功寫入本人資料庫：'+JSON.stringify(rows));
+  return {dbRows:rows.length,content:short(await p.innerText(),300),screen:await shot('16-task')};
  });
  await step('案件詳情：直接上傳私人文件',async()=>{
-  await page.getByRole('tab',{name:'文件與標書'}).click();
-  const p=page.locator('#detailContent .ti-case-panel:not([hidden])');
+  const p=await prep('documents');
   await p.locator('input[type=file]').first().setInputFiles(file);
   await p.getByRole('button',{name:'上傳至此案文件庫'}).click();
-  const saved=await page.waitForFunction(()=>document.querySelector('#detailContent .ti-case-panel:not([hidden])')?.textContent?.includes('tender-audit-check.txt'),null,{timeout:12000}).then(()=>true).catch(()=>false);
-  const content=short(await p.innerText(),480),toast=short(await page.locator('#toast').innerText(),300);
-  if(!saved){
-   const rows=await page.evaluate(async()=>{
-    const {getClient}=await import(new URL('./backend.js',document.baseURI).href),db=await getClient(),{data:{user}}=await db.auth.getUser();
-    const {data,error}=await db.from('ti_documents').select('filename,case_id,storage_path').eq('user_id',user.id).order('created_at',{ascending:false}).limit(5);
-    return {data,error:error?.message};
-   });
-   throw Error('文件已存但案件清單未更新：'+toast+'；'+JSON.stringify(rows).slice(0,380));
-  }
-  if(content.includes('文件尚未儲存成功'))throw Error('私有文件上傳失敗：'+toast+'；'+content);
-  return {content,toast,screen:await shot('17-document')};
+  await page.waitForFunction(()=>document.querySelector('#detailContent .ti-prep-panel:not([hidden]) .ti-case-list')?.textContent?.includes('tender-audit-check.txt'),null,{timeout:24000});
+  const rows=await ownedRows('ti_documents','filename,storage_path,case_id');
+  if(!rows.some(x=>x.filename===file.name&&x.case_id==='3.1.1::UT-11601'&&x.storage_path))
+    throw Error('文件未在私人資料庫正確關聯案件：'+JSON.stringify(rows));
+  return {dbRows:rows.length,content:short(await p.innerText(),360),screen:await shot('17-document')};
  });
  await step('下載單案私有文件並確認原始位元內容',async()=>{
-  const panel=page.locator('#detailContent .ti-case-panel:not([hidden])');
+  const panel=await prep('documents');
+  await panel.getByRole('button',{name:'下載文件'}).first().waitFor({state:'visible',timeout:18000});
   const [download]=await Promise.all([
-   page.waitForEvent('download',{timeout:15000}),
+   page.waitForEvent('download',{timeout:20000}),
    panel.getByRole('button',{name:'下載文件'}).first().click()
   ]);
   const bytes=fs.readFileSync(await download.path());
-  if(!bytes.equals(file.buffer))throw Error('下載位元內容與上傳檔案不一致');
-  return {filename:download.suggestedFilename(),bytes:bytes.length};
+  if(!bytes.equals(file.buffer))throw Error('下載位元內容與上傳原始檔不同');
+  return {filename:download.suggestedFilename(),bytes:bytes.length,screen:await shot('17b-document-download')};
  });
  await step('標書條款：公司實績候選比對並保存',async()=>{
   await page.locator('#closeDetail').click();await nav('documents');
   await page.locator('#documentFile').setInputFiles(file);
   await page.locator('#documentCaseId').selectOption('3.1.1::UT-11601');
-  await page.locator('#tiCompareCompany').click();await page.waitForTimeout(1700);
-  const checkCount=await page.locator('#tiCompareResults .ti-qualify-row').count();
-  if(checkCount)await page.locator('#tiCompareResults button').last().click();
-  await page.waitForTimeout(900);
-  const status=short(await page.locator('#tiCompareStatus').innerText());
-  if(!status.includes('已保存')||!status.includes('此標案'))throw Error('資格記錄未關聯案件：'+status);
-  return {check_count:checkCount,status,screen:await shot('18-qualification')};
+  await page.locator('#tiCompareCompany').click();
+  await page.waitForFunction(()=>document.querySelector('#tiCompareStatus')?.textContent?.includes('找到')||document.querySelector('#tiCompareStatus')?.textContent?.includes('比對未完成'),null,{timeout:16000});
+  const count=await page.locator('#tiCompareResults .ti-qualify-row').count();
+  const matched=await page.locator('#tiCompareResults .ti-qualify-row').filter({hasText:prefix+'資訊系統設備維護實績'}).count();
+  if(count===0||matched===0)throw Error('未找到原文資格與公司資訊系統實績的候選比對：'+await page.locator('#tiCompareStatus').innerText());
+  await page.getByRole('button',{name:'保存本次人工資格比對'}).click();
+  await page.waitForFunction(()=>document.querySelector('#tiCompareStatus')?.textContent?.includes('已保存至私人資料庫並關聯此標案'),null,{timeout:16000});
+  const rows=await ownedRows('ti_qualification_checks','case_id,checks,document_name');
+  if(!rows.some(x=>x.case_id==='3.1.1::UT-11601'&&x.document_name===file.name&&x.checks?.length))throw Error('人工資格比對沒有保存或關聯錯誤：'+JSON.stringify(rows));
+  return {check_count:count,matched,dbRows:rows.length,status:short(await page.locator('#tiCompareStatus').innerText()),screen:await shot('18-qualification')};
  });
  await step('監控：新增測試用競品條件',async()=>{
   await nav('alerts');
@@ -155,9 +177,12 @@ async function run(){
   const other=await browser.newContext({locale:'zh-TW',timezoneId:'Asia/Taipei'});
   const p2=await other.newPage();
   try{
-   await p2.goto(BASE,{waitUntil:'domcontentloaded',timeout:35000});
+   await p2.goto(BASE+'?demo=1',{waitUntil:'domcontentloaded',timeout:35000});
    await p2.locator('#accountDemoQuick').click();
-   await p2.waitForFunction(()=>document.querySelector('#accountButton')?.textContent?.includes('測試帳號已登入'),null,{timeout:20000});
+   await p2.waitForFunction(()=>document.querySelector('#accountInfo')?.textContent?.includes('測試帳號已登入'),null,{timeout:25000});
+   const ownerId=await page.evaluate(async()=>{const {getClient}=await import(new URL('./backend.js',document.baseURI).href);const {data:{user}}=await(await getClient()).auth.getUser();return user?.id});
+   const outsiderId=await p2.evaluate(async()=>{const {getClient}=await import(new URL('./backend.js',document.baseURI).href);const {data:{user}}=await(await getClient()).auth.getUser();return user?.id});
+   if(!ownerId||!outsiderId||ownerId===outsiderId)throw Error('兩個測試帳號未正確隔離：'+ownerId+'/'+outsiderId);
    const rows=await p2.evaluate(async()=>{
     const {getClient}=await import(new URL('./backend.js',document.baseURI).href),db=await getClient();
     const [docs,assets,cases,reports]=await Promise.all([
@@ -172,12 +197,19 @@ async function run(){
    if(rows.errors.length||rows.docs||rows.assets||rows.cases||rows.reports)
      throw Error('新測試帳號看到了別人的資料或存取失敗：'+JSON.stringify(rows));
    await p2.evaluate(async()=>{const {getClient}=await import(new URL('./backend.js',document.baseURI).href);(await getClient()).auth.signOut()});
-   return rows;
+   return {...rows,distinctAccounts:true,screen:await shot('20b-rls-owner')};
   }finally{await other.close();}
  });
  await step('返回頁面：確認私人公司資料跨頁保存',async()=>{
   await nav('company');await page.locator('#tiCompanyRefresh').click();await page.waitForTimeout(1200);
-  return {company:await page.locator('#tiCompanyName').inputValue(),asset:short(await page.locator('#tiCompanyAssets').innerText(),240),screen:await shot('21-readback')};
+  await page.waitForFunction(prefix=>
+    document.querySelector('#tiCompanyName')?.value?.includes(prefix)&&
+    document.querySelector('#tiCompanyAssets')?.textContent?.includes(prefix),
+    prefix,{timeout:15000});
+  const company=await page.locator('#tiCompanyName').inputValue();
+  const asset=short(await page.locator('#tiCompanyAssets').innerText(),240);
+  if(!company.includes(prefix)||!asset.includes(prefix))throw Error('跨頁讀回沒有保存原公司資料');
+  return {company,asset,screen:await shot('21-readback')};
  });
  await step('投標績效統計只計入自行記錄的已結案結果',async()=>{
   await nav('tracking');
@@ -200,19 +232,14 @@ async function run(){
  });
  await step('刪除單案私人文件並確認已從資料庫移除',async()=>{
   await page.goto(BASE+'?case_unit=3.1.1&case_no=UT-11601',{waitUntil:'domcontentloaded',timeout:35000});
-  await page.getByRole('tab',{name:'文件與標書'}).click();
-  const panel=page.locator('#detailContent .ti-case-panel:not([hidden])');
-  await panel.getByRole('button',{name:'刪除文件'}).first().waitFor({timeout:12000});
+  const panel=await prep('documents');
+  await panel.getByRole('button',{name:'刪除文件'}).first().waitFor({state:'visible',timeout:18000});
   page.once('dialog',dialog=>dialog.accept());
   await panel.getByRole('button',{name:'刪除文件'}).first().click();
-  await page.waitForFunction(()=>!document.querySelector('#detailContent .ti-case-panel:not([hidden])')?.textContent?.includes('tender-audit-check.txt'),null,{timeout:12000});
-  const result=await page.evaluate(async()=>{
-   const {getClient}=await import(new URL('./backend.js',document.baseURI).href),db=await getClient(),{data:{user}}=await db.auth.getUser();
-   const {data,error}=await db.from('ti_documents').select('id').eq('user_id',user.id).eq('case_id','3.1.1::UT-11601');
-   return {remaining:data?.length,error:error?.message};
-  });
-  if(result.error||result.remaining!==0)throw Error('文件刪除後資料庫仍有紀錄：'+JSON.stringify(result));
-  return result;
+  await page.waitForFunction(()=>!document.querySelector('#detailContent .ti-prep-panel:not([hidden]) .ti-case-list')?.textContent?.includes('tender-audit-check.txt'),null,{timeout:18000});
+  const rows=await ownedRows('ti_documents','id,filename,storage_path');
+  if(rows.some(x=>x.filename===file.name))throw Error('刪除後仍可在本人資料庫看到文件：'+JSON.stringify(rows));
+  return {remainingOwnDocuments:rows.length,screen:await shot('23-document-deleted')};
  });
  await step('清理本次測試帳號下的私人測試資料',async()=>{
   const result=await page.evaluate(async()=>{
