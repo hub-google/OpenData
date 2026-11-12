@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parseDate,dateLabel,safeNumber,normalize,dedupe,mergeCaseAmounts,filtered,groupOf,stateOf,
-  fieldsOf,summaryOf,deadlineDate,deadlineLabel,opportunityOf,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,amountRatio,ratioStats,scoreCase,csvEscape,safeOfficial,keyOf
+  fieldsOf,summaryOf,deadlineDate,deadlineLabel,opportunityOf,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,amountRatio,ratioStats,scoreCase,csvEscape,safeOfficial,officialNoticeUrl,keyOf
 } from '../core.mjs';
 
 const base={unit_id:'A.15.2',job_number:'115157G',unit_name:'交通部中央氣象署',date:20261103,filename:'TIQ-1-71148889',
@@ -166,4 +166,15 @@ test('supplier fit never claims verified legal eligibility',()=>{
  assert.ok(fit.unknowns.some(x=>x.includes('資格')));
  const failed=assessCompanyFit({...row,status:'無法決標'}, {services:'氣象資訊'}, {},[]);
  assert.equal(failed.label,'目前非投標商機');
+});
+
+test('derived government notice link comes only from recorded date and file identifier',()=>{
+  assert.equal(officialNoticeUrl({...base,detail:{}}),
+    'https://web.pcc.gov.tw/prkms/tender/common/noticeDate/redirectPublic?ds=20261103&fn=TIQ-1-71148889.xml');
+  assert.equal(officialNoticeUrl({...base,filename:'../../x'}),'');
+  assert.equal(officialNoticeUrl({...base,date:'not-a-date'}),'');
+  assert.equal(officialNoticeUrl({...base,detail:{url:'https://evil.example/redirect'}}),
+    'https://web.pcc.gov.tw/prkms/tender/common/noticeDate/redirectPublic?ds=20261103&fn=TIQ-1-71148889.xml');
+  assert.equal(officialNoticeUrl({...base,detail:{url:'https://web.pcc.gov.tw/official'}}),
+    'https://web.pcc.gov.tw/official');
 });

@@ -4,7 +4,7 @@ import {loadAgencyEvidence} from './agency-deep.js';
 import {
   API_ROOT,asText,keyOf,safeNumber,formatMoney,parseDate,dateLabel,typeOf,
   normalize,dedupe,mergeCaseAmounts,filtered,fieldsOf,summaryOf,ratioStats,scoreCase,
-  compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,csvEscape,safeOfficial
+  compareDeadline,opportunityOf,deadlineLabel,noticeChangeSummary,possibleRelatedCase,assessCompanyFit,csvEscape,safeOfficial,officialNoticeUrl
 } from './core.mjs';
 import {getClient,ensureGuestSession,fetchArchive,fetchCaseSearch,fetchDefaultCaseFallback,fetchFastTitleFallback,enrichCaseRecords,fetchUnifiedTitleSearch,fetchBasicArchiveSearch,fetchLatestAmounts,fetchLatestCachedNotices,fetchArchivedCaseDetail,fetchAgencyArchivedAnnual,fetchAgencyConfirmedWinners,fetchSourceStatus,cloudSaved,cloudWatches,cloudNotifications,DATABASE_URL,PUBLISHABLE_KEY} from './backend.js';
 
@@ -35,7 +35,7 @@ function loadStore() {
 const store=loadStore();
 const cloud={client:null,user:null,taskRows:[]};
 const state={docPages:[],rows:[],searchRows:[],sourcePage:1,clientPage:1,totalPages:1,mode:'latest',query:'',date:null,
-  running:0,view:'search',scenario:'all',selected:null,details:new Map(),vendorRows:[],docRows:[],watchRunning:false,lastSearch:'最新標案'};
+  running:0,view:'search',scenario:'ready',selected:null,details:new Map(),vendorRows:[],docRows:[],watchRunning:false,lastSearch:'最新標案'};
 let toastTimer=null;
 const E=(tag,cls,text)=>{
   const n=document.createElement(tag);
@@ -179,6 +179,9 @@ async function search(mode,query='',sourcePage=1){
     }
     state.totalPages=Math.max(1,Number(data.total_pages||1));
     const descriptions={
+      ready:'主要商機：正式招標、官方截止未到且有公開預算',
+      verify:'正式招標待核實：預算或官方截止時間未取得',
+      early:'前期商機：徵求參考資料或公開閱覽，不等於可投標',
       open:'官方截止日未到的招標案件',
       soon:'三日內截止的招標案件',
       small:'公開預算百萬元以下且官方截止日未到的招標案件',
@@ -245,7 +248,12 @@ function caseCard(row,{radarScore=null}={}){
   const opportunity=opportunityOf(row);
   child(left,btn(row.title,'case-title',()=>openDetail(row)));
   const m=E('div','case-meta');
-  const tag=E('span','case-tag'+(opportunity.kind==='awarded'?' awarded':opportunity.kind==='failed'?' failed':opportunity.kind==='amended'?' amended':''),opportunity.label);
+  const phase=row.status==='公開徵求'||row.status==='公開閱覽'
+    ?'前期徵詢・不能直接投標'
+    :opportunity.canConfirmOpen&&row.budget!==null?'正式招標・預算已確認'
+    :row.status==='招標'&&(opportunity.kind==='unknown'||row.budget===null)
+      ?'正式招標・欄位待核實':opportunity.label;
+  const tag=E('span','case-tag'+(opportunity.kind==='awarded'?' awarded':opportunity.kind==='failed'?' failed':opportunity.kind==='amended'?' amended':''),phase);
   child(m,tag,E('span','',row.agency||'機關未公開'),E('span','','·'),E('span','',row.group));
   if(row.job_number)child(m,E('span','','· 案號 '+row.job_number));
   const second=E('div','case-meta');
@@ -259,9 +267,13 @@ function caseCard(row,{radarScore=null}={}){
   if(radarScore!==null)child(second,E('span','case-tag','關鍵字匹配 '+radarScore+' 項'));
   const actions=E('div','ti-case-card-actions');
   actions.append(btn('查看案件與公告歷程','ghost-btn',()=>openDetail(row)));
+  const officialPage=officialNoticeUrl(row);
+  if(officialPage)actions.append(link('政府原始公告 ↗',officialPage));
   child(left,m,second,actions);
   const amount=E('div','');
-  child(amount,E('small','','公開預算'),E('strong','',row.budget===null?'尚無可確認資料':formatMoney(row.budget)));
+  child(amount,E('small','','公開預算'),E('strong','',row.budget===null?
+    (row.status==='公開徵求'||row.status==='公開閱覽'?'前期徵詢・尚未取得預算':'預算尚待補抓／核對'):
+    formatMoney(row.budget)));
   const favorite=btn(store.saved[row.id]?'★':'☆','favorite-btn'+(store.saved[row.id]?' saved':''),()=>toggleSaved(row));
   favorite.setAttribute('aria-label',store.saved[row.id]?'移除追蹤':'加入追蹤');
   child(right,amount,favorite);child(card,left,right);
@@ -428,6 +440,10 @@ function renderDetail(row,data){
   page.append(tags);
   if(opportunity.kind==='unknown')page.append(E('p','notice warning','此案目前沒有可確認的官方截止時間，不能判定仍可投標。請核對最新官方公告或提出詳情補抓。'));
   if(opportunity.kind==='amended')page.append(E('p','notice warning','此案有更正公告；即使既有截標日期尚未到，也必須核對更正內容與最新期限，不能直接視為可投標。'));
+  if(row.status==='公開徵求'||row.status==='公開閱覽')
+    page.append(E('p','notice warning','這是前期參考資料徵詢／公開閱覽，不是正式投標公告。可提供資訊或先評估未來商機，但不能直接當成可投標案件。'));
+  if(row.budget===null)
+    page.append(E('p','notice warning','預算目前未由原始公告確認：可能尚未公告，也可能是詳細資料仍待補抓。不能把未知預算視為零元或推估利潤。'));
   if(data.source==='ingested_archive'){
     page.append(E('p','notice warning','即時來源無法直接讀取，以下為本站已成功入庫的真實公告紀錄；未擷取到的標書細節一律顯示未公開，請以官方原文確認。'+
       (data.partial_history?'本頁歷史上限 500 筆；請核對完整原始紀錄。':'')+
@@ -446,7 +462,9 @@ function renderDetail(row,data){
     try{await navigator.clipboard.writeText(url.toString());toast('已複製此案專屬網址');}
     catch{toast('無法存取剪貼簿，請使用瀏覽器的分享功能。');}
   }));
-  child(actions,link('資料 API ↗',apiLink));if(sum.latestFields.url||info.url||row.detail?.url)child(actions,link('官方原始公告 ↗',safeOfficial(sum.latestFields.url||info.url||row.detail?.url)));
+  child(actions,link('資料 API ↗',apiLink));
+  const officialDetail=officialNoticeUrl(sum.latest)||officialNoticeUrl(row);
+  if(officialDetail)child(actions,link('政府原始公告 ↗',officialDetail));
   page.append(actions);
   const grid=E('div','detail-grid');
   const latest=sum.latest||row,latestInfo=fieldsOf(latest.detail);
@@ -488,8 +506,8 @@ function renderDetail(row,data){
       }
       if(!difference.changes.length)item.append(E('span','minor','已收錄的可比較欄位沒有可確認變化；不代表標書內容沒有修改。'));
     }
-    const url=safeOfficial(rec.detail?.url);
-    if(url)item.append(link('開啟官方公告 ↗',url));
+    const url=officialNoticeUrl(rec);
+    if(url)item.append(link('開啟政府公告 ↗',url));
     timeline.append(item);
   }
   page.append(timeline);

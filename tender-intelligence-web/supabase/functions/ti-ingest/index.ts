@@ -64,6 +64,14 @@ async function upsertCasesWithoutRegression(rows){
   return 0;
  });
 }
+// PCC's public redirect is identified by the published source date and
+// announcement filename. Preserve the original API detail URL when available.
+function sourceNoticeUrl(date,filename){
+ const d=text(date),f=text(filename);
+ if(!/^[0-9]{8}$/.test(d)||!(/^[A-Z]{2,4}-[0-9]{1,2}-[0-9]{5,12}$/).test(f))return null;
+ return "https://web.pcc.gov.tw/prkms/tender/common/noticeDate/redirectPublic?ds="+d+
+  "&fn="+encodeURIComponent(f+".xml");
+}
 function norm(r,stamp){
  const unit=text(r?.unit_id),job=text(r?.job_number),fn=text(r?.filename),dt=Number(r?.date);
  if(!unit||!job||!fn||!Number.isInteger(dt)||dt<19990101||dt>20991231)return null;
@@ -73,10 +81,10 @@ function norm(r,stamp){
  return {c:{id,unit_id:unit,job_number:job,title:title.slice(0,800),agency:text(r.unit_name).slice(0,450)||null,
  category:cat.slice(0,700)||null,group_name:g,latest_notice_type:t||null,
  latest_notice_date:dt,budget_amount:num(r.budget_amount),award_amount:num(r.award_amount),
- official_url:null,latest_filename:fn,source_fetched_at:stamp},
+ official_url:sourceNoticeUrl(dt,fn),latest_filename:fn,source_fetched_at:stamp},
  n:{id:id+"::"+dt+"::"+fn,case_id:id,source_date:dt,filename:fn,notice_type:t||null,
  title:title.slice(0,800),category:cat.slice(0,700)||null,
- budget_amount:num(r.budget_amount),award_amount:num(r.award_amount),official_url:null,
+ budget_amount:num(r.budget_amount),award_amount:num(r.award_amount),official_url:sourceNoticeUrl(dt,fn),
  company_ids:Array.isArray(companies.ids)?companies.ids.map(text).slice(0,100):[],
  company_names:Array.isArray(companies.names)?companies.names.map(text).slice(0,100):[],
  company_role_keys:companies.name_key&&typeof companies.name_key==="object"?companies.name_key:{},
@@ -116,12 +124,17 @@ async function enrich(c){
  const budget=records.map(r=>valueFrom(r,["預算金額"])).find(v=>v!==null)??null;
  const award=records.filter(r=>/決標/.test(text(r?.brief?.type))&&!/無法決標/.test(text(r?.brief?.type)))
    .map(r=>valueFrom(r,["總決標金額","決標金額"])).find(v=>v!==null)??null;
- const detail=bid?.detail||{},link=official(latest.detail?.url)||official(detail.url);
+ const detail=bid?.detail||{},link=official(latest.detail?.url)||official(detail.url)||
+  sourceNoticeUrl(latest.date,latest.filename);
  const fields={deadline_at:rocDate(pick(detail,"截止投標")),opening_at:rocDate(pick(detail,"開標時間")),
   location:text(pick(detail,"履約地點"))||null,period:text(pick(detail,"履約期限")).slice(0,4000)||null,
   deposit:text(pick(detail,"押標金額度")).slice(0,1000)||null,
   qualification:text(pick(detail,"廠商應附具之基本資格證明文件或物品")).slice(0,10000)||null,
   tender_method:text(pick(detail,"招標方式"))||null,decision_method:text(pick(detail,"決標方式"))||null,
+  contact:text(pick(latest.detail,"聯絡人")||pick(detail,"聯絡人")).slice(0,300)||null,
+  phone:text(pick(latest.detail,"聯絡電話")||pick(detail,"聯絡電話")).slice(0,300)||null,
+  description:text(pick(latest.detail,"內容摘要")||pick(detail,"內容摘要")).slice(0,4000)||null,
+  extra_description:text(pick(latest.detail,"附加說明")||pick(detail,"附加說明")).slice(0,6000)||null,
   official_page:link,source_api:src,budget_amount:budget,award_amount:award};
  await db("ti_case_details?on_conflict=case_id","POST",[{case_id:c.id,latest_notice_id:c.id+"::"+latest.date+"::"+latest.filename,
   details:fields,records_count:records.length,fetched_at:new Date().toISOString()}],
@@ -140,7 +153,7 @@ async function enrich(c){
       ?valueFrom(notice,["總決標金額","決標金額"]):null;
    if(b!==null)partial.budget_amount=b;
    if(a!==null)partial.award_amount=a;
-   const noticeLink=official(notice?.detail?.url);
+   const noticeLink=official(notice?.detail?.url)||sourceNoticeUrl(notice.date,notice.filename);
    if(noticeLink)partial.official_url=noticeLink;
    if(Object.keys(partial).length){
      const nid=c.id+"::"+notice.date+"::"+notice.filename;
