@@ -2436,13 +2436,29 @@ function initTeamUI(){
   finally{button.disabled=false;}
  });
  $('workspaceCreateForm').addEventListener('submit',async e=>{
-  e.preventDefault();if(!cloud.user)return toast('請先登入。');
+  e.preventDefault();
   const name=$('workspaceName').value.trim();if(!name)return;
-  const {data,error}=await cloud.client.from('ti_workspaces')
-    .insert({name,owner_id:cloud.user.id}).select('id').single();
-  if(error)return toast('建立工作區失敗：'+readableError(error));
-  selectedWorkspace=data.id;$('workspaceName').value='';await refreshWorkspaces();
-  toast('已建立團隊工作區。');
+  const button=e.currentTarget.querySelector('button[type="submit"]');
+  if(button)button.disabled=true;
+  try{
+    const client=cloud.client||await getClient();
+    // A guest login can settle after the page has already rendered. The owner
+    // written to RLS-protected tables must match the *current* signed JWT,
+    // never a stale cached cloud.user from before an anonymous auth switch.
+    const {data:sessionResult,error:sessionError}=await client.auth.getSession();
+    const {data:userResult,error:verifyError}=await client.auth.getUser();
+    const user=userResult?.user;
+    if(sessionError||verifyError||!user||!sessionResult?.session?.user
+       ||sessionResult.session.user.id!==user.id)
+      throw Error('登入身分尚未同步完成，請稍後再試');
+    if(cloud.user?.id!==user.id){cloud.client=client;cloud.user=user;renderAccount();}
+    const {data,error}=await client.from('ti_workspaces')
+      .insert({name,owner_id:user.id}).select('id').single();
+    if(error||!data?.id)throw error||Error('資料庫未回傳工作區編號');
+    selectedWorkspace=data.id;$('workspaceName').value='';await refreshWorkspaces();
+    toast('已建立團隊工作區。');
+  }catch(error){toast('建立工作區失敗：'+readableError(error));}
+  finally{if(button)button.disabled=false;}
  });
  $('workspaceSelect').addEventListener('change',()=>{
   selectedWorkspace=$('workspaceSelect').value;void renderWorkspace();
