@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-11-12T07:03:52.921Z",
+  "target": "https://hub-google.github.io/OpenData/tender-intelligence-web/",
+  "browser": "Playwright: 3 isolated anonymous signed-in accounts + real RLS",
+  "results": [
+    {
+      "name": "Owner creates workspace and a shared task",
+      "status": "PASS",
+      "data": {
+        "workspace_created": true,
+        "task_visible": true
+      }
+    },
+    {
+      "name": "Owner generates single-use invitation; member joins",
+      "status": "PASS",
+      "data": {
+        "joined": true,
+        "task_count": 1
+      }
+    },
+    {
+      "name": "Uninvited third account cannot read, write, or replay invitation",
+      "status": "PASS",
+      "data": {
+        "outsider_visible": 0,
+        "insert_denied": true,
+        "invite_replay_denied": true,
+        "escalation_denied": true
+      }
+    },
+    {
+      "name": "Owner changes editor to viewer; viewer remains read-only even via Data API",
+      "status": "FAIL",
+      "error": "唯讀權限雖已由資料庫確認，但會員頁面未更新：{\"output\":\"團隊案件 0 件 · 成員 2 人\\n\\n你的權限：未知。跨裝置案件會存到 ti_workspace_cases；角色由 RLS 驗證。\\n\\n共用投標案件\\n\\n目前沒有共用案件。\\n\\n共用待辦\\nWORKSPACE-RLS-mwd7bbcg\\n無期限\\n未指派\\n0db6356e…（owner）\\n85654e49…（viewer）\\n未送審\\n待審核\\n團隊共用附件\\n\\n使用獨立私有儲存區，只有本工作區成員可查看；編輯者可上傳，只有上傳者或管理員可刪除。單檔上限 15 MB。\\n\\n目前尚無共用附件。\\n\\n團隊共用監控規則\\n\\n所有成員共用關鍵字監控；只由團隊 Owner／Admin 建立或修改。命中公告時每位成員都只會收到一則同版本通知。\\n\\n目前沒有團隊共用監控。\\n\\n團隊成員\\n0db6356e…\\towner\\t2026/11/12\\n85654e49…\\tviewer\\t2026/11/12\\n",
+      "screenshot": "fail-04.png"
+    },
+    {
+      "name": "Owner restores editor; editor can add a shared task",
+      "status": "PASS",
+      "data": {
+        "editor_write": true
+      }
+    },
+    {
+      "name": "Owner removes member; access is revoked immediately",
+      "status": "PASS",
+      "data": {
+        "member_revoke_effective": true
+      }
+    }
+  ],
+  "page_errors": []
+}
