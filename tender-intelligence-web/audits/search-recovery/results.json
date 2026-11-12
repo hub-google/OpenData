@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-11-12T07:10:47.274Z",
+  "target": "https://hub-google.github.io/OpenData/tender-intelligence-web/",
+  "checks": [
+    {
+      "name": "UAT: HTTP 503 must show source-backed fallback or an honest error",
+      "status": "PASS",
+      "details": {
+        "intercepted": 1,
+        "sourceBackedFallback": false,
+        "cards": 0,
+        "message": "真實資料讀取失敗：UAT simulated upstream unavailable。請稍後重新查詢，本站不會以模擬公告代替。",
+        "http": [
+          {
+            "status": 503,
+            "path": "https://unapiwajmgqqtdkixaab.supabase.co/rest/v1/rpc/ti_case_search_v3"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UAT: after outage, retry can read genuine matching cases",
+      "status": "PASS",
+      "details": {
+        "cards": 30,
+        "info": "標案名稱：資安｜全庫篩選｜符合 116 件案件｜本頁 30 件（每個案件僅顯示一筆，依機關與案號去重；非全國完整資料）｜全部篩選與排序先在資料庫完成"
+      }
+    },
+    {
+      "name": "UAT: advanced search API 503 releases submit and reports the real error",
+      "status": "PASS",
+      "details": {
+        "calls": 1,
+        "submitEnabled": true,
+        "error": "資料庫進階搜尋失敗：UAT advanced search outage"
+      }
+    },
+    {
+      "name": "UAT: public page never exposes production debug credentials",
+      "status": "PASS",
+      "details": {
+        "publicDemoButtonVisible": false,
+        "jsErrors": 0
+      }
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "total": 4
+  }
+}
