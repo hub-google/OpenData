@@ -13,8 +13,17 @@ test('rejects invalid URL modes, unrelated views and unsafe filter values',()=>{
  const state=readBasicSearchUrl('?mode=bad&page=-2&status=unsafe&group=garbage&min=-1&sort=random&scenario=unknown');
  assert.equal(state.mode,'latest');assert.equal(state.page,1);
  assert.equal(state.status,'全部');assert.equal(state.group,'全部');
- assert.equal(state.min,'');assert.equal(state.max,'');assert.equal(state.sort,'date');assert.equal(state.scenario,'all');
+ assert.equal(state.min,'');assert.equal(state.max,'');assert.equal(state.sort,'date');assert.equal(state.scenario,'ready');
 });
 test('empty defaults do not clutter a shared URL',()=>{
- assert.equal(writeBasicSearchUrl('https://example.com/path',{mode:'latest',query:'',page:1,scenario:'all',status:'全部',group:'全部',min:'',sort:'date'}),'/path');
+ assert.equal(writeBasicSearchUrl('https://example.com/path',{mode:'latest',query:'',page:1,scenario:'ready',status:'全部',group:'全部',min:'',sort:'date'}),'/path');
+});
+
+test('business-stage scenario is stable through share, reload and explicit all-cases links',()=>{
+  for(const scenario of ['ready','verify','early','all']){
+    const url=writeBasicSearchUrl('https://example.com/path',{mode:'latest',scenario});
+    const restored=readBasicSearchUrl(url.includes('?')?url.slice(url.indexOf('?')):'?mode=latest');
+    assert.equal(restored.scenario,scenario);
+    if(scenario==='all')assert.match(url,/scenario=all/);
+  }
 });

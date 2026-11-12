@@ -1,6 +1,6 @@
 // Reproducible, validated basic search links. Never expose private user data.
 const modes=new Set(['latest','title','archive','agency','vendor','companyId']);
-const scenarios=new Set(['all','open','soon','small','failed','amended','awarded']);
+const scenarios=new Set(['ready','verify','early','all','open','soon','small','failed','amended','awarded']);
 const groups=new Set(['全部','工程','財物','勞務','未分類']);
 const statusKinds=new Set(['全部','招標','決標','更正','無法決標','公開閱覽','公開徵求','財物標售']);
 const sorts=new Set(['date','budget','title','deadline']);
@@ -14,7 +14,7 @@ export function readBasicSearchUrl(search){
   mode:allow(p.get('mode'),modes,'latest'),
   query:String(p.get('q')||'').slice(0,120),
   page:Number.isInteger(num)&&num>=1&&num<=10000?num:1,
-  scenario:allow(p.get('scenario'),scenarios,'all'),
+  scenario:allow(p.get('scenario'),scenarios,'ready'),
   status:allow(p.get('status'),statusKinds,'全部'),
   group:allow(p.get('group'),groups,'全部'),
   min:/^\d{1,13}$/.test(rawMin)?rawMin:'',
@@ -36,7 +36,7 @@ export function writeBasicSearchUrl(href,state){
  set('q',String(s.query||'').slice(0,120),'');
  const page=Number(s.page);
  set('page',Number.isInteger(page)&&page>1&&page<=10000?page:1,1);
- set('scenario',allow(s.scenario,scenarios,'all'),'all');
+ set('scenario',allow(s.scenario,scenarios,'ready'),'ready');
  set('status',allow(s.status,statusKinds,'全部'),'全部');
  set('group',allow(s.group,groups,'全部'),'全部');
  const min=String(s.min??''),max=String(s.max??'');

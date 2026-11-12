@@ -442,7 +442,7 @@ function renderDetail(row,data){
   if(opportunity.kind==='amended')page.append(E('p','notice warning','此案有更正公告；即使既有截標日期尚未到，也必須核對更正內容與最新期限，不能直接視為可投標。'));
   if(row.status==='公開徵求'||row.status==='公開閱覽')
     page.append(E('p','notice warning','這是前期參考資料徵詢／公開閱覽，不是正式投標公告。可提供資訊或先評估未來商機，但不能直接當成可投標案件。'));
-  if(row.budget===null)
+  if(!sum.notices.some(n=>safeNumber(n.budget_amount)!==null)&&row.budget===null)
     page.append(E('p','notice warning','預算目前未由原始公告確認：可能尚未公告，也可能是詳細資料仍待補抓。不能把未知預算視為零元或推估利潤。'));
   if(data.source==='ingested_archive'){
     page.append(E('p','notice warning','即時來源無法直接讀取，以下為本站已成功入庫的真實公告紀錄；未擷取到的標書細節一律顯示未公開，請以官方原文確認。'+
