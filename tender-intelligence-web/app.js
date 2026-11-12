@@ -1978,8 +1978,19 @@ async function renderWorkspace(){
  if(!userId||!id){$('workspaceTaskComposer').hidden=true;box.replaceChildren(E('div','empty','請先選擇工作區。'));return;}
  box.replaceChildren(E('div','empty','正在讀取團隊案件及任務…'));
  try{
-  const [members,cases,tasks,comments,activity,watches,documents]=await Promise.all([
-   cloud.client.from('ti_workspace_members').select('user_id,role,joined_at').eq('workspace_id',id),
+  // Permission is security-critical and must not wait for six unrelated panels.
+  // A slow market/sync side read must not keep showing a member's old editor UI.
+  const members=await cloud.client.from('ti_workspace_members')
+   .select('user_id,role,joined_at').eq('workspace_id',id);
+  if(members.error)throw members.error;
+  if(version!==workspaceRenderVersion||selectedWorkspace!==id||cloud.user?.id!==userId)return;
+  const current=members.data?.find(m=>m.user_id===userId);
+  $('workspaceTaskComposer').hidden=!current||current.role==='viewer';
+  box.replaceChildren(
+   E('p','minor ti-workspace-permission-status','你的權限：'+(current?.role||'未知')+'。'),
+   E('div','empty','正在讀取共用案件、待辦及其他團隊資料…')
+  );
+  const [cases,tasks,comments,activity,watches,documents]=await Promise.all([
    cloud.client.from('ti_workspace_cases').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
    cloud.client.from('ti_workspace_tasks').select('*').eq('workspace_id',id).order('updated_at',{ascending:false}),
    cloud.client.from('ti_workspace_task_comments').select('id,task_id,author_id,body,created_at').eq('workspace_id',id).order('created_at',{ascending:false}).limit(200),
@@ -2396,7 +2407,13 @@ async function renderWorkspace(){
    const when=new Date(event.changed_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'});
    box.append(E('p','minor',when+'｜'+actor+'｜'+event.entity_kind+' '+event.action+'｜'+event.summary));
   }
- }catch(err){box.replaceChildren(E('div','empty','團隊讀取失敗：'+readableError(err)));}
+ }catch(err){
+  if(version!==workspaceRenderVersion||selectedWorkspace!==id||cloud.user?.id!==userId)return;
+  const role=box.querySelector('.ti-workspace-permission-status');
+  $('workspaceTaskComposer').hidden=true;
+  box.replaceChildren(...(role?[role]:[]),
+   E('div','notice warning','團隊資料尚未完整載入：'+readableError(err)+'。請按「刷新團隊資料」重試。'));
+ }
 }
 async function acceptWorkspaceInvitation(token){
  if(!cloud.user)return toast('請先登入，再使用邀請連結。');
