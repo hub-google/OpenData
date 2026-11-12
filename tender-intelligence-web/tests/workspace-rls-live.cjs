@@ -9,12 +9,37 @@ fs.mkdirSync(OUT,{recursive:true});
 const results=[],exceptions=[];const stamp=Date.now().toString(36);
 let browser,owner,member,outsider,workspaceId,inviteToken;
 const short=x=>String(x?.message||x||'').replace(/\s+/g,' ').slice(0,450);
-async function step(name,fn){try{const data=await fn();results.push({name,status:'PASS',data});console.log('PASS',name,JSON.stringify(data).slice(0,470));}catch(e){results.push({name,status:'FAIL',error:short(e)});console.error('FAIL',name,short(e));}}
+async function step(name,fn){
+ try{
+  const data=await fn();
+  results.push({name,status:'PASS',data});
+  console.log('PASS',name,JSON.stringify(data).slice(0,470));
+ }catch(e){
+  const screen='fail-'+String(results.length+1).padStart(2,'0')+'.png';
+  try{await owner?.screenshot({path:path.join(OUT,screen),timeout:9000});}
+  catch(_){}
+  results.push({name,status:'FAIL',error:short(e),screenshot:screen});
+  console.error('FAIL',name,short(e));
+ }
+}
 async function login(p){
  await p.goto(BASE+'?demo=1',{waitUntil:'domcontentloaded',timeout:45000});
  await p.locator('#accountDemoQuick').waitFor({state:'visible',timeout:30000});
  await p.locator('#accountDemoQuick').click();
  await p.waitForFunction(()=>document.querySelector('#accountInfo')?.textContent?.includes('測試帳號已登入'),null,{timeout:30000});
+ // Explicitly verify that the UI identity and the JWT-backed PostgREST client
+ // have settled on the same guest before attempting any RLS-protected write.
+ const identity=await p.evaluate(async()=>{
+  const {getClient}=await import(new URL('./backend.js',document.baseURI).href);
+  const client=await getClient();
+  const [{data:users,error:authError},{data:sessions,error:sessionError}]=await Promise.all([
+   client.auth.getUser(),client.auth.getSession()
+  ]);
+  return {uid:users?.user?.id,jwtUid:sessions?.session?.user?.id,
+   verified:!authError&&!sessionError};
+ });
+ if(!identity.verified||!identity.uid||identity.uid!==identity.jwtUid)
+  throw Error('登入帳號與當前 JWT 尚未同步：'+JSON.stringify(identity));
  await p.waitForTimeout(250);
  if(!await p.locator('#tiSupportPanel').isHidden())
   throw Error('登入後客服視窗自行展開，遮住工作區操作按鈕');
