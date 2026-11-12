@@ -249,7 +249,13 @@ async function ingest(mode){
   const cached=await db("ti_case_details?select=case_id&limit=10000");
   const known=new Set((cached||[]).map(x=>x.case_id));
   const detailsQuota=["backfill","retry"].includes(mode)?2:15;
-  for(const c of [...cases.values()].filter(x=>!known.has(x.id)&&/招標|決標|更正/.test(x.latest_notice_type||"")).slice(0,detailsQuota)){
+  const outstanding=[...cases.values()].filter(x=>!known.has(x.id));
+  // Prioritize formal tenders without dropping pre-tender reference notices.
+  const formal=outstanding.filter(x=>/招標|決標|更正/.test(x.latest_notice_type||""));
+  const preliminary=outstanding.filter(x=>/公開徵求廠商提供參考資料|公開閱覽/.test(x.latest_notice_type||""));
+  const chosen=detailsQuota===2?formal.slice(0,2):
+    [...formal.slice(0,12),...preliminary.slice(0,3)];
+  for(const c of chosen){
    try{if(await enrich(c))details++}catch(e){console.warn("detail unavailable",c.id,text(e).slice(0,130))}
   }
   const finished=new Date().toISOString();
