@@ -103,11 +103,36 @@ async function firstAdvancedId(){
  await check('Latest page next button changes the visible page',async()=>{
    const original=await page.locator('#pageInfo').innerText();
    const first=await page.locator('#resultList .case-card').first().innerText();
+   const firstId=(first.match(/案號\s+([^\s]+)/)||[])[1];
+   assert.ok(firstId,'First page card must have a real procurement case number');
    assert.equal(await page.locator('#nextPage').isDisabled(),false);
    await page.locator('#nextPage').click();
-   await page.waitForFunction(v=>document.getElementById('pageInfo')?.textContent!==v,original);
-   const after=await page.locator('#resultList .case-card').first().innerText();
-   assert.notEqual(after,first);
+   try{
+     await page.waitForFunction(previous=>{
+       const info=document.getElementById('pageInfo')?.textContent||'';
+       const card=document.querySelector('#resultList .case-card');
+       const id=(card?.innerText.match(/案號\s+([^\s]+)/)||[])[1];
+       return info.startsWith('第 2 /') && id && id!==previous;
+     },firstId,{timeout:50000});
+     assert.equal(await page.locator('#dataError').isVisible(),false,
+       'Page two cannot silently be a database error');
+     const after=await page.locator('#resultList .case-card').first().innerText();
+     assert.notEqual((after.match(/案號\s+([^\s]+)/)||[])[1],firstId,'Page 2 repeated the same case');
+     console.log('PAGE_CHANGE_EVIDENCE '+JSON.stringify({
+       oldPage:original,newPage:await page.locator('#pageInfo').innerText(),
+       firstCase:firstId,secondCase:(after.match(/案號\s+([^\s]+)/)||[])[1],
+       resultInfo:await page.locator('#resultInfo').innerText()
+     }));
+     await page.screenshot({path:out+'/tender-page-2.png',fullPage:true});
+   }catch(e){
+     console.error('PAGE_CHANGE_FAILURE '+JSON.stringify({
+       oldPage:original,actualPage:await page.locator('#pageInfo').innerText(),
+       firstCase:firstId,rendered:await page.locator('#resultList').innerText(),
+       error:await page.locator('#dataError').innerText(),url:page.url()
+     }).slice(0,3000));
+     await page.screenshot({path:out+'/tender-page-2-failed.png',fullPage:true}).catch(()=>{});
+     throw e;
+   }
  });
  await check('Case status scenarios do not advertise failed cases as open',async()=>{
    await page.locator('[data-scenario="failed"]').click();
