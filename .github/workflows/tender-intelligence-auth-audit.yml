@@ -2,17 +2,12 @@ name: 標案網站測試帳號操作稽核
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["發布政府標案情報平台"]
-    types: [completed]
-    branches: ["main"]
 
 permissions:
   contents: write
 
 jobs:
   auth-click-audit:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
