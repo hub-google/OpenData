@@ -26,6 +26,10 @@ TABLES = {
     "ti_case_details": "case_id",
     "ti_debarred_vendor_notices": "id",
 }
+SEARCH_TABLES = {
+    "ti_case_search_index": "case_id",
+    "ti_case_vendor_search": "case_id",
+}
 PAGE_SIZE = 250
 ROWS_PER_SHARD = 10000
 DATASET_CARD = """---
@@ -204,6 +208,12 @@ def main():
     repo_id = os.environ.get("HF_DATASET_REPO", "hub-google/TenderIntelligence")
     if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo_id):
         raise ValueError("Invalid Hugging Face dataset repository")
+    archive_set = os.environ.get("TI_ARCHIVE_TABLE_SET", "records").strip().lower()
+    if archive_set not in ("records", "search"):
+        raise ValueError("TI_ARCHIVE_TABLE_SET must be records or search")
+    source_tables = TABLES if archive_set == "records" else SEARCH_TABLES
+    target_prefix = "snapshots" if archive_set == "records" else "search-indexes"
+    latest_pointer = "latest.json" if archive_set == "records" else "search-latest.json"
     base = os.environ["SUPABASE_URL"].rstrip("/")
     if not base.startswith("https://"):
         raise ValueError("Source URL must use HTTPS")
@@ -215,7 +225,7 @@ def main():
         s = session()
         tables = {
             table: export_table(s, base, out, table, key)
-            for table, key in TABLES.items()
+            for table, key in source_tables.items()
         }
         manifest = {
             "schema_version": 1,
@@ -223,6 +233,7 @@ def main():
             "source": base,
             "format": "jsonl-gzip-lossless",
             "snapshot_type": "full",
+            "table_set": archive_set,
             "tables": tables,
             "deletion_from_source": False,
         }
@@ -251,8 +262,8 @@ def main():
             api.upload_file(repo_id=repo_id, repo_type="dataset",
                             path_in_repo="README.md",
                             path_or_fileobj=DATASET_CARD.encode("utf-8"),
-                            commit_message="Document private tender archive provenance")
-        target = f"snapshots/{stamp}"
+                            commit_message="Document public tender archive provenance")
+        target = f"{target_prefix}/{stamp}"
         api.upload_folder(repo_id=repo_id, repo_type="dataset",
                           folder_path=str(out), path_in_repo=target,
                           commit_message=f"Archive verified tender records {stamp}")
@@ -270,10 +281,11 @@ def main():
             "remote_sha256_verified": True,
         }, ensure_ascii=False, indent=2).encode("utf-8")
         api.upload_file(repo_id=repo_id, repo_type="dataset",
-                        path_or_fileobj=pointer, path_in_repo="latest.json",
+                        path_or_fileobj=pointer, path_in_repo=latest_pointer,
                         commit_message=f"Publish verified tender archive {stamp}")
         print("TENDER_HF_ARCHIVE_VERIFIED=" + json.dumps({
             "dataset": repo_id,
+            "table_set": archive_set,
             "snapshot": stamp,
             "rows": {key: val["rows"] for key, val in tables.items()},
             "file_count_verified": len(expected_hashes),
