@@ -320,3 +320,73 @@ export async function hfHomeKpis(){
   last_success_at:published
  };
 }
+
+
+function evaluateBooleanTree(ast, haystack,depth=0){
+ if(!ast||typeof ast!=='object'||depth>12)throw Error('無效的布林搜尋條件');
+ if(ast.op==='term')return haystack.includes(norm(ast.value));
+ if(ast.op==='not')return !evaluateBooleanTree(ast.child,haystack,depth+1);
+ if(ast.op==='and'&&Array.isArray(ast.children))return ast.children.every(x=>evaluateBooleanTree(x,haystack,depth+1));
+ if(ast.op==='or'&&Array.isArray(ast.children))return ast.children.some(x=>evaluateBooleanTree(x,haystack,depth+1));
+ throw Error('不支援的布林搜尋語法');
+}
+export async function hfAdvancedSearch(args={}){
+ const terms=(args.p_terms||[]).map(norm).filter(Boolean),excluded=(args.p_exclude||[]).map(norm).filter(Boolean);
+ if(terms.length>12||excluded.length>12)throw Error('查詢關鍵字超過 12 個限制');
+ const needsIndex=terms.length>0||excluded.length>0||args.p_expression;
+ const needsDetail=!!(args.p_location||args.p_method||args.p_decision_method);
+ const [cases,idx,detailMap]=await Promise.all([
+  hfAllCases(),needsIndex?searchable():Promise.resolve(null),
+  needsDetail?details():Promise.resolve(null)
+ ]);
+ const group=String(args.p_group||''),kind=String(args.p_kind||'');
+ const min=args.p_min_budget==null?null:Number(args.p_min_budget);
+ const max=args.p_max_budget==null?null:Number(args.p_max_budget);
+ const dateFrom=args.p_date_from==null?null:Number(args.p_date_from);
+ const dateTo=args.p_date_to==null?null:Number(args.p_date_to);
+ const start=args.p_deadline_start?Date.parse(args.p_deadline_start+'T00:00:00+08:00'):null;
+ const end=args.p_deadline_end?Date.parse(args.p_deadline_end+'T23:59:59+08:00'):null;
+ const loc=norm(args.p_location),method=norm(args.p_method),decision=norm(args.p_decision_method),agency=norm(args.p_agency);
+ const matches=cases.filter(c=>{
+  const hay=idx?.get(c.id)||norm(c.title+' '+c.agency+' '+c.job_number);
+  if(args.p_expression&&!evaluateBooleanTree(args.p_expression,hay))return false;
+  if(!args.p_expression&&terms.length&&!(args.p_any?terms.some(t=>hay.includes(t)):terms.every(t=>hay.includes(t))))return false;
+  if(excluded.some(t=>hay.includes(t)))return false;
+  if(agency&&!norm(c.agency+' '+c.unit_id).includes(agency))return false;
+  if(kind&&kind!=='全部'&&itemStage(c.latest_notice_type)!==kind)return false;
+  if(group&&group!=='全部'&&c.group_name!==group)return false;
+  if(min!==null&&(c.budget_amount==null||Number(c.budget_amount)<min))return false;
+  if(max!==null&&(c.budget_amount==null||Number(c.budget_amount)>max))return false;
+  if(dateFrom!==null&&Number(c.latest_notice_date)<dateFrom)return false;
+  if(dateTo!==null&&Number(c.latest_notice_date)>dateTo)return false;
+  const deadline=Date.parse(c.deadline_at||'');
+  if(start!==null&&!(deadline>=start))return false;
+  if(end!==null&&!(deadline<=end))return false;
+  if(args.p_deadline_only&&!(deadline>now()))return false;
+  if(needsDetail){
+   const d=detailMap.get(c.id);
+   if(!d)return false;
+   if(loc&&!norm(d.location).includes(loc))return false;
+   if(method&&!norm(d.tender_method).includes(method))return false;
+   if(decision&&!norm(d.decision_method).includes(decision))return false;
+  }
+  return true;
+ });
+ const sort=['date','budget','title','deadline'].includes(args.p_sort)?args.p_sort:'date';
+ matches.sort((a,b)=>sortBy(sort,a,b));
+ const limit=Math.max(1,Math.min(50,Number(args.p_limit)||30));
+ const page=Math.max(1,Number(args.p_page)||1);
+ const selected=matches.slice((page-1)*limit,page*limit);
+ return {
+  rows:selected.map(r=>{
+   const d=detailMap?.get(r.id)||{};
+   return {...r,
+    verified_location:d.location||null,
+    verified_tender_method:d.tender_method||null,
+    verified_decision_method:d.decision_method||null
+   };
+  }),
+  total:matches.length,source:'hf-public-repository',
+  snapshot_date:SNAPSHOT_DATE
+ };
+}
