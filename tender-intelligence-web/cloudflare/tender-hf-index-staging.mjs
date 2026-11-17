@@ -58,7 +58,8 @@ function value(key,v){
  if(typeof v==='object')return JSON.stringify(v);
  return String(v);
 }
-async function ingest(db){
+async function ingest(env){
+ const db=env.TI_DB;
  const states=await db.prepare('SELECT * FROM ti_import_state ORDER BY dataset').all();
  const rows=states.results||[];
  const stage=PHASES.find(p=>rows.find(s=>s.dataset===p.set&&s.status!=='complete'&&s.stage===p.table));
@@ -72,19 +73,28 @@ async function ingest(db){
  const raw=await lines(st.snapshot+'/'+shard.file);
  if(raw.length!==shard.rows)throw Error('HF shard row-count mismatch');
  const chunk=raw.slice(st.row_cursor,Math.min(raw.length,st.row_cursor+120)).map(x=>JSON.parse(x));
+ const destination=(stage.table==='ti_notices'||stage.table==='ti_case_details')?env.TI_RAW_DB:db;
  const prepared=chunk.map(row=>{
    if(!row[stage.key])throw Error('Missing primary key for '+stage.table);
-   return db.prepare(sqlFor(stage)).bind(...FIELDS[stage.table].map(k=>value(k,row[k])));
+   return destination.prepare(sqlFor(stage)).bind(...FIELDS[stage.table].map(k=>value(k,row[k])));
  });
  const end=st.row_cursor+chunk.length;
  const nextShard=end>=raw.length?st.shard_idx+1:st.shard_idx;
  const completedStage=nextShard===entry.shards.length;
  const next=completedStage?PHASES[PHASES.indexOf(stage)+1]:stage;
  const completedSet=!next||next.set!==stage.set;
- prepared.push(db.prepare('UPDATE ti_import_state SET stage=?, shard_idx=?, row_cursor=?, imported_rows=imported_rows+?, status=?, updated_at=CURRENT_TIMESTAMP WHERE dataset=? AND stage=? AND shard_idx=? AND row_cursor=?')
-  .bind(completedSet?stage.table:next.table,completedStage?0:nextShard,end>=raw.length?0:end,chunk.length,completedSet?'complete':'importing',stage.set,stage.table,st.shard_idx,st.row_cursor));
- const results=await db.batch(prepared);
- if(!results.at(-1)?.meta?.changes)throw Error('Concurrent writer cursor mismatch');
+ const checkpoint=db.prepare('UPDATE ti_import_state SET stage=?, shard_idx=?, row_cursor=?, imported_rows=imported_rows+?, status=?, updated_at=CURRENT_TIMESTAMP WHERE dataset=? AND stage=? AND shard_idx=? AND row_cursor=?')
+  .bind(completedSet?stage.table:next.table,completedStage?0:nextShard,end>=raw.length?0:end,chunk.length,completedSet?'complete':'importing',stage.set,stage.table,st.shard_idx,st.row_cursor);
+ if(destination===db){
+   // Same D1: rows and cursor commit atomically in one transaction.
+   const result=await db.batch([...prepared,checkpoint]);
+   if(!result.at(-1)?.meta?.changes)throw Error('Concurrent writer cursor mismatch');
+ }else{
+   // Split raw storage: replay-safe upserts before advancing the control cursor.
+   await destination.batch(prepared);
+   const cursor=await checkpoint.run();
+   if(!cursor.meta?.changes)throw Error('Concurrent writer cursor mismatch');
+ }
  return {stage:stage.table,rows:chunk.length,set:stage.set,finished_set:completedSet};
 }
 async function search(db,u){
@@ -128,7 +138,8 @@ export default {
    if(u.pathname==='/health'){
     const states=await env.TI_DB.prepare('SELECT dataset,stage,shard_idx,row_cursor,imported_rows,status,updated_at FROM ti_import_state ORDER BY dataset').all();
     const cases=await env.TI_DB.prepare('SELECT count(*) AS n FROM ti_cases_cache').first();
-    return json({service:'tender-hf-d1',production_ready:false,case_count:cases.n,imports:states.results});
+    const noticeCount=await env.TI_RAW_DB.prepare('SELECT count(*) AS n FROM ti_notices_cache').first();
+    return json({service:'tender-hf-d1',production_ready:false,case_count:cases.n,notice_count:noticeCount.n,imports:states.results});
    }
    if(u.pathname==='/preview/search')return search(env.TI_DB,u);
    if(u.pathname==='/preview/debarred'){
@@ -145,14 +156,14 @@ export default {
     const id=u.searchParams.get('id')||'';
     const item=await env.TI_DB.prepare('SELECT * FROM ti_cases_cache WHERE id=?').bind(id).first();
     if(!item)return json({error:'not found'},404);
-    const notices=await env.TI_DB.prepare('SELECT * FROM ti_notices_cache WHERE case_id=? ORDER BY source_date DESC LIMIT 100').bind(id).all();
-    const details=await env.TI_DB.prepare('SELECT * FROM ti_details_cache WHERE case_id=?').bind(id).first();
+    const notices=await env.TI_RAW_DB.prepare('SELECT * FROM ti_notices_cache WHERE case_id=? ORDER BY source_date DESC LIMIT 100').bind(id).all();
+    const details=await env.TI_RAW_DB.prepare('SELECT * FROM ti_details_cache WHERE case_id=?').bind(id).first();
     return json({case:item,notices:notices.results||[],details:details?JSON.parse(details.details):null});
    }
    return json({error:'not found'},404);
   }catch(e){return json({error:String(e.message||e)},503);}
  },
  async scheduled(event,env,ctx){
-  ctx.waitUntil(ingest(env.TI_DB).then(x=>console.log('HF/D1 stage progress',JSON.stringify(x))).catch(e=>{console.error('HF/D1 ingest failure:',e.stack||e.message);throw e;}));
+  ctx.waitUntil(ingest(env).then(x=>console.log('HF/D1 stage progress',JSON.stringify(x))).catch(e=>{console.error('HF/D1 ingest failure:',e.stack||e.message);throw e;}));
  }
 };
