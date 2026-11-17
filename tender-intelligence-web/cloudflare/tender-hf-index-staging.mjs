@@ -125,6 +125,6 @@ export default {
   }catch(e){return json({error:String(e.message||e)},503);}
  },
  async scheduled(event,env,ctx){
-  ctx.waitUntil(ingest(env.TI_DB).catch(e=>console.error('HF/D1 ingest failure:',e.message)));
+  ctx.waitUntil(ingest(env.TI_DB).then(x=>console.log('HF/D1 stage progress',JSON.stringify(x))).catch(e=>{console.error('HF/D1 ingest failure:',e.stack||e.message);throw e;}));
  }
 };
