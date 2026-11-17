@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-11-17T05:45:06.224Z",
+  "target": "https://hub-google.github.io/OpenData/tender-intelligence-web/",
+  "checks": [
+    {
+      "name": "UAT: HTTP 503 must show source-backed fallback or an honest error",
+      "status": "FAIL",
+      "error": "AssertionError [ERR_ASSERTION]: Must actually attempt the normal RPC first\n    at /home/runner/work/OpenData/OpenData/tender-intelligence-web/tests/search-recovery-live.cjs:41:10\n    at async check (/home/runner/work/OpenData/OpenData/tender-intelligence-web/tests/search-recovery-live.cjs:12:20)\n    at async /home/runner/work/OpenData/OpenData/tender-intelligence-web/tests/search-recovery-live.cjs:30:2"
+    },
+    {
+      "name": "UAT: after outage, retry can read genuine matching cases",
+      "status": "PASS",
+      "details": {
+        "cards": 30,
+        "info": "標案名稱：資安｜全庫篩選｜符合 124 件案件｜本頁 30 件（每個案件僅顯示一筆，依機關與案號去重；非全國完整資料）｜全部篩選與排序先在資料庫完成"
+      }
+    },
+    {
+      "name": "UAT: advanced search API 503 releases submit and reports the real error",
+      "status": "FAIL",
+      "error": "page.waitForFunction: Timeout 35000ms exceeded.\n    at /home/runner/work/OpenData/OpenData/tender-intelligence-web/tests/search-recovery-live.cjs:78:17\n    at async check (/home/runner/work/OpenData/OpenData/tender-intelligence-web/tests/search-recovery-live.cjs:12:20)\n    at async /home/runner/work/OpenData/OpenData/tender-intelligence-web/tests/search-recovery-live.cjs:63:2"
+    },
+    {
+      "name": "UAT: public page never exposes production debug credentials",
+      "status": "PASS",
+      "details": {
+        "publicDemoButtonVisible": false,
+        "jsErrors": 0
+      }
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "total": 4
+  }
+}

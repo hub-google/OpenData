@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-11-17T05:43:28.222Z",
+  "target": "https://hub-google.github.io/OpenData/tender-intelligence-web/",
+  "browser": "Playwright Chromium, anonymous demo account",
+  "prefix": "【稽核測試-20261105-4182644】",
+  "results": [
+    {
+      "name": "使用網站的一鍵測試帳號登入",
+      "status": "FAIL",
+      "error": "page.waitForFunction: Timeout 25000ms exceeded.",
+      "screen": "FAIL-01.png"
+    }
+  ],
+  "page_errors": []
+}
