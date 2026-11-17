@@ -70,42 +70,103 @@ def put(folder,path,value,manifest):
  manifest[str(path)]={"bytes":len(raw),"sha256":sha(raw),"records":len(value)}
  return len(value)
 
+
+def daily_files(api):
+ import re
+ return sorted(f for f in api.list_repo_files(repo_id=REPO,repo_type="dataset")
+  if re.fullmatch(r"Daily/\d{4}-\d{2}-\d{2}/notices\.json\.gz",f))
+
+def merge_daily(token,api,cases,notices,search,vendors):
+ files=daily_files(api);total=0
+ for file in files:
+  with gzip.open(download(token,file),"rt",encoding="utf-8") as f:rows=json.load(f)
+  if not isinstance(rows,list):raise RuntimeError("Invalid source archive "+file)
+  for r in rows:
+   if not isinstance(r,dict):continue
+   unit=str(r.get("unit_id") or "");job=str(r.get("job_number") or "")
+   fn=str(r.get("filename") or "")
+   try:date=int(r["date"])
+   except (TypeError,ValueError,KeyError):continue
+   if not (unit and job and fn and 19990101<=date<=20991231):continue
+   id=unit+"::"+job
+   brief=r.get("brief") or {}
+   if not isinstance(brief,dict):brief={}
+   name=str(brief.get("title") or "來源未提供案名")
+   agency=str(r.get("unit_name") or "")
+   cat=str(brief.get("category") or "")
+   typ=str(brief.get("type") or "")
+   companies=brief.get("companies") or {}
+   if not isinstance(companies,dict):companies={}
+   ids=companies.get("ids") if isinstance(companies.get("ids"),list) else []
+   names=companies.get("names") if isinstance(companies.get("names"),list) else []
+   roles=companies.get("name_key") if isinstance(companies.get("name_key"),dict) else {}
+   def money(x):
+    try:return float(str(x).replace(",","").replace("元","")) if x is not None else None
+    except (TypeError,ValueError):return None
+   budget=money(r.get("budget_amount"));award=money(r.get("award_amount"))
+   prev=cases.get(id)
+   newer=not prev or date>int(prev.get("latest_notice_date") or 0) or (date==int(prev.get("latest_notice_date") or 0) and fn>=str(prev.get("latest_filename") or ""))
+   url=(r.get("detail") or {}).get("url") if isinstance(r.get("detail") or {},dict) else None
+   if not isinstance(url,str) or not url.startswith("https://web.pcc.gov.tw/"):url=None
+   if newer:
+    group=next((v for v in ("工程","財物","勞務") if cat.startswith(v)),"未分類")
+    cases[id]=dict(id=id,unit_id=unit,job_number=job,title=name[:800],
+      agency=agency[:450],category=cat[:700],group_name=group,
+      latest_notice_type=typ,latest_notice_date=date,budget_amount=budget,
+      award_amount=award,deadline_at=prev.get("deadline_at") if prev else None,
+      official_url=url,latest_filename=fn,source_fetched_at=None)
+   notice_id=id+"::"+str(date)+"::"+fn
+   notices[notice_id]=dict(id=notice_id,case_id=id,source_date=date,filename=fn,
+     notice_type=typ,title=name[:800],category=cat[:700],budget_amount=budget,
+     award_amount=award,official_url=url,company_ids=ids,company_names=names,
+     company_role_keys=roles,raw_brief=brief,fetched_at=None)
+   prior=search.get(id,{}).get("searchable") or ""
+   search[id]={"case_id":id,"searchable":prior+" "+name+" "+agency+" "+cat}
+   vendor_text=" ".join(str(v) for v in ids+names)
+   if vendor_text:
+    prior=vendors.get(id,{}).get("vendor_text") or ""
+    vendors[id]={"case_id":id,"vendor_text":prior+" "+vendor_text}
+   total+=1
+  print("TENDER_HF_DAILY_OVERLAY="+json.dumps({"file":file,"source_rows":len(rows)},ensure_ascii=False),flush=True)
+ return len(files),total
+
 def main():
  token=os.environ["HF_TOKEN"]
  api=HfApi(token=token)
  assert not api.repo_info(repo_id=REPO,repo_type="dataset").private
  with tempfile.TemporaryDirectory(prefix="tender_hf_browser_") as temp:
   root=Path(temp);files={}
-  case_rows=None
+  cases={r["id"]:r for r in rows_for(token,"ti_cases")}
+  notices={r["id"]:r for r in rows_for(token,"ti_notices")}
+  search={r["case_id"]:r for r in rows_for(token,"ti_case_search_index")}
+  vendors={r["case_id"]:r for r in rows_for(token,"ti_case_vendor_search")}
+  daily_files_count,daily_source_count=merge_daily(token,api,cases,notices,search,vendors)
   notice_counts=defaultdict(int)
-  for table in ("ti_cases","ti_case_search_index","ti_case_vendor_search","ti_debarred_vendor_notices"):
-   values=list(rows_for(token,table))
-   if table=="ti_cases":
-    case_rows=values
-    values.sort(key=lambda r:(r.get("latest_notice_date") or 0,r.get("id") or ""),reverse=True)
-    for row in values:
-     row.pop("first_seen_at",None)
-   path=f"{table}.json.gz"
-   put(root,Path(path),values,files)
-   print("TENDER_HF_BROWSER_PACK "+table+" "+str(len(values)),flush=True)
-  for table in ("ti_notices","ti_case_details"):
-   b=defaultdict(list); total=0
-   for row in rows_for(token,table):
-    b[bucket(str(row["case_id"]))].append(row);total+=1
-    if table=="ti_notices":notice_counts[row["case_id"]]+=1
-   for key in [f"{i:02x}" for i in range(SHARD_BUCKETS)]:
-    records=b[key]
-    if table=="ti_notices":
-     records.sort(key=lambda r:(r.get("source_date") or 0,str(r.get("filename") or "")),reverse=True)
-    put(root,Path(table)/f"{key}.json.gz",records,files)
-   print("TENDER_HF_BROWSER_PACK "+table+" "+str(total),flush=True)
-  for row in case_rows:
+  for row in notices.values():notice_counts[row["case_id"]]+=1
+  for row in cases.values():
+   row.pop("first_seen_at",None)
    row["notice_count"]=notice_counts.get(row["id"],0)
-  put(root,Path("ti_cases.json.gz"),case_rows,files)
+  cases_sorted=sorted(cases.values(),key=lambda r:(r.get("latest_notice_date") or 0,r["id"]),reverse=True)
+  for table,data in (("ti_cases",cases_sorted),("ti_case_search_index",list(search.values())),
+      ("ti_case_vendor_search",list(vendors.values())),
+      ("ti_debarred_vendor_notices",list(rows_for(token,"ti_debarred_vendor_notices")))):
+   put(root,Path(table+".json.gz"),data,files)
+   print("TENDER_HF_BROWSER_PACK "+table+" "+str(len(data)),flush=True)
+  for table,data in (("ti_notices",notices.values()),("ti_case_details",rows_for(token,"ti_case_details"))):
+   b=defaultdict(list);total=0
+   for row in data:
+    b[bucket(str(row["case_id"]))].append(row);total+=1
+   for key in [f"{i:02x}" for i in range(SHARD_BUCKETS)]:
+    shard=b[key]
+    if table=="ti_notices":shard.sort(key=lambda r:(r.get("source_date") or 0,str(r.get("filename") or "")),reverse=True)
+    put(root,Path(table)/f"{key}.json.gz",shard,files)
+   print("TENDER_HF_BROWSER_PACK "+table+" "+str(total),flush=True)
   manifest={
    "format":"source-backed-public-tender-browser",
    "schema_version":1,
    "source_snapshots":SNAPSHOTS,
+   "daily_source_files":daily_files_count,
+   "daily_overlay_source_records":daily_source_count,
    "created_at":datetime.now(timezone.utc).isoformat(),
    "hash_bucket_count":SHARD_BUCKETS,
    "files":files,
