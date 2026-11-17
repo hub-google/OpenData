@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>標案情報｜Hugging Face 公開資料測試入口</title>
+<meta name="robots" content="noindex">
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;color:#1d1d1f;background:#f5f5f7}
+*{box-sizing:border-box}body{margin:0}header{background:#fff;border-bottom:1px solid #e5e5ea;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+a{color:#0066cc;text-decoration:none}a:hover{text-decoration:underline}header strong{font-size:17px}
+main{max-width:1080px;margin:32px auto;padding:0 18px 60px}.intro{margin-bottom:20px}
+h1{font-size:clamp(25px,4vw,34px);letter-spacing:-.03em;margin:0 0 10px}h2{font-size:21px;margin:0 0 8px}
+p{line-height:1.6;color:#59606a}.panel{background:white;border:1px solid #e7e8eb;border-radius:17px;padding:20px;margin-bottom:16px;box-shadow:0 3px 18px #00000005}
+.filters{display:grid;grid-template-columns:minmax(210px,2fr) repeat(2,minmax(130px,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#60666e}
+input,select,button{border-radius:10px;border:1px solid #d4d8de;font:inherit;padding:12px;background:#fff;min-height:43px}
+input:focus,select:focus{outline:2px solid #0071e3;outline-offset:1px}button{cursor:pointer;border:0;background:#0071e3;color:#fff;font-weight:600}button:disabled{background:#ccd0d6;cursor:default}
+.action{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap}.muted{color:#69717d;font-size:13px}
+.row{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid #eee;padding:17px 0}.row:last-child{border-bottom:0}
+.row h3{margin:0 0 7px;font-size:17px}.row p{font-size:14px;margin:3px 0}.badge{font-size:12px;color:#536478;background:#f1f4f8;border-radius:6px;padding:5px 7px;white-space:nowrap}
+nav{display:flex;align-items:center;gap:12px;justify-content:flex-end;margin-top:14px}
+nav button{min-width:88px}#status{font-size:14px}#status[aria-invalid=true]{color:#bb1e2f}
+#detail[hidden],#results[hidden]{display:none}.detail-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+pre{font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f7f9;padding:15px;border-radius:10px}
+@media(max-width:680px){.filters{grid-template-columns:1fr 1fr}.filters label:first-child{grid-column:1/-1}main{margin:22px auto}.panel{padding:16px}}
+</style>
+</head>
+<body>
+<header><strong>標案情報 · HF 公開資料</strong><a href="./">返回標案平台</a></header>
+<main>
+ <section class="intro">
+  <h1>政府標案公開資料查詢</h1>
+  <p>資料來源：<a href="https://huggingface.co/datasets/hub-google/TenderIntelligence" target="_blank" rel="noopener noreferrer">Hugging Face 公開 Repository</a>。直接使用官方 Dataset Viewer API，不經 Supabase。這是獨立驗收頁，資料更新以公開封存時間為準。</p>
+ </section>
+ <section class="panel" id="searchPanel">
+  <form id="searchForm">
+   <div class="filters">
+    <label>關鍵字<input id="query" placeholder="輸入標案名稱、機關或案號" maxlength="80" autocomplete="off"></label>
+    <label>採購分類<select id="group"><option value="">全部</option><option>工程</option><option>財物</option><option>勞務</option><option>未分類</option></select></label>
+    <label>最低預算（元）<input type="number" id="minBudget" min="0" step="1" placeholder="不限"></label>
+    <label>公告起日<input type="date" id="start"></label>
+    <label>公告迄日<input type="date" id="end"></label>
+   </div>
+   <div class="action"><span class="muted">文字搜尋及分類／日期篩選由 HF 分別提供。避免錯誤統計，關鍵字查詢不會偷偷忽略其他條件。</span><button id="submit" type="submit">查詢公開標案</button></div>
+  </form>
+ </section>
+ <section class="panel" id="results">
+  <div class="detail-head"><h2>查詢結果</h2><span id="count" class="muted"></span></div>
+  <p id="status" role="status" aria-live="polite">資料載入中…</p>
+  <div id="list"></div>
+  <nav><button id="prev" type="button">上一頁</button><span id="pageInfo" class="muted"></span><button id="next" type="button">下一頁</button></nav>
+ </section>
+ <section class="panel" id="detail" hidden>
+  <div class="detail-head"><h2 id="detailTitle">案件詳情</h2><button type="button" id="closeDetail">返回列表</button></div>
+  <p id="detailStatus" role="status"></p>
+  <div id="detailBody"></div>
+ </section>
+</main>
+<script type="module">
+const DATASET='hub-google/TenderIntelligence';
+const ROOT='https://datasets-server.huggingface.co';
+const $=id=>document.getElementById(id);
+let page=1,lastTotal=0,active={};
+function escapeSql(s){return "'"+String(s).replaceAll("'","''")+"'";}
+function dateNumber(s){return Number(s.replaceAll('-',''));}
+function money(n){return n==null?'未公開':Number(n).toLocaleString('zh-TW')+' 元';}
+function text(tag,value,cls){
+ const n=document.createElement(tag);n.textContent=value==null?'':String(value);
+ if(cls)n.className=cls;return n;
+}
+async function queryHF(config,kind,values){
+ const u=new URL(ROOT+'/'+kind);u.searchParams.set('dataset',DATASET);
+ u.searchParams.set('config',config);u.searchParams.set('split','train');
+ for(const [key,value] of Object.entries(values)){
+  if(value!==undefined&&value!==null&&value!=='')u.searchParams.set(key,String(value));
+ }
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),20000);
+ try{
+  const r=await fetch(u,{signal:ctrl.signal,headers:{Accept:'application/json'}});
+  const result=await r.json().catch(()=>({error:'invalid_json'}));
+  if(!r.ok)throw Error('HF Dataset Viewer：HTTP '+r.status+'，'+(result.error||result.cause||result.detail||'資料尚在索引中'));
+  if(!Array.isArray(result.rows))throw Error('HF 資料回傳格式不符');
+  return {...result,rows:result.rows.map(item=>item.row)};
+ }finally{clearTimeout(timer);}
+}
+function filters(){
+ const q=$('query').value.trim(),group=$('group').value,min=$('minBudget').value;
+ const start=$('start').value,end=$('end').value;
+ if(start&&end&&start>end)throw Error('公告起日不得晚於迄日');
+ if(q&&(group||min||start||end))throw Error('HF 文字搜尋無法和其他欄位篩選一起精確計數；請清除關鍵字或其他條件後查詢');
+ const clauses=[];
+ if(group)clauses.push('"group_name"='+escapeSql(group));
+ if(min)clauses.push('"budget_amount">='+Number(min));
+ if(start)clauses.push('"latest_notice_date">='+dateNumber(start));
+ if(end)clauses.push('"latest_notice_date"<='+dateNumber(end));
+ return {q,where:clauses.join(' AND ')};
+}
+async function run(){
+ let conf;try{conf=filters();}catch(e){$('status').textContent=e.message;$('status').setAttribute('aria-invalid','true');return;}
+ active=conf;$('submit').disabled=true;$('status').textContent='正在查詢 HF…';
+ $('status').removeAttribute('aria-invalid');$('list').replaceChildren();
+ try{
+  const args={offset:(page-1)*30,length:30};
+  const kind=conf.q?'search':'filter';
+  if(conf.q)args.query=conf.q;
+  else {if(conf.where)args.where=conf.where;args.orderby='"latest_notice_date" DESC';}
+  const r=await queryHF('ti_cases',kind,args);
+  lastTotal=Number(r.num_rows_total??0);
+  $('status').textContent=r.rows.length?'資料直接來自 HF Parquet。':'目前沒有符合的公開標案。';
+  $('count').textContent='符合 '+lastTotal.toLocaleString('zh-TW')+' 筆';
+  const fragment=document.createDocumentFragment();
+  for(const item of r.rows){
+   const el=text('article','','row'),left=text('div','');
+   const title=text('a',item.title||'未提供案名');title.href='#case='+encodeURIComponent(item.id);
+   title.addEventListener('click',e=>{e.preventDefault();void openDetail(item.id);});
+   left.append(text('h3',''));left.querySelector('h3').append(title);
+   left.append(text('p',(item.agency||'機關未公開')+'　·　'+(item.latest_notice_date||'日期不明')));
+   left.append(text('p','案號：'+(item.job_number||'未公開')+'　·　預算：'+money(item.budget_amount)));
+   el.append(left,text('span',item.group_name||'未分類','badge'));fragment.append(el);
+  }
+  $('list').replaceChildren(fragment);
+  $('prev').disabled=page<=1;$('next').disabled=page*30>=lastTotal;
+  $('pageInfo').textContent='第 '+page+' / '+Math.max(1,Math.ceil(lastTotal/30))+' 頁';
+ }catch(e){
+  $('status').textContent=String(e.message||e);$('status').setAttribute('aria-invalid','true');
+  $('prev').disabled=$('next').disabled=true;$('count').textContent='';
+ }finally{$('submit').disabled=false;}
+}
+async function openDetail(id){
+ $('results').hidden=true;$('searchPanel').hidden=true;
+ $('detail').hidden=false;$('detailBody').replaceChildren();
+ $('detailTitle').textContent='案件詳情';$('detailStatus').textContent='讀取 HF 公告歷史…';
+ try{
+  const [caseResult,noticeResult,detailResult]=await Promise.all([
+   queryHF('ti_cases','filter',{where:'"id"='+escapeSql(id),offset:0,length:1}),
+   queryHF('ti_notices','filter',{where:'"case_id"='+escapeSql(id),orderby:'"source_date" DESC',offset:0,length:100}),
+   queryHF('ti_case_details','filter',{where:'"case_id"='+escapeSql(id),offset:0,length:1})
+  ]);
+  const found=caseResult.rows[0];if(!found)throw Error('HF 沒有這筆案件');
+  $('detailTitle').textContent=found.title||'案件詳情';
+  $('detailStatus').textContent='機關：'+(found.agency||'未公開')+'　公告歷史：'+noticeResult.num_rows_total+' 筆（本次最多顯示 100 筆）';
+  const root=document.createDocumentFragment();
+  root.append(text('p','機關代碼：'+found.unit_id+'　案號：'+found.job_number));
+  root.append(text('p','預算：'+money(found.budget_amount)+'　決標金額：'+money(found.award_amount)));
+  if(found.official_url&&found.official_url.startsWith('https://')){
+    const link=text('a','開啟政府原始公告');link.href=found.official_url;
+    link.target='_blank';link.rel='noopener noreferrer';root.append(link);
+  }
+  const detail=detailResult.rows[0];
+  if(detail?.details){
+    const vals=JSON.parse(detail.details);
+    const loc=vals?.location||null;
+    if(loc)root.append(text('p','履約地點：'+loc));
+  }
+  root.append(text('h3','公告歷史'));
+  for(const n of noticeResult.rows){
+    const row=text('article','','row'),left=text('div','');
+    left.append(text('p',(n.source_date||'日期不明')+'　'+(n.notice_type||'公告')));
+    left.append(text('p',n.title||found.title));
+    if(n.official_url&&n.official_url.startsWith('https://')){
+      const a=text('a','原始公告');a.href=n.official_url;a.target='_blank';a.rel='noopener noreferrer';left.append(a);
+    }
+    row.append(left);root.append(row);
+  }
+  $('detailBody').replaceChildren(root);
+ }catch(e){$('detailStatus').textContent='查詢失敗：'+String(e.message||e);}
+}
+$('searchForm').addEventListener('submit',e=>{e.preventDefault();page=1;void run();});
+$('prev').addEventListener('click',()=>{if(page>1){page--;void run();}});
+$('next').addEventListener('click',()=>{if(page*30<lastTotal){page++;void run();}});
+$('closeDetail').addEventListener('click',()=>{$('detail').hidden=true;$('searchPanel').hidden=false;$('results').hidden=false;});
+void run();
+</script>
+</body>
+</html>
