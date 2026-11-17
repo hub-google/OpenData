@@ -15,7 +15,8 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
-from huggingface_hub import EntryNotFoundError, HfApi, hf_hub_download
+from huggingface_hub import HfApi, hf_hub_download
+from huggingface_hub.errors import EntryNotFoundError
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -88,12 +89,13 @@ def main():
     session = http_session()
     latest_date = None
     manifests = []
-    for day in source_dates(session):
+    dates = source_dates(session)
+    for day in dates:
         dataset = fetch_json(session, "/listbydate", date=day.isoformat())
         rows = dataset.get("records") if isinstance(dataset, dict) else None
         if not isinstance(rows, list):
             raise RuntimeError(f"{day}: no source records array")
-        if day == source_dates(session)[-1] and not rows:
+        if day == dates[-1] and not rows:
             raise RuntimeError(f"{day}: newest public source date has zero records")
         invalid = sum(1 for row in rows if not isinstance(row, dict))
         if invalid:
