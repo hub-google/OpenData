@@ -283,3 +283,40 @@ export async function hfSourceStatus(){
   backfillDays:0
  };
 }
+
+
+export async function hfHomeKpis(){
+ const cases=await hfAllCases();
+ const meta=await hfReady();
+ const nowMs=Date.now();
+ const countBy=pred=>cases.reduce((sum,c)=>sum+(pred(c)?1:0),0);
+ const stage=c=>itemStage(c.latest_notice_type);
+ const active=c=>stage(c)==='招標';
+ const deadline=c=>Date.parse(c.deadline_at||'');
+ const latest=cases.reduce((max,c)=>Math.max(max,Number(c.latest_notice_date)||0),0);
+ let count=countBy(c=>c.latest_notice_date===latest),published=meta.created_at;
+ try{
+  const response=await fetch('https://huggingface.co/datasets/hub-google/TenderIntelligence/resolve/main/Daily/latest.json');
+  if(response.ok){
+   const ptr=await response.json();
+   const days=Array.isArray(ptr.snapshots)?ptr.snapshots:[];
+   const newest=days.reduce((best,d)=>!best||String(d.date)>String(best.date)?d:best,null);
+   if(newest){
+    const day=Number(String(newest.date).replaceAll('-',''));
+    if(day>=latest){count=Number(newest.records);published=ptr.published_at||published;}
+   }
+  }
+ }catch{/* The source-backed archived snapshot remains valid if daily metadata is unavailable. */}
+ return {
+  latest_publication_day:latest,
+  latest_notice_count:count,
+  total_cases:cases.length,
+  verified_open:countBy(c=>active(c)&&deadline(c)>nowMs),
+  due_soon:countBy(c=>active(c)&&deadline(c)>nowMs&&deadline(c)<=nowMs+3*86400000),
+  failed:countBy(c=>stage(c)==='無法決標'),
+  deadline_known:countBy(c=>!!c.deadline_at),
+  active_unknown_deadline:countBy(c=>active(c)&&!c.deadline_at),
+  budget_known:countBy(c=>c.budget_amount!=null),
+  last_success_at:published
+ };
+}

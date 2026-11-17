@@ -1,3 +1,4 @@
+import {hfHomeKpis} from './hf-static-source.mjs';
 import {renderBidEffortSummary} from './bid-effort-summary.js';
 import {readBasicSearchUrl,writeBasicSearchUrl} from './search-url.mjs';
 import {loadAgencyEvidence} from './agency-deep.js';
@@ -350,9 +351,14 @@ async function loadVerifiedHomepageKpis(){
  const note=$('verifiedMetricsNote');
  if(!note)return;
  try{
-  const client=await getClient();
-  const {data,error}=await client.rpc('ti_home_kpis');
-  if(error)throw error;
+  const sourceHF=new URLSearchParams(location.search).get('source')==='hf';
+  let data;
+  if(sourceHF)data=await hfHomeKpis();
+  else{
+   const client=await getClient(),answer=await client.rpc('ti_home_kpis');
+   if(answer.error)throw answer.error;
+   data=answer.data;
+  }
   if(!data||typeof data!=='object')throw Error('資料庫未提供統計');
   const numeral=v=>Number(v||0).toLocaleString('zh-TW');
   const d=String(data.latest_publication_day||'');
@@ -368,7 +374,7 @@ async function loadVerifiedHomepageKpis(){
   const syncText=synced&&!Number.isNaN(synced.getTime())?
    synced.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false}):'尚無成功紀錄';
   const overdue=synced&&Date.now()-synced.getTime()>2*3600000;
-  note.textContent='自有資料庫 '+numeral(total)+' 案；目前有明確截止時間 '+numeral(known)+
+  note.textContent=(sourceHF?'HF 公開資料 ':'自有資料庫 ')+numeral(total)+' 案；目前有明確截止時間 '+numeral(known)+
    ' 案（'+checked+'）。「確認尚未截標」與「三日內截止」只計入有原文證據者，不能據此推斷其餘案件已截止。'+
    '最後成功同步（台灣時間）：'+syncText+'。'+
    (data.unresolved_source_dates?'來源尚未核實 '+numeral(data.unresolved_source_dates)+' 天（其中 '+numeral(data.calendar_unverified_source_dates||0)+' 天落在例假日或政府預期休刊日、工作日待查 '+numeral(data.workday_unverified_source_dates||0)+' 天）；未把來源 HTTP 錯誤當作零公告。':'')+
