@@ -64,6 +64,7 @@ jobs:
               await main.goto('https://hub-google.github.io/OpenData/tender-intelligence-web/?source=hf',
                 {waitUntil:'domcontentloaded',timeout:35000});
               await main.locator('#resultList .case-card').first().waitFor({timeout:105000});
+              await main.waitForFunction(()=>document.querySelector('#verifiedMetricsNote')?.textContent?.includes('HF 公開資料'),null,{timeout:45000});
               const metric=await main.locator('#verifiedMetricsNote').innerText();
               if(!metric.includes('HF 公開資料'))throw Error('Original homepage failed HF source KPI cutover: '+metric.slice(0,300));
               console.log('HF_ORIGINAL_WEBSITE_RESULTS_OK '+await main.locator('#resultList .case-card').count());
