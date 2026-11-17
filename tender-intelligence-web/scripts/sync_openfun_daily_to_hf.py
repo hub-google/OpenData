@@ -87,11 +87,20 @@ def main():
     if repo.private:
         raise RuntimeError("Refusing to export: target must be public")
     session = http_session()
-    latest_date = None
-    manifests = []
     dates = source_dates(session)
-    for day in dates:
-        dataset = fetch_json(session, "/listbydate", date=day.isoformat())
+    latest_date = dates[-1]
+    manifests = []
+    failed_dates = []
+    for day in (dates[-1], dates[0]):
+        try:
+            dataset = fetch_json(session, "/listbydate", date=day.isoformat())
+        except requests.RequestException as exc:
+            if day == latest_date:
+                raise RuntimeError(f"Latest official source {day} is unavailable; no pointer updated") from exc
+            failed_dates.append({"date": day.isoformat(), "status": "upstream_unavailable",
+                                 "retry_required": True})
+            print("TENDER_PUBLIC_SOURCE_GAP=" + json.dumps(failed_dates[-1]), flush=True)
+            continue
         rows = dataset.get("records") if isinstance(dataset, dict) else None
         if not isinstance(rows, list):
             raise RuntimeError(f"{day}: no source records array")
@@ -121,7 +130,6 @@ def main():
             "sha256": digest, "records": len(rows), "bytes": len(raw),
             "unchanged": already == digest
         })
-        latest_date = day
         print(json.dumps({"archived_date": day.isoformat(),
                           "records": len(rows), "remote_verified": True,
                           "unchanged": already == digest},
@@ -130,7 +138,9 @@ def main():
         "schema_version": 1,
         "source": API + "/listbydate",
         "latest_date": latest_date.isoformat(),
-        "snapshots": manifests,
+        "snapshots": sorted(manifests, key=lambda item: item["date"]),
+        "source_gaps": failed_dates,
+        "complete": not failed_dates,
         "published_at": datetime.now(timezone.utc).isoformat(),
         "public": True,
         "supabase_independent": True
@@ -141,11 +151,18 @@ def main():
         path_in_repo="Daily/latest.json", path_or_fileobj=raw,
         commit_message=f"Publish verified latest public tender dates {latest_date.isoformat()}"
     )
-    print("TENDER_PUBLIC_DAILY_ARCHIVE_OK=" +
+    downloaded = hf_hub_download(repo_id=REPO, repo_type="dataset",
+                                 filename="Daily/latest.json", token=token,
+                                 force_download=True)
+    if sha(Path(downloaded).read_bytes()) != sha(raw):
+        raise RuntimeError("Public HF latest pointer checksum mismatch")
+    print("TENDER_PUBLIC_DAILY_ARCHIVE_" + ("PARTIAL" if failed_dates else "OK") + "=" +
           json.dumps({"dataset": REPO, "latest_date": latest_date.isoformat(),
                       "source_dates": len(manifests),
-                      "source_rows": sum(x["records"] for x in manifests)},
-                     ensure_ascii=False), flush=True)
+                      "source_rows": sum(x["records"] for x in manifests),
+                      "retry_gaps": failed_dates}, ensure_ascii=False), flush=True)
+    if failed_dates:
+        raise SystemExit("Previous-day upstream unavailable: newest data archived, source gap requires retry")
 
 
 if __name__ == "__main__":
