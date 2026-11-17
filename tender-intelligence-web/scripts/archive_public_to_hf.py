@@ -89,8 +89,9 @@ def filter_literal(value: str) -> str:
 def get_count(s: requests.Session, base: str, table: str,
               key: str, max_key: str | None = None) -> int:
     params = {"select": key, "limit": 1}
-    if max_key is not None:
-        params[key] = "lte." + filter_literal(max_key)
+    # Count all public rows; PostgREST single-field quoted lte filters can
+    # miscount identifiers containing punctuation. Keyset bounds are enforced
+    # separately by get_page() using its tested grouped filter.
     r = s.get(f"{base}/rest/v1/{table}", params=params,
               headers={"Prefer": "count=exact"}, timeout=(15, 120))
     r.raise_for_status()
