@@ -61,7 +61,7 @@ jobs:
               await page.screenshot({path:'/tmp/hf-public-acceptance.png',fullPage:true});
               const main=await browser.newPage({viewport:{width:1320,height:900}});
               main.on('pageerror',e=>console.log('MAIN_PAGE_ERROR '+e.message.slice(0,220)));
-              await main.goto('https://hub-google.github.io/OpenData/tender-intelligence-web/?source=hf',
+              await main.goto('https://hub-google.github.io/OpenData/tender-intelligence-web/',
                 {waitUntil:'domcontentloaded',timeout:35000});
               await main.locator('#resultList .case-card').first().waitFor({timeout:105000});
               await main.waitForFunction(()=>document.querySelector('#verifiedMetricsNote')?.textContent?.includes('HF 公開資料'),null,{timeout:45000});
