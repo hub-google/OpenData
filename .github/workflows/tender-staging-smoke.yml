@@ -15,12 +15,18 @@ jobs:
           API: https://monsterport-ti-hf-staging.ber-at.workers.dev
         run: |
           python3 - <<'PY'
-          import json,os,urllib.request
+          import json,os,urllib.request,urllib.error
           api=os.environ['API']
           req=urllib.request.Request(api+'/health',headers={'Accept':'application/json'})
-          with urllib.request.urlopen(req,timeout=30) as r:
-              data=json.load(r)
-              assert r.status==200
+          try:
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  data=json.load(r)
+                  assert r.status==200
+          except urllib.error.HTTPError as ex:
+              print('STAGING_HTTP_STATUS='+str(ex.code))
+              print('STAGING_HTTP_HEADERS='+str(ex.headers))
+              print('STAGING_HTTP_BODY='+ex.read(1500).decode('utf-8','replace'))
+              raise
           assert data['service']=='tender-hf-d1', data
           assert data['production_ready'] is False, data
           print('STAGING_HEALTH='+json.dumps(data,ensure_ascii=False))
