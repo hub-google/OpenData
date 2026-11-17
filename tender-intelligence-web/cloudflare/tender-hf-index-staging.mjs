@@ -6,6 +6,7 @@ const PHASES=[
  {set:'records',table:'ti_cases',db:'ti_cases_cache',key:'id'},
  {set:'records',table:'ti_notices',db:'ti_notices_cache',key:'id'},
  {set:'records',table:'ti_case_details',db:'ti_details_cache',key:'case_id'},
+ {set:'records',table:'ti_debarred_vendor_notices',db:'ti_debarred_cache',key:'id'},
  {set:'search',table:'ti_case_search_index',db:'ti_search_fts',key:'case_id'},
  {set:'search',table:'ti_case_vendor_search',db:'ti_vendor_text_cache',key:'case_id'}
 ];
@@ -13,6 +14,7 @@ const FIELDS={
  ti_cases:['id','unit_id','job_number','title','agency','category','group_name','latest_notice_type','latest_notice_date','budget_amount','award_amount','deadline_at','official_url','latest_filename','first_seen_at','source_fetched_at'],
  ti_notices:['id','case_id','source_date','filename','notice_type','title','category','budget_amount','award_amount','official_url','company_ids','company_names','company_role_keys','raw_brief','fetched_at'],
  ti_case_details:['case_id','latest_notice_id','details','records_count','fetched_at'],
+ ti_debarred_vendor_notices:['id','company_name','company_number','case_number','case_name','agency_name','legal_clause','effective_date','expiration_date','announcement_date','appeal_result','source_url','fetched_at'],
  ti_case_search_index:['case_id','searchable'],
  ti_case_vendor_search:['case_id','vendor_text','updated_at']
 };
@@ -129,6 +131,16 @@ export default {
     return json({service:'tender-hf-d1',production_ready:false,case_count:cases.n,imports:states.results});
    }
    if(u.pathname==='/preview/search')return search(env.TI_DB,u);
+   if(u.pathname==='/preview/debarred'){
+    const term=(u.searchParams.get('q')||'').trim().slice(0,90);
+    if(term.length<2)return json({error:'enter at least two characters'},400);
+    const numeric=/^\d{8}$/.test(term);
+    const where=numeric?'company_number=?':'company_name LIKE ?';
+    const value=numeric?term:'%'+term.replaceAll('%','\\%').replaceAll('_','\\_')+'%';
+    const data=await env.TI_DB.prepare('SELECT * FROM ti_debarred_cache WHERE '+where+' ORDER BY announcement_date DESC LIMIT 50').bind(value).all();
+    const count=await env.TI_DB.prepare('SELECT count(*) AS n FROM ti_debarred_cache WHERE '+where).bind(value).first();
+    return json({rows:data.results||[],total:count.n,source:'hf-d1-staging'});
+   }
    if(u.pathname==='/preview/case'){
     const id=u.searchParams.get('id')||'';
     const item=await env.TI_DB.prepare('SELECT * FROM ti_cases_cache WHERE id=?').bind(id).first();
