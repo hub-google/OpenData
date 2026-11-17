@@ -351,7 +351,7 @@ async function loadVerifiedHomepageKpis(){
  const note=$('verifiedMetricsNote');
  if(!note)return;
  try{
-  const sourceHF=new URLSearchParams(location.search).get('source')==='hf';
+  const sourceHF=new URLSearchParams(location.search).get('source')!=='supabase';
   let data;
   if(sourceHF)data=await hfHomeKpis();
   else{

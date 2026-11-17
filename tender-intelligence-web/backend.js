@@ -1,5 +1,5 @@
 import * as hf from './hf-static-source.mjs';
-const hfEnabled=()=>typeof location!=='undefined'&&new URLSearchParams(location.search).get('source')==='hf';
+const hfEnabled=()=>typeof location==='undefined'||new URLSearchParams(location.search).get('source')!=='supabase';
 // Public configuration only: publishable key is intended for browsers.
 // Authorization is enforced by Supabase Auth + RLS, not by secrecy of this key.
 export const DATABASE_PROJECT="unapiwajmgqqtdkixaab";
