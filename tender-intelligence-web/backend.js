@@ -1,3 +1,5 @@
+import * as hf from './hf-static-source.mjs';
+const hfEnabled=()=>typeof location!=='undefined'&&new URLSearchParams(location.search).get('source')==='hf';
 // Public configuration only: publishable key is intended for browsers.
 // Authorization is enforced by Supabase Auth + RLS, not by secrecy of this key.
 export const DATABASE_PROJECT="unapiwajmgqqtdkixaab";
@@ -104,6 +106,7 @@ function caseFilters(query,filters={},scenario='all'){
 // Every non-keyword feed applies filters and sorting BEFORE server pagination.
 // One source page equals one user-visible page; no second in-memory pager.
 export async function fetchArchive({page=1,search='',filters={},scenario='all'}={}){
+ if(hfEnabled())return hf.hfCaseSearch({mode:search?'title':'latest',query:search,page,filters,scenario});
  const client=await getClient(),current=Math.max(1,Math.trunc(Number(page)||1));
  const from=(current-1)*CASE_PAGE_SIZE;
  let q=client.from('ti_cases').select('id,unit_id,job_number,title,agency,category,group_name,latest_notice_type,latest_notice_date,latest_filename,budget_amount,award_amount,official_url,deadline_at,source_fetched_at',{count:'exact'});
@@ -129,6 +132,7 @@ export async function fetchArchive({page=1,search='',filters={},scenario='all'}=
 // Match all search modes to verified case metadata, never infer a deadline
 // from a title or a prior award notice.
 export async function enrichCaseRecords(records){
+ if(hfEnabled())return hf.hfEnrichCaseRecords(records);
  const source=Array.isArray(records)?records:[];
  const ids=[...new Set(source.filter(r=>r?.unit_id&&r?.job_number).map(r=>String(r.unit_id)+'::'+String(r.job_number)))].slice(0,100);
  if(!ids.length||source.every(r=>Object.hasOwn(r,'deadline_at')))return source;
@@ -149,6 +153,7 @@ export async function enrichCaseRecords(records){
 export async function fetchCaseSearch({
  mode='latest',query='',page=1,filters={},scenario='all'
 }={}){
+ if(hfEnabled())return hf.hfCaseSearch({mode,query,page,filters,scenario});
  const client=await getClient();
  const amount=filters.minBudget===''||filters.minBudget==null?null:Number(filters.minBudget);
  const maxBudget=filters.maxBudget===''||filters.maxBudget==null?null:Number(filters.maxBudget);
@@ -193,6 +198,7 @@ export async function fetchCaseSearch({
 // Never use for a constrained search: that would silently discard filters.
 // No count is claimed, since a full exact COUNT can itself time out upstream.
 export async function fetchDefaultCaseFallback({page=1}={}){
+ if(hfEnabled())return hf.hfCaseSearch({page});
  const current=Math.max(1,Math.trunc(Number(page)||1)),size=30;
  const db=await getClient(),start=(current-1)*size;
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
@@ -222,6 +228,7 @@ export async function fetchDefaultCaseFallback({page=1}={}){
 // searchable text match. It is equivalent to the canonical title/keyword
 // lookup only when no additional filters are present; never invoke otherwise.
 export async function fetchFastTitleFallback({query,page=1}={}){
+ if(hfEnabled())return hf.hfCaseSearch({mode:'title',query,page});
  const term=String(query||'').trim();
  if(term.length<2||term.length>60||/[%_\\]/.test(term))throw Error('快速索引不支援這組查詢字元');
  const current=Math.max(1,Math.trunc(Number(page)||1)),db=await getClient();
@@ -254,6 +261,7 @@ export async function fetchFastTitleFallback({query,page=1}={}){
 // Exact-field backup searches when the upstream API blocks browser CORS.
 // All rows come from the already-ingested public government announcements.
 export async function fetchBasicArchiveSearch({mode,query,page=1}={}){
+ if(hfEnabled())return hf.hfCaseSearch({mode,query,page});
   const client=await getClient();
   const {data,error}=await client.rpc("ti_basic_archive_search",{
     p_mode:mode,p_query:String(query||''),p_page:page,p_limit:30
@@ -265,6 +273,7 @@ export async function fetchBasicArchiveSearch({mode,query,page=1}={}){
 // Cross-check latest OpenFun daily summaries with source-derived amounts already
 // ingested into the public case index. Daily list summaries omit budget_amount.
 export async function fetchLatestAmounts(yyyymmdd){
+ if(hfEnabled())return hf.hfLatestAmounts(yyyymmdd);
   const day=String(yyyymmdd||'');
   if(!/^\d{8}$/.test(day))throw Error('公告日期格式不正確');
   const client=await getClient();
@@ -292,6 +301,7 @@ export async function fetchLatestAmounts(yyyymmdd){
 // This is clearly labelled cached data, never claimed to be a live API response.
 // Homepage: a procurement case appears once. ti_notices preserves its timeline.
 export async function fetchLatestCachedNotices({page=1,date:requestedDate=null}={}){
+ if(hfEnabled())return hf.hfLatestCachedNotices({page,date:requestedDate});
  const client=await getClient(),perPage=100;
  const currentPage=Math.max(1,Math.trunc(Number(page)||1));
  let day=Number(requestedDate);
@@ -340,6 +350,7 @@ export async function fetchLatestCachedNotices({page=1,date:requestedDate=null}=
 // Return only source-backed records already ingested in Supabase. Detail fields
 // with no original evidence stay null, not fabricated or inferred.
 export async function fetchArchivedCaseDetail(unitId,jobNumber){
+ if(hfEnabled())return hf.hfArchivedCaseDetail(unitId,jobNumber);
   const unit=String(unitId||''),job=String(jobNumber||'');
   if(!unit||!job||unit.length>80||job.length>100)throw Error('機關代碼或案號格式不正確');
   const id=unit+'::'+job,client=await getClient();
@@ -402,6 +413,7 @@ export async function fetchAgencyArchivedAnnual(unitId){
   return data;
 }
 export async function fetchSourceStatus(){
+ if(hfEnabled())return hf.hfSourceStatus();
  const client=await getClient();
  const [source,run,coverage,backfill,days,notices]=await Promise.all([
   client.from("ti_sources").select("id,provider,method,frequency_minutes,last_success_at,last_error,commercial_license_status").eq("id","openfun-pcc").maybeSingle(),
@@ -441,6 +453,7 @@ export async function cloudNotifications(client,user){
 // Same indexed official-case dataset as the advanced-search fast path.
 // Return the total number of matching cases, not only one capped 100-row batch.
 export async function fetchUnifiedTitleSearch(query,page=1,filters={}){
+ if(hfEnabled())return hf.hfCaseSearch({mode:'title',query,page,filters});
  const term=String(query||'').trim();
  if(term.length<2||term.length>60||/[%_\\]/.test(term))throw Error('跨日全文搜尋請輸入 2–60 字，且不要包含 %、_ 或反斜線');
  const client=await getClient();
