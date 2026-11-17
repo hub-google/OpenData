@@ -1,3 +1,5 @@
+import {hfAdvancedSearch} from './hf-static-source.mjs';
+const useHF=()=>new URLSearchParams(location.search).get('source')!=='supabase';
 // PRD F02-F05: real archive search via Postgres, never a browser-only 100-row filter.
 // This module has no service-role secrets and uses public, RLS-protected Supabase RPC.
 import {getClient} from './backend.js';
@@ -127,9 +129,9 @@ async function search(p=1){
  $('advSubmit').disabled=true;
  $('advPrev').disabled=true;$('advNext').disabled=true;
  $('advPageInfo').textContent='正在載入第 '+p+' 頁…';
- status('正在查詢自有 Supabase 中實際已收錄的公告，跨日期條件在資料庫端處理…');
+ status(useHF()?'正在查詢 Hugging Face 公開標案索引…':'正在查詢自有 Supabase 中實際已收錄的公告…');
  try{
-  const client=await getClient();
+  const client=useHF()?null:await getClient();
   const t=Array.isArray(opts.p_terms)&&opts.p_terms.length===1?opts.p_terms[0]:'';
   const unfiltered=opts.p_expression===null&&
    opts.p_terms.length===0&&opts.p_exclude.length===0&&
@@ -148,6 +150,8 @@ async function search(p=1){
    opts.p_date_from===null&&opts.p_date_to===null&&
    !opts.p_deadline_start&&!opts.p_deadline_end&&!opts.p_deadline_only;
   let data,error;
+  if(useHF())data=await hfAdvancedSearch(opts);
+  else{
   // Under heavy background ingestion PostgreSQL may cancel a slow read at its
   // statement timeout. Retry just this transient case once; never mutate filters.
   for(let attempt=0;attempt<2;attempt++){
@@ -170,6 +174,7 @@ async function search(p=1){
    if(!/statement timeout|canceling statement/i.test(String(error.message||''))||attempt===1)break;
    status('資料庫正忙於同步公告，正在重新查詢同一組條件…');
    await new Promise(resolve=>setTimeout(resolve,300));
+  }
   }
   if(error)throw error;
   if(n!==request)return;
@@ -355,9 +360,13 @@ async function previewAdvancedRule(){
   const start=Number(dateParts.year+dateParts.month+dateParts.day);
   params.p_date_from=Math.max(params.p_date_from||0,start);
   params.p_limit=1;
-  const client=await getClient();
-  const {data,error}=await client.rpc('ti_archive_search_v5',params);
-  if(error)throw error;
+  let data;
+  if(useHF())data=await hfAdvancedSearch(params);
+  else{
+   const client=await getClient(),res=await client.rpc('ti_archive_search_v5',params);
+   if(res.error)throw res.error;
+   data=res.data;
+  }
   ruleStatus('「'+rule.name+'」在近 30 天「實際已成功入庫」日期中匹配 '+Number(data?.total||0).toLocaleString('zh-TW')+
     ' 件；尚未回填的日期不包含在預覽，不代表全國所有標案。');
  }catch(e){ruleStatus('預覽失敗：'+String(e.message||e));}
