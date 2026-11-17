@@ -14,7 +14,7 @@ const source=new Map([
  ['ti_case_vendor_search.json.gz',[{case_id:id,vendor_text:'ABC 建設有限公司'},{case_id:'DEF::11502',vendor_text:'DEF文具'}]],
  ['ti_notices/'+bucket+'.json.gz',[{id:'NOTICE1',case_id:id,source_date:20261110,filename:'XYZ',notice_type:'公開招標',raw_brief:{title:'臺北工程採購案',type:'招標'},official_url:'https://web.pcc.gov.tw/official'}]],
  ['ti_case_details/'+bucket+'.json.gz',[{case_id:id,latest_notice_id:'NOTICE1',details:{location:'台北市',period:'120日'}}]],
- ['manifest.json',{files:{'ti_cases.json.gz':{records:2},'ti_notices/'+bucket+'.json.gz':{records:1}},created_at:'2026-11-17T00:00:00Z'}]
+ ['manifest.json',{files:{'ti_cases.json.gz':{records:2},['ti_notices/'+bucket+'.json.gz']:{records:1}},created_at:'2026-11-17T00:00:00Z'}]
 ]);
 const originalFetch=globalThis.fetch;
 globalThis.fetch=async(url)=>{
