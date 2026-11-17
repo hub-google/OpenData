@@ -67,7 +67,7 @@ def put(folder,path,value,manifest):
  file=folder/path
  file.parent.mkdir(parents=True,exist_ok=True)
  file.write_bytes(raw)
- manifest[path]={"bytes":len(raw),"sha256":sha(raw),"records":len(value)}
+ manifest[str(path)]={"bytes":len(raw),"sha256":sha(raw),"records":len(value)}
  return len(value)
 
 def main():
@@ -76,9 +76,12 @@ def main():
  assert not api.repo_info(repo_id=REPO,repo_type="dataset").private
  with tempfile.TemporaryDirectory(prefix="tender_hf_browser_") as temp:
   root=Path(temp);files={}
+  case_rows=None
+  notice_counts=defaultdict(int)
   for table in ("ti_cases","ti_case_search_index","ti_case_vendor_search","ti_debarred_vendor_notices"):
    values=list(rows_for(token,table))
    if table=="ti_cases":
+    case_rows=values
     values.sort(key=lambda r:(r.get("latest_notice_date") or 0,r.get("id") or ""),reverse=True)
     for row in values:
      row.pop("first_seen_at",None)
@@ -89,12 +92,16 @@ def main():
    b=defaultdict(list); total=0
    for row in rows_for(token,table):
     b[bucket(str(row["case_id"]))].append(row);total+=1
+    if table=="ti_notices":notice_counts[row["case_id"]]+=1
    for key in [f"{i:02x}" for i in range(SHARD_BUCKETS)]:
     records=b[key]
     if table=="ti_notices":
      records.sort(key=lambda r:(r.get("source_date") or 0,str(r.get("filename") or "")),reverse=True)
     put(root,Path(table)/f"{key}.json.gz",records,files)
    print("TENDER_HF_BROWSER_PACK "+table+" "+str(total),flush=True)
+  for row in case_rows:
+   row["notice_count"]=notice_counts.get(row["id"],0)
+  put(root,Path("ti_cases.json.gz"),case_rows,files)
   manifest={
    "format":"source-backed-public-tender-browser",
    "schema_version":1,

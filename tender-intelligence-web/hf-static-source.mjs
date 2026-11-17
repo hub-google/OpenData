@@ -178,8 +178,8 @@ export async function hfCaseSearch({mode='latest',query='',page=1,filters={},sce
   if(filter.max!==null&&(row.budget_amount==null||Number(row.budget_amount)>filter.max))return false;
   if(from!==null&&Number(row.latest_notice_date)<from)return false;
   if(to!==null&&Number(row.latest_notice_date)>to)return false;
-  if(deadlineStart!==null&&Date.parse(row.deadline_at||'')<deadlineStart)return false;
-  if(deadlineEnd!==null&&Date.parse(row.deadline_at||'')>deadlineEnd)return false;
+  if(deadlineStart!==null&&!(Date.parse(row.deadline_at||'')>=deadlineStart))return false;
+  if(deadlineEnd!==null&&!(Date.parse(row.deadline_at||'')<=deadlineEnd))return false;
   if((location||method)&&det){
    const d=det.get(row.id);if(!d)return false;
    if(location&&!norm(d.location).includes(location))return false;
@@ -224,7 +224,7 @@ export async function hfLatestAmounts(yyyymmdd){
 export async function hfLatestCachedNotices({page=1,date=null}={}){
  const all=await hfAllCases();
  const dates=all.map(r=>r.latest_notice_date).filter(x=>x);
- const day=date||Math.max(...dates);
+ const day=date||dates.reduce((max,x)=>Math.max(max,x),0);
  const matching=all.filter(r=>r.latest_notice_date===Number(day));
  const n=Math.max(1,Math.floor(Number(page)||1)),limit=100;
  return {records:matching.slice((n-1)*limit,n*limit).map(convertRecord),
