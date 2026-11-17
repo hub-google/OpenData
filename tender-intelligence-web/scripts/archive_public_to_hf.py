@@ -168,8 +168,8 @@ def export_table(s: requests.Session, base: str, out: Path,
                 value = row.get(key)
                 if not isinstance(value, str) or not value:
                     raise RuntimeError(f"{table}: invalid primary key {key}")
-                if previous_key is not None and value <= previous_key:
-                    raise RuntimeError(f"{table}: key order changed, unsafe export")
+                if previous_key is not None and value == previous_key:
+                    raise RuntimeError(f"{table}: repeated primary key, unsafe export")
                 previous_key = value
                 if stream is None:
                     filename = folder / f"part-{index:05d}.jsonl.gz"
