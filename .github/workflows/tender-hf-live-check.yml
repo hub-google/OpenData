@@ -1,0 +1,71 @@
+name: 標案 HF 無後端資料的真實瀏覽器驗收
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/tender-hf-live-check.yml']
+permissions:
+  contents: read
+jobs:
+  hf-live:
+    name: GitHub Pages + HF direct CORS / search / detail
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Chromium only for this acceptance test
+        run: |
+          npm install --prefix /tmp/hf-browser --no-save playwright@1.56.1
+          /tmp/hf-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify public case search and case details use HF without Supabase
+        run: |
+          node <<'JS'
+          const {chromium}=require('/tmp/hf-browser/node_modules/playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            try{
+              const page=await browser.newPage({viewport:{width:1320,height:900}});
+              const failed=[];
+              page.on('pageerror',e=>failed.push('PAGE '+e.message));
+              page.on('requestfailed',r=>failed.push('NET '+r.url()+' '+r.failure()?.errorText));
+              const url='https://hub-google.github.io/OpenData/tender-intelligence-web/hf-preview.html';
+              await page.goto(url,{waitUntil:'domcontentloaded',timeout:35000});
+              await page.waitForFunction(()=>{
+                const el=document.querySelector('#count');
+                return el&&/符合/.test(el.textContent);
+              },{timeout:105000});
+              const count=await page.locator('#count').innerText();
+              if(!/90,?1[0-9]{2}/.test(count))throw Error('HF result count is not source-backed: '+count);
+              console.log('HF_PUBLIC_BROWSER_CATALOG_OK '+count);
+              await page.locator('#query').fill('工程');
+              await page.locator('#submit').click();
+              await page.waitForFunction(()=>{
+                const status=document.querySelector('#status');
+                return status&&status.textContent.includes('已從 HF 公開資料完成查詢');
+              },{timeout:80000});
+              const resultCount=await page.locator('#list article').count();
+              if(resultCount<1)throw Error('No matching public tender results');
+              console.log('HF_PUBLIC_BROWSER_KEYWORD_SEARCH_OK '+resultCount);
+              await page.locator('#list article a').first().click();
+              await page.waitForFunction(()=>{
+                const status=document.querySelector('#detailStatus');
+                return status&&status.textContent.startsWith('機關：');
+              },{timeout:50000});
+              if(await page.locator('#detailBody article').count()<1)throw Error('No real announcement detail');
+              console.log('HF_PUBLIC_BROWSER_CASE_DETAILS_OK');
+              console.log('HF_NETWORK_ERROR_COUNT '+failed.length);
+              if(failed.length)console.log('HF_NETWORK_ERRORS '+JSON.stringify(failed.slice(0,12)));
+              await page.screenshot({path:'/tmp/hf-public-acceptance.png',fullPage:true});
+            }finally{await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1);});
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tender-hf-browser-acceptance
+          path: /tmp/hf-public-acceptance.png
+          if-no-files-found: ignore
+          retention-days: 7
