@@ -93,7 +93,7 @@ def main():
     failed_dates = []
     for day in (dates[-1], dates[0]):
         try:
-            dataset = fetch_json(session, "/listbydate", date=day.isoformat())
+            dataset = fetch_json(session, "/listbydate", date=day.strftime("%Y%m%d"))
         except requests.RequestException as exc:
             if day == latest_date:
                 raise RuntimeError(f"Latest official source {day} is unavailable; no pointer updated") from exc
