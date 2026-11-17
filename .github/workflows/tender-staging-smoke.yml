@@ -17,7 +17,7 @@ jobs:
           python3 - <<'PY'
           import json,os,urllib.request,urllib.error
           api=os.environ['API']
-          req=urllib.request.Request(api+'/health',headers={'Accept':'application/json'})
+          req=urllib.request.Request(api+'/health',headers={'Accept':'application/json','User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/157 Safari/537.36'})
           try:
               with urllib.request.urlopen(req,timeout=30) as r:
                   data=json.load(r)
@@ -30,13 +30,13 @@ jobs:
           assert data['service']=='tender-hf-d1', data
           assert data['production_ready'] is False, data
           print('STAGING_HEALTH='+json.dumps(data,ensure_ascii=False))
-          with urllib.request.urlopen(api+'/preview/search?mode=latest&page=1',timeout=30) as r:
+          with urllib.request.urlopen(urllib.request.Request(api+'/preview/search?mode=latest&page=1',headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/157 Safari/537.36'}),timeout=30) as r:
               result=json.load(r)
               assert r.status==200
               assert isinstance(result['rows'],list)
               assert isinstance(result['total'],int)
               print('STAGING_SEARCH_CONTRACT_OK='+str(result['total']))
-          request=urllib.request.Request(api+'/preview/search',data=b'{}',method='POST')
+          request=urllib.request.Request(api+'/preview/search',data=b'{}',method='POST',headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/157 Safari/537.36'})
           try:
               urllib.request.urlopen(request,timeout=30)
               raise AssertionError('POST unexpectedly permitted')
