@@ -36,8 +36,22 @@ function sqlFor(p){
  const updates=fs.filter(x=>x!==p.key).map(x=>x+'=excluded.'+x).join(',');
  return 'INSERT INTO '+p.db+' ('+fs.join(',')+') VALUES ('+fs.map(()=>'?').join(',')+') ON CONFLICT('+p.key+') DO UPDATE SET '+updates;
 }
+// D1 trigram FTS cannot index two-character Han queries directly.
+// Add a three-codepoint marker for each adjacent Han pair, so
+// q工程 can be indexed and searched as a regular trigram.
+function indexedText(raw){
+ const source=String(raw||'');
+ const c=Array.from(source);
+ const pairs=[];
+ const han=/^\p{Script=Han}$/u;
+ for(let i=0;i+1<c.length;i++){
+  if(han.test(c[i])&&han.test(c[i+1]))pairs.push('q'+c[i]+c[i+1]);
+ }
+ return source+' '+pairs.join(' ');
+}
 function value(key,v){
  if(v==null)return null;
+ if(key==='searchable')return indexedText(v);
  if(['budget_amount','award_amount','latest_notice_date','source_date','records_count'].includes(key))return Number(v);
  if(typeof v==='object')return JSON.stringify(v);
  return String(v);
@@ -75,6 +89,7 @@ async function search(db,u){
  const p=u.searchParams;
  const term=(p.get('q')||'').trim().slice(0,100);
  const mode=p.get('mode')||'latest';
+ if((mode==='agency'||mode==='vendor'||mode==='companyId'||term.length<2) && new TextEncoder().encode(term).length>45) return json({error:'query exceeds database LIKE limit'},400);
  const allowed=['latest','title','archive','agency','vendor','companyId'];
  if(!allowed.includes(mode))return json({error:'unsupported mode'},400);
  const page=Math.max(1,Math.min(1000,parseInt(p.get('page')||'1',10)||1));
@@ -88,9 +103,10 @@ async function search(db,u){
   else if(mode==='vendor'||mode==='companyId'){
     where.push('id IN (SELECT case_id FROM ti_vendor_text_cache WHERE vendor_text LIKE ?)');
     args.push('%'+term+'%');
-  }else if(term.length>=3){
+  }else if(term.length>=3||/^\p{Script=Han}{2}$/u.test(term)){
     where.push('id IN (SELECT case_id FROM ti_search_fts WHERE searchable MATCH ?)');
-    args.push('"'+term.replaceAll('"','')+'"');
+    const ftsTerm=term.length===2?'q'+term:term;
+    args.push('"'+ftsTerm.replaceAll('"','')+'"');
   }else{
     where.push('(title LIKE ? OR agency LIKE ?)');args.push('%'+term+'%','%'+term+'%');
   }
