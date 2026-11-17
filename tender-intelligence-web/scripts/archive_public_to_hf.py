@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verified, read-only archive of public Taiwan tender data to a PRIVATE HF dataset.
+"""Verified, read-only archive of public Taiwan tender data to a PUBLIC HF dataset repository.
 
 This intentionally does not delete or mutate Supabase records and does not
 export private accounts, billing, notifications, keys, or user documents.
@@ -26,7 +26,7 @@ TABLES = {
     "ti_case_details": "case_id",
     "ti_debarred_vendor_notices": "id",
 }
-PAGE_SIZE = 500
+PAGE_SIZE = 250
 ROWS_PER_SHARD = 10000
 DATASET_CARD = """---
 language:
@@ -36,7 +36,7 @@ pretty_name: Taiwan Tender Intelligence Public Records Archive
 
 # Taiwan Tender Intelligence — Public Procurement Records Archive
 
-Private, versioned, lossless snapshots of public procurement notice and
+Public, versioned, lossless snapshots of public procurement notice and
 case metadata acquired by the OpenData/Tender Intelligence project.
 
 Data provenance: the project's public data mirror of OpenFun PCC API and the
@@ -81,27 +81,52 @@ def session() -> requests.Session:
     return s
 
 
+def filter_literal(value: str) -> str:
+    """Safely quote PostgREST filter values, including punctuation."""
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def get_count(s: requests.Session, base: str, table: str,
+              key: str, max_key: str | None = None) -> int:
+    params = {"select": key, "limit": 1}
+    if max_key is not None:
+        params[key] = "lte." + filter_literal(max_key)
+    r = s.get(f"{base}/rest/v1/{table}", params=params,
+              headers={"Prefer": "count=exact"}, timeout=(15, 120))
+    r.raise_for_status()
+    range_header = r.headers.get("content-range", "")
+    if "/" not in range_header or not range_header.rsplit("/", 1)[1].isdigit():
+        raise RuntimeError(f"{table}: cannot get exact source count")
+    return int(range_header.rsplit("/", 1)[1])
+
+
+def upper_bound(s: requests.Session, base: str, table: str, key: str) -> str | None:
+    r = s.get(f"{base}/rest/v1/{table}",
+              params={"select": key, "order": f"{key}.desc", "limit": 1},
+              timeout=(15, 120))
+    r.raise_for_status()
+    rows = r.json()
+    return rows[0][key] if rows else None
+
+
 def get_page(s: requests.Session, base: str, table: str, key: str,
-             offset: int, limit: int, count: bool = False):
-    url = f"{base}/rest/v1/{table}"
+             cursor: str | None, max_key: str, limit: int):
+    """Keyset pagination avoids Postgres OFFSET scans and proxy 500s."""
     params = {
-        "select": "*" if not count else key,
+        "select": "*",
         "order": f"{key}.asc",
         "limit": limit,
-        "offset": offset,
+        "and": f"({key}.lte.{filter_literal(max_key)}" +
+               (f",{key}.gt.{filter_literal(cursor)}" if cursor is not None else "") +
+               ")",
     }
-    r = s.get(url, params=params, timeout=(15, 120))
+    r = s.get(f"{base}/rest/v1/{table}", params=params,
+              headers={"Prefer": "return=representation"}, timeout=(15, 120))
     r.raise_for_status()
-    result = r.json()
-    if not isinstance(result, list):
-        raise ValueError(f"{table}: response was not a row array")
-    total = None
-    part = r.headers.get("content-range", "")
-    if "/" in part and part.rsplit("/", 1)[1].isdigit():
-        total = int(part.rsplit("/", 1)[1])
-    if total is None:
-        raise ValueError(f"{table}: server did not provide an exact row count")
-    return result, total
+    rows = r.json()
+    if not isinstance(rows, list):
+        raise RuntimeError(f"{table}: invalid page response")
+    return rows
 
 
 def export_table(s: requests.Session, base: str, out: Path,
@@ -109,8 +134,10 @@ def export_table(s: requests.Session, base: str, out: Path,
     folder = out / table
     folder.mkdir(parents=True)
     rows_written, index = 0, 0
-    expected = None
-    seen = set()
+    max_key = upper_bound(s, base, table, key)
+    expected = get_count(s, base, table, key, max_key) if max_key else 0
+    cursor = None
+    previous_key = None
     shards = []
     stream = None
     filename = None
@@ -132,21 +159,18 @@ def export_table(s: requests.Session, base: str, out: Path,
 
     try:
         while True:
-            page, total = get_page(s, base, table, key, rows_written,
-                                   PAGE_SIZE)
-            if expected is None:
-                expected = total
-            if total != expected:
-                raise RuntimeError(f"{table}: source count changed during export: {expected} -> {total}")
+            if max_key is None:
+                break
+            page = get_page(s, base, table, key, cursor, max_key, PAGE_SIZE)
             if not page:
                 break
             for row in page:
                 value = row.get(key)
                 if not isinstance(value, str) or not value:
                     raise RuntimeError(f"{table}: invalid primary key {key}")
-                if value in seen:
-                    raise RuntimeError(f"{table}: duplicate key found; aborting snapshot")
-                seen.add(value)
+                if previous_key is not None and value <= previous_key:
+                    raise RuntimeError(f"{table}: key order changed, unsafe export")
+                previous_key = value
                 if stream is None:
                     filename = folder / f"part-{index:05d}.jsonl.gz"
                     stream = gzip.open(filename, "wt", encoding="utf-8",
@@ -159,10 +183,9 @@ def export_table(s: requests.Session, base: str, out: Path,
                 rows_written += 1
                 if shard_rows >= ROWS_PER_SHARD:
                     close_shard()
-            if rows_written >= expected:
-                break
+            cursor = previous_key
         close_shard()
-        _, ending = get_page(s, base, table, key, 0, 1, count=True)
+        ending = get_count(s, base, table, key, max_key) if max_key else 0
         if expected != ending or rows_written != expected:
             raise RuntimeError(
                 f"{table}: count check failed (start={expected}, end={ending}, archived={rows_written})"
@@ -215,10 +238,13 @@ def main():
         expected_hashes = {str(f.relative_to(out)): digest(f) for f in all_files}
         api = HfApi(token=token)
         api.create_repo(repo_id=repo_id, repo_type="dataset",
-                        private=True, exist_ok=True)
+                        private=False, exist_ok=True)
         info = api.repo_info(repo_id=repo_id, repo_type="dataset")
-        if not info.private:
-            raise RuntimeError("Refusing to upload: HF destination is PUBLIC")
+        if info.private:
+            api.update_repo_settings(repo_id=repo_id, repo_type="dataset", private=False)
+            info = api.repo_info(repo_id=repo_id, repo_type="dataset")
+        if info.private:
+            raise RuntimeError("HF destination must be PUBLIC")
         current_files = set(api.list_repo_files(repo_id=repo_id, repo_type="dataset"))
         if "README.md" not in current_files:
             api.upload_file(repo_id=repo_id, repo_type="dataset",
