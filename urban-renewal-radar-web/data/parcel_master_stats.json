@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-11-23T08:21:56.311463+00:00",
+  "generated_at": "2026-11-24T10:31:12.907777+00:00",
   "parcel_count": 421038,
-  "radar_count": 148415,
+  "radar_count": 148531,
   "ownership_observation_count": 891,
-  "public_land_parcel_count": 147812,
+  "public_land_parcel_count": 147930,
   "cadastral_cleanup_parcel_count": 19,
   "zoning_join_count": 420700,
   "far_bcr_join_count": 218132,
-  "public_land_join_rows": 147812,
+  "public_land_join_rows": 147930,
   "cleanup_join_rows": 20,
   "sources": {
     "land_value": {
@@ -59,8 +59,8 @@
       ]
     },
     "public_land": {
-      "bytes": 15187316,
-      "rows": 148049,
+      "bytes": 15212596,
+      "rows": 148265,
       "encoding": "cp950/replace",
       "page": "https://data.taipei/dataset/detail?id=ca644935-035e-4ecf-bd93-3d8df351bdb7",
       "url": "https://tpland.blob.core.windows.net/blobfs/publand.csv",
